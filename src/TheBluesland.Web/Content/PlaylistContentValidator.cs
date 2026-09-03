@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
@@ -26,6 +27,8 @@ public sealed class PlaylistContentValidator
     private const int SummaryMaxLength = 180;
     private const int MoodsMaxCount = 5;
     private const int GenresMaxCount = 5;
+    private const int MaxFeaturedPlaylists = 4;
+    private const string PublishedAtFormat = "yyyy-MM-dd";
 
     private static readonly Regex SlugPattern = new("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.Compiled);
     private static readonly Regex SpotifyPlaylistIdPattern = new("^[A-Za-z0-9]{22}$", RegexOptions.Compiled);
@@ -52,6 +55,7 @@ public sealed class PlaylistContentValidator
         var issues = new List<PlaylistContentValidationIssue>();
         var slugOwners = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         var spotifyPlaylistIdOwners = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var featuredFiles = new List<string>();
 
         foreach (var filePath in Directory
                      .EnumerateFiles(contentDirectory, "*.md", SearchOption.TopDirectoryOnly)
@@ -94,10 +98,19 @@ public sealed class PlaylistContentValidator
             {
                 CollectOwner(spotifyPlaylistIdOwners, spotifyPlaylistId, fileName);
             }
+
+            // Only published files count toward the cap: a draft staged for a future release with
+            // featured: true isn't live yet and shouldn't block CI over playlists nobody sees.
+            if (frontMatter.Featured is true &&
+                string.Equals(frontMatter.Status, PublishedStatus, StringComparison.Ordinal))
+            {
+                featuredFiles.Add(fileName);
+            }
         }
 
         AddDuplicateIssues(issues, slugOwners, "slug");
         AddDuplicateIssues(issues, spotifyPlaylistIdOwners, "spotifyPlaylistId");
+        AddFeaturedCapIssues(issues, featuredFiles);
 
         return new PlaylistContentValidationResult(issues);
     }
@@ -133,6 +146,29 @@ public sealed class PlaylistContentValidator
                     field,
                     $"{field} '{value}' is not unique; also used by: {otherFiles}."));
             }
+        }
+    }
+
+    /// <summary>
+    /// US-009 AC5 / spec FR-003: at most 4 playlists may be featured at once. Follows the same
+    /// "collect owners, flag every file involved" shape as <see cref="AddDuplicateIssues"/> -
+    /// every featured file is named in the issue so a fifth (or later) addition is unambiguous
+    /// about which files to un-feature.
+    /// </summary>
+    private static void AddFeaturedCapIssues(List<PlaylistContentValidationIssue> issues, List<string> featuredFiles)
+    {
+        if (featuredFiles.Count <= MaxFeaturedPlaylists)
+        {
+            return;
+        }
+
+        var allFeaturedFiles = string.Join(", ", featuredFiles);
+        foreach (var fileName in featuredFiles)
+        {
+            issues.Add(new PlaylistContentValidationIssue(
+                fileName,
+                "featured",
+                $"at most {MaxFeaturedPlaylists} files may be featured, but {featuredFiles.Count} are: {allFeaturedFiles}."));
         }
     }
 
@@ -232,9 +268,21 @@ public sealed class PlaylistContentValidator
         }
 
         // publishedAt: the one field the acceptance criteria explicitly names as draft-exempt.
-        if (frontMatter.PublishedAt is not { Length: > 0 } && isPublished)
+        // When present (on either a draft or published file), it must actually parse as a date -
+        // PlaylistContentReader.ParsePublishedAt silently degrades an unparsable value to null
+        // (its own "malformed content must not crash render" contract), which would otherwise let
+        // a typo'd date slip through CI and quietly move that playlist in the home page's
+        // publishedAt-descending sort (US-009 AC1) with no error surfaced anywhere.
+        if (frontMatter.PublishedAt is not { Length: > 0 } publishedAt)
         {
-            AddIssue("publishedAt", "publishedAt is required for published content.");
+            if (isPublished)
+            {
+                AddIssue("publishedAt", "publishedAt is required for published content.");
+            }
+        }
+        else if (!DateOnly.TryParseExact(publishedAt, PublishedAtFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+        {
+            AddIssue("publishedAt", $"publishedAt must be an ISO date in '{PublishedAtFormat}' format, found '{publishedAt}'.");
         }
 
         // Markdown body (curator note): spec 9.1 lists it as "required for published content".

@@ -235,15 +235,15 @@ aradığım ruh haline uygun playlist'i hızlıca bulayım.
 
 Kabul kriterleri:
 
-- [ ] Ana sayfa açıldığında, yayınlanmış tüm playlist'ler `displayOrder` sonra `publishedAt`
+- [x] Ana sayfa açıldığında, yayınlanmış tüm playlist'ler `displayOrder` sonra `publishedAt`
       azalan sırasına göre listelenir.
-- [ ] Aynı boyut içinde (ör. iki mood) birden fazla değer seçildiğinde sonuçlar OR mantığıyla
+- [x] Aynı boyut içinde (ör. iki mood) birden fazla değer seçildiğinde sonuçlar OR mantığıyla
       birleştirilir; farklı boyutlar arasında (ör. mood + occasion) AND mantığıyla birleştirilir.
-- [ ] Filtre seçimi yapıldığında URL query string'i güncellenir; bu URL doğrudan açıldığında aynı
+- [x] Filtre seçimi yapıldığında URL query string'i güncellenir; bu URL doğrudan açıldığında aynı
       filtre durumu geri yüklenir.
-- [ ] Hiçbir playlist aktif filtrelerle eşleşmediğinde, "sonuç yok" mesajı ve tek tıkla filtre
+- [x] Hiçbir playlist aktif filtrelerle eşleşmediğinde, "sonuç yok" mesajı ve tek tıkla filtre
       sıfırlama seçeneği gösterilir.
-- [ ] Dört playlist "featured" olarak işaretlendiğinde beşinci bir playlist featured olarak
+- [x] Dört playlist "featured" olarak işaretlendiğinde beşinci bir playlist featured olarak
       eklenmeye çalışıldığında içerik doğrulama bunu reddeder (US-006 ile birlikte).
 
 Kapsam dışı: playlist detay sayfası (US-010).

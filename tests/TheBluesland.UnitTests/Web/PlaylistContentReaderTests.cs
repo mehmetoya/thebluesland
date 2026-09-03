@@ -30,8 +30,23 @@ public sealed class PlaylistContentReaderTests
         playlist.Moods.ShouldBe(["energetic", "raw"]);
         playlist.Genres.ShouldBe(["anadolu-rock", "rock"]);
         playlist.Occasions.ShouldBe(["night-drive"]);
+        playlist.Era.ShouldBe("1970s");
         playlist.CuratorNote.ShouldContain("Curator note body.");
         playlist.IsPublished.ShouldBeTrue();
+        playlist.PublishedAt.ShouldBe(new DateOnly(2026, 1, 1));
+        playlist.Featured.ShouldBeFalse();
+        playlist.DisplayOrder.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task ReadAllAsync_maps_a_missing_publishedAt_to_null_instead_of_throwing()
+    {
+        var contentDirectory = Path.Combine(FixturesRoot, "content-playlists");
+
+        var playlists = await _reader.ReadAllAsync(contentDirectory, CancellationToken.None);
+
+        var playlist = playlists.Single(p => p.Slug == "dear-mr-fantasy");
+        playlist.PublishedAt.ShouldBeNull();
     }
 
     [Fact]

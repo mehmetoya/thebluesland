@@ -29,10 +29,15 @@ public sealed class PlaylistContentRepository
         return playlists.FirstOrDefault(playlist => string.Equals(playlist.Slug, slug, StringComparison.Ordinal));
     }
 
-    /// <summary>Playlists the home page catalogue (US-008) may show; drafts are never listed.</summary>
+    /// <summary>
+    /// Playlists the home page catalogue (US-008) may show; drafts are never listed. Sorted per
+    /// US-009 AC1/FR-001 (<see cref="PlaylistCatalogueSort"/>) - the home page renders this order
+    /// directly, before any filter is applied.
+    /// </summary>
     public async Task<IReadOnlyList<PlaylistContent>> FindAllPublishedAsync(CancellationToken cancellationToken)
     {
         var playlists = await LoadAllAsync(cancellationToken);
-        return playlists.Where(playlist => playlist.IsPublished).ToList();
+        var published = playlists.Where(playlist => playlist.IsPublished).ToList();
+        return PlaylistCatalogueSort.Apply(published);
     }
 }

@@ -13,15 +13,83 @@
     </p>
 </section>
 
+@*
+    US-009 design decision: filtering is a plain `<form method="get">` bound to
+    [SupplyParameterFromQuery] array parameters below (@code block), evaluated server-side at
+    static-SSR render time - not an `@rendermode InteractiveServer` island, even though spec
+    section 5 labels this route "Static SSR + interactive filter island". Every AC bullet is
+    satisfied by this alone: the query string *is* the filter state (so opening a filtered URL
+    directly reproduces the same result a form submission would), and a normal browser GET form
+    submission both updates the URL and re-renders the filtered list with zero JavaScript/SignalR
+    involved. Spec 12.3's "a lost SignalR connection must not prevent navigation" is trivially
+    satisfied because this page never opens a SignalR connection in the first place; an Interactive
+    Server filter component would still need this exact static form/query-string mechanism
+    underneath it as the 12.3-mandated no-JS fallback, making it additive complexity rather than a
+    replacement for anything an AC bullet requires.
+*@
+<section class="catalogue-filters">
+    <form method="get" action="/" class="filter-form">
+        <fieldset>
+            <legend>Mood</legend>
+            @foreach (var mood in PlaylistTaxonomy.Moods)
+            {
+                <label>
+                    <input type="checkbox" name="mood" value="@mood" checked="@_criteria.Moods.Contains(mood)" />
+                    @mood
+                </label>
+            }
+        </fieldset>
+        <fieldset>
+            <legend>Genre</legend>
+            @foreach (var genre in PlaylistTaxonomy.Genres)
+            {
+                <label>
+                    <input type="checkbox" name="genre" value="@genre" checked="@_criteria.Genres.Contains(genre)" />
+                    @genre
+                </label>
+            }
+        </fieldset>
+        <fieldset>
+            <legend>Occasion</legend>
+            @foreach (var occasion in PlaylistTaxonomy.Occasions)
+            {
+                <label>
+                    <input type="checkbox" name="occasion" value="@occasion" checked="@_criteria.Occasions.Contains(occasion)" />
+                    @occasion
+                </label>
+            }
+        </fieldset>
+        <fieldset>
+            <legend>Era</legend>
+            @foreach (var era in PlaylistTaxonomy.Eras)
+            {
+                <label>
+                    <input type="checkbox" name="era" value="@era" checked="@_criteria.Eras.Contains(era)" />
+                    @era
+                </label>
+            }
+        </fieldset>
+        <button type="submit">Apply filters</button>
+    </form>
+</section>
+
 <section class="catalogue">
     <h2>Playlists</h2>
-    @if (_playlists.Count == 0)
+    @if (_filteredPlaylists.Count == 0)
     {
-        <p>No playlists are published yet. Check back soon.</p>
+        @if (_criteria.IsActive)
+        {
+            <p class="no-results">No playlists match the selected filters.</p>
+            <a href="/" class="clear-filters">Clear filters</a>
+        }
+        else
+        {
+            <p>No playlists are published yet. Check back soon.</p>
+        }
     }
     else
     {
-        @foreach (var playlist in _playlists)
+        @foreach (var playlist in _filteredPlaylists)
         {
             <a href="@($"/playlists/{playlist.Slug}")" class="playlist-card-link">
                 <PlaylistCard Content="playlist" CacheSnapshot="GetSnapshot(playlist)" />
@@ -31,12 +99,31 @@
 </section>
 
 @code {
-    // Filter interaction (mood/genre/occasion/era) is US-009's job; this page only lists the
-    // published catalogue readably (US-008 AC1-2).
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 
-    private IReadOnlyList<PlaylistContent> _playlists = [];
+    // US-009 AC3: the query string is the entire filter state - no cascading interactive
+    // component state, no client-side JS. Bound directly on the page per query-parameter name
+    // (repeated "?mood=x&mood=y" is how a browser GET form submits multiple checked checkboxes
+    // sharing one `name`, which is exactly how the OR-within-a-dimension selection above works).
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "mood")]
+    public string[]? MoodQuery { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "genre")]
+    public string[]? GenreQuery { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "occasion")]
+    public string[]? OccasionQuery { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "era")]
+    public string[]? EraQuery { get; set; }
+
+    private IReadOnlyList<PlaylistContent> _filteredPlaylists = [];
+    private PlaylistFilterCriteria _criteria = PlaylistFilterCriteria.None;
     private IReadOnlyDictionary<string, PlaylistCacheSnapshot> _snapshots =
         new Dictionary<string, PlaylistCacheSnapshot>();
 
@@ -44,11 +131,19 @@
     {
         var cancellationToken = HttpContext?.RequestAborted ?? CancellationToken.None;
 
-        _playlists = await ContentRepository.FindAllPublishedAsync(cancellationToken);
+        _criteria = new PlaylistFilterCriteria(
+            Moods: MoodQuery ?? [],
+            Genres: GenreQuery ?? [],
+            Occasions: OccasionQuery ?? [],
+            Eras: EraQuery ?? []);
+
+        // Already sorted by displayOrder, then publishedAt descending (US-009 AC1/FR-001).
+        var allPublished = await ContentRepository.FindAllPublishedAsync(cancellationToken);
+        _filteredPlaylists = PlaylistFilter.Apply(allPublished, _criteria);
 
         // Never throws (spec 16.1): a DB outage must still yield a 200 with editorial content.
         _snapshots = await CacheLookup.GetSnapshotsAsync(
-            _playlists.Select(playlist => playlist.SpotifyPlaylistId).ToList(),
+            _filteredPlaylists.Select(playlist => playlist.SpotifyPlaylistId).ToList(),
             cancellationToken);
     }
 

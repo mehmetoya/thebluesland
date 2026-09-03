@@ -1,0 +1,19 @@
+---
+schemaVersion: 1
+slug: featured-draft-not-counted-1
+spotifyPlaylistId: 0123456789abcdefghijkl
+title: Featured Fixture Playlist 1
+summary: A solid summary describing this fixture playlist in plain, sufficiently long prose.
+moods:
+  - warm
+genres:
+  - blues
+occasions:
+  - late-night
+era: 1970s
+status: published
+publishedAt: 2026-01-01
+featured: true
+---
+
+Curator note body.

@@ -1,3 +1,4 @@
+using System.Globalization;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -13,6 +14,7 @@ namespace TheBluesland.Web.Content;
 public sealed class PlaylistContentReader
 {
     private const string PublishedStatus = "published";
+    private const string PublishedAtFormat = "yyyy-MM-dd";
 
     private readonly IDeserializer _deserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
@@ -69,7 +71,20 @@ public sealed class PlaylistContentReader
             frontMatter.Moods ?? [],
             frontMatter.Genres ?? [],
             frontMatter.Occasions ?? [],
+            frontMatter.Era ?? string.Empty,
             body.Trim(),
-            string.Equals(frontMatter.Status, PublishedStatus, StringComparison.OrdinalIgnoreCase));
+            string.Equals(frontMatter.Status, PublishedStatus, StringComparison.OrdinalIgnoreCase),
+            frontMatter.Featured ?? false,
+            frontMatter.DisplayOrder ?? 0,
+            ParsePublishedAt(frontMatter.PublishedAt));
     }
+
+    // Draft content may omit publishedAt entirely (US-006); an unparsable value degrades to null
+    // rather than throwing, matching this reader's "malformed content must not crash render"
+    // contract (see the class doc comment).
+    private static DateOnly? ParsePublishedAt(string? publishedAt) =>
+        publishedAt is { Length: > 0 } &&
+        DateOnly.TryParseExact(publishedAt, PublishedAtFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed)
+            ? parsed
+            : null;
 }

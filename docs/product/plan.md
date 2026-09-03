@@ -14,14 +14,22 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 3 — Blazor scaffold (aktif).** US-009 (ana sayfa/filtre) sırada.
-  US-010 (detay sayfası), US-011 (SEO/sitemap/sosyal kart), US-012 (güvenlik başlıkları/CSP).
+- **Faz 3 — Blazor scaffold (aktif).** US-010 (detay sayfası) sırada. Ardından US-011
+  (SEO/sitemap/sosyal kart), US-012 (güvenlik başlıkları/CSP).
 - **Faz 4 — CI/CD.** US-013 (PR pipeline'ı), US-014 (Render+Neon deploy pipeline'ı).
 - **Faz 5 — Launch içeriği.** US-015 (sekiz playlist'in editoryal tamamlanması) — Faz 1-4 ile
   paralel yürütülebilir, ama public launch bunu bekler.
 
 ## Tamamlanan
 
+- **US-009 — Ana sayfa: katalog, kartlar ve filtreleme.** Ana sayfa filtresi, spec'in "interactive
+  filter island" ifadesine rağmen bilinçli olarak `@rendermode InteractiveServer` kullanmıyor — düz
+  `<form method="get">` + `[SupplyParameterFromQuery]`, static SSR'da sunucu tarafında filtreleniyor;
+  URL query string tüm filtre durumu (JS/SignalR gerekmiyor). `PlaylistFilter` (OR-içi/AND-arası),
+  `PlaylistCatalogueSort` (displayOrder artan, sonra publishedAt azalan) saf fonksiyonlar olarak
+  ayrıştırıldı. US-006 validator'a featured-cap-4 kuralı eklendi (yalnızca published dosyalar
+  sayılıyor — review'da bulunan bir hata düzeltildi) ve `publishedAt` artık format da doğrulanıyor
+  (başka bir review bulgusu). Testcontainers Postgres'e karşı 88/88 test yeşil.
 - **US-008 — Blazor Web App iskeleti (static SSR, sağlık kontrolleri, routing).** Ana sayfa
   (`HomePage.razor`, yayınlanmış katalog listesi, filtre yok — US-009), `/about`/`/privacy`/`/terms`
   (yer tutucu editoryal metin), `/playlists/{slug}` ve genel `NotFound` artık gerçek 404 status

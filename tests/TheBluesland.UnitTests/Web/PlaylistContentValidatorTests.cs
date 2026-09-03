@@ -133,6 +133,45 @@ public sealed class PlaylistContentValidatorTests
     }
 
     [Fact]
+    public async Task ValidateAllAsync_passes_when_exactly_four_files_are_featured()
+    {
+        var result = await ValidateFixtureAsync("featured-within-cap");
+
+        result.IsValid.ShouldBeTrue();
+        result.Issues.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateAllAsync_fails_every_featured_file_when_a_fifth_file_is_also_featured()
+    {
+        var result = await ValidateFixtureAsync("featured-over-cap");
+
+        var featuredIssues = result.Issues.Where(issue => issue.Field == "featured").ToList();
+        featuredIssues.Count.ShouldBe(5);
+        featuredIssues.Select(issue => issue.FileName).ShouldBe(
+            ["file-1.md", "file-2.md", "file-3.md", "file-4.md", "file-5.md"],
+            ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task ValidateAllAsync_does_not_count_a_featured_draft_toward_the_published_featured_cap()
+    {
+        var result = await ValidateFixtureAsync("featured-draft-not-counted");
+
+        result.IsValid.ShouldBeTrue();
+        result.Issues.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateAllAsync_fails_when_publishedAt_is_not_a_valid_iso_date()
+    {
+        var result = await ValidateFixtureAsync("bad-publishedat-format");
+
+        result.IsValid.ShouldBeFalse();
+        result.Issues.ShouldContain(issue => issue.Field == "publishedAt");
+    }
+
+    [Fact]
     public async Task ValidateAllAsync_reports_malformed_yaml_as_an_issue_instead_of_throwing()
     {
         var result = await ValidateFixtureAsync("malformed-yaml");

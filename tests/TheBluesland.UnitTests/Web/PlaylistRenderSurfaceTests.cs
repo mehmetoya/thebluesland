@@ -28,8 +28,12 @@ public sealed class PlaylistRenderSurfaceTests
         Moods: ["energetic"],
         Genres: ["rock"],
         Occasions: ["night-drive"],
+        Era: "1970s",
         CuratorNote: "Curator note body used only for rendering tests.",
-        IsPublished: true);
+        IsPublished: true,
+        Featured: false,
+        DisplayOrder: 0,
+        PublishedAt: new DateOnly(2026, 1, 1));
 
     [Fact]
     public async Task PlaylistCard_renders_editorial_fields_without_error_when_cache_is_unavailable()
