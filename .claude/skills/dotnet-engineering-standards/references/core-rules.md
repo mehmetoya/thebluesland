@@ -1,6 +1,7 @@
 # Çekirdek Kurallar
 
 ## Dil ve adlandırma
+
 - Tip/metot `PascalCase`, yerel/parametre `camelCase`, private alan `_camelCase`.
 - Identifier'larda Türkçe karakter yok; yorumlar Türkçe olabilir.
 - `var` yalnızca tip sağ taraftan açıkça belliyse.
@@ -10,18 +11,21 @@
 - Değişmez veriyi `record` ile modelle.
 
 ## Async
+
 - I/O yapan public metotlar `async Task`. `async void` yalnızca event handler'da.
 - `.Result`, `.Wait()`, `.GetAwaiter().GetResult()` yasak.
 - `CancellationToken` her async public metotta parametredir ve I/O çağrılarına geçirilir.
 - Kütüphane niteliğindeki kodda `ConfigureAwait(false)`.
 
 ## Hata yönetimi
+
 - `catch (Exception ex) { ...; throw; }` — `throw ex;` asla.
 - Boş `catch` yok; loglamadan yutma yok.
 - Akış kontrolü için exception atma; beklenen hatalar sonuç tipiyle taşınır.
 - `IDisposable` → `using` / `await using`.
 
 ## Katman disiplini
+
 - Domain dış paket bilmez; invariant'lar constructor/factory'de korunur,
   `public set` açılmaz. Anemic model kaçınılır.
 - Uygulama katmanı HTTP bilmez: `HttpContext`, `IActionResult` sızmaz.
@@ -32,6 +36,7 @@
 - EF Core üzerine ikinci repository katmanı sarma; `DbContext` yeterli.
 
 ## Veri erişimi (EF Core)
+
 - Konfigürasyon `IEntityTypeConfiguration<T>` sınıflarında.
 - Okuma sorgularında `AsNoTracking()`.
 - Döngü içinde DB çağrısı yok; toplu iş tek sorgu veya `ExecuteUpdateAsync`.
@@ -41,6 +46,7 @@
 - Migration adları anlamlı: `Add_Tenant_To_Orders`.
 
 ## API ve güvenlik
+
 - Endpoint'ler varsayılan olarak yetkilendirilir; anonim olan açıkça işaretlenir.
 - Token doğrulama parametreleri (issuer, audience, lifetime) açıkça set edilir.
 - Kullanıcı girdisi doğrudan SQL'e veya loga basılmaz; PII loglanmaz.
@@ -48,6 +54,7 @@
 - Liste dönen uçlar sayfalanır.
 
 ## İstemci paylaşımı
+
 - `Shared` (sözleşme katmanı): UI, HTTP ve platform bağımlılığı içermez.
   Domain entity'si burada yer almaz; yalnızca DTO ve deterministik doğrulama.
 - `Ui.Shared` (sunum katmanı): Razor/UI içerebilir, ancak MAUI veya tarayıcıya

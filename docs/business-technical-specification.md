@@ -169,7 +169,7 @@ time or setting.
 ## 5. Information architecture
 
 | Route | Purpose | Rendering |
-|---|---|---|
+| --- | --- | --- |
 | `/` | Brand introduction, featured playlists, complete catalogue and filters | Static SSR + interactive filter island |
 | `/playlists/{slug}` | Curator note, editorial tags, Spotify-sourced facts, Spotify Embed and related playlists | Static SSR |
 | `/collections/{slug}` | Editorial grouping such as "Late Night Blues" | Static SSR; optional for launch |
@@ -288,7 +288,7 @@ The supplied links contain two unique public playlist identifiers. The first lin
 twice.
 
 | Spotify playlist ID | Editorial title (draft) | Mood/genre tags (draft) | Curator note | Status |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `0iJt9LMebhOY0KSHSJw3cS` | "Masterpieces of Erkin the Father" (Erkin Koray, Anadolu rock) | moods: `energetic`, `raw`; genres: `anadolu-rock`, `rock` | TBD by Mehmet | Candidate |
 | `2m8X8fsMWor8A5AnmOHwzy` | "Dear Mr. Fantasy" (Clapton / Winwood / Traffic, blues rock) | moods: `warm`, `nostalgic`; genres: `blues-rock`, `rock` | TBD by Mehmet | Candidate |
 
@@ -398,7 +398,7 @@ monthly. **Only (1) is authored by hand. (2) is never hand-edited — it is a ge
 ### 9.1 Required fields (editorial content, Markdown front matter)
 
 | Field | Type | Rules |
-|---|---|---|
+| --- | --- | --- |
 | `schemaVersion` | integer | Must equal the currently supported content schema version |
 | `slug` | string | Lowercase kebab-case and globally unique |
 | `spotifyPlaylistId` | string | Exactly 22 base62 characters; join key into `spotify_playlist_cache` |
@@ -415,7 +415,7 @@ monthly. **Only (1) is authored by hand. (2) is never hand-edited — it is a ge
 ### 9.2 Optional fields (editorial content, Markdown front matter)
 
 | Field | Type | Rules |
-|---|---|---|
+| --- | --- | --- |
 | `featured` | boolean | Defaults to false |
 | `displayOrder` | integer | Defaults to 0 |
 | `accentColor` | string | Approved design token only; arbitrary CSS is forbidden |
@@ -437,7 +437,7 @@ Table `spotify_playlist_cache`, written only by the monthly sync job (section 12
 from the web application:
 
 | Column | Type | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `spotify_playlist_id` | text, primary key | Same value as editorial `spotifyPlaylistId`; the join key |
 | `name` | text | Spotify's own playlist name (may differ from TheBluesland's editorial `title`) |
 | `description` | text, nullable | Spotify's own playlist description |
@@ -570,7 +570,7 @@ flowchart TD
 ### 12.2 Runtime stack
 
 | Concern | Technology |
-|---|---|
+| --- | --- |
 | Runtime | .NET 10 LTS |
 | Web framework | ASP.NET Core Blazor Web App |
 | Default rendering | Static server-side rendering |
@@ -987,7 +987,7 @@ analysis remain outside the planned roadmap.
 ## 21. Risks and mitigations
 
 | Risk | Impact | Mitigation |
-|---|---|---|
+| --- | --- | --- |
 | Spotify changes Embed behavior or terms | Player may stop or policy may change | Keep editorial pages valuable without the player; isolate Embed integration; review policy periodically |
 | Too few playlists at launch | Catalogue looks unfinished | Launch after at least eight completed entries; develop with realistic fixtures |
 | Taxonomy becomes inconsistent | Filters lose meaning | Use controlled vocabulary and CI validation; require explicit taxonomy changes; narrowed v0.2 lists reduce empty-filter risk at low playlist counts |
@@ -1047,6 +1047,8 @@ The MVP is complete when:
 
 ### Still open — blocking
 
+<!-- markdownlint-disable MD029 -->
+
 6. **Initial playlist content:** provide the final editorial title, summary, tags and curator note
    for both candidate playlists in section 7 (draft suggestions given, not yet Mehmet-approved).
    Implementation of the Blazor scaffold and content model can proceed in parallel using the drafts
@@ -1068,6 +1070,8 @@ The MVP is complete when:
 Implementation of the technical scaffold (DB schema, sync tool, content validation, Blazor
 scaffold, CI) may begin now. **Public launch** additionally requires items 6 and 7.
 
+<!-- markdownlint-enable MD029 -->
+
 ---
 
 ## 24. ADRs
@@ -1078,7 +1082,8 @@ Existing / newly written for v0.2:
   **Does not describe TheBluesland's actual architecture**; see ADR-0003 for the explicit scoping
   note.
 - **`docs/adr/0002-spotify-veri-mimarisi.md`** (new) — the hybrid Spotify Web API + Postgres cache
-  + monthly GitHub Actions sync decision: why a database now exists, why track data is still never
+  and monthly GitHub Actions sync decision: why a database now exists, why track data is still
+  never
   persisted, why sync is a scheduled external job rather than an in-process `BackgroundService`,
   credential isolation, and rejected hosting alternatives.
 - **`docs/adr/0003-mimari-kapsam.md`** (new) — why TheBluesland is a single-project Blazor Web App
