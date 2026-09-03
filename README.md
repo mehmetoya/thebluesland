@@ -16,3 +16,11 @@ including rotating the placeholder passwords it ships with):
 - `spotify_cache_readwrite` — SELECT/INSERT/UPDATE. Its connection string is stored as `NEON_SYNC_CONNECTION_STRING`,
   a **GitHub Actions repository secret only**, scoped to the `sync-spotify.yml` workflow. It is never
   present in the Render production environment.
+
+**Connection string format:** Neon's dashboard gives you a `postgresql://user:pass@host/db?...` URI by
+default — Npgsql does **not** accept that format directly and fails with a confusing
+`NpgsqlConnectionStringBuilder` parsing error. Convert it to ADO.NET keyword/value form before storing
+it as either secret:
+```
+Host=<neon-host>;Database=<db>;Username=<role>;Password=<password>;SSL Mode=Require
+```
