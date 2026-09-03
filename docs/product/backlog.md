@@ -11,11 +11,13 @@ bölünmüştür.
 ---
 
 ## US-001 — Spotify cache tablosu şeması
+
 Kullanıcı olarak geliştirici, `spotify_playlist_cache` tablosunun EF Core entity ve migration'ını
 istiyorum ki hem web uygulaması hem senkron aracı aynı şemayı paylaşarak Spotify-kaynaklı alanları
 okuyup yazabilsin.
 
 Kabul kriterleri:
+
 - [x] `src/TheBluesland.Data` projesi eklendiğinde, `spotify_playlist_cache` tablosunu şu kolonlarla
       tanımlayan bir EF Core migration üretilmiş olur: `spotify_playlist_id` (PK, text),
       `name`, `description` (nullable), `cover_image_url` (nullable), `track_count` (integer),
@@ -37,10 +39,12 @@ Platform: web
 ---
 
 ## US-002 — Salt-okunur ve yazma-yetkili DB rolleri
+
 Kullanıcı olarak geliştirici, Neon üzerinde ayrı bir salt-okunur rol ve bir yazma-yetkili rol
 istiyorum ki production web uygulaması yalnızca okuma yapabilsin, senkron aracı ise yazabilsin.
 
 Kabul kriterleri:
+
 - [x] Neon projesinde `spotify_playlist_cache` üzerinde yalnızca SELECT yetkisi olan bir rol ve
       buna karşılık gelen bir connection string tanımlandığında, bu connection string ile yazma
       denemesi (INSERT/UPDATE) reddedilir.
@@ -61,11 +65,13 @@ Platform: web
 ---
 
 ## US-003 — Spotify Web API senkron aracı (`tools/spotify-playlist-fetcher`)
+
 Kullanıcı olarak proje sahibi (Mehmet), `content/playlists/*.md` içindeki her `spotifyPlaylistId`
 için Spotify Web API'den ad, açıklama, kapak görseli URL'i, track sayısı ve sanatçı listesini çeken
 bir konsol aracı istiyorum ki bu alanları elle güncel tutmak zorunda kalmayayım.
 
 Kabul kriterleri:
+
 - [x] Araç, `content/playlists/*.md` dosyalarındaki her `spotifyPlaylistId` için Spotify Web API'ye
       istek attığında ve başarılı yanıt aldığında, `spotify_playlist_cache` tablosuna bir satır
       upsert eder (`name`, `description`, `cover_image_url`, `track_count`, `artists`,
@@ -92,11 +98,13 @@ Platform: web
 ---
 
 ## US-004 — Aylık GitHub Actions senkron workflow'u
+
 Kullanıcı olarak proje sahibi (Mehmet), senkron aracının ayda bir otomatik çalışmasını ve
 credential'larının yalnızca GitHub Actions'ta yaşamasını istiyorum ki production web uygulamasının
 hiçbir Spotify credential'ı olmasın.
 
 Kabul kriterleri:
+
 - [x] `.github/workflows/sync-spotify.yml` dosyası eklendiğinde, aylık bir `cron` tetikleyicisi ve
       ayrıca manuel `workflow_dispatch` tetikleyicisi tanımlıdır.
 - [x] Workflow, `SPOTIFY_CLIENT_ID`, `SPOTIFY_REFRESH_TOKEN`, `NEON_SYNC_CONNECTION_STRING`
@@ -122,20 +130,22 @@ Platform: web
 ---
 
 ## US-005 — Cache eksik/bayat olduğunda zarif düşüş (graceful degradation)
+
 Kullanıcı olarak ziyaretçi, bir playlist'in Spotify-kaynaklı verisi henüz senkronize edilmemiş veya
 Spotify'da artık bulunamıyor olsa bile, playlist'in editoryal sayfasını sorunsuz görmek istiyorum
 ki kırık bir deneyimle karşılaşmayayım.
 
 Kabul kriterleri:
-- [ ] Yayınlanmış bir playlist'in `spotify_playlist_cache` içinde henüz satırı olmadığında, kart ve
+
+- [x] Yayınlanmış bir playlist'in `spotify_playlist_cache` içinde henüz satırı olmadığında, kart ve
       detay sayfası hata vermeden, yalnızca editoryal alanlarla (başlık, özet, mood/genre/occasion,
       curator note) render edilir.
-- [ ] İlgili cache satırı `is_available = false` olduğunda, detay sayfası editoryal içeriği
+- [x] İlgili cache satırı `is_available = false` olduğunda, detay sayfası editoryal içeriği
       göstermeye devam eder ve iframe yerine anlaşılır bir "player şu anda kullanılamıyor" mesajı
       gösterir; sayfa tek içerik olarak kırık bir iframe sunmaz.
-- [ ] Veritabanına hiç erişilemediğinde (bağlantı hatası), sayfa yine de editoryal içerikle 200
+- [x] Veritabanına hiç erişilemediğinde (bağlantı hatası), sayfa yine de editoryal içerikle 200
       yanıtı döner; 500 hatası oluşmaz.
-- [ ] `/health/ready` uç noktası, veritabanına erişilemese bile "ready" durumunu bildirir (yalnızca
+- [x] `/health/ready` uç noktası, veritabanına erişilemese bile "ready" durumunu bildirir (yalnızca
       içerik doğrulamasının başarılı olup olmadığına bakar), bu davranış bir entegrasyon testiyle
       doğrulanır.
 
@@ -146,21 +156,23 @@ Platform: web
 ---
 
 ## US-006 — Editoryal içerik şeması ve v0.2 taksonomi doğrulaması
+
 Kullanıcı olarak proje sahibi (Mehmet), her playlist Markdown dosyasının gerekli alanları içerdiğini
 ve mood/genre/occasion/era değerlerinin onaylı v0.2 listelerinden (spec bölüm 8) geldiğini otomatik
 olarak doğrulamak istiyorum ki hatalı içerik yayına sızmasın.
 
 Kabul kriterleri:
-- [ ] `schemaVersion`, `slug`, `spotifyPlaylistId`, `title`, `summary`, `moods`, `genres`,
+
+- [x] `schemaVersion`, `slug`, `spotifyPlaylistId`, `title`, `summary`, `moods`, `genres`,
       `occasions`, `era`, `publishedAt` (yayınlanmış içerik için), `status` alanlarından biri
       eksik veya kural dışı olduğunda (ör. `spotifyPlaylistId` 22 base62 karakter değilse, `title`
       3-80 karakter aralığı dışındaysa) doğrulama başarısız olur ve nedeni belirten bir hata mesajı
       üretir.
-- [ ] `moods`/`genres`/`occasions`/`era` içinde spec bölüm 8.2-8.5'teki onaylı listelerde olmayan
+- [x] `moods`/`genres`/`occasions`/`era` içinde spec bölüm 8.2-8.5'teki onaylı listelerde olmayan
       bir değer geçtiğinde doğrulama başarısız olur.
-- [ ] İki farklı dosyada aynı `slug` veya aynı `spotifyPlaylistId` bulunduğunda doğrulama başarısız
+- [x] İki farklı dosyada aynı `slug` veya aynı `spotifyPlaylistId` bulunduğunda doğrulama başarısız
       olur.
-- [ ] `status: draft` olan bir dosya `publishedAt` alanını atladığında doğrulama başarısız olmaz
+- [x] `status: draft` olan bir dosya `publishedAt` alanını atladığında doğrulama başarısız olmaz
       (draft muaf), ama geçerli bir `spotifyPlaylistId` ve `slug` yine de zorunludur.
 
 Kapsam dışı: taksonomi listesinin kendisinin genişletilmesi/değiştirilmesi (içerik değişikliği,
@@ -171,10 +183,12 @@ Platform: web
 ---
 
 ## US-007 — İçerik doğrulamasının CI'a bağlanması
+
 Kullanıcı olarak proje sahibi (Mehmet), her pull request'te içerik doğrulamasının otomatik
 çalışmasını istiyorum ki hatalı bir playlist dosyası `main`'e birleşmeden önce yakalansın.
 
 Kabul kriterleri:
+
 - [ ] `content/playlists/` altına US-006'daki kurallardan birini ihlal eden bir dosya eklenmiş bir
       PR açıldığında, CI kontrolü kırmızı olur ve PR birleştirilemez (branch protection ile).
 - [ ] Geçerli bir playlist dosyası eklenmiş bir PR açıldığında, içerik doğrulama adımı yeşil olur.
@@ -188,11 +202,13 @@ Platform: web
 ---
 
 ## US-008 — Blazor Web App iskeleti (static SSR, sağlık kontrolleri, routing)
+
 Kullanıcı olarak ziyaretçi, siteye ilk kez geldiğimde temel sayfaların (ana sayfa, playlist detayı,
 about, privacy, terms) doldurulmuş içerikle, JavaScript olmadan bile açılmasını istiyorum ki site
 her koşulda erişilebilir olsun.
 
 Kabul kriterleri:
+
 - [ ] `src/TheBluesland.Web` projesi eklendiğinde, `/`, `/playlists/{slug}`, `/about`, `/privacy`,
       `/terms` route'ları tanımlıdır ve varsayılan render modu static SSR'dır.
 - [ ] JavaScript devre dışı bırakıldığında (veya Interactive Server bağlantısı koparıldığında),
@@ -209,10 +225,12 @@ Platform: web
 ---
 
 ## US-009 — Ana sayfa: katalog, kartlar ve filtreleme
+
 Kullanıcı olarak ziyaretçi, playlist'leri mood/genre/occasion/era'ya göre filtrelemek istiyorum ki
 aradığım ruh haline uygun playlist'i hızlıca bulayım.
 
 Kabul kriterleri:
+
 - [ ] Ana sayfa açıldığında, yayınlanmış tüm playlist'ler `displayOrder` sonra `publishedAt`
       azalan sırasına göre listelenir.
 - [ ] Aynı boyut içinde (ör. iki mood) birden fazla değer seçildiğinde sonuçlar OR mantığıyla
@@ -231,10 +249,12 @@ Platform: web
 ---
 
 ## US-010 — Playlist detay sayfası: curator note, cache alanları, Spotify embed
+
 Kullanıcı olarak ziyaretçi, bir playlist detay sayfasında küratör notunu okumak ve Spotify'da
 dinlemeye başlamak istiyorum ki playlist'in ne olduğunu anlayıp doğrudan dinleyebileyim.
 
 Kabul kriterleri:
+
 - [ ] Detay sayfası açıldığında, curator note (Markdown'dan render edilmiş, sanitize edilmiş HTML),
       mood/genre/occasion/era etiketleri ve (varsa) cache'ten gelen track sayısı ve kapak görseli
       gösterilir.
@@ -255,10 +275,12 @@ Platform: web
 ---
 
 ## US-011 — SEO metadata, sitemap ve sosyal kartlar
+
 Kullanıcı olarak proje sahibi (Mehmet), her sayfanın arama motorlarında ve sosyal medyada doğru
 göründüğünü istiyorum ki paylaşılan bağlantılar profesyonel görünsün ve site keşfedilebilir olsun.
 
 Kabul kriterleri:
+
 - [ ] Her indexlenebilir sayfa (`/`, `/playlists/{slug}`, `/about`, `/privacy`, `/terms`) benzersiz
       `<title>`, meta description, canonical URL, Open Graph ve Twitter/X card meta etiketleri
       döner.
@@ -276,11 +298,13 @@ Platform: web
 ---
 
 ## US-012 — Güvenlik başlıkları, CSP ve embed URL doğrulaması
+
 Kullanıcı olarak proje sahibi (Mehmet), sitenin yalnızca kendi kaynaklarını ve gerekli minimum
 Spotify izinlerini yüklediğinden emin olmak istiyorum ki güvenlik riski ve içerik enjeksiyonu
 önlensin.
 
 Kabul kriterleri:
+
 - [ ] Production yanıtlarında `Content-Security-Policy`, `X-Content-Type-Options`,
       `Referrer-Policy`, `Permissions-Policy` başlıkları mevcuttur; CSP yalnızca click-to-load
       Spotify embed'i için gereken minimum directive'leri Spotify'a açar.
@@ -297,11 +321,13 @@ Platform: web
 ---
 
 ## US-013 — Pull request CI pipeline'ı
+
 Kullanıcı olarak geliştirici, her pull request'te build, test, format, içerik doğrulama ve Docker
 image build adımlarının otomatik çalışmasını istiyorum ki `main`'e yalnızca doğrulanmış kod
 birleşsin.
 
 Kabul kriterleri:
+
 - [ ] `.github/workflows/ci.yml` bir pull request'te tetiklendiğinde şu adımları sırayla çalıştırır
       ve her biri ayrı ayrı başarı/başarısızlık durumu raporlar: restore, Release build, içerik
       doğrulama (US-007), unit+integration testler (Testcontainers Postgres ile), format kontrolü,
@@ -320,11 +346,13 @@ Platform: web
 ---
 
 ## US-014 — Render + Neon production deploy pipeline'ı
+
 Kullanıcı olarak proje sahibi (Mehmet), `main`'e birleşen değişikliklerin otomatik olarak Render'a
 deploy edilmesini ve gerekirse önceki sürüme dönülebilmesini istiyorum ki yayına almak manuel ve
 riskli olmasın.
 
 Kabul kriterleri:
+
 - [ ] `.github/workflows/deploy.yml`, `main`'e merge sonrası tetiklendiğinde, commit SHA ile
       etiketlenmiş bir immutable Docker image build eder ve Render'ın bunu çekebileceği bir yere
       gönderir (veya Render deploy hook'unu tetikler).
@@ -343,11 +371,13 @@ Platform: web
 ---
 
 ## US-015 — Launch içeriği: sekiz playlist'in editoryal olarak tamamlanması
+
 Kullanıcı olarak proje sahibi (Mehmet), yayına çıkmadan önce en az sekiz playlist'in başlık, özet,
 etiketler ve küratör notuyla tamamlanmasını istiyorum ki site boş/yarım görünmesin (spec bölüm 3.2,
 7.1, 22).
 
 Kabul kriterleri:
+
 - [ ] `content/playlists/` altında `status: published` olan en az sekiz dosya bulunur ve her biri
       US-006'daki doğrulamayı geçer.
 - [ ] Bu sekiz dosyanın her birinde en az bir mood, bir genre, bir occasion etiketi ve 80-250

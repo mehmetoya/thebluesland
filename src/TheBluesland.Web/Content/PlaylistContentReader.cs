@@ -1,4 +1,3 @@
-using System.Text;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -13,7 +12,6 @@ namespace TheBluesland.Web.Content;
 /// </summary>
 public sealed class PlaylistContentReader
 {
-    private const string FrontMatterDelimiter = "---";
     private const string PublishedStatus = "published";
 
     private readonly IDeserializer _deserializer = new DeserializerBuilder()
@@ -50,7 +48,7 @@ public sealed class PlaylistContentReader
     private async Task<PlaylistContent?> ReadAsync(string filePath, CancellationToken cancellationToken)
     {
         var rawContent = await File.ReadAllTextAsync(filePath, cancellationToken);
-        var (yaml, body) = SplitFrontMatter(rawContent);
+        var (yaml, body) = FrontMatterSplitter.Split(rawContent);
         if (yaml is null)
         {
             return null;
@@ -73,28 +71,5 @@ public sealed class PlaylistContentReader
             frontMatter.Occasions ?? [],
             body.Trim(),
             string.Equals(frontMatter.Status, PublishedStatus, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static (string? Yaml, string Body) SplitFrontMatter(string content)
-    {
-        using var reader = new StringReader(content);
-        if (reader.ReadLine()?.Trim() != FrontMatterDelimiter)
-        {
-            return (null, string.Empty);
-        }
-
-        var yamlBuilder = new StringBuilder();
-        string? line;
-        while ((line = reader.ReadLine()) is not null)
-        {
-            if (line.Trim() == FrontMatterDelimiter)
-            {
-                return (yamlBuilder.ToString(), reader.ReadToEnd());
-            }
-
-            yamlBuilder.AppendLine(line);
-        }
-
-        return (null, string.Empty); // no closing delimiter - not valid front matter
     }
 }

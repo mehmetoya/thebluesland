@@ -14,8 +14,8 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 2 — İçerik doğrulama (aktif).** US-006 (şema + taksonomi doğrulama) sırada — backend-dev'e
-  atandı. Ardından US-007 (CI'a bağlama).
+- **Faz 2 — İçerik doğrulama (aktif).** US-007 (doğrulamanın CI'a bağlanması) sırada — Faz 2'nin
+  son hikayesi.
 - **Faz 3 — Blazor scaffold.** US-008 (iskelet + sağlık kontrolleri), US-009 (ana sayfa/filtre),
   US-010 (detay sayfası), US-011 (SEO/sitemap/sosyal kart), US-012 (güvenlik başlıkları/CSP).
 - **Faz 4 — CI/CD.** US-013 (PR pipeline'ı), US-014 (Render+Neon deploy pipeline'ı).
@@ -24,6 +24,13 @@ Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
 ## Tamamlanan
 
+- **US-006 — Editoryal içerik şeması ve v0.2 taksonomi doğrulaması.** `src/TheBluesland.Web/Content`
+  içinde `PlaylistContentValidator` — `PlaylistContentReader`'dan (render yolu) bağımsız, ayrı bir
+  doğrulama yolu; her `content/playlists/*.md` dosyasını gerekli alan/format/aralık kurallarına ve
+  onaylı v0.2 taksonomi listelerine (spec 8.2-8.5) karşı doğruluyor, dosyalar arası slug/
+  spotifyPlaylistId tekilliğini kontrol ediyor; sonuç dosya+alan+neden taşıyan yapılandırılmış bir
+  liste (US-007'nin CI raporlaması buna kolayca oturacak). Testcontainers Postgres'e karşı 55/55
+  test yeşil.
 - **US-005 — Cache eksik/bayat olduğunda zarif düşüş.** `src/TheBluesland.Web` (Blazor Web App) —
   `PlaylistCacheLookup`, `PlaylistContentHealthCheck`, `PlaylistDetailPage`/`PlaylistCard`
   bileşenleri; DB erişilemese veya cache satırı olmasa bile editoryal içerik 200 ile render
