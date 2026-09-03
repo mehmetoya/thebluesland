@@ -14,7 +14,7 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 3 — Blazor scaffold (sırada).** US-008 (iskelet + sağlık kontrolleri), US-009 (ana sayfa/filtre),
+- **Faz 3 — Blazor scaffold (aktif).** US-009 (ana sayfa/filtre) sırada.
   US-010 (detay sayfası), US-011 (SEO/sitemap/sosyal kart), US-012 (güvenlik başlıkları/CSP).
 - **Faz 4 — CI/CD.** US-013 (PR pipeline'ı), US-014 (Render+Neon deploy pipeline'ı).
 - **Faz 5 — Launch içeriği.** US-015 (sekiz playlist'in editoryal tamamlanması) — Faz 1-4 ile
@@ -22,6 +22,12 @@ Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
 ## Tamamlanan
 
+- **US-008 — Blazor Web App iskeleti (static SSR, sağlık kontrolleri, routing).** Ana sayfa
+  (`HomePage.razor`, yayınlanmış katalog listesi, filtre yok — US-009), `/about`/`/privacy`/`/terms`
+  (yer tutucu editoryal metin), `/playlists/{slug}` ve genel `NotFound` artık gerçek 404 status
+  kodu dönüyor (`ResponseStatusCode.razor` bileşeni, iki yerde paylaşılıyor). Batched cache lookup
+  (`PlaylistCacheLookup.GetSnapshotsAsync`) eklendi; review'da bulunan bir duplicate-id crash'i
+  düzeltildi. Testcontainers Postgres'e karşı 71/71 test yeşil.
 - **US-007 — İçerik doğrulamasının CI'a bağlanması.** `.github/workflows/ci.yml` (yeni) —
   `content-validation` job'u, `Program.cs`'e eklenen `validate-content` CLI argümanı üzerinden
   `ContentValidationCli`'yi gerçek `content/playlists/` dizinine karşı çalıştırıyor; ihlalde

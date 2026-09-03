@@ -28,4 +28,11 @@ public sealed class PlaylistContentRepository
         var playlists = await LoadAllAsync(cancellationToken);
         return playlists.FirstOrDefault(playlist => string.Equals(playlist.Slug, slug, StringComparison.Ordinal));
     }
+
+    /// <summary>Playlists the home page catalogue (US-008) may show; drafts are never listed.</summary>
+    public async Task<IReadOnlyList<PlaylistContent>> FindAllPublishedAsync(CancellationToken cancellationToken)
+    {
+        var playlists = await LoadAllAsync(cancellationToken);
+        return playlists.Where(playlist => playlist.IsPublished).ToList();
+    }
 }

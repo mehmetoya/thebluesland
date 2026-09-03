@@ -6,8 +6,14 @@
 {
     <PlaylistDetailView Content="_content" CacheSnapshot="_cacheSnapshot" />
 }
-else
+else if (_hasLoaded)
 {
+    @* _hasLoaded guards this branch so the 404 status is only ever set once the slug lookup has
+       actually completed - OnInitializedAsync's interim synchronous render (before the awaited
+       lookup completes) would otherwise take this branch with _content still at its default null,
+       set a 404 status as an eager HttpContext side effect, and leave that status stuck even
+       though the final render (after the lookup completes) correctly shows the found playlist. *@
+    <ResponseStatusCode Code="StatusCodes.Status404NotFound" />
     <p>Playlist not found.</p>
 }
 
@@ -20,6 +26,7 @@ else
 
     private PlaylistContent? _content;
     private PlaylistCacheSnapshot _cacheSnapshot = PlaylistCacheSnapshot.Unavailable;
+    private bool _hasLoaded;
 
     protected override async Task OnInitializedAsync()
     {
@@ -28,10 +35,12 @@ else
         _content = await ContentRepository.FindBySlugAsync(Slug, cancellationToken);
         if (_content is null)
         {
+            _hasLoaded = true;
             return;
         }
 
         // Never throws (spec 16.1): a DB outage must still yield a 200 with editorial content.
         _cacheSnapshot = await CacheLookup.GetSnapshotAsync(_content.SpotifyPlaylistId, cancellationToken);
+        _hasLoaded = true;
     }
 }

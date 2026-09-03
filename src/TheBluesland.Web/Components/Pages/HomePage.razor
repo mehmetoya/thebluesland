@@ -1,0 +1,57 @@
+@page "/"
+@inject PlaylistContentRepository ContentRepository
+@inject PlaylistCacheLookup CacheLookup
+
+<PageTitle>TheBluesland</PageTitle>
+
+<section class="brand-intro">
+    <h1>TheBluesland</h1>
+    <p>
+        TheBluesland is Mehmet's curated collection of Spotify playlists - blues, rock and the
+        records that connect them - each introduced with a short curator note rather than left to
+        speak for itself.
+    </p>
+</section>
+
+<section class="catalogue">
+    <h2>Playlists</h2>
+    @if (_playlists.Count == 0)
+    {
+        <p>No playlists are published yet. Check back soon.</p>
+    }
+    else
+    {
+        @foreach (var playlist in _playlists)
+        {
+            <a href="@($"/playlists/{playlist.Slug}")" class="playlist-card-link">
+                <PlaylistCard Content="playlist" CacheSnapshot="GetSnapshot(playlist)" />
+            </a>
+        }
+    }
+</section>
+
+@code {
+    // Filter interaction (mood/genre/occasion/era) is US-009's job; this page only lists the
+    // published catalogue readably (US-008 AC1-2).
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private IReadOnlyList<PlaylistContent> _playlists = [];
+    private IReadOnlyDictionary<string, PlaylistCacheSnapshot> _snapshots =
+        new Dictionary<string, PlaylistCacheSnapshot>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var cancellationToken = HttpContext?.RequestAborted ?? CancellationToken.None;
+
+        _playlists = await ContentRepository.FindAllPublishedAsync(cancellationToken);
+
+        // Never throws (spec 16.1): a DB outage must still yield a 200 with editorial content.
+        _snapshots = await CacheLookup.GetSnapshotsAsync(
+            _playlists.Select(playlist => playlist.SpotifyPlaylistId).ToList(),
+            cancellationToken);
+    }
+
+    private PlaylistCacheSnapshot GetSnapshot(PlaylistContent playlist) =>
+        _snapshots.GetValueOrDefault(playlist.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable);
+}

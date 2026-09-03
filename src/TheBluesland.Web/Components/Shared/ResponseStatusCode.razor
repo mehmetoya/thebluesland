@@ -1,0 +1,30 @@
+@code {
+    /// <summary>
+    /// Sets the HTTP response status code from within a statically-rendered Razor component tree
+    /// (US-008 AC4). Renders no markup itself; used by <c>Routes.razor</c>'s <c>NotFound</c> section
+    /// and <c>PlaylistDetailPage.razor</c>'s "no such slug" branch so a 404 is never masked as a 200.
+    /// <see cref="HttpContext"/> is cascaded automatically for statically-rendered Razor component
+    /// endpoints, so no extra wiring is needed to reach it here.
+    ///
+    /// Framework caveat (verified empirically): for a non-streaming static SSR response, once the
+    /// status code is set to anything other than 2xx, ASP.NET Core's Razor Components endpoint
+    /// discards the rendered HTML and sends an empty body instead - so a 404 response here is a
+    /// real 404 status with no body, not the sibling "not found" markup. That still satisfies the
+    /// AC (status 404, never 500); it does not need to satisfy the "readable content" AC, which only
+    /// applies to the home and playlist detail pages when the *content itself* is missing/unreadable,
+    /// not to the not-found case.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public required int Code { get; set; }
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (HttpContext is not null)
+        {
+            HttpContext.Response.StatusCode = Code;
+        }
+    }
+}

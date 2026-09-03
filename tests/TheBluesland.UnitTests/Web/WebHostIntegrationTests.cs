@@ -77,4 +77,52 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
         body.ShouldContain("Masterpieces of Erkin the Father");
         body.ShouldContain("currently unavailable");
     }
+
+    /// <summary>
+    /// US-008 AC4: an unknown slug must 404, not silently 200 (and not 500). The body is empty by
+    /// ASP.NET Core Razor Components framework design: a non-streaming static SSR response whose
+    /// status code is set to a non-2xx value has its rendered HTML discarded (verified empirically -
+    /// setting the same branch's status to 200 instead renders "Playlist not found." normally).
+    /// </summary>
+    [Fact]
+    public async Task PlaylistDetailPage_returns_404_for_an_unknown_slug()
+    {
+        var response = await _httpClient.GetAsync("/playlists/does-not-exist");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    /// <summary>US-008 AC1/AC2: home page is readable static SSR content, not an empty shell.</summary>
+    [Fact]
+    public async Task HomePage_returns_200_with_published_playlist_content()
+    {
+        var response = await _httpClient.GetAsync("/");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("TheBluesland");
+        body.ShouldContain("Masterpieces of Erkin the Father");
+    }
+
+    [Theory]
+    [InlineData("/about")]
+    [InlineData("/privacy")]
+    [InlineData("/terms")]
+    public async Task StaticPage_returns_200_with_readable_content(string path)
+    {
+        var response = await _httpClient.GetAsync(path);
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("<p>");
+    }
+
+    /// <summary>US-008 AC1: an unregistered route must still 404 through Router's NotFound branch.</summary>
+    [Fact]
+    public async Task UnknownRoute_returns_404()
+    {
+        var response = await _httpClient.GetAsync("/this-route-does-not-exist");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
 }

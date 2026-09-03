@@ -213,14 +213,14 @@ her koşulda erişilebilir olsun.
 
 Kabul kriterleri:
 
-- [ ] `src/TheBluesland.Web` projesi eklendiğinde, `/`, `/playlists/{slug}`, `/about`, `/privacy`,
+- [x] `src/TheBluesland.Web` projesi eklendiğinde, `/`, `/playlists/{slug}`, `/about`, `/privacy`,
       `/terms` route'ları tanımlıdır ve varsayılan render modu static SSR'dır.
-- [ ] JavaScript devre dışı bırakıldığında (veya Interactive Server bağlantısı koparıldığında),
+- [x] JavaScript devre dışı bırakıldığında (veya Interactive Server bağlantısı koparıldığında),
       ana sayfa ve playlist detay sayfası hâlâ okunabilir içerik döner (boş sayfa veya sonsuz
       yükleniyor durumu oluşmaz).
-- [ ] `/health/live` ve `/health/ready` uç noktaları tanımlıdır; `/health/live` her zaman 200 döner,
+- [x] `/health/live` ve `/health/ready` uç noktaları tanımlıdır; `/health/live` her zaman 200 döner,
       `/health/ready` içerik yüklenip doğrulandığında 200 döner.
-- [ ] Var olmayan bir `/playlists/{slug}` istendiğinde 404 sayfası döner (500 değil).
+- [x] Var olmayan bir `/playlists/{slug}` istendiğinde 404 sayfası döner (500 değil).
 
 Kapsam dışı: filtre etkileşimi (US-009), Spotify embed (US-010), SEO metadata (US-011).
 Öncelik: Must

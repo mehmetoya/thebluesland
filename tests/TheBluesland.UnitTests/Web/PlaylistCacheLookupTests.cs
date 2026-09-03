@@ -88,6 +88,53 @@ public sealed class PlaylistCacheLookupTests : IAsyncLifetime
         snapshot.ShouldBe(PlaylistCacheSnapshot.Unavailable);
     }
 
+    /// <summary>
+    /// US-008: the home page catalogue looks up every card's cache row in one batched call. A
+    /// mix of an available row, an unavailable row and a missing row must each degrade correctly.
+    /// </summary>
+    [Fact]
+    public async Task GetSnapshotsAsync_maps_each_requested_id_to_its_own_snapshot()
+    {
+        await SeedRowAsync("available-batch-id", isAvailable: true, trackCount: 21, coverImageUrl: "https://i.scdn.co/image/batch.jpg");
+        await SeedRowAsync("unavailable-batch-id", isAvailable: false, trackCount: 5, coverImageUrl: "https://i.scdn.co/image/gone-batch.jpg");
+        var lookup = CreateLookup(_postgres.GetConnectionString());
+
+        var snapshots = await lookup.GetSnapshotsAsync(
+            ["available-batch-id", "unavailable-batch-id", "missing-batch-id"],
+            CancellationToken.None);
+
+        snapshots["available-batch-id"].IsPlayable.ShouldBeTrue();
+        snapshots["available-batch-id"].TrackCount.ShouldBe(21);
+        snapshots["unavailable-batch-id"].ShouldBe(PlaylistCacheSnapshot.Unavailable);
+        snapshots["missing-batch-id"].ShouldBe(PlaylistCacheSnapshot.Unavailable);
+    }
+
+    [Fact]
+    public async Task GetSnapshotsAsync_returns_empty_dictionary_for_no_requested_ids()
+    {
+        var lookup = CreateLookup(_postgres.GetConnectionString());
+
+        var snapshots = await lookup.GetSnapshotsAsync([], CancellationToken.None);
+
+        snapshots.ShouldBeEmpty();
+    }
+
+    /// <summary>
+    /// Two content files could (invalidly) share a spotifyPlaylistId - US-006 only catches this
+    /// as an advisory CI check, not a runtime guard, so a duplicate id must not crash the lookup.
+    /// </summary>
+    [Fact]
+    public async Task GetSnapshotsAsync_deduplicates_a_repeated_requested_id_without_throwing()
+    {
+        await SeedRowAsync("dup-batch-id", isAvailable: true, trackCount: 3, coverImageUrl: "https://i.scdn.co/image/dup.jpg");
+        var lookup = CreateLookup(_postgres.GetConnectionString());
+
+        var snapshots = await lookup.GetSnapshotsAsync(["dup-batch-id", "dup-batch-id"], CancellationToken.None);
+
+        snapshots.Count.ShouldBe(1);
+        snapshots["dup-batch-id"].IsPlayable.ShouldBeTrue();
+    }
+
     private async Task SeedRowAsync(string playlistId, bool isAvailable, int trackCount, string coverImageUrl)
     {
         var optionsBuilder = new DbContextOptionsBuilder<TheBlueslandDbContext>()

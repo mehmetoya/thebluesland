@@ -1,9 +1,10 @@
 using TheBluesland.Web;
 using TheBluesland.Web.Content;
 
-// US-005: minimal host wiring only (content reader, cache lookup, health checks, the single
-// /playlists/{slug} render surface). Full routing table, homepage catalogue, SEO and security
-// headers land in later stories (US-008/009/010/011/012) per docs/adr/0003-mimari-kapsam.md.
+// US-005/US-008: host wiring (content reader, cache lookup, health checks) plus the static-SSR
+// route table (/, /playlists/{slug}, /about, /privacy, /terms). Filter interaction, Spotify embed,
+// SEO metadata and security headers land in later stories (US-009/010/011/012) per
+// docs/adr/0003-mimari-kapsam.md.
 //
 // US-007 (spec 18.1, item 3): a `validate-content` first argument switches this entry point into
 // a one-shot content-validation CLI instead of starting Kestrel, so CI can run
