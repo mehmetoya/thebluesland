@@ -72,7 +72,7 @@ public sealed class SpotifyPlaylistClientTests
     [Fact]
     public async Task FetchAsync_never_surfaces_a_track_level_field_even_though_the_raw_response_carries_one()
     {
-        // Regression test for spec section 9.4/11.2: the raw Spotify track payload below carries
+        // Regression test for spec section 9.4/11.2: the raw Spotify "item" payload below carries
         // track id, duration and ISRC on purpose - SpotifyPlaylistSummary must never expose them,
         // only the distinct artist names and the aggregate track count.
         using var httpClient = new HttpClient(new FakeHttpMessageHandler(BuildTwoPageFoundResponder()));
@@ -88,6 +88,22 @@ public sealed class SpotifyPlaylistClientTests
             ignoreOrder: true);
     }
 
+    [Fact]
+    public async Task FetchAsync_reads_artists_from_the_item_field_and_ignores_the_deprecated_empty_track_field()
+    {
+        // Regression test for the February 2026 Spotify API migration: "track" is still present on
+        // each page item but is always an empty, deprecated object - the real artist data lives
+        // under "item". If the mapping ever regresses to reading "track", this must fail because
+        // Traffic/Eric Clapton would no longer be found (an empty object has no "artists").
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(BuildTwoPageFoundResponder()));
+        var client = new SpotifyPlaylistClient(httpClient);
+
+        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+
+        var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
+        found.Summary.Artists.ShouldBe(["Eric Clapton", "Traffic"], ignoreOrder: true);
+    }
+
     private static Func<HttpRequestMessage, HttpResponseMessage> BuildTwoPageFoundResponder() => request =>
     {
         var absolutePath = request.RequestUri!.AbsolutePath;
@@ -98,14 +114,14 @@ public sealed class SpotifyPlaylistClientTests
             return JsonResponse(PlaylistResponseJson);
         }
 
-        if (absolutePath == $"/v1/playlists/{PlaylistId}/tracks" && query.Contains("offset=100"))
+        if (absolutePath == $"/v1/playlists/{PlaylistId}/items" && query.Contains("offset=100"))
         {
             return JsonResponse("""{"items":[],"next":null}""");
         }
 
-        if (absolutePath == $"/v1/playlists/{PlaylistId}/tracks")
+        if (absolutePath == $"/v1/playlists/{PlaylistId}/items")
         {
-            return JsonResponse(TracksPageOneJson);
+            return JsonResponse(ItemsPageOneJson);
         }
 
         throw new InvalidOperationException($"Unexpected request path '{absolutePath}{query}'.");
@@ -122,35 +138,39 @@ public sealed class SpotifyPlaylistClientTests
           "name": "Dear Mr. Fantasy",
           "description": "Blues rock for late nights.",
           "images": [{ "url": "https://i.scdn.co/image/cover.jpg", "height": 640, "width": 640 }],
-          "tracks": { "total": 2 },
+          "items": { "total": 2 },
           "snapshot_id": "snapshot-abc"
         }
         """;
 
-    private const string TracksPageOneJson =
+    // Post-February-2026 shape: "track" is present but deprecated and always empty ({}); the
+    // real track/episode payload lives under "item" instead (see SpotifyPlaylistClient's XML doc).
+    private const string ItemsPageOneJson =
         """
         {
           "items": [
             {
-              "track": {
+              "item": {
                 "id": "track-id-1",
                 "name": "Dear Mr. Fantasy",
                 "duration_ms": 322000,
                 "external_ids": { "isrc": "GBUM71029601" },
                 "artists": [{ "name": "Traffic" }]
-              }
+              },
+              "track": {}
             },
             {
-              "track": {
+              "item": {
                 "id": "track-id-2",
                 "name": "Presence of the Lord",
                 "duration_ms": 275000,
                 "external_ids": { "isrc": "GBAYE0601234" },
                 "artists": [{ "name": "Eric Clapton" }, { "name": "Traffic" }]
-              }
+              },
+              "track": {}
             }
           ],
-          "next": "https://api.spotify.com/v1/playlists/2m8X8fsMWor8A5AnmOHwzy/tracks?offset=100&limit=100&fields=items(track(artists(name))),next"
+          "next": "https://api.spotify.com/v1/playlists/2m8X8fsMWor8A5AnmOHwzy/items?offset=100&limit=100&fields=items(item(artists(name))),next"
         }
         """;
 }

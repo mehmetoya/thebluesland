@@ -6,10 +6,19 @@ namespace TheBluesland.SpotifyFetcher.Spotify;
 
 /// <summary>
 /// Reads playlist-level facts from the Spotify Web API. Track-level data (title, id, duration,
-/// ISRC) is read only transiently, one page at a time, while paginating the tracks endpoint solely
+/// ISRC) is read only transiently, one page at a time, while paginating the items endpoint solely
 /// to compute the distinct artist list, and is discarded as soon as that page's artist names have
 /// been extracted - see spec section 9.4 and 11.2. The <c>fields</c> query parameter narrows both
 /// requests so Spotify itself never sends fields this tool has no use for.
+///
+/// Spotify's February 2026 Web API migration removed <c>GET /playlists/{id}/tracks</c> in favour
+/// of <c>GET /playlists/{id}/items</c>, and the per-item track payload moved from the <c>track</c>
+/// field (now present but always empty, <c>{}</c>) to <c>item</c>; the "Get Playlist" summary
+/// endpoint's <c>tracks</c> container was renamed to <c>items</c> at the same time (its inner
+/// shape is unchanged). This client reads the new <c>items</c>/<c>item</c> fields accordingly. The
+/// new items endpoint additionally requires the <c>playlist-read-private</c> scope on the access
+/// token, which must already be present on <c>SPOTIFY_REFRESH_TOKEN</c> from the interactive
+/// authorization step (see <see cref="SpotifyAuthClient"/>).
 /// </summary>
 public sealed class SpotifyPlaylistClient
 {
@@ -43,7 +52,7 @@ public sealed class SpotifyPlaylistClient
         CancellationToken cancellationToken)
     {
         var url = $"{BaseUrl}/playlists/{Uri.EscapeDataString(spotifyPlaylistId)}" +
-                  "?fields=name,description,images,tracks.total,snapshot_id";
+                  "?fields=name,description,images,items.total,snapshot_id";
 
         using var response = await SendAsync(HttpMethod.Get, url, accessToken, cancellationToken);
         if (IsPlaylistUnavailableStatus(response.StatusCode))
@@ -79,8 +88,8 @@ public sealed class SpotifyPlaylistClient
                 : null;
         }
 
-        var trackCount = root.TryGetProperty("tracks", out var tracksElement)
-            && tracksElement.TryGetProperty("total", out var totalElement)
+        var trackCount = root.TryGetProperty("items", out var itemsTotalElement)
+            && itemsTotalElement.TryGetProperty("total", out var totalElement)
                 ? totalElement.GetInt32()
                 : 0;
 
@@ -106,8 +115,8 @@ public sealed class SpotifyPlaylistClient
         CancellationToken cancellationToken)
     {
         var artistNames = new SortedSet<string>(StringComparer.Ordinal);
-        string? nextUrl = $"{BaseUrl}/playlists/{Uri.EscapeDataString(spotifyPlaylistId)}/tracks" +
-                           "?fields=items(track(artists(name))),next&limit=100";
+        string? nextUrl = $"{BaseUrl}/playlists/{Uri.EscapeDataString(spotifyPlaylistId)}/items" +
+                           "?fields=items(item(artists(name))),next&limit=100";
 
         while (nextUrl is not null)
         {
@@ -120,9 +129,9 @@ public sealed class SpotifyPlaylistClient
 
             if (root.TryGetProperty("items", out var itemsElement) && itemsElement.ValueKind == JsonValueKind.Array)
             {
-                foreach (var item in itemsElement.EnumerateArray())
+                foreach (var pageItem in itemsElement.EnumerateArray())
                 {
-                    CollectArtistNames(item, artistNames);
+                    CollectArtistNames(pageItem, artistNames);
                 }
             }
 
@@ -134,14 +143,18 @@ public sealed class SpotifyPlaylistClient
         return [.. artistNames];
     }
 
-    private static void CollectArtistNames(JsonElement item, SortedSet<string> artistNames)
+    private static void CollectArtistNames(JsonElement pageItem, SortedSet<string> artistNames)
     {
-        if (!item.TryGetProperty("track", out var trackElement) || trackElement.ValueKind != JsonValueKind.Object)
+        // Since the February 2026 API migration, "track" is present on every page item but is
+        // always an empty, deprecated object ({}); the actual track/episode payload is under
+        // "item" instead - reading "track" here would silently collect zero artists.
+        if (!pageItem.TryGetProperty("item", out var itemDetailElement)
+            || itemDetailElement.ValueKind != JsonValueKind.Object)
         {
-            return; // Spotify returns a null track for removed/local items; nothing to attribute.
+            return; // Spotify returns a null item for removed/local items; nothing to attribute.
         }
 
-        if (!trackElement.TryGetProperty("artists", out var artistsElement)
+        if (!itemDetailElement.TryGetProperty("artists", out var artistsElement)
             || artistsElement.ValueKind != JsonValueKind.Array)
         {
             return;

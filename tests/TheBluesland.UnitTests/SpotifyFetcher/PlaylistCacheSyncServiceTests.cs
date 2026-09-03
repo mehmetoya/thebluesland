@@ -152,19 +152,20 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
                       "name": "Masterpieces of Erkin the Father",
                       "description": "Anadolu rock, straight from the source.",
                       "images": [{ "url": "https://i.scdn.co/image/cover.jpg" }],
-                      "tracks": { "total": 1 },
+                      "items": { "total": 1 },
                       "snapshot_id": "snapshot-available"
                     }
                     """);
             }
 
-            if (absolutePath == $"/v1/playlists/{AvailablePlaylistId}/tracks")
+            if (absolutePath == $"/v1/playlists/{AvailablePlaylistId}/items")
             {
+                // "track" is post-Feb-2026 deprecated and always empty; artists live under "item".
                 return JsonResponse(
                     """
                     {
                       "items": [
-                        { "track": { "artists": [{ "name": "Erkin Koray" }] } }
+                        { "item": { "artists": [{ "name": "Erkin Koray" }] }, "track": {} }
                       ],
                       "next": null
                     }
