@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Bash'i, ÇAĞIRAN AJANA göre dar bir komut kümesine sınırlar.
 # settings.json'da TEK global hook olarak tanımlanır (argümansız). Ajan kimliği
-# hook JSON'undaki agent_type alanından okunur (bkz. guard-write-path.sh başlığı
-# — ajan frontmatter hook'ları subagent çağrılarında tetiklenmiyor, bilinen bug).
+# hook JSON'undaki agent_type alanından okunur. Merkezi kural, agent dosyalarındaki
+# davranış talimatlarından bağımsız ve fail-closed bir güvenlik sınırı sağlar.
 #
 # Tasarım: shell'i ayrıştırıp güvenli hale getirmeye ÇALIŞMAZ.
 # Metakarakter içeren her komut reddedilir; kalan komutlar tam listeye göre denetlenir.
@@ -28,7 +28,7 @@ case "$AGENT" in
   code-reviewer)  set -- build test ;;
   test-engineer)  set -- build test restore ;;
   backend-dev)    set -- build test restore format ef ;;
-  architect|product-owner|project-manager)
+  architect)
     echo "Engellendi: '$AGENT' ajanı Bash çalıştıramaz." >&2
     exit 2 ;;
   *)
@@ -40,11 +40,12 @@ CMD="$(json_get "$INPUT" '.tool_input.command')"
 fail_on_parse_error "$CMD" "command"
 [ -n "$CMD" ] || { echo "Engellendi: komut okunamadı (fail-closed)." >&2; exit 2; }
 
-# --- 1) Metakarakter yasağı: zincirleme, boru, yönlendirme, ikame, alt kabuk, tırnak
+# --- 1) Çalıştırma metakarakterleri yasak. Tek/double quote yalnız argüman
+#     gruplamak için güvenlidir ve dotnet --filter gibi normal çağrılarda gerekir.
 #     (grep'e gömülü satır sonu pattern'i bozduğu için bash pattern eşleşmesi kullanılır)
 case "$CMD" in
-  *[\;\&\|\<\>\`\$\(\)\{\}\\\'\"]*)
-    echo "Engellendi: komutta shell metakarakteri var (; & | < > \` \$ ( ) { } \\ ' \"). Tek düz komut yaz." >&2
+  *[\;\&\|\<\>\`\$\(\)\{\}\\]*)
+    echo "Engellendi: komutta çalıştırma metakarakteri var (; & | < > \` \$ ( ) { } \\). Tek düz komut yaz." >&2
     exit 2 ;;
 esac
 # --- 1b) Satır sonu / kontrol karakteri
@@ -56,29 +57,36 @@ fi
 # --- 2) Tehlikeli argüman yasağı (yazabilen/çalıştırabilen bayraklar)
 for tok in $CMD; do
   case "$tok" in
-    -o|-O|--output|--output=*|--output-*|--exec|-exec|--exec-path=*|--upload-pack=*|--receive-pack=*|-c|--config=*|--config-env=*|--delete|-delete|--write|--fix|--pager=*|ext::*)
+    -o|-O|--output|--output=*|--output-*|--exec|-exec|-execdir|-ok|-okdir|-delete|-fls|-fprint*|-fprintf*|--exec-path=*|--upload-pack=*|--receive-pack=*|-c|--config=*|--config-env=*|--delete|--write|--fix|--pager=*|ext::*)
       echo "Engellendi: '$tok' yazma veya çalıştırma yapabilir." >&2; exit 2 ;;
   esac
 done
 
-# --- 2b) Proje dışı yol yasağı (MSBuild anahtarları muaf)
+# --- 2b) Proje dışı yol yasağı. Proje kökü içindeki absolute path'ler kabul edilir.
+ROOT="${CLAUDE_PROJECT_DIR:-$(pwd -P)}"
 for tok in $CMD; do
   case "$tok" in
     -*) continue ;;
     /p:*|/t:*|/m:*|/v:*|/bl|/bl:*|/nologo) continue ;;
+    "$ROOT"|"$ROOT"/*) continue ;;
     ..|../*|*/../*|*/..|/*|~*)
       echo "Engellendi: proje dışı yol kullanılamaz ($tok)." >&2; exit 2 ;;
   esac
 done
 
 # --- 3) Komut allowlist'i
-GIT_RO="diff status log show blame rev-parse ls-files describe shortlog"
+GIT_RO="diff status log show blame rev-parse ls-files describe shortlog grep"
 # shellcheck disable=SC2206
 PARTS=( $CMD )
 BIN="${PARTS[0]:-}"
 SUB="${PARTS[1]:-}"
 
 case "$BIN" in
+  pwd)
+    [ "${#PARTS[@]}" -eq 1 ] && exit 0
+    echo "Engellendi: pwd argüman alamaz." >&2; exit 2 ;;
+  ls|find)
+    exit 0 ;;
   git)
     case " $GIT_RO " in
       *" $SUB "*) exit 0 ;;
@@ -101,6 +109,6 @@ case "$BIN" in
     done
     echo "Engellendi: 'dotnet $SUB' bu ajan için izinli değil. İzinli: $*" >&2; exit 2 ;;
   *)
-    echo "Engellendi: '$AGENT' ajanı '$BIN' çalıştıramaz. İzinli: git (salt-okunur) ve dotnet ($*). Dosya arama için Read/Grep/Glob araçlarını kullan." >&2
+    echo "Engellendi: '$AGENT' ajanı '$BIN' çalıştıramaz. İzinli: pwd, ls, find, git (salt-okunur) ve dotnet ($*)." >&2
     exit 2 ;;
 esac

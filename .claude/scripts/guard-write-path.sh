@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Write/Edit çağrılarını, ÇAĞIRAN AJANA göre belirli klasörlerle sınırlar.
 # settings.json'da TEK bir global hook olarak tanımlanır (argümansız).
-# Ajan kimliği hook JSON'undaki agent_type alanından okunur — çünkü ajan
-# frontmatter'ındaki "hooks:" alanı Task-tool subagent çağrılarında
-# TETİKLENMİYOR (bilinen Claude Code hatası). Bu yüzden kısıt merkezde durur.
+# Ajan kimliği hook JSON'undaki agent_type alanından okunur. Kısıtın merkezde
+# tutulması tüm proje agentlarına aynı fail-closed güvenlik sınırını uygular.
 # Exit 2 = engelle.
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -30,7 +29,7 @@ if [ -z "$AGENT" ]; then
 fi
 
 case "$AGENT" in
-  architect|product-owner|project-manager) set -- docs ;;
+  architect)                               set -- docs ;;
   backend-dev)                             set -- src tests tools .github ;;
   test-engineer)                           set -- tests ;;
   code-reviewer)

@@ -1,54 +1,53 @@
-# Proje Teknoloji Sözleşmesi
+# TheBluesland Proje Sözleşmesi
 
-Her oturumda yüklenir; **bu projenin** teknoloji kararlarını taşır.
-Genel mühendislik kuralları `dotnet-engineering-standards` skill'indedir.
+Her oturumda yüklenen kısa ve güncel proje bağlamıdır. Genel C# kuralları
+`dotnet-engineering-standards` skill'indedir; ayrıntılı kararlar `docs/adr/` altındadır.
 
-## Hedef platform
-- .NET 10 (LTS) / C# 14. `TreatWarningsAsErrors`, nullable ve implicit usings açık.
-- **API-first.** Backend hiçbir UI teknolojisini varsaymaz; tek sözleşme HTTP API'dir.
+## Mevcut mimari
 
-## Projeler
-```
-src/Api/         ASP.NET Core Minimal API
-src/Domain/      entity + value object       → dış paket bağımlılığı yok
-src/Infra/       EF Core, PostgreSQL, migration
-src/Shared/      DTO/API sözleşmeleri + istemcide çalışabilen doğrulama
-                 → UI/HTTP/platform bağımsız. Domain entity'si BURAYA GİRMEZ.
-src/Ui.Shared/   Razor Class Library → ortak Razor bileşenleri (sunum katmanı).
-                 Razor/UI içerir; MAUI veya tarayıcıya özgü API içermez.
-src/Web/         Blazor WASM host    → platform implementasyonları burada
-src/Mobile/      MAUI Blazor Hybrid host → platform implementasyonları burada
-tests/
-```
-Katman sözleşmesi:
-- **İş kuralları `Domain` içindedir**, `Shared` veya `Ui.Shared` içinde değil.
-- `Domain` entity'leri istemci projelerine **açılmaz**; istemci yalnızca `Shared`
-  içindeki DTO'ları görür.
-- Veritabanı, tenant veya yetki gerektiren doğrulama sunucuda authoritative kalır;
-  `Shared` yalnızca deterministik (girdiye bakarak karar verilebilen) kuralları taşır.
-- **Web ve Mobile birbirine referans vermez.** Ortak bileşen `Ui.Shared` içine konur.
+- .NET 10 / C# 14; nullable, implicit usings ve `TreatWarningsAsErrors` açık.
+- `src/TheBluesland.Web`: Blazor Web App; static SSR, yalnız gerektiğinde isolated
+  Interactive Server. İçerik okuma, doğrulama ve web sunumu burada.
+- `src/TheBluesland.Data`: EF Core/PostgreSQL şeması ve migration'lar. Web salt okunur,
+  senkron aracı yazma yetkili bağlantı kullanır.
+- `tools/spotify-playlist-fetcher`: GitHub Actions'ta aylık çalışan Spotify senkron aracı.
+- `content/playlists`: version-controlled editoryal playlist içeriği.
+- `tests/TheBluesland.UnitTests`: birim, şema ve web integration testleri.
+- `.github/workflows`: doğrulama, senkron ve diğer otomasyonlar.
 
-## Kararlar
-- Kimlik: ASP.NET Core Identity + JWT (mobil istemci cookie kullanamaz).
-- Veri: EF Core + PostgreSQL (Npgsql). Migration'lar `src/Infra/Migrations`.
-- Multi-tenancy: `ITenantContext` + EF Core Global Query Filter.
-- Stil: Tailwind CSS.
-- Doğrulama: FluentValidation, kurallar `src/Shared` içinde.
-- Test: xUnit + Shouldly + Testcontainers.
+MVP'de ayrı API, Domain, Shared, Ui.Shared veya Mobile projesi yoktur. İkinci bir
+istemci gerçek ihtiyaç hâline gelmeden bu katmanları oluşturma. Mimari gerekçe için
+ADR-0002 ve ADR-0003'e bak.
 
-## Mobil kısıtları
-- Sunucuda oturum durumu tutulmaz; her istek kendi kendine yeter.
-- Yanıtlar sayfalanır ve küçüktür; bağlantı yavaş ve kesintili varsayılır.
-- `src/Shared` ve `src/Ui.Shared` içine platform bağımlılığı girmez.
-- **MAUI sürüm ömrü .NET'ten kısadır** (bkz. ADR-0001). Mobil host projesi backend'den
-  bağımsız ve daha sık yükseltilir; bu yüzden ince tutulur. İçinde iş mantığı olmaz —
-  iş kuralları `Domain`, sözleşme `Shared`, sunum `Ui.Shared` içindedir.
+## Sabit sınırlar
+
+- Editoryal veri Markdown/YAML'de; Spotify kaynaklı playlist özeti PostgreSQL cache'te.
+- Track listesi kalıcı saklanmaz. Spotify/AI credential'ları production web ortamına girmez.
+- Web cache'e graceful degradation ile erişir; eksik veya bayat cache siteyi çökertmez.
+- Yeni proje, katman, repository sarmalayıcı veya paket ancak somut ihtiyaç varsa eklenir.
+- MediatR ve AutoMapper eklenmez.
+- Mevcut desen ve kurulu kütüphaneler tercih edilir; yeni paket için kullanıcıdan onay alınır.
 
 ## Çalışma şekli
-- Kod yazmadan önce ilgili klasörü oku; varsayım üretme.
-- Teslimden önce `dotnet build` ve `dotnet test` yeşil olmalı.
-- Mimari kararlar `docs/adr/`, gereksinimler `docs/product/backlog.md`,
-  plan `docs/product/plan.md`.
 
-## Ajanlar
-architect · backend-dev · code-reviewer · test-engineer · product-owner · project-manager
+- Yalnız görevle ilgili dosyaları ve gerekirse ilgili ADR/spec bölümünü oku.
+- Davranış değişikliğine minimum test ekle; bug fix'e regresyon testi ekle.
+- Önce ilgili testleri çalıştır. Tam `dotnet build` ve `dotnet test` teslimden önce bir kez
+  çalıştırılır; aynı görev zincirindeki agentlar sonucu geçerliyse tekrarlamaz.
+- Kullanıcının mevcut çalışma ağacı değişikliklerini koru.
+
+## Agent bütçesi
+
+- Normal feature, bug fix ve küçük refactor ana oturumda veya yalnız `backend-dev` ile tamamlanır.
+- Varsayılan olarak subagent çağırma. Bağımsız uzmanlık gerçekten gerekiyorsa en fazla bir
+  specialist çağır; agent zinciri kurma ve specialist'ın başka agent çağırmasına izin verme.
+- Her specialist kendi işini bitirir ve durur. Sonraki bir role ihtiyaç varsa o agentı çağırmaz;
+  kullanıcıya `Önerilen devir: <rol> — <somut görev>` biçiminde bildirir. Devri kullanıcı başlatır.
+- Model seviyesi role göre seçilebilir; mimari karar kalitesi için `architect` Opus kullanır.
+- `architect` yalnız kullanıcı mimari seçenek/ADR istediğinde; `code-reviewer` yalnız açık review
+  veya PR öncesi talebinde; `test-engineer` yalnız test altyapısı, kırık suite ya da kapsamlı
+  integration testi istendiğinde kullanılır.
+- Ürün netleştirme ve iş planlama ayrı context açmaz: kullanıcı istediğinde ana konuşmada
+  `refine-story` ve `plan-work` skill'leri kullanılır.
+- Specialist çıktısı en fazla 8 satırlık `Durum / Kanıt / Kalan risk / Önerilen devir /
+  Başlatma komutu` sözleşmesiyle kapanır; log veya diff devre taşınmaz.

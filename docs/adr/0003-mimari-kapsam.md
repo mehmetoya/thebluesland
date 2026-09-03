@@ -1,7 +1,7 @@
 # ADR-0003 — Mimari kapsam: TheBluesland neden CLAUDE.md'deki çok-istemcili şablonu kullanmıyor
 
-Durum: Kabul edildi ve onaylandı — Mehmet, 2026-09-03 tarihinde US-005 ile (ilk `TheBluesland.Web`
-implementasyonu) devam kararı vererek bu sapmayı açıkça onayladı.
+Durum: Kabul edildi ve onaylandı — 2026-09-03. Aynı tarihte `.claude/CLAUDE.md`, bu kararla
+uyumlu TheBluesland sözleşmesine dönüştürüldü; aşağıdaki eski şablon referansları tarihsel bağlamdır.
 
 ## Bağlam
 
@@ -61,15 +61,14 @@ Bunun yerine:
 - **CLAUDE.md şablonunu aynen uygulamak (src/Api + src/Domain + src/Infra + src/Shared):**
   Reddedildi. Tek istemcili bir static-SSR site için gereksiz dolaylama üretir; `src/Api`
   katmanının tükettiği hiçbir ikinci istemci yok.
-- **CLAUDE.md'yi TheBluesland'e özel olarak güncellemek:** Değerlendirilmedi/ertelendi — CLAUDE.md
-  repo genelinde başka projeler için de kullanılıyor olabilir (scaffold script'i genel amaçlı);
-  onu TheBluesland'e özel hâle getirmek başka projeleri etkileyebilir. Bunun yerine bu ADR ve
-  spec'in başındaki not ile sapma belgelendi.
+- **CLAUDE.md'yi TheBluesland'e özel olarak güncellemek:** Kabul edildi. Dosya bu repoya aittir;
+  başka projeler için genel şablon görevi görmesi, çalışan kodla çelişen talimatları her oturumda
+  yüklemeyi haklı çıkarmaz.
 
 ## Sonuçlar
 
-- `docs/business-technical-specification.md`, `docs/adr/0002-spotify-veri-mimarisi.md` ve bu ADR,
-  CLAUDE.md/ADR-0001'in TheBluesland için **geçerli olmadığını** açıkça belirtir.
+- `.claude/CLAUDE.md` mevcut yapıyı doğrudan tanımlar. ADR-0001 genel şablonun tarihsel kaydıdır;
+  TheBluesland için bu ADR geçerlidir.
 - Bu sapma, implementasyon başlamadan önce Mehmet'in açık onayını gerektiriyordu (spec bölüm 23,
   madde 9); bu onay 2026-09-03'te, US-005/`TheBluesland.Web` işine devam talimatıyla verildi.
 - Eğer TheBluesland ileride gerçek bir mobil istemci kazanırsa (bugün yol haritasında yok, spec

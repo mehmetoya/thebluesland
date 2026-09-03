@@ -1,4 +1,8 @@
 {
+  "env": {
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1",
+    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "1"
+  },
   "hooks": {
     "PreToolUse": [
       {
@@ -43,6 +47,10 @@
       "Edit(./src/**)",
       "Write(./tests/**)",
       "Edit(./tests/**)",
+      "Write(./tools/**)",
+      "Edit(./tools/**)",
+      "Write(./.github/**)",
+      "Edit(./.github/**)",
       "Write(./docs/**)",
       "Edit(./docs/**)"
     ],
@@ -62,6 +70,9 @@
       "Bash(git switch:*)"
     ],
     "deny": [
+      "Agent(Explore)",
+      "Agent(Plan)",
+      "Agent(general-purpose)",
       "Bash(git push)",
       "Bash(git push:*)",
       "Bash(git commit)",

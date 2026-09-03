@@ -29,8 +29,14 @@ chk "reviewer: arka plan & engellendi" "$(run "$SH" '{"tool_name":"Bash","agent_
 chk "reviewer: backtick engellendi"    "$(run "$SH" '{"tool_name":"Bash","agent_type":"code-reviewer","tool_input":{"command":"git diff `id`"}}')" 2
 chk "reviewer: dotnet format engelli"  "$(run "$SH" '{"tool_name":"Bash","agent_type":"code-reviewer","tool_input":{"command":"dotnet format"}}')" 2
 chk "reviewer: git diff izinli"        "$(run "$SH" '{"tool_name":"Bash","agent_type":"code-reviewer","tool_input":{"command":"git diff main...HEAD"}}')" 0
+chk "reviewer: git grep izinli"        "$(run "$SH" '{"tool_name":"Bash","agent_type":"code-reviewer","tool_input":{"command":"git grep TODO"}}')" 0
+chk "reviewer: pwd izinli"             "$(run "$SH" '{"tool_name":"Bash","agent_type":"code-reviewer","tool_input":{"command":"pwd"}}')" 0
+chk "reviewer: find izinli"            "$(run "$SH" '{"tool_name":"Bash","agent_type":"code-reviewer","tool_input":{"command":"find src -name *.cs"}}')" 0
+chk "reviewer: find exec engelli"      "$(run "$SH" '{"tool_name":"Bash","agent_type":"code-reviewer","tool_input":{"command":"find src -exec id"}}')" 2
 chk "test-engineer: ef engelli"        "$(run "$SH" '{"tool_name":"Bash","agent_type":"test-engineer","tool_input":{"command":"dotnet ef migrations add X"}}')" 2
 chk "backend-dev: ef migr izinli"      "$(run "$SH" '{"tool_name":"Bash","agent_type":"backend-dev","tool_input":{"command":"dotnet ef migrations add X"}}')" 0
+chk "backend-dev: quoted filter izinli" "$(run "$SH" '{"tool_name":"Bash","agent_type":"backend-dev","tool_input":{"command":"dotnet test --filter \"Category=Unit\""}}')" 0
+chk "backend-dev: proje ici abs izinli" "$(run "$SH" "{\"tool_name\":\"Bash\",\"agent_type\":\"backend-dev\",\"tool_input\":{\"command\":\"dotnet test $PWD/tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj\"}}")" 0
 chk "backend-dev: ef remove engelli"   "$(run "$SH" '{"tool_name":"Bash","agent_type":"backend-dev","tool_input":{"command":"dotnet ef migrations remove"}}')" 2
 chk "backend-dev: proje disi engelli"  "$(run "$SH" '{"tool_name":"Bash","agent_type":"backend-dev","tool_input":{"command":"dotnet test ../baska"}}')" 2
 chk "architect: Bash tamamen engelli"  "$(run "$SH" '{"tool_name":"Bash","agent_type":"architect","tool_input":{"command":"git status"}}')" 2
@@ -41,7 +47,9 @@ chk "bozuk json engellendi"            "$(run "$SH" 'bozuk{{{')" 2
 echo "write guard (agent_type gömülü JSON ile):"
 chk "architect: docs izinli"           "$(run "$WP" '{"tool_name":"Write","agent_type":"architect","tool_input":{"file_path":"docs/a.md"}}')" 0
 chk "architect: src engelli"           "$(run "$WP" '{"tool_name":"Write","agent_type":"architect","tool_input":{"file_path":"src/P.cs"}}')" 2
-chk "backend-dev: src izinli"          "$(run "$WP" '{"tool_name":"Write","agent_type":"backend-dev","tool_input":{"file_path":"src/Api/P.cs"}}')" 0
+chk "backend-dev: Web izinli"          "$(run "$WP" '{"tool_name":"Write","agent_type":"backend-dev","tool_input":{"file_path":"src/TheBluesland.Web/P.cs"}}')" 0
+chk "backend-dev: tools izinli"        "$(run "$WP" '{"tool_name":"Write","agent_type":"backend-dev","tool_input":{"file_path":"tools/spotify-playlist-fetcher/P.cs"}}')" 0
+chk "backend-dev: workflow izinli"     "$(run "$WP" '{"tool_name":"Write","agent_type":"backend-dev","tool_input":{"file_path":".github/workflows/ci.yml"}}')" 0
 chk "backend-dev: docs engelli"        "$(run "$WP" '{"tool_name":"Write","agent_type":"backend-dev","tool_input":{"file_path":"docs/x.md"}}')" 2
 chk "test-engineer: tests izinli"      "$(run "$WP" '{"tool_name":"Write","agent_type":"test-engineer","tool_input":{"file_path":"tests/A.cs"}}')" 0
 chk "code-reviewer: her yazma engelli" "$(run "$WP" '{"tool_name":"Write","agent_type":"code-reviewer","tool_input":{"file_path":"docs/x.md"}}')" 2

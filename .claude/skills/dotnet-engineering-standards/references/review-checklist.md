@@ -1,7 +1,6 @@
 # Kontrol Listesi
 
-- [ ] `dotnet build` uyarısız
-- [ ] `dotnet test` yeşil
+- [ ] İlgili testler yeşil; teslim doğrulaması görev zincirinde yalnız bir kez yapılmış
 - [ ] MediatR / AutoMapper / gereksiz repository sarmalayıcı eklenmemiş
 - [ ] Onaysız yeni NuGet paketi eklenmemiş
 - [ ] `.Result` / `.Wait()` / `async void` yok
@@ -10,8 +9,7 @@
 - [ ] Okuma sorgularında `AsNoTracking()`; döngü içinde DB çağrısı yok
 - [ ] Tenant filtresi gerekçesiz aşılmamış
 - [ ] Sihirli sabit yok
-- [ ] Yeni endpoint yetkilendirilmiş, liste uçları sayfalı
+- [ ] Yeni HTTP yüzeyinde yetkilendirme ve yanıt sınırı değerlendirilmiş
 - [ ] Secret hardcode edilmemiş, PII loglanmıyor
-- [ ] Paylaşılan katmana UI/HTTP/platform bağımlılığı sızmamış
-- [ ] Web ↔ Mobile arasında doğrudan referans yok
+- [ ] Mevcut `TheBluesland.Web` / `TheBluesland.Data` sınırı korunmuş; gereksiz katman eklenmemiş
 - [ ] Değişen davranış için test eklenmiş
