@@ -1,0 +1,44 @@
+name: Sync Spotify playlist cache
+
+# US-004 (spec section 12.4/12.5, SEC-001): runs tools/spotify-playlist-fetcher (US-003) once a
+# month to refresh spotify_playlist_cache from the Spotify Web API. This is the ONLY workflow that
+# may reference the SPOTIFY_CLIENT_ID, SPOTIFY_REFRESH_TOKEN and NEON_SYNC_CONNECTION_STRING
+# secrets - ci.yml and deploy.yml must never declare them (US-013 AC3). Mehmet must additionally
+# restrict these three secrets to this workflow in the GitHub repo settings (Settings > Secrets and
+# variables > Actions, or an "Environment" scoped to this workflow) - that scoping is a one-time,
+# code-external step and cannot be enforced from the YAML alone.
+#
+# NEON_SYNC_CONNECTION_STRING must be the spotify_cache_readwrite role's connection string, created
+# by src/TheBluesland.Data/Scripts/create-spotify-cache-roles.sql (run once, by hand, against the
+# Neon project - see that script's header for details).
+
+on:
+  schedule:
+    # 03:00 UTC on the 1st of every month.
+    - cron: "0 3 1 * *"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+      NEON_SYNC_CONNECTION_STRING: ${{ secrets.NEON_SYNC_CONNECTION_STRING }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj
+
+      - name: Build
+        run: dotnet build tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-restore
+
+      - name: Run sync
+        run: dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build

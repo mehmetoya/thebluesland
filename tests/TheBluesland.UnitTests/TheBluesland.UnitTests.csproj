@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="SSH.NET" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/TheBluesland.Data/TheBluesland.Data.csproj" />
+    <ProjectReference Include="../../tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Fixtures/**/*.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Fixtures/**/*.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!--
+    Testcontainers.PostgreSql transitively pulls SSH.NET (for Docker daemon SSH tunneling), which
+    NuGet audit flags under the advisory below regardless of which published version is resolved
+    (verified against 2023.0.0 and 2024.2.0 - flagged identically). This is a test-only dependency,
+    never part of the published runtime output. Suppressing this specific, unavoidable, test-only
+    advisory rather than disabling audit or TreatWarningsAsErrors project-wide.
+  -->
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-q939-rpr3-3284" />
+  </ItemGroup>
+
+</Project>

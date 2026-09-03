@@ -1,0 +1,2 @@
+This directory intentionally contains no Markdown files, to prove the sync tool completes without
+error when content/playlists exists but has nothing to sync.

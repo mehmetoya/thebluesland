@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TheBluesland.Data/TheBluesland.Data.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/" />
+  <Folder Name="/tools/spotify-playlist-fetcher/">
+    <Project Path="tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj" />
+  </Folder>
+</Solution>

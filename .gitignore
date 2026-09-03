@@ -1,0 +1,25 @@
+bin/
+obj/
+*.user
+.vs/
+.idea/
+.DS_Store
+
+# Personal/local permission overrides — not shared team config.
+.claude/settings.local.json
+
+# .NET local tool restore cache.
+.dotnet/
+
+# Secrets — never committed. Local dev config uses appsettings.Development.json
+# or user-secrets instead; production config lives in Render/GitHub Actions.
+*.env
+.env
+.env.*
+**/secrets.json
+**/appsettings.Production.json
+**/appsettings.*.local.json
+
+# Node/Tailwind build output (src/TheBluesland.Web, once it exists).
+node_modules/
+npm-debug.log*

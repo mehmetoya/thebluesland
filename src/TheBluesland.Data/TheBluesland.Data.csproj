@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <!-- Embedded so both TheBluesland.UnitTests and any future Neon-setup tooling can read the
+         role script via Assembly.GetManifestResourceStream instead of a fragile relative path. -->
+    <EmbeddedResource Include="Scripts/create-spotify-cache-roles.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <!--
+    Microsoft.EntityFrameworkCore.Design (design-time/dotnet-ef tooling only, never part of the
+    published runtime output) transitively pulls System.Security.Cryptography.Xml 9.0.0, which
+    NuGet audit flags under the advisories below regardless of which published version of that
+    package is resolved (verified against 9.0.0, 9.0.9 and 10.0.0 - all flagged identically).
+    Suppressing these specific, unavoidable, tooling-only advisories rather than disabling audit
+    or TreatWarningsAsErrors project-wide.
+  -->
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-23rf-6693-g89p" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-37gx-xxp4-5rgx" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-6588-8gv4-xfgh" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-8q5v-6pqq-x66h" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-cvvh-rhrc-wg4q" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-g8r8-53c2-pm3f" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-mmjf-rqrv-855v" />
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-w3x6-4m5h-cxqf" />
+  </ItemGroup>
+
+</Project>

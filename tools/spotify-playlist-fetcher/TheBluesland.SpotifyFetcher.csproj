@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>TheBluesland.SpotifyFetcher</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Parses the spotifyPlaylistId front-matter field (spec section 12.2). -->
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/TheBluesland.Data/TheBluesland.Data.csproj" />
+  </ItemGroup>
+
+</Project>
