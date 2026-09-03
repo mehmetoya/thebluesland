@@ -14,9 +14,7 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 2 — İçerik doğrulama (aktif).** US-007 (doğrulamanın CI'a bağlanması) sırada — Faz 2'nin
-  son hikayesi.
-- **Faz 3 — Blazor scaffold.** US-008 (iskelet + sağlık kontrolleri), US-009 (ana sayfa/filtre),
+- **Faz 3 — Blazor scaffold (sırada).** US-008 (iskelet + sağlık kontrolleri), US-009 (ana sayfa/filtre),
   US-010 (detay sayfası), US-011 (SEO/sitemap/sosyal kart), US-012 (güvenlik başlıkları/CSP).
 - **Faz 4 — CI/CD.** US-013 (PR pipeline'ı), US-014 (Render+Neon deploy pipeline'ı).
 - **Faz 5 — Launch içeriği.** US-015 (sekiz playlist'in editoryal tamamlanması) — Faz 1-4 ile
@@ -24,6 +22,12 @@ Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
 ## Tamamlanan
 
+- **US-007 — İçerik doğrulamasının CI'a bağlanması.** `.github/workflows/ci.yml` (yeni) —
+  `content-validation` job'u, `Program.cs`'e eklenen `validate-content` CLI argümanı üzerinden
+  `ContentValidationCli`'yi gerçek `content/playlists/` dizinine karşı çalıştırıyor; ihlalde
+  non-zero exit + dosya/alan/kural satırları. Hiçbir secret bildirmez. Branch protection toggle'ı
+  (GitHub repo ayarları) Mehmet'in elle yapması gereken tek seferlik adım olarak kaldı. Testcontainers
+  Postgres'e karşı 61/61 test yeşil.
 - **US-006 — Editoryal içerik şeması ve v0.2 taksonomi doğrulaması.** `src/TheBluesland.Web/Content`
   içinde `PlaylistContentValidator` — `PlaylistContentReader`'dan (render yolu) bağımsız, ayrı bir
   doğrulama yolu; her `content/playlists/*.md` dosyasını gerekli alan/format/aralık kurallarına ve

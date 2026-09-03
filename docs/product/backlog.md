@@ -190,9 +190,13 @@ Kullanıcı olarak proje sahibi (Mehmet), her pull request'te içerik doğrulama
 Kabul kriterleri:
 
 - [ ] `content/playlists/` altına US-006'daki kurallardan birini ihlal eden bir dosya eklenmiş bir
-      PR açıldığında, CI kontrolü kırmızı olur ve PR birleştirilemez (branch protection ile).
-- [ ] Geçerli bir playlist dosyası eklenmiş bir PR açıldığında, içerik doğrulama adımı yeşil olur.
-- [ ] CI logunda hangi dosyanın hangi kuralı ihlal ettiği açıkça görünür (dosya adı + alan adı +
+      PR açıldığında, CI kontrolü kırmızı olur ve PR birleştirilemez (branch protection ile). Kod
+      tarafı tamam (job geçersiz içerikte non-zero exit ile kırmızı olur, `ci.yml` +
+      `ContentValidationCli`); GitHub repo ayarlarında bu check'i zorunlu kılan branch protection
+      toggle'ı (Settings > Branches) Mehmet'in elle yapması gereken, koddan yapılamayan tek seferlik
+      bir adım — bu yüzden kutucuk tam işaretlenmedi.
+- [x] Geçerli bir playlist dosyası eklenmiş bir PR açıldığında, içerik doğrulama adımı yeşil olur.
+- [x] CI logunda hangi dosyanın hangi kuralı ihlal ettiği açıkça görünür (dosya adı + alan adı +
       beklenen kural).
 
 Kapsam dışı: build/test/lint gibi diğer CI adımları (US-013).

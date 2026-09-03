@@ -1,0 +1,47 @@
+name: CI
+
+# US-007 (spec section 18.1, item 3 only): runs content validation (PlaylistContentValidator,
+# US-006) against content/playlists on every pull request, so a Markdown file that violates the
+# v0.2 schema/taxonomy or duplicates a slug/spotifyPlaylistId across files is caught before it can
+# reach main. Deliberately does NOT implement the other eight items in spec 18.1 (restore/build,
+# tests, formatting, Tailwind, Playwright, dependency/secret scanning, Docker build) - those are
+# US-013's full PR pipeline, a separate story. This workflow declares no secrets: content
+# validation only reads local Markdown files, so it must never reference SPOTIFY_CLIENT_ID,
+# SPOTIFY_REFRESH_TOKEN or NEON_SYNC_CONNECTION_STRING - those stay scoped exclusively to
+# sync-spotify.yml per that workflow's own header comment (SEC-001).
+#
+# Triggers on every pull request rather than being path-scoped to content/playlists/**: the
+# validator also checks cross-file slug/spotifyPlaylistId uniqueness (US-006), so a PR that edits
+# only one of two colliding files must still run this check even if that PR's diff never touches
+# the file it collides with.
+#
+# Making this job's failure actually block merging main requires a one-time, code-external GitHub
+# branch-protection setting (Settings > Branches > require this check to pass) - that toggle is
+# Mehmet's manual step and cannot be configured from this YAML; this workflow only guarantees the
+# job itself fails (non-zero exit) on invalid content, giving that setting something to enforce.
+
+on:
+  pull_request: {}
+
+permissions:
+  contents: read
+
+jobs:
+  content-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Validate playlist content
+        # An absolute path is passed explicitly (rather than relying on the relative default in
+        # Program.cs) because dotnet run's working directory for the launched process is not
+        # guaranteed to be the invoking shell's directory across SDK versions; PlaylistContentValidator
+        # silently treats a missing directory as valid (US-006), so a wrong relative path here would
+        # make this job falsely report success instead of failing loudly.
+        run: dotnet run --project src/TheBluesland.Web/TheBluesland.Web.csproj -- validate-content ${{ github.workspace }}/content/playlists
