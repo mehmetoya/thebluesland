@@ -5,7 +5,8 @@ namespace TheBluesland.Web.Content;
 /// subset than <c>tools/spotify-playlist-fetcher</c>'s own PlaylistFrontMatter (which only needs
 /// spotifyPlaylistId), because the web render surface additionally needs title/summary/tags/
 /// curator note/era/publishedAt/displayOrder/featured (US-009 widened this beyond US-005's
-/// original render-only set: sorting and filtering on the home page need them). The two are not
+/// original render-only set: sorting and filtering on the home page need them). <c>previousSlugs</c>
+/// was added for US-010 AC5/FR-020 (permanent redirects from an old slug). The two are not
 /// shared: per docs/adr/0003-mimari-kapsam.md there is no real dependency boundary to justify
 /// sharing a DTO this small. <c>schemaVersion</c> stays validation-only (<see
 /// cref="PlaylistValidationFrontMatter"/>) - the render path never needs it. Full schema/taxonomy
@@ -26,4 +27,5 @@ public sealed class PlaylistFrontMatter
     public bool? Featured { get; set; }
     public int? DisplayOrder { get; set; }
     public string? Status { get; set; }
+    public string[]? PreviousSlugs { get; set; }
 }

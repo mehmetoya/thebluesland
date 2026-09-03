@@ -33,7 +33,8 @@ public sealed class PlaylistRenderSurfaceTests
         IsPublished: true,
         Featured: false,
         DisplayOrder: 0,
-        PublishedAt: new DateOnly(2026, 1, 1));
+        PublishedAt: new DateOnly(2026, 1, 1),
+        PreviousSlugs: []);
 
     [Fact]
     public async Task PlaylistCard_renders_editorial_fields_without_error_when_cache_is_unavailable()
@@ -89,6 +90,83 @@ public sealed class PlaylistRenderSurfaceTests
 
         html.ShouldContain("34 tracks");
         html.ShouldNotContain("currently unavailable");
+    }
+
+    /// <summary>US-010 AC1: the cache-sourced cover image renders when present and playable.</summary>
+    [Fact]
+    public async Task PlaylistDetailView_shows_cover_image_when_present_and_playable()
+    {
+        var playableSnapshot = new PlaylistCacheSnapshot(IsPlayable: true, TrackCount: 34, CoverImageUrl: "https://i.scdn.co/image/cover.jpg");
+
+        var html = await RenderAsync<PlaylistDetailView>(new Dictionary<string, object?>
+        {
+            [nameof(PlaylistDetailView.Content)] = SamplePlaylist,
+            [nameof(PlaylistDetailView.CacheSnapshot)] = playableSnapshot,
+        });
+
+        html.ShouldContain("<img class=\"cover-image\" src=\"https://i.scdn.co/image/cover.jpg\"");
+    }
+
+    /// <summary>US-010 AC2/spec 11.3: no iframe in the markup until ShowEmbed is explicitly true.</summary>
+    [Fact]
+    public async Task PlaylistDetailView_shows_a_click_to_load_link_and_no_iframe_by_default()
+    {
+        var playableSnapshot = new PlaylistCacheSnapshot(IsPlayable: true, TrackCount: 34, CoverImageUrl: null);
+
+        var html = await RenderAsync<PlaylistDetailView>(new Dictionary<string, object?>
+        {
+            [nameof(PlaylistDetailView.Content)] = SamplePlaylist,
+            [nameof(PlaylistDetailView.CacheSnapshot)] = playableSnapshot,
+        });
+
+        html.ShouldNotContain("<iframe");
+        html.ShouldContain("href=\"?listen=true\"");
+    }
+
+    /// <summary>US-010 AC2: once ShowEmbed is true, the iframe is present with the spec 12.4(a) embed URL shape.</summary>
+    [Fact]
+    public async Task PlaylistDetailView_shows_the_iframe_with_the_embed_url_when_ShowEmbed_is_true()
+    {
+        var playableSnapshot = new PlaylistCacheSnapshot(IsPlayable: true, TrackCount: 34, CoverImageUrl: null);
+
+        var html = await RenderAsync<PlaylistDetailView>(new Dictionary<string, object?>
+        {
+            [nameof(PlaylistDetailView.Content)] = SamplePlaylist,
+            [nameof(PlaylistDetailView.CacheSnapshot)] = playableSnapshot,
+            [nameof(PlaylistDetailView.ShowEmbed)] = true,
+        });
+
+        html.ShouldContain($"<iframe class=\"spotify-embed\" src=\"https://open.spotify.com/embed/playlist/{SamplePlaylist.SpotifyPlaylistId}\"");
+    }
+
+    /// <summary>US-010 AC3/FR-024: present even when the cache is unavailable, built only from the playlist ID.</summary>
+    [Fact]
+    public async Task PlaylistDetailView_always_shows_the_open_in_spotify_link_even_when_the_cache_is_unavailable()
+    {
+        var html = await RenderAsync<PlaylistDetailView>(new Dictionary<string, object?>
+        {
+            [nameof(PlaylistDetailView.Content)] = SamplePlaylist,
+            [nameof(PlaylistDetailView.CacheSnapshot)] = PlaylistCacheSnapshot.Unavailable,
+        });
+
+        html.ShouldContain($"href=\"https://open.spotify.com/playlist/{SamplePlaylist.SpotifyPlaylistId}\"");
+    }
+
+    /// <summary>US-010 AC4: related playlists (already ranked/capped upstream) render as cards.</summary>
+    [Fact]
+    public async Task PlaylistDetailView_renders_the_related_playlists_it_is_given()
+    {
+        var related = SamplePlaylist with { Slug = "related-slug", Title = "A Related Playlist" };
+
+        var html = await RenderAsync<PlaylistDetailView>(new Dictionary<string, object?>
+        {
+            [nameof(PlaylistDetailView.Content)] = SamplePlaylist,
+            [nameof(PlaylistDetailView.CacheSnapshot)] = PlaylistCacheSnapshot.Unavailable,
+            [nameof(PlaylistDetailView.RelatedPlaylists)] = new List<PlaylistContent> { related },
+        });
+
+        html.ShouldContain("A Related Playlist");
+        html.ShouldContain("href=\"/playlists/related-slug\"");
     }
 
     private static async Task<string> RenderAsync<TComponent>(Dictionary<string, object?> parameters)

@@ -2,8 +2,10 @@
     <h1>@Content.Title</h1>
     <p class="summary">@Content.Summary</p>
 
+    @* US-010 AC1: mood/genre/occasion/era shown together as one tag list (PlaylistTags.All - era
+       included, blank era excluded so a playlist with no era doesn't render an empty tag pill). *@
     @{
-        var tags = Content.Moods.Concat(Content.Genres).Concat(Content.Occasions).ToList();
+        var tags = PlaylistTags.All(Content);
     }
     @if (tags.Count > 0)
     {
@@ -15,7 +17,11 @@
         </ul>
     }
 
-    <div class="curator-note">@Content.CuratorNote</div>
+    @* US-010 AC1/spec 9.3/SEC-003: rendered through Markdig with DisableHtml() so raw HTML in the
+       source Markdown is escaped rather than passed through - see CuratorNoteRenderer's doc
+       comment. MarkupString is safe here specifically because the HTML came out of that sanitizing
+       pipeline, not from unprocessed user input. *@
+    <div class="curator-note">@((MarkupString)CuratorNoteRenderer.ToSanitizedHtml(Content.CuratorNote))</div>
 
     @if (CacheSnapshot.IsPlayable)
     {
@@ -23,7 +29,40 @@
         {
             <p class="track-count">@trackCount tracks</p>
         }
-        <p class="player-placeholder">Click-to-load Spotify embed lands in US-010.</p>
+        @if (CacheSnapshot.CoverImageUrl is { } coverImageUrl)
+        {
+            <img class="cover-image" src="@coverImageUrl" alt="@($"{Content.Title} cover art")" />
+        }
+
+        @if (ShowEmbed)
+        {
+            @* US-010 AC2/spec 11.3/12.4(a): embed URL built only from the validated
+               spotifyPlaylistId, never from content-file input. *@
+            <iframe
+                class="spotify-embed"
+                src="@EmbedUrl"
+                title="Spotify player"
+                width="100%"
+                height="352"
+                frameborder="0"
+                allowfullscreen
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy">
+            </iframe>
+        }
+        else
+        {
+            @* US-010 AC2/spec 11.3: click-to-load - no iframe in the initial HTML and no contact
+               with Spotify until this link is followed. A plain static-SSR link to "?listen=1"
+               (full navigation, re-rendering this same static page with the iframe now present),
+               not an @rendermode InteractiveServer island - see the design-decision comment on
+               PlaylistDetailPage.razor for why. *@
+            <p class="player-placeholder">
+                <a href="?listen=true" class="load-player-link">Listen here</a>
+                - loading the player connects to Spotify, which may process your browser data under
+                its own policies.
+            </p>
+        }
     }
     else
     {
@@ -32,6 +71,25 @@
             The Spotify player is currently unavailable for this playlist. The curator note above is
             still complete.
         </p>
+    }
+
+    @* US-010 AC3/FR-022: always present (even when the cache is unavailable, per FR-024) since it
+       is built only from the editorial spotifyPlaylistId, never from cache data. *@
+    <a href="@OpenInSpotifyUrl" class="open-in-spotify" target="_blank" rel="noopener noreferrer">
+        Open in Spotify
+    </a>
+
+    @if (RelatedPlaylists.Count > 0)
+    {
+        <section class="related-playlists">
+            <h2>Related playlists</h2>
+            @foreach (var related in RelatedPlaylists)
+            {
+                <a href="@($"/playlists/{related.Slug}")" class="playlist-card-link">
+                    <PlaylistCard Content="related" CacheSnapshot="GetRelatedCacheSnapshot(related)" />
+                </a>
+            }
+        </section>
     }
 </article>
 
@@ -42,4 +100,23 @@
 
     [Parameter, EditorRequired]
     public required PlaylistCacheSnapshot CacheSnapshot { get; set; }
+
+    /// <summary>US-010 AC2: true only once the visitor has followed the "Listen here" click-to-load link.</summary>
+    [Parameter]
+    public bool ShowEmbed { get; set; }
+
+    /// <summary>US-010 AC4: at most three related playlists, already ranked/capped by <see cref="RelatedPlaylistRanking"/>.</summary>
+    [Parameter]
+    public IReadOnlyList<PlaylistContent> RelatedPlaylists { get; set; } = [];
+
+    [Parameter]
+    public IReadOnlyDictionary<string, PlaylistCacheSnapshot> RelatedCacheSnapshots { get; set; } =
+        new Dictionary<string, PlaylistCacheSnapshot>();
+
+    private string OpenInSpotifyUrl => $"https://open.spotify.com/playlist/{Content.SpotifyPlaylistId}";
+
+    private string EmbedUrl => $"https://open.spotify.com/embed/playlist/{Content.SpotifyPlaylistId}";
+
+    private PlaylistCacheSnapshot GetRelatedCacheSnapshot(PlaylistContent related) =>
+        RelatedCacheSnapshots.GetValueOrDefault(related.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable);
 }

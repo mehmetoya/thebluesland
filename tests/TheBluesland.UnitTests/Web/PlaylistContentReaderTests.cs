@@ -69,4 +69,27 @@ public sealed class PlaylistContentReaderTests
 
         playlists.ShouldBeEmpty();
     }
+
+    /// <summary>US-010 AC5/FR-020: previousSlugs is read so the detail page can redirect old slugs.</summary>
+    [Fact]
+    public async Task ReadAllAsync_maps_previousSlugs()
+    {
+        var contentDirectory = Path.Combine(FixturesRoot, "content-playlists-detail");
+
+        var playlists = await _reader.ReadAllAsync(contentDirectory, CancellationToken.None);
+
+        var playlist = playlists.Single(p => p.Slug == "primary-playlist");
+        playlist.PreviousSlugs.ShouldBe(["legacy-primary-slug"]);
+    }
+
+    [Fact]
+    public async Task ReadAllAsync_maps_a_missing_previousSlugs_to_an_empty_list()
+    {
+        var contentDirectory = Path.Combine(FixturesRoot, "content-playlists");
+
+        var playlists = await _reader.ReadAllAsync(contentDirectory, CancellationToken.None);
+
+        var playlist = playlists.Single(p => p.Slug == "masterpieces-of-erkin-the-father");
+        playlist.PreviousSlugs.ShouldBeEmpty();
+    }
 }

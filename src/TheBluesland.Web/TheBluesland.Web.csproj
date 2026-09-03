@@ -9,6 +9,8 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <!-- Parses editorial Markdown front matter (title/summary/tags/curator note) for render. -->
     <PackageReference Include="YamlDotNet" />
+    <!-- US-010/spec 12.2: renders curator-note Markdown to sanitized HTML (Markdig.DisableHtml()). -->
+    <PackageReference Include="Markdig" />
   </ItemGroup>
 
   <ItemGroup>

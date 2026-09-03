@@ -61,5 +61,6 @@ public sealed class PlaylistCatalogueSortTests
             IsPublished: true,
             Featured: false,
             DisplayOrder: displayOrder,
-            PublishedAt: publishedAt);
+            PublishedAt: publishedAt,
+            PreviousSlugs: []);
 }

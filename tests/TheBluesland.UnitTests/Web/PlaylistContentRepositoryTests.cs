@@ -11,7 +11,7 @@ namespace TheBluesland.UnitTests.Web;
 /// </summary>
 public sealed class PlaylistContentRepositoryTests
 {
-    private readonly PlaylistContentRepository _repository = CreateRepository();
+    private readonly PlaylistContentRepository _repository = CreateRepository("content-playlists");
 
     [Fact]
     public async Task FindAllPublishedAsync_excludes_draft_playlists()
@@ -23,9 +23,31 @@ public sealed class PlaylistContentRepositoryTests
         published.ShouldNotContain(playlist => playlist.Slug == "dear-mr-fantasy");
     }
 
-    private static PlaylistContentRepository CreateRepository()
+    /// <summary>US-010 AC5/FR-020: an old slug listed in previousSlugs resolves to its playlist.</summary>
+    [Fact]
+    public async Task FindByPreviousSlugAsync_resolves_an_old_slug_to_the_playlist_that_now_owns_it()
     {
-        var contentDirectory = Path.Combine(AppContext.BaseDirectory, "Fixtures", "content-playlists");
+        var repository = CreateRepository("content-playlists-detail");
+
+        var playlist = await repository.FindByPreviousSlugAsync("legacy-primary-slug", CancellationToken.None);
+
+        playlist.ShouldNotBeNull();
+        playlist.Slug.ShouldBe("primary-playlist");
+    }
+
+    [Fact]
+    public async Task FindByPreviousSlugAsync_returns_null_for_a_slug_no_playlist_ever_used()
+    {
+        var repository = CreateRepository("content-playlists-detail");
+
+        var playlist = await repository.FindByPreviousSlugAsync("never-existed-slug", CancellationToken.None);
+
+        playlist.ShouldBeNull();
+    }
+
+    private static PlaylistContentRepository CreateRepository(string fixtureDirectoryName)
+    {
+        var contentDirectory = Path.Combine(AppContext.BaseDirectory, "Fixtures", fixtureDirectoryName);
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection([
                 new KeyValuePair<string, string?>(

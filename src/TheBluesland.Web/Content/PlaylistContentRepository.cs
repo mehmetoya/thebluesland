@@ -30,6 +30,19 @@ public sealed class PlaylistContentRepository
     }
 
     /// <summary>
+    /// US-010 AC5/FR-020: resolves an old slug (one a playlist's <c>previousSlugs</c> front-matter
+    /// array still lists) to the playlist now owning it, so the detail page can issue a permanent
+    /// redirect to its current slug. Only consulted once <see cref="FindBySlugAsync"/> has already
+    /// failed to find a current-slug match - a slug's own current owner always wins over any other
+    /// playlist that happens to list it as a former slug.
+    /// </summary>
+    public async Task<PlaylistContent?> FindByPreviousSlugAsync(string slug, CancellationToken cancellationToken)
+    {
+        var playlists = await LoadAllAsync(cancellationToken);
+        return playlists.FirstOrDefault(playlist => playlist.PreviousSlugs.Contains(slug, StringComparer.Ordinal));
+    }
+
+    /// <summary>
     /// Playlists the home page catalogue (US-008) may show; drafts are never listed. Sorted per
     /// US-009 AC1/FR-001 (<see cref="PlaylistCatalogueSort"/>) - the home page renders this order
     /// directly, before any filter is applied.

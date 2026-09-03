@@ -104,5 +104,6 @@ public sealed class PlaylistFilterTests
             IsPublished: true,
             Featured: false,
             DisplayOrder: 0,
-            PublishedAt: new DateOnly(2026, 1, 1));
+            PublishedAt: new DateOnly(2026, 1, 1),
+            PreviousSlugs: []);
 }

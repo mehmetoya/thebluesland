@@ -6,7 +6,9 @@ namespace TheBluesland.Web.Content;
 /// US-006's job; this type trusts whatever <see cref="PlaylistContentReader"/> found in the front
 /// matter. <see cref="Era"/>, <see cref="PublishedAt"/> and <see cref="DisplayOrder"/> were added
 /// for US-009's home-page sort/filter; <see cref="PublishedAt"/> stays nullable because draft
-/// content may omit it (US-006).
+/// content may omit it (US-006). <see cref="PreviousSlugs"/> was added for US-010 AC5/FR-020: old
+/// slugs a visitor might still land on, resolved to a permanent redirect to <see cref="Slug"/> by
+/// <see cref="PlaylistContentRepository.FindByPreviousSlugAsync"/>.
 /// </summary>
 public sealed record PlaylistContent(
     string Slug,
@@ -21,4 +23,5 @@ public sealed record PlaylistContent(
     bool IsPublished,
     bool Featured,
     int DisplayOrder,
-    DateOnly? PublishedAt);
+    DateOnly? PublishedAt,
+    IReadOnlyList<string> PreviousSlugs);

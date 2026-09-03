@@ -2,17 +2,40 @@
 @inject PlaylistContentRepository ContentRepository
 @inject PlaylistCacheLookup CacheLookup
 
+@*
+    US-010 click-to-load design decision: implemented as a plain static-SSR `?listen=true` query
+    flag (see PlaylistDetailView.razor's "Listen here" link), not an `@rendermode
+    InteractiveServer` island. Spec section 5's route table lists `/playlists/{slug}` as plain
+    "Static SSR" (unlike the home page's "Static SSR + interactive filter island"), and 12.3 only
+    allows Interactive Server for "clearly justified" islands. A full navigation to the same URL
+    with `?listen=true` appended re-renders this same static page with the iframe now present in
+    the initial HTML of that follow-up request - satisfying "no iframe in the DOM/no Spotify
+    contact until the click" (AC2,
+    spec 11.3) without adding SignalR/Interactive Server registration anywhere in
+    WebHostFactory.cs, matching the zero-JS pattern HomePage.razor's filter already established
+    (see its own design-decision comment) and keeping 12.3's "lost SignalR connection must not
+    prevent navigation or content access" trivially true, because this route never opens a SignalR
+    connection at all.
+*@
 @if (_content is not null)
 {
-    <PlaylistDetailView Content="_content" CacheSnapshot="_cacheSnapshot" />
+    <PlaylistDetailView
+        Content="_content"
+        CacheSnapshot="_cacheSnapshot"
+        ShowEmbed="Listen == true"
+        RelatedPlaylists="_relatedPlaylists"
+        RelatedCacheSnapshots="_relatedCacheSnapshots" />
 }
-else if (_hasLoaded)
+else if (_hasLoaded && !_redirected)
 {
     @* _hasLoaded guards this branch so the 404 status is only ever set once the slug lookup has
        actually completed - OnInitializedAsync's interim synchronous render (before the awaited
        lookup completes) would otherwise take this branch with _content still at its default null,
        set a 404 status as an eager HttpContext side effect, and leave that status stuck even
-       though the final render (after the lookup completes) correctly shows the found playlist. *@
+       though the final render (after the lookup completes) correctly shows the found playlist.
+       _redirected additionally excludes the case where the slug instead matched a previousSlugs
+       entry (AC5): without it, ResponseStatusCode below would overwrite the 301 already set on
+       HttpContext.Response with a 404, stepping on the redirect. *@
     <ResponseStatusCode Code="StatusCodes.Status404NotFound" />
     <p>Playlist not found.</p>
 }
@@ -21,12 +44,21 @@ else if (_hasLoaded)
     [Parameter]
     public string Slug { get; set; } = string.Empty;
 
+    /// <summary>US-010 AC2: present once the visitor has followed the "Listen here" click-to-load link.</summary>
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "listen")]
+    public bool? Listen { get; set; }
+
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 
     private PlaylistContent? _content;
     private PlaylistCacheSnapshot _cacheSnapshot = PlaylistCacheSnapshot.Unavailable;
+    private IReadOnlyList<PlaylistContent> _relatedPlaylists = [];
+    private IReadOnlyDictionary<string, PlaylistCacheSnapshot> _relatedCacheSnapshots =
+        new Dictionary<string, PlaylistCacheSnapshot>();
     private bool _hasLoaded;
+    private bool _redirected;
 
     protected override async Task OnInitializedAsync()
     {
@@ -35,12 +67,32 @@ else if (_hasLoaded)
         _content = await ContentRepository.FindBySlugAsync(Slug, cancellationToken);
         if (_content is null)
         {
+            // US-010 AC5/FR-020: an old previousSlugs entry redirects permanently to its playlist's
+            // current slug. HttpContext.Response is touched only here, post-await, once we know for
+            // certain whether a redirect applies - see the _hasLoaded/_redirected doc comment above
+            // for why an eager touch during the interim synchronous render would stick a wrong
+            // response (the same class of bug ResponseStatusCode.razor's doc comment documents).
+            var redirectTarget = await ContentRepository.FindByPreviousSlugAsync(Slug, cancellationToken);
+            if (redirectTarget is not null && HttpContext is not null)
+            {
+                HttpContext.Response.Redirect($"/playlists/{redirectTarget.Slug}", permanent: true);
+                _redirected = true;
+            }
+
             _hasLoaded = true;
             return;
         }
 
         // Never throws (spec 16.1): a DB outage must still yield a 200 with editorial content.
         _cacheSnapshot = await CacheLookup.GetSnapshotAsync(_content.SpotifyPlaylistId, cancellationToken);
+
+        // US-010 AC4/FR-023: up to three related playlists by shared-tag overlap, excluding this one.
+        var allPublished = await ContentRepository.FindAllPublishedAsync(cancellationToken);
+        _relatedPlaylists = RelatedPlaylistRanking.Apply(allPublished, _content);
+        _relatedCacheSnapshots = await CacheLookup.GetSnapshotsAsync(
+            _relatedPlaylists.Select(playlist => playlist.SpotifyPlaylistId).ToList(),
+            cancellationToken);
+
         _hasLoaded = true;
     }
 }

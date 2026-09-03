@@ -76,7 +76,8 @@ public sealed class PlaylistContentReader
             string.Equals(frontMatter.Status, PublishedStatus, StringComparison.OrdinalIgnoreCase),
             frontMatter.Featured ?? false,
             frontMatter.DisplayOrder ?? 0,
-            ParsePublishedAt(frontMatter.PublishedAt));
+            ParsePublishedAt(frontMatter.PublishedAt),
+            frontMatter.PreviousSlugs ?? []);
     }
 
     // Draft content may omit publishedAt entirely (US-006); an unparsable value degrades to null

@@ -259,16 +259,16 @@ dinlemeye başlamak istiyorum ki playlist'in ne olduğunu anlayıp doğrudan din
 
 Kabul kriterleri:
 
-- [ ] Detay sayfası açıldığında, curator note (Markdown'dan render edilmiş, sanitize edilmiş HTML),
+- [x] Detay sayfası açıldığında, curator note (Markdown'dan render edilmiş, sanitize edilmiş HTML),
       mood/genre/occasion/era etiketleri ve (varsa) cache'ten gelen track sayısı ve kapak görseli
       gösterilir.
-- [ ] Sayfa ilk yüklendiğinde Spotify iframe'i DOM'da yoktur; ziyaretçi "dinle" öğesine tıkladığında
+- [x] Sayfa ilk yüklendiğinde Spotify iframe'i DOM'da yoktur; ziyaretçi "dinle" öğesine tıkladığında
       iframe eklenir (click-to-load).
-- [ ] "Open in Spotify" bağlantısı, ilgili playlist'in `https://open.spotify.com/playlist/{id}`
+- [x] "Open in Spotify" bağlantısı, ilgili playlist'in `https://open.spotify.com/playlist/{id}`
       adresine işaret eder.
-- [ ] Sayfanın altında, aynı ziyaretçinin gördüğü playlist'i içermeyen, en fazla üç ilişkili
+- [x] Sayfanın altında, aynı ziyaretçinin gördüğü playlist'i içermeyen, en fazla üç ilişkili
       playlist (paylaşılan etiket sayısına göre) gösterilir.
-- [ ] `previousSlugs` içinde eski bir slug bulunduğunda, o eski slug'a yapılan istek yeni slug'a
+- [x] `previousSlugs` içinde eski bir slug bulunduğunda, o eski slug'a yapılan istek yeni slug'a
       kalıcı (301) yönlendirilir.
 
 Kapsam dışı: cache eksikliğinde davranış (US-005'te tanımlı ve burada da geçerli, ayrı test

@@ -14,14 +14,23 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 3 — Blazor scaffold (aktif).** US-010 (detay sayfası) sırada. Ardından US-011
-  (SEO/sitemap/sosyal kart), US-012 (güvenlik başlıkları/CSP).
+- **Faz 3 — Blazor scaffold (aktif).** US-011 (SEO/sitemap/sosyal kart) sırada. Ardından US-012
+  (güvenlik başlıkları/CSP).
 - **Faz 4 — CI/CD.** US-013 (PR pipeline'ı), US-014 (Render+Neon deploy pipeline'ı).
 - **Faz 5 — Launch içeriği.** US-015 (sekiz playlist'in editoryal tamamlanması) — Faz 1-4 ile
   paralel yürütülebilir, ama public launch bunu bekler.
 
 ## Tamamlanan
 
+- **US-010 — Playlist detay sayfası: curator note, cache alanları, Spotify embed.** Curator note
+  artık Markdig ile (raw HTML devre dışı) sanitize edilmiş HTML olarak render ediliyor; review'da
+  bulunan bir XSS açığı (markdown link syntax'ında `javascript:`/`data:` şeması) ayrıca kapatıldı.
+  Click-to-load embed, US-009'daki gibi bilinçli olarak zero-JS statik `?listen=true` query-flag
+  yaklaşımıyla yapıldı (Interactive Server eklenmedi). "Open in Spotify" linki, en fazla 3 ilişkili
+  playlist (paylaşılan etiket sayısına göre, `RelatedPlaylistRanking`), ve `previousSlugs` için
+  gerçek 301 redirect eklendi. Review'da bulunan bir diğer hata (boş `era`'nın yanlışlıkla
+  "paylaşılan etiket" sayılması) da düzeltildi — dört yerdeki tag mantığı `PlaylistTags` altında
+  birleştirildi. Testcontainers Postgres'e karşı 116/116 test yeşil.
 - **US-009 — Ana sayfa: katalog, kartlar ve filtreleme.** Ana sayfa filtresi, spec'in "interactive
   filter island" ifadesine rağmen bilinçli olarak `@rendermode InteractiveServer` kullanmıyor — düz
   `<form method="get">` + `[SupplyParameterFromQuery]`, static SSR'da sunucu tarafında filtreleniyor;
