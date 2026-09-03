@@ -20,7 +20,16 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/TheBluesland.Data/TheBluesland.Data.csproj" />
+    <ProjectReference Include="../../src/TheBluesland.Web/TheBluesland.Web.csproj" />
     <ProjectReference Include="../../tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- TheBluesland.Web is a Blazor Web App (Microsoft.NET.Sdk.Web); this framework reference
+         gives this plain class-library test project access to the same ASP.NET Core / Blazor
+         Components assemblies (HtmlRenderer, IServer, ...) needed to test it in-process, without
+         adding a WebApplicationFactory/TestHost NuGet package. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>

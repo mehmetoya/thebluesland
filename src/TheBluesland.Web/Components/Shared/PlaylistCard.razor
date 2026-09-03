@@ -1,0 +1,17 @@
+<article class="playlist-card">
+    <h2>@Content.Title</h2>
+    <p class="summary">@Content.Summary</p>
+    @if (CacheSnapshot is { IsPlayable: true, TrackCount: { } trackCount })
+    {
+        <p class="track-count">@trackCount tracks</p>
+    }
+</article>
+
+@code {
+    /// <summary>Editorial-only fields (US-005 AC1): must render fully even with no cache data.</summary>
+    [Parameter, EditorRequired]
+    public required PlaylistContent Content { get; set; }
+
+    [Parameter, EditorRequired]
+    public required PlaylistCacheSnapshot CacheSnapshot { get; set; }
+}

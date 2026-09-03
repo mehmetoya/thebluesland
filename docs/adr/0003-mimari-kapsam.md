@@ -1,6 +1,7 @@
 # ADR-0003 — Mimari kapsam: TheBluesland neden CLAUDE.md'deki çok-istemcili şablonu kullanmıyor
 
-Durum: Kabul edildi — Mehmet'in açık onayı bekliyor (bkz. Sonuçlar)
+Durum: Kabul edildi ve onaylandı — Mehmet, 2026-09-03 tarihinde US-005 ile (ilk `TheBluesland.Web`
+implementasyonu) devam kararı vererek bu sapmayı açıkça onayladı.
 
 ## Bağlam
 
@@ -69,9 +70,8 @@ Bunun yerine:
 
 - `docs/business-technical-specification.md`, `docs/adr/0002-spotify-veri-mimarisi.md` ve bu ADR,
   CLAUDE.md/ADR-0001'in TheBluesland için **geçerli olmadığını** açıkça belirtir.
-- **Bu sapma, implementasyon başlamadan önce Mehmet'in açık onayını gerektirir** (spec bölüm 23,
-  madde 9). Onay olmadan devam edilirse, ileride "neden CLAUDE.md'ye uyulmadı" sorusu code review
-  veya mimari denetimde tekrar gündeme gelebilir.
+- Bu sapma, implementasyon başlamadan önce Mehmet'in açık onayını gerektiriyordu (spec bölüm 23,
+  madde 9); bu onay 2026-09-03'te, US-005/`TheBluesland.Web` işine devam talimatıyla verildi.
 - Eğer TheBluesland ileride gerçek bir mobil istemci kazanırsa (bugün yol haritasında yok, spec
   bölüm 20), bu ADR yeniden değerlendirilmeli ve muhtemelen editoryal/DB mantığının bir kısmı
   CLAUDE.md'nin `Domain`/`Shared` ayrımına benzer bir şekilde yeniden katmanlanmalıdır. Bu, bugünkü

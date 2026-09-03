@@ -1,0 +1,45 @@
+<article class="playlist-detail">
+    <h1>@Content.Title</h1>
+    <p class="summary">@Content.Summary</p>
+
+    @{
+        var tags = Content.Moods.Concat(Content.Genres).Concat(Content.Occasions).ToList();
+    }
+    @if (tags.Count > 0)
+    {
+        <ul class="tags">
+            @foreach (var tag in tags)
+            {
+                <li>@tag</li>
+            }
+        </ul>
+    }
+
+    <div class="curator-note">@Content.CuratorNote</div>
+
+    @if (CacheSnapshot.IsPlayable)
+    {
+        @if (CacheSnapshot.TrackCount is { } trackCount)
+        {
+            <p class="track-count">@trackCount tracks</p>
+        }
+        <p class="player-placeholder">Click-to-load Spotify embed lands in US-010.</p>
+    }
+    else
+    {
+        <!-- US-005 AC2/FR-024: never a bare/broken iframe, always a readable fallback message. -->
+        <p class="player-unavailable" role="status">
+            The Spotify player is currently unavailable for this playlist. The curator note above is
+            still complete.
+        </p>
+    }
+</article>
+
+@code {
+    /// <summary>Editorial-only fields (US-005 AC1/AC3): must render fully with no cache data.</summary>
+    [Parameter, EditorRequired]
+    public required PlaylistContent Content { get; set; }
+
+    [Parameter, EditorRequired]
+    public required PlaylistCacheSnapshot CacheSnapshot { get; set; }
+}

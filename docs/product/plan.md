@@ -4,10 +4,9 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 ## Aktif
 
-- **Faz 0 — Spec/mimari onayı.** v0.2 spec, ADR-0002 ve ADR-0003 yazıldı. Mehmet'in onayı
-  bekleniyor:
-  - CLAUDE.md/ADR-0001 çok-istemcili şablonundan sapma (ADR-0003) — implementasyonu bloklamıyor
-    ama kod incelemesi öncesinde teyit edilmeli.
+- **Faz 0 — Spec/mimari onayı.** v0.2 spec, ADR-0002 ve ADR-0003 yazıldı. CLAUDE.md/ADR-0001
+  çok-istemcili şablonundan sapma (ADR-0003), Mehmet'in 2026-09-03'teki US-005 devam talimatıyla
+  onaylandı. Açık kalan onaylar:
   - v0.2 taksonomisi (spec bölüm 8) — nihai değer listesi.
   - Section 7'deki iki taslak playlist için önerilen başlık/etiket/not — nihai onay.
 
@@ -15,9 +14,8 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 1 — Spotify veri katmanı (son adım).** US-005 (graceful degradation) sırada — Faz 1'in
-  son hikayesi.
-- **Faz 2 — İçerik doğrulama.** US-006 (şema + taksonomi doğrulama), US-007 (CI'a bağlama).
+- **Faz 2 — İçerik doğrulama (aktif).** US-006 (şema + taksonomi doğrulama) sırada — backend-dev'e
+  atandı. Ardından US-007 (CI'a bağlama).
 - **Faz 3 — Blazor scaffold.** US-008 (iskelet + sağlık kontrolleri), US-009 (ana sayfa/filtre),
   US-010 (detay sayfası), US-011 (SEO/sitemap/sosyal kart), US-012 (güvenlik başlıkları/CSP).
 - **Faz 4 — CI/CD.** US-013 (PR pipeline'ı), US-014 (Render+Neon deploy pipeline'ı).
@@ -26,6 +24,12 @@ Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
 ## Tamamlanan
 
+- **US-005 — Cache eksik/bayat olduğunda zarif düşüş.** `src/TheBluesland.Web` (Blazor Web App) —
+  `PlaylistCacheLookup`, `PlaylistContentHealthCheck`, `PlaylistDetailPage`/`PlaylistCard`
+  bileşenleri; DB erişilemese veya cache satırı olmasa bile editoryal içerik 200 ile render
+  ediliyor, `/health/ready` yalnızca içerik doğrulamasına bakıyor. ADR-0003 ile CLAUDE.md
+  şablonundan sapma resmî onay aldı (Mehmet, 2026-09-03). Testcontainers Postgres'e karşı 43/43
+  test yeşil.
 - **US-004 — Aylık GitHub Actions senkron workflow'u.** `.github/workflows/sync-spotify.yml` —
   cron + `workflow_dispatch`, secret scope tek job'a sınırlı.
 - **US-003 — Spotify Web API senkron aracı.** `tools/spotify-playlist-fetcher` — front-matter

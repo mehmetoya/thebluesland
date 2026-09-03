@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/TheBluesland.Data/TheBluesland.Data.csproj" />
+    <Project Path="src/TheBluesland.Web/TheBluesland.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj" />

@@ -1,0 +1,37 @@
+@page "/playlists/{Slug}"
+@inject PlaylistContentRepository ContentRepository
+@inject PlaylistCacheLookup CacheLookup
+
+@if (_content is not null)
+{
+    <PlaylistDetailView Content="_content" CacheSnapshot="_cacheSnapshot" />
+}
+else
+{
+    <p>Playlist not found.</p>
+}
+
+@code {
+    [Parameter]
+    public string Slug { get; set; } = string.Empty;
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private PlaylistContent? _content;
+    private PlaylistCacheSnapshot _cacheSnapshot = PlaylistCacheSnapshot.Unavailable;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var cancellationToken = HttpContext?.RequestAborted ?? CancellationToken.None;
+
+        _content = await ContentRepository.FindBySlugAsync(Slug, cancellationToken);
+        if (_content is null)
+        {
+            return;
+        }
+
+        // Never throws (spec 16.1): a DB outage must still yield a 200 with editorial content.
+        _cacheSnapshot = await CacheLookup.GetSnapshotAsync(_content.SpotifyPlaylistId, cancellationToken);
+    }
+}
