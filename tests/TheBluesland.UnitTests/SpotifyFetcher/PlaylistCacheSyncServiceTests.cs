@@ -115,6 +115,53 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task SyncAsync_persists_an_earlier_playlist_even_when_a_later_one_throws()
+    {
+        // Regression test: at scale (100+ playlists, some running to thousands of tracks) a single
+        // transient failure partway through a run must not discard every successful fetch that
+        // already happened - each row is saved as it's fetched, not once at the very end.
+        var handler = new FakeHttpMessageHandler(request =>
+        {
+            var absolutePath = request.RequestUri!.AbsolutePath;
+
+            if (absolutePath == $"/v1/playlists/{AvailablePlaylistId}")
+            {
+                return JsonResponse(
+                    """
+                    {
+                      "name": "Masterpieces of Erkin the Father",
+                      "items": { "total": 0 }
+                    }
+                    """);
+            }
+
+            if (absolutePath == $"/v1/playlists/{AvailablePlaylistId}/items")
+            {
+                return JsonResponse("""{"items":[],"next":null}""");
+            }
+
+            if (absolutePath == $"/v1/playlists/{MissingPlaylistId}")
+            {
+                return new HttpResponseMessage(HttpStatusCode.InternalServerError);
+            }
+
+            throw new InvalidOperationException($"Unexpected request path '{absolutePath}'.");
+        });
+
+        await using var dbContext = await CreateMigratedDbContextAsync();
+        var service = new PlaylistCacheSyncService(new SpotifyPlaylistClient(new HttpClient(handler)), dbContext);
+
+        await Should.ThrowAsync<HttpRequestException>(() =>
+            service.SyncAsync([AvailablePlaylistId, MissingPlaylistId], AccessToken, CancellationToken.None));
+
+        await using var verifyContext = await CreateMigratedDbContextAsync();
+        var persisted = await verifyContext.SpotifyPlaylistCache.AsNoTracking()
+            .SingleOrDefaultAsync(e => e.SpotifyPlaylistId == AvailablePlaylistId);
+        persisted.ShouldNotBeNull();
+        persisted.Name.ShouldBe("Masterpieces of Erkin the Father");
+    }
+
+    [Fact]
     public async Task SyncAsync_with_no_playlist_ids_makes_no_spotify_calls_and_writes_nothing()
     {
         var handler = new FakeHttpMessageHandler(

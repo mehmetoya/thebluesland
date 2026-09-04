@@ -23,6 +23,14 @@ if (args.Length > 0 && string.Equals(args[0], "list-playlists", StringComparison
     return await ListMyPlaylistsAsync(cancellationToken);
 }
 
+// Read-only: prints every spotify_playlist_cache row (name/description/track count/artists) so
+// already-synced data can be reviewed without a direct database connection or a new credential -
+// uses the same NEON_SYNC_CONNECTION_STRING this workflow already holds. Never writes anything.
+if (args.Length > 0 && string.Equals(args[0], "dump-cache", StringComparison.Ordinal))
+{
+    return await DumpCacheAsync(cancellationToken);
+}
+
 var contentDirectory = args.Length > 0
     ? args[0]
     : Path.Combine(Directory.GetCurrentDirectory(), "content", "playlists");
@@ -86,6 +94,34 @@ static async Task<int> ListMyPlaylistsAsync(CancellationToken cancellationToken)
         if (!string.IsNullOrWhiteSpace(playlist.Description))
         {
             Console.WriteLine($"  {playlist.Description}");
+        }
+    }
+
+    return 0;
+}
+
+static async Task<int> DumpCacheAsync(CancellationToken cancellationToken)
+{
+    var connectionString = RequireEnvironmentVariable("NEON_SYNC_CONNECTION_STRING");
+
+    var optionsBuilder = new DbContextOptionsBuilder<TheBlueslandDbContext>().UseNpgsql(connectionString);
+    await using var dbContext = new TheBlueslandDbContext(optionsBuilder.Options);
+
+    var entries = await dbContext.SpotifyPlaylistCache
+        .AsNoTracking()
+        .OrderBy(e => e.Name)
+        .ToListAsync(cancellationToken);
+
+    Console.WriteLine($"{entries.Count} row(s) in spotify_playlist_cache:");
+    Console.WriteLine();
+    foreach (var entry in entries)
+    {
+        Console.WriteLine(
+            $"- {entry.SpotifyPlaylistId} | \"{entry.Name}\" | {entry.TrackCount} tracks | " +
+            $"available={entry.IsAvailable} | artists={string.Join(", ", entry.Artists)}");
+        if (!string.IsNullOrWhiteSpace(entry.Description))
+        {
+            Console.WriteLine($"  {entry.Description}");
         }
     }
 

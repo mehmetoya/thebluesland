@@ -22,14 +22,16 @@ on:
         description: >-
           "sync" (default) writes spotify_playlist_cache as usual. "list-playlists" is read-only
           discovery: lists every playlist on the account (id/name/track count) in this run's job
-          summary, for picking an editorial candidate, and touches neither the database nor
-          content/playlists.
+          summary, for picking an editorial candidate. "dump-cache" is read-only: prints every
+          already-synced spotify_playlist_cache row (name/description/track count/artists) to the
+          job summary. Neither read-only mode writes to the database or content/playlists.
         required: false
         default: sync
         type: choice
         options:
           - sync
           - list-playlists
+          - dump-cache
 
 jobs:
   sync:
@@ -61,6 +63,8 @@ jobs:
           mode="${{ github.event.inputs.mode || 'sync' }}"
           if [ "$mode" = "list-playlists" ]; then
             dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build -- list-playlists | tee -a "$GITHUB_STEP_SUMMARY"
+          elif [ "$mode" = "dump-cache" ]; then
+            dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build -- dump-cache | tee -a "$GITHUB_STEP_SUMMARY"
           else
             dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build
           fi
