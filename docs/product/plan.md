@@ -4,25 +4,37 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 ## Aktif
 
-- **Faz 0 — Spec/mimari onayı.** v0.2 spec, ADR-0002 ve ADR-0003 yazıldı. CLAUDE.md/ADR-0001
-  çok-istemcili şablonundan sapma (ADR-0003), Mehmet'in 2026-09-03'teki US-005 devam talimatıyla
-  onaylandı. Açık kalan onaylar:
-  - v0.2 taksonomisi (spec bölüm 8) — nihai değer listesi.
-  - Section 7'deki iki taslak playlist için önerilen başlık/etiket/not — nihai onay.
+- **Faz 5 — Launch içeriği.** US-015 (sekiz playlist'in editoryal tamamlanması) — 2/8 published
+  (bkz. Tamamlanan). Faz 1-4 ile paralel yürütülebilir, ama public launch bunu bekler.
 
 ## Sıradaki
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 4 — CI/CD.** Kod tarafı tamam (US-013, US-014); Faz'ın kapanması Mehmet'in Render
-  Blueprint'i bağlayıp uçtan uca ilk deploy'u doğrulamasını bekliyor — bkz. US-014 kalan risk.
-- **Faz 5 — Launch içeriği (aktif).** US-015 (sekiz playlist'in editoryal tamamlanması) — Faz 1-4
-  ile paralel yürütülebilir, ama public launch bunu bekler.
+- **US-015 devamı.** Altı playlist daha (başlık/özet/etiket/kürator notu) launch eşiği için gerekli
+  (spec 7.1).
 - **US-016 — AI destekli kürator notu taslağı önerisi.** Fazlardan bağımsız, yalnızca US-002'ye
   (salt-okunur DB rolü) bağımlı; `docs/adr/0005-ai-kurator-notu-siniri.md` ile onaylandı. US-015'i
   destekleyici, paralel yürütülebilir.
 
 ## Tamamlanan
+
+- **Faz 0 — Spec/mimari onayı.** v0.2 spec, ADR-0002 ve ADR-0003 yazıldı. CLAUDE.md/ADR-0001
+  çok-istemcili şablonundan sapma (ADR-0003), Mehmet'in 2026-09-03'teki US-005 devam talimatıyla
+  onaylandı. v0.2 taksonomisi (spec bölüm 8 — mood/genre/occasion/era, 4 liste) ve section 7'deki
+  iki taslak playlist'in başlık/etiket/özet/kürator notu, Mehmet tarafından 2026-09-05'te nihai
+  onaylandı (bkz. US-015'in ilk iki girdisi altında).
+- **Faz 4 — CI/CD.** US-013 + US-014 kod tarafı tamamlandı; Mehmet Render Blueprint'i bağladı,
+  ilk deploy `https://thebluesland.onrender.com`'da uçtan uca canlı doğrulandı (health-gated
+  traffic, GHCR image, otomatik deploy hook). Branch protection (altı CI job'u + PR zorunluluğu)
+  main üzerinde aktif — bkz. US-013/US-014 girdileri.
+- **US-015 (2/8) — Launch içeriği: ilk iki playlist.** Section 7'nin iki adayı yayınlandı:
+  "Masterpieces of Erkin the Father" (`0iJt9LMebhOY0KSHSJw3cS`, moods: energetic/raw, genres:
+  anadolu-rock/rock, occasion: night-drive, era: pre-1970, featured, displayOrder 1) ve "Dear Mr.
+  Fantasy" (`2m8X8fsMWor8A5AnmOHwzy`, moods: warm/nostalgic, genres: blues-rock/rock, occasion:
+  slow-evening, era: mixed-era, featured, displayOrder 2). Başlık/etiketler spec'in product-owner
+  taslağından değişmeden onaylandı; summary ve kürator notu prose'u bu oturumda taslak olarak
+  önerildi, Mehmet tarafından onaylandı. `validate-content` ve tam test suite (162/162) yeşil.
 
 - **US-014 — Render + Neon production deploy pipeline'ı (kod tarafı tamam, uçtan uca doğrulama
   bekliyor).** `.github/workflows/deploy.yml` — `main`'e her push'ta US-013'ün doğruladığı aynı
