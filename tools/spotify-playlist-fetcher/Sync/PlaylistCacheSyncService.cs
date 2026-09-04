@@ -66,9 +66,14 @@ public sealed class PlaylistCacheSyncService
 
                 unavailable++;
             }
-        }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            // Saved per playlist rather than once at the end: at 120+ playlists (some running to
+            // thousands of tracks, each requiring its own paginated Spotify calls just to collect
+            // artist names), a single transient failure partway through must not discard every
+            // successful fetch that already happened in this run. Re-running the sync after a
+            // partial failure is safe either way (idempotent upsert, spec US-003).
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         return new SyncSummary(created, updated, unavailable);
     }
