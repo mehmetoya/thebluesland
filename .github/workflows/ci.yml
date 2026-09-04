@@ -158,8 +158,12 @@ jobs:
           dotnet-version: "10.0.x"
 
       # GitHub-native PR dependency diff (NuGet + npm manifests); needs no secret beyond the
-      # default, auto-issued GITHUB_TOKEN.
+      # default, auto-issued GITHUB_TOKEN. Only meaningful (and only runnable - the action itself
+      # errors with "Both a base ref and head ref must be provided") on a pull_request event, which
+      # has a base/head to diff; skipped on the push: [main] trigger added for CI's safety-net rerun
+      # on direct pushes, where there is no base ref to compare against.
       - name: Dependency review
+        if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@v4
 
       - name: Restore
