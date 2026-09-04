@@ -59,6 +59,21 @@ public sealed class SpotifyMyPlaylistsClientTests
     }
 
     [Fact]
+    public async Task ListAsync_falls_back_to_the_items_total_field_when_tracks_is_absent()
+    {
+        // Regression test: if the February 2026 "tracks" -> "items" rename (see
+        // SpotifyPlaylistClient's XML doc) also touched the simplified playlist object /me/playlists
+        // returns, the track count must still be read correctly rather than silently defaulting to 0.
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => JsonResponse(
+            """{"items":[{"id":"renamed-field","name":"Renamed Field","public":true,"items":{"total":42}}],"next":null}""")));
+        var client = new SpotifyMyPlaylistsClient(httpClient);
+
+        var playlists = await client.ListAsync(AccessToken, CancellationToken.None);
+
+        playlists.ShouldHaveSingleItem().TrackCount.ShouldBe(42);
+    }
+
+    [Fact]
     public async Task ListAsync_skips_a_null_playlist_entry()
     {
         // Spotify can return a null item here if a playlist was deleted between page requests.
