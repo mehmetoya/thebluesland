@@ -7,6 +7,12 @@ name: CI
 # step and cannot be configured from this YAML (AC2), same pattern already used for US-007's
 # original content-validation job.
 #
+# Also runs on push: [main] - not part of US-013 AC1, but branch protection can only require a
+# check name GitHub has actually seen run at least once, and until protection is on, main can still
+# receive direct pushes (as US-012..US-014 did) that a pull_request-only trigger would never
+# validate. Redundant re-validation of a commit already checked on its PR is an acceptable cost for
+# that safety net.
+#
 # SEC-001/US-013 AC3: this workflow declares NO secrets, anywhere, in any job. It must never
 # reference SPOTIFY_CLIENT_ID, SPOTIFY_REFRESH_TOKEN or NEON_SYNC_CONNECTION_STRING - those stay
 # scoped exclusively to sync-spotify.yml's own `env:` block (see that workflow's header comment).
@@ -18,6 +24,8 @@ name: CI
 
 on:
   pull_request: {}
+  push:
+    branches: [main]
 
 permissions:
   contents: read
