@@ -14,6 +14,15 @@ Console.CancelKeyPress += (_, e) =>
 };
 var cancellationToken = cts.Token;
 
+// Read-only discovery mode: lists every playlist on the account so candidates can be picked for
+// editorial curation without ever asking Mehmet to paste a playlist ID (spec 11.2 still means the
+// human picks the title/tags/curator note - this only shortens "which ID is that playlist?").
+// Never touches spotify_playlist_cache or content/playlists.
+if (args.Length > 0 && string.Equals(args[0], "list-playlists", StringComparison.Ordinal))
+{
+    return await ListMyPlaylistsAsync(cancellationToken);
+}
+
 var contentDirectory = args.Length > 0
     ? args[0]
     : Path.Combine(Directory.GetCurrentDirectory(), "content", "playlists");
@@ -54,3 +63,31 @@ static string RequireEnvironmentVariable(string name) =>
     Environment.GetEnvironmentVariable(name) is { Length: > 0 } value
         ? value
         : throw new InvalidOperationException($"Required environment variable '{name}' is not set.");
+
+static async Task<int> ListMyPlaylistsAsync(CancellationToken cancellationToken)
+{
+    var clientId = RequireEnvironmentVariable("SPOTIFY_CLIENT_ID");
+    var refreshToken = RequireEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
+
+    using var httpClient = new HttpClient();
+    var authClient = new SpotifyAuthClient(httpClient);
+    var accessToken = await authClient.GetAccessTokenAsync(clientId, refreshToken, cancellationToken);
+
+    var myPlaylistsClient = new SpotifyMyPlaylistsClient(httpClient);
+    var playlists = await myPlaylistsClient.ListAsync(accessToken, cancellationToken);
+
+    Console.WriteLine($"Found {playlists.Count} playlist(s) on this Spotify account:");
+    Console.WriteLine();
+    foreach (var playlist in playlists)
+    {
+        Console.WriteLine(
+            $"- {playlist.Id} | \"{playlist.Name}\" | {playlist.TrackCount} tracks | " +
+            $"public={playlist.IsPublic} | owner={playlist.OwnerDisplayName ?? "(unknown)"}");
+        if (!string.IsNullOrWhiteSpace(playlist.Description))
+        {
+            Console.WriteLine($"  {playlist.Description}");
+        }
+    }
+
+    return 0;
+}

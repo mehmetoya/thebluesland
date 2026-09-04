@@ -16,7 +16,20 @@ on:
   schedule:
     # 03:00 UTC on the 1st of every month.
     - cron: "0 3 1 * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: >-
+          "sync" (default) writes spotify_playlist_cache as usual. "list-playlists" is read-only
+          discovery: lists every playlist on the account (id/name/track count) in this run's job
+          summary, for picking an editorial candidate, and touches neither the database nor
+          content/playlists.
+        required: false
+        default: sync
+        type: choice
+        options:
+          - sync
+          - list-playlists
 
 jobs:
   sync:
@@ -40,5 +53,14 @@ jobs:
       - name: Build
         run: dotnet build tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-restore
 
-      - name: Run sync
-        run: dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build
+      # `github.event.inputs.mode` only exists on a workflow_dispatch trigger; the monthly
+      # schedule trigger falls through the `|| 'sync'` default, same as an unset dispatch input.
+      - name: Run
+        run: |
+          set -euo pipefail
+          mode="${{ github.event.inputs.mode || 'sync' }}"
+          if [ "$mode" = "list-playlists" ]; then
+            dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build -- list-playlists | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build
+          fi
