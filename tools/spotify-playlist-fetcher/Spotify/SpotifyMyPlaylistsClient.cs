@@ -28,8 +28,12 @@ public sealed class SpotifyMyPlaylistsClient
         CancellationToken cancellationToken)
     {
         var results = new List<SpotifyOwnedPlaylistSummary>();
+        // Requests both "tracks.total" and "items.total": the simplified playlist object historically
+        // used "tracks", but the February 2026 migration that renamed the "Get Playlist" endpoint's
+        // top-level tracks container to "items" (see SpotifyPlaylistClient's XML doc) may have touched
+        // this shared object shape too. MapPlaylist below checks both, whichever Spotify sends back.
         string? nextUrl = $"{BaseUrl}/me/playlists" +
-                           "?limit=50&fields=items(id,name,description,public,tracks.total,owner.display_name),next";
+                           "?limit=50&fields=items(id,name,description,public,tracks.total,items.total,owner.display_name),next";
 
         while (nextUrl is not null)
         {
@@ -76,10 +80,7 @@ public sealed class SpotifyMyPlaylistsClient
         var isPublic = item.TryGetProperty("public", out var publicElement)
             && publicElement.ValueKind == JsonValueKind.True;
 
-        var trackCount = item.TryGetProperty("tracks", out var tracksElement)
-            && tracksElement.TryGetProperty("total", out var totalElement)
-                ? totalElement.GetInt32()
-                : 0;
+        var trackCount = TryGetNestedTotal(item, "tracks") ?? TryGetNestedTotal(item, "items") ?? 0;
 
         var ownerDisplayName = item.TryGetProperty("owner", out var ownerElement)
             && ownerElement.TryGetProperty("display_name", out var displayNameElement)
@@ -89,6 +90,14 @@ public sealed class SpotifyMyPlaylistsClient
 
         return new SpotifyOwnedPlaylistSummary(id, name, description, isPublic, trackCount, ownerDisplayName);
     }
+
+    private static int? TryGetNestedTotal(JsonElement item, string containerPropertyName) =>
+        item.TryGetProperty(containerPropertyName, out var container)
+        && container.ValueKind == JsonValueKind.Object
+        && container.TryGetProperty("total", out var totalElement)
+        && totalElement.ValueKind == JsonValueKind.Number
+            ? totalElement.GetInt32()
+            : null;
 }
 
 /// <summary>
