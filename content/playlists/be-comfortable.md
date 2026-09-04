@@ -3,9 +3,21 @@ schemaVersion: 1
 slug: be-comfortable
 spotifyPlaylistId: 4v4t1l43hgk8E2Yn7SpUQU
 title: "Be Comfortable"
-status: draft
+summary: "Film-score and ambient piano — Max Richter, Ólafur Arnalds, Hans Zimmer and Jon Hopkins among a hundred-sixty tracks."
+moods:
+  - melancholic
+  - warm
+genres:
+  - classical
+  - electronic
+occasions:
+  - headphones
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (161 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A soundtrack-and-ambient collection built for exactly what the title says: modern composers like Max Richter and Ólafur Arnalds, film-score names like Hans Zimmer and Alexandre Desplat, and electronic acts like Jon Hopkins and Boards of Canada that work in the same textural register. Nothing here demands attention; everything rewards it if given.
+
+Background music in the best sense — designed to lower a room's tempo.

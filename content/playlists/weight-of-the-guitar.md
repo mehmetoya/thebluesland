@@ -3,9 +3,22 @@ schemaVersion: 1
 slug: weight-of-the-guitar
 spotifyPlaylistId: 6orhAQEDslzQ8Rv09tdQ7x
 title: "Weight of the Guitar"
-status: draft
+summary: "A guitar-tone survey from blues-rock through metal — Eric Clapton, Jeff Beck, Deep Purple and Blind Guardian."
+moods:
+  - energetic
+  - raw
+genres:
+  - rock
+  - metal
+  - blues-rock
+occasions:
+  - headphones
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (37 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A study in what "heavy" means across genres — Eric Clapton and Jeff Beck's blues-rock guitar heroics, Deep Purple's proto-metal riffing, Blind Guardian and Amorphis' more modern metal takes on the same guitar-forward instinct. The title is literal: every track here earns its weight through the instrument, not the production.
+
+Headphones recommended for the tone alone.

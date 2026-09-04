@@ -3,9 +3,20 @@ schemaVersion: 1
 slug: tombik-efes-ve-les-metal
 spotifyPlaylistId: 24PFUq4VVF84clOvVjLBgk
 title: "Tombik Efes ve Leş Metal"
-status: draft
+summary: "Five hundred tracks of extreme and classic metal — Black Sabbath, Anthrax, Behemoth and Amon Amarth."
+moods:
+  - raw
+  - energetic
+genres:
+  - metal
+occasions:
+  - headphones
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (506 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A self-deprecating title ("chubby beer bottle and rotten metal") for a genuinely serious metal collection — Black Sabbath's foundational doom, Anthrax's thrash, Behemoth's blackened death metal, Amon Amarth's Viking-themed melodic death metal. Five hundred tracks covering most of metal's major subgenres.
+
+Not for the faint of ear, and proud of it.

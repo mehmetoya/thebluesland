@@ -3,9 +3,21 @@ schemaVersion: 1
 slug: entwined
 spotifyPlaylistId: 2FeUEzm5B5LULdjrvpXJhL
 title: "Entwined"
-status: draft
+summary: "Intimate folk and soul duets and harmonies — Bon Iver, Black Pumas, Ani DiFranco and Arooj Aftab."
+moods:
+  - warm
+  - melancholic
+genres:
+  - folk
+  - soul
+occasions:
+  - slow-evening
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (50 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A fifty-track set built around warmth and closeness — Bon Iver's hushed harmonies, Black Pumas' modern psychedelic soul, Arooj Aftab's genre-blurring vocal work, and Ani DiFranco's decades of confessional folk. The mood stays consistently intimate even as the genres shift underneath it.
+
+A slow-evening record for close company.

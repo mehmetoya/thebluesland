@@ -3,9 +3,20 @@ schemaVersion: 1
 slug: nocturnal
 spotifyPlaylistId: 2ajsCbei4Y7wH4enn08JEv
 title: "Nocturnal"
-status: draft
+summary: "Dark, atmospheric indie and dream-pop — Bat For Lashes, Beach House, Arcade Fire and Bastille."
+moods:
+  - melancholic
+  - energetic
+genres:
+  - indie
+occasions:
+  - late-night
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (163 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A hundred sixty-three tracks built for after dark specifically — Beach House and Bat For Lashes' dream-pop haze, Antony and the Johnsons' vulnerable vocals, Balance and Composure's heavier post-hardcore edges. The mood stays nocturnal throughout even as the genre boundaries blur.
+
+Built for the hours when most other playlists feel wrong.

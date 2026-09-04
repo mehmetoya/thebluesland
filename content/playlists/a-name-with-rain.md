@@ -3,9 +3,21 @@ schemaVersion: 1
 slug: a-name-with-rain
 spotifyPlaylistId: 1pQhEuhZtS6uth3bc1MK1q
 title: "A Name with Rain 🌧️ ☔️"
-status: draft
+summary: "Every song here has rain somewhere in its name or its mood — Bob Dylan, Bonnie Raitt and Led Zeppelin among the forty tracks."
+moods:
+  - melancholic
+  - nostalgic
+genres:
+  - rock
+  - blues-rock
+occasions:
+  - slow-evening
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (40 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A concept built on weather: forty tracks that mention rain, or sound like it, from Bob Dylan's and Bonnie Raitt's Americana through Led Zeppelin's heavier storms. It plays like a mood board more than a mixtape — melancholic without being one-note, since rain covers a lot of emotional ground.
+
+Made for actual rainy weather, not just rainy metaphors.

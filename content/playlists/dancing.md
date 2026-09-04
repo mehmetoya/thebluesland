@@ -3,9 +3,20 @@ schemaVersion: 1
 slug: dancing
 spotifyPlaylistId: 0czg2DK7pxxBsA3zp1ZPcj
 title: "Dancing"
-status: draft
+summary: "Techno and electronic rhythm tracks — Acid Arab, Air, Ben Frost and BADBADNOTGOOD among a hundred fifteen tracks."
+moods:
+  - energetic
+  - raw
+genres:
+  - electronic
+occasions:
+  - night-drive
+era: 2000s-present
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (115 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A dedicated electronic and techno set, distinct from the rock and indie playlists elsewhere in the catalogue — Acid Arab's Arabic-inflected techno, Ben Frost's harsher soundscapes, BADBADNOTGOOD's jazz-electronic crossover. It's built purely around rhythm and momentum rather than songs in the traditional sense.
+
+For late-night driving or an actual dance floor.
