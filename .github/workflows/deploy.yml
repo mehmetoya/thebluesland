@@ -69,10 +69,19 @@ jobs:
       # Mehmet adds the secret - see this file's header comment and render.yaml. Render performs
       # its own `/health/ready` gate (AC2) after this trigger; this step only asks Render to start
       # that process, it does not itself confirm the deploy succeeded.
+      #
+      # The secret is read into `env` once and both steps below branch on `env.RENDER_DEPLOY_HOOK_URL`
+      # rather than referencing `secrets.RENDER_DEPLOY_HOOK_URL` directly inside `if:` - functionally
+      # equivalent, but avoids editor/linter false positives ("Unrecognized named-value: 'secrets'")
+      # that some GitHub Actions schema validators raise for `secrets` used inside a step `if:`.
       - name: Trigger Render deploy
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
-        run: curl --fail --silent --show-error --request POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+        if: ${{ env.RENDER_DEPLOY_HOOK_URL != '' }}
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
 
       - name: Render deploy hook not configured
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL == '' }}
+        if: ${{ env.RENDER_DEPLOY_HOOK_URL == '' }}
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: echo "::warning::RENDER_DEPLOY_HOOK_URL secret is not set - image was pushed to GHCR but Render was not asked to deploy it. See deploy.yml's header comment."
