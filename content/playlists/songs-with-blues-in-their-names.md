@@ -3,9 +3,20 @@ schemaVersion: 1
 slug: songs-with-blues-in-their-names
 spotifyPlaylistId: 7rK30UFBJYwsOMzQDZ49uO
 title: "Songs with Blues in Their Names"
-status: draft
+summary: "A running joke turned real playlist: every track that name-drops the blues, from AC/DC to Albert King to Barış Manço."
+moods:
+  - nostalgic
+genres:
+  - blues
+  - rock
+occasions:
+  - slow-evening
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (138 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A concept playlist built on a pun: every song here has some form of the word "blues" in its title, regardless of what genre actually made it. The result is a stranger, funnier mixtape than a straight blues playlist would be — hard rock sits next to Delta blues sits next to Anadolu rock, united only by a shared word.
+
+Less a mood than a scavenger hunt; good for when you want surprises more than consistency.

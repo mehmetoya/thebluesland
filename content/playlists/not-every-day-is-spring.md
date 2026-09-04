@@ -3,9 +3,20 @@ schemaVersion: 1
 slug: not-every-day-is-spring
 spotifyPlaylistId: 4adf8uD3dh4Xuh642g1zNj
 title: "Not Every Day Is Spring"
-status: draft
+summary: "A companion folk collection to My Folklore — Cengiz Özkan, Erkan Oğur, Ezginin Günlüğü and more."
+moods:
+  - melancholic
+  - warm
+genres:
+  - folk
+occasions:
+  - slow-evening
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (32 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A second, closely related folk collection — Ezginin Günlüğü's more song-oriented approach alongside Erkan Oğur's instrumental work, held together by a title that borrows a Turkish idiom about hardship and change. It leans slightly more melancholic than "My Folklore," built for the days the title describes.
+
+Best paired with quiet rather than a drive.

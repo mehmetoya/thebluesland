@@ -26,6 +26,20 @@ internal static class PlaylistTaxonomy
         "soul",
         "jazz",
         "anadolu-rock",
+        // Added 2026-09-05 (Mehmet's approval) when the catalogue widened from a hand-picked
+        // blues/rock showcase to cover every public playlist he owns - the original 6 values
+        // were sized for 8-15 blues/rock-adjacent playlists (spec 8.1), not a personal library
+        // spanning punk, metal, indie, folk, classical, electronic, world and country.
+        "punk",
+        "metal",
+        "indie",
+        "folk",
+        "funk",
+        "country",
+        "classical",
+        "electronic",
+        "world",
+        "pop",
     ];
 
     public static readonly IReadOnlyCollection<string> Occasions =

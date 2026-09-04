@@ -3,9 +3,20 @@ schemaVersion: 1
 slug: covers-of-crossroads
 spotifyPlaylistId: 7aCEgBpxZDdJ37Tddv7wd4
 title: "Covers of Crossroads ⛌"
-status: draft
+summary: "Every notable version of \"Crossroads,\" from Robert Johnson's myth through Cream and Eric Clapton's electric takes."
+moods:
+  - raw
+  - nostalgic
+genres:
+  - blues
+occasions:
+  - headphones
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (18 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+Few songs carry as much mythology as "Crossroads" — the Robert Johnson legend, the deal at the crossroads, and the decades of guitarists who've tried to answer it with their own version. This playlist collects that lineage directly: Cream's landmark live recording, Eric Clapton's later returns to the song, and lesser-known versions that show how far one song can travel.
+
+A study in interpretation as much as a playlist.

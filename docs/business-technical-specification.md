@@ -355,7 +355,7 @@ the Father" (Anadolu rock) and "Dear Mr. Fantasy" (blues rock).
 Dropped from v0.1: `calm`, `dark`, `romantic`, `reflective`, `hopeful`. These can return once the
 catalogue is large enough that 5 values under-differentiate it.
 
-### 8.3 Genre vocabulary (v0.2, 6 values)
+### 8.3 Genre vocabulary (v0.2, 6 values; widened to 16 on 2026-09-05)
 
 - `blues`
 - `blues-rock`
@@ -368,12 +368,32 @@ catalogue is large enough that 5 values under-differentiate it.
   of its founding figures. Without this value, "Masterpieces of Erkin the Father" has no accurate
   genre tag in the v0.1 dictionary.
 
-This dictionary holds 6 values rather than the ~5 target because the new `anadolu-rock` value was
+This dictionary held 6 values rather than the ~5 target because the new `anadolu-rock` value was
 required for content-accuracy reasons (section 8.5), not for taxonomy-design reasons; the product
 owner judged shrinking the historically core `blues` genre set further as a worse trade-off than
 allowing one extra value. Dropped from v0.1: `delta-blues`, `electric-blues`, `roots-rock`,
-`folk`, `americana`, `instrumental` — these remain available as sub-style detail inside curator
-note prose instead of as filterable tags.
+`folk` (reinstated below), `americana`, `instrumental` — these remain available as sub-style
+detail inside curator note prose instead of as filterable tags.
+
+**2026-09-05 widening.** Mehmet decided the catalogue should cover every public playlist he owns
+rather than a hand-picked blues/rock showcase (US-015 follow-up, ~120 playlists) - the original 6
+values, sized for 8-15 blues/rock-adjacent entries (section 8.1), cannot describe a personal
+library spanning punk, metal, indie, folk music, classical, electronic, world music and country.
+Mehmet approved 10 additional values in the same session:
+
+- `punk`
+- `metal`
+- `indie`
+- `folk`
+- `funk`
+- `country`
+- `classical`
+- `electronic`
+- `world`
+- `pop`
+
+This is still a content change, not an architecture change (section 8.1) - the taxonomy remains
+whatever list `PlaylistTaxonomy.Genres` currently holds.
 
 ### 8.4 Occasion vocabulary (v0.2, 5 values)
 
