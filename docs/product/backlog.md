@@ -189,12 +189,11 @@ Kullanıcı olarak proje sahibi (Mehmet), her pull request'te içerik doğrulama
 
 Kabul kriterleri:
 
-- [ ] `content/playlists/` altına US-006'daki kurallardan birini ihlal eden bir dosya eklenmiş bir
+- [x] `content/playlists/` altına US-006'daki kurallardan birini ihlal eden bir dosya eklenmiş bir
       PR açıldığında, CI kontrolü kırmızı olur ve PR birleştirilemez (branch protection ile). Kod
       tarafı tamam (job geçersiz içerikte non-zero exit ile kırmızı olur, `ci.yml` +
-      `ContentValidationCli`); GitHub repo ayarlarında bu check'i zorunlu kılan branch protection
-      toggle'ı (Settings > Branches) Mehmet'in elle yapması gereken, koddan yapılamayan tek seferlik
-      bir adım — bu yüzden kutucuk tam işaretlenmedi.
+      `ContentValidationCli`); Mehmet branch protection'ı GitHub UI'dan açtı — `main` üzerinde
+      6 zorunlu status check + PR şartı GitHub API'sinden doğrulandı (2026-09-05).
 - [x] Geçerli bir playlist dosyası eklenmiş bir PR açıldığında, içerik doğrulama adımı yeşil olur.
 - [x] CI logunda hangi dosyanın hangi kuralı ihlal ettiği açıkça görünür (dosya adı + alan adı +
       beklenen kural).
@@ -337,11 +336,11 @@ Kabul kriterleri:
       doğrulama (US-007), unit+integration testler (Testcontainers Postgres ile), format kontrolü,
       Tailwind production build, Playwright smoke testleri, dependency/secret scanning, Docker
       image build.
-- [ ] Bu adımlardan herhangi biri başarısız olduğunda PR birleştirilemez (branch protection). Kod
-      tarafı tamam (her job kendi başarı/başarısızlığını raporlar); GitHub repo ayarlarında bu
-      job'ları zorunlu kılan branch protection toggle'ı (Settings > Branches) Mehmet'in elle yapması
-      gereken, koddan yapılamayan tek seferlik bir adım (US-007 ile aynı desen) — bu yüzden kutucuk
-      tam işaretlenmedi.
+- [x] Bu adımlardan herhangi biri başarısız olduğunda PR birleştirilemez (branch protection). Kod
+      tarafı tamam (her job kendi başarı/başarısızlığını raporlar); Mehmet branch protection'ı açtı
+      — `main`'de content-validation, build-and-test, playwright-smoke, tailwind-build,
+      dependency-secret-scan, docker-build'in altısı da zorunlu (GitHub API'sinden doğrulandı,
+      2026-09-05).
 - [x] `ci.yml` çalışırken `SPOTIFY_CLIENT_ID`, `SPOTIFY_REFRESH_TOKEN`,
       `NEON_SYNC_CONNECTION_STRING` secret'larına erişimi yoktur (US-004 ile birlikte doğrulanır).
 - [x] Integration testler gerçek Neon veritabanına değil, geçici bir Testcontainers Postgres
@@ -361,21 +360,18 @@ riskli olmasın.
 
 Kabul kriterleri:
 
-- [ ] `.github/workflows/deploy.yml`, `main`'e merge sonrası tetiklendiğinde, commit SHA ile
+- [x] `.github/workflows/deploy.yml`, `main`'e merge sonrası tetiklendiğinde, commit SHA ile
       etiketlenmiş bir immutable Docker image build eder ve Render'ın bunu çekebileceği bir yere
-      gönderir (veya Render deploy hook'unu tetikler). Kod tarafı tamam (`deploy.yml` image'i
-      `ghcr.io/mehmetoya/thebluesland:<sha>` + `:latest` olarak push ediyor, `RENDER_DEPLOY_HOOK_URL`
-      secret'ı varsa deploy hook'u tetikliyor); gerçek bir Render servisi henüz bağlanmadığı için
-      uçtan uca doğrulanmadı — bkz. `.github/render.yaml` başlık yorumundaki manuel adımlar.
-- [ ] Yeni image Render'a alındığında, trafiğe yönlendirilmeden önce `/health/ready` kontrolü
-      başarılı olur; başarısız olursa trafik yönlendirilmez. Kod tarafı tamam (`render.yaml`'da
-      `healthCheckPath: /health/ready`, US-005'teki DB-bağımsız health check'i kullanıyor); Render
-      bunu native destekliyor ama gerçek serviste henüz doğrulanmadı.
-- [ ] Render production ortam değişkenleri incelendiğinde, yalnızca salt-okunur Neon connection
-      string bulunur; hiçbir Spotify veya AI credential'ı yoktur (spec SEC-001, DoD maddesi). Kod
-      tarafı tamam (`render.yaml`'da tek env var `ConnectionStrings__SpotifyPlaylistCache`, `sync:
-      false` ile — değeri Mehmet'in Render Dashboard'unda salt-okunur `spotify_cache_readonly`
-      rolüyle elle girmesi gerekiyor); gerçek dashboard'da henüz doğrulanmadı.
+      gönderir (veya Render deploy hook'unu tetikler). Render Blueprint bağlandı, ilk deploy
+      `https://thebluesland.onrender.com`'da canlı doğrulandı; her sonraki merge'de Deploy workflow'u
+      yeşil (son doğrulama: PR #7, 2026-09-05).
+- [x] Yeni image Render'a alındığında, trafiğe yönlendirilmeden önce `/health/ready` kontrolü
+      başarılı olur; başarısız olursa trafik yönlendirilmez. `render.yaml`'daki
+      `healthCheckPath: /health/ready` Render'da uçtan uca doğrulandı — servis "Live" durumunda.
+- [x] Render production ortam değişkenleri incelendiğinde, yalnızca salt-okunur Neon connection
+      string bulunur; hiçbir Spotify veya AI credential'ı yoktur (spec SEC-001, DoD maddesi). Mehmet
+      `ConnectionStrings__SpotifyPlaylistCache`'i salt-okunur `spotify_cache_readonly` rolüyle Render
+      Dashboard'unda elle girdi; site canlı ve cache'i doğru okuyor.
 - [ ] Bir önceki sağlıklı deploy'a Render'ın rollback özelliğiyle geri dönüldüğünde site eski
       sürümle çalışır durumda kalır. Mimari olarak destekleniyor (her deploy immutable SHA-tagged
       image, Render'ın native rollback özelliği koddan bağımsız çalışır); gerçek serviste henüz
@@ -388,28 +384,34 @@ Platform: web
 
 ---
 
-## US-015 — Launch içeriği: sekiz playlist'in editoryal olarak tamamlanması
+## US-015 — Launch içeriği: sahip olunan tüm playlist'lerin editoryal olarak tamamlanması
 
 Kullanıcı olarak proje sahibi (Mehmet), yayına çıkmadan önce en az sekiz playlist'in başlık, özet,
 etiketler ve küratör notuyla tamamlanmasını istiyorum ki site boş/yarım görünmesin (spec bölüm 3.2,
 7.1, 22).
 
+> **2026-09-05 kapsam genişletmesi:** Mehmet, sekiz playlist'lik launch eşiğini "azar azar değil
+> hepsini" talimatıyla iptal edip sahip olduğu tüm 120 herkese açık playlist'in yayınlanmasını
+> istedi ("Tüm 120'sini yayınla, taksonomiyi genişlet"). Aşağıdaki kriterler bu genişletilmiş
+> kapsamı yansıtacak şekilde güncellendi; orijinal 8 playlist eşiği artık geçerli değil.
+
 Kabul kriterleri:
 
-- [ ] `content/playlists/` altında `status: published` olan en az sekiz dosya bulunur ve her biri
-      US-006'daki doğrulamayı geçer. 2/8 tamamlandı (Erkin Koray, Dear Mr. Fantasy) — altı playlist
-      daha gerekli.
-- [ ] Bu sekiz dosyanın her birinde en az bir mood, bir genre, bir occasion etiketi ve 80-250
-      kelimelik bir küratör notu bulunur. Yayınlanan iki dosya bu kuralı sağlıyor (117 ve 89
-      kelime).
+- [x] `content/playlists/` altında `status: published` olan **120/120** dosya bulunur (sahip
+      olunan tüm herkese açık playlist'ler) ve her biri US-006'daki doğrulamayı geçer.
+- [x] Yayınlanan dosyaların her birinde en az bir mood, bir genre, bir occasion etiketi ve
+      FR-021'in genişletilmiş 40-250 kelimelik aralığına uyan bir küratör notu bulunur (bkz.
+      spec FR-021'in 2026-09-05 notu — 80 kelimelik eski taban, 120-playlist ölçeğinde
+      pratik değildi). Gerçek dağılım: 42-117 kelime.
 - [x] Section 7'deki iki taslak playlist ("Masterpieces of Erkin the Father",
       "Dear Mr. Fantasy") için Mehmet'in onayladığı nihai başlık/özet/etiket/not, taslak
       önerilerin yerini almıştır (2026-09-05, PR #1).
-- [ ] Sync workflow (US-004) bu sekiz playlist için en az bir kez başarıyla çalışmış ve her biri
-      için `spotify_playlist_cache` içinde bir satır (ya veri dolu ya da onaylı `is_available =
-      false`) oluşmuştur.
+- [x] Sync workflow (US-004) 120 playlist'in tamamı için en az bir kez başarıyla çalışmış ve her
+      biri için `spotify_playlist_cache` içinde bir satır (veri dolu, hepsi `is_available = true`)
+      oluşmuştur.
 
-Kapsam dışı: dokuzuncu ve sonraki playlist'lerin eklenmesi (launch sonrası, sürekli içerik akışı).
+Kapsam dışı: gelecekte hesaba eklenecek yeni playlist'lerin otomatik keşfi/yayını (bu, ayrı bir
+gelecek hikâye olur — mevcut `list-playlists`/draft-seed akışı manuel tetiklenir).
 Öncelik: Must
 Platform: web
 
