@@ -14,9 +14,7 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 3 — Blazor scaffold (aktif).** US-012 (güvenlik başlıkları/CSP) sırada — Faz 3'ün son
-  hikayesi.
-- **Faz 4 — CI/CD.** US-013 (PR pipeline'ı), US-014 (Render+Neon deploy pipeline'ı).
+- **Faz 4 — CI/CD (aktif).** US-013 (PR pipeline'ı), US-014 (Render+Neon deploy pipeline'ı).
 - **Faz 5 — Launch içeriği.** US-015 (sekiz playlist'in editoryal tamamlanması) — Faz 1-4 ile
   paralel yürütülebilir, ama public launch bunu bekler.
 - **US-016 — AI destekli kürator notu taslağı önerisi.** Fazlardan bağımsız, yalnızca US-002'ye
@@ -25,6 +23,16 @@ Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
 ## Tamamlanan
 
+- **US-012 — Güvenlik başlıkları, CSP ve embed URL doğrulaması.** Her yanıta (2xx/404 dahil)
+  `Content-Security-Policy`/`X-Content-Type-Options`/`Referrer-Policy`/`Permissions-Policy`
+  ekleyen bir middleware (`WebHostFactory`); CSP'nin tek Spotify-özel izni `frame-src
+  https://open.spotify.com` (click-to-load embed için), `img-src` ise yalnızca kapak görseli
+  CDN'i `i.scdn.co`'yu ekliyor. `SpotifyPlaylistIdFormat` (22 karakter base62), US-006'nın
+  build-time doğrulamasıyla aynı kurala dayanıp render zamanında da tekrar uygulanıyor — böylece
+  CI'ı bir şekilde atlatan bozuk bir `spotifyPlaylistId`, cache satırı playable görünse bile
+  embed/"Open in Spotify" URL'ine hiç dönüşemiyor (defense in depth). Ham HTML sanitization zaten
+  US-010'daki Markdig `DisableHtml()` ile karşılanıyordu — yeni kod gerekmedi, yalnızca kapsam
+  doğrulandı. Testcontainers Postgres'e karşı 148/148 test yeşil.
 - **US-011 — SEO metadata, sitemap ve sosyal kartlar.** Her indexlenebilir sayfada `PageMetadata`
   bileşeni (description/canonical/OG/Twitter, tek `<HeadContent>` slotu altında — Blazor'un
   `HeadOutlet`'inin ayrı `<HeadContent>` bloklarını birleştirmek yerine üzerine yazdığı ampirik

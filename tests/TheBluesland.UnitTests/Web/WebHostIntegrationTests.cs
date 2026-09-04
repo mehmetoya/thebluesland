@@ -125,4 +125,36 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
+
+    /// <summary>US-012 AC1/spec 13 SEC-002/SEC-005: every response - including a 200 - carries the
+    /// security-header set, and the CSP grants Spotify only the `frame-src` it needs for the
+    /// click-to-load embed (spec 12.4(a)), never a broad/wildcard origin.</summary>
+    [Fact]
+    public async Task HomePage_response_includes_the_required_security_headers()
+    {
+        var response = await _httpClient.GetAsync("/");
+
+        response.Headers.TryGetValues("X-Content-Type-Options", out var contentTypeOptions).ShouldBeTrue();
+        contentTypeOptions!.ShouldContain("nosniff");
+
+        response.Headers.TryGetValues("Referrer-Policy", out var referrerPolicy).ShouldBeTrue();
+        referrerPolicy!.ShouldContain("strict-origin-when-cross-origin");
+
+        response.Headers.TryGetValues("Permissions-Policy", out _).ShouldBeTrue();
+
+        response.Headers.TryGetValues("Content-Security-Policy", out var csp).ShouldBeTrue();
+        var cspValue = csp!.Single();
+        cspValue.ShouldContain("frame-src https://open.spotify.com");
+        cspValue.ShouldNotContain("frame-src *");
+        cspValue.ShouldContain("default-src 'self'");
+    }
+
+    /// <summary>US-012 AC1: the security headers apply to a 404 response too, not only 2xx ones.</summary>
+    [Fact]
+    public async Task NotFoundResponse_still_includes_the_security_headers()
+    {
+        var response = await _httpClient.GetAsync("/this-route-does-not-exist");
+
+        response.Headers.Contains("Content-Security-Policy").ShouldBeTrue();
+    }
 }

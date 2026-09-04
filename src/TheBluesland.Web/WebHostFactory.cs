@@ -50,6 +50,37 @@ public static class WebHostFactory
             app.UseDeveloperExceptionPage();
         }
 
+        // US-012 AC1/spec 13 SEC-002..SEC-005: applied to every response (not only a "production"
+        // check) - simplest way to guarantee production always has them, and harmless in any other
+        // environment. Set before UseAntiforgery/routing so no downstream branch (404, redirect,
+        // health check, ...) can skip it. `frame-src` is the only Spotify-specific grant: the
+        // click-to-load embed (PlaylistDetailView.EmbedUrl) is the sole reason this page ever loads
+        // a cross-origin iframe. `img-src` additionally allows Spotify's cover-art CDN
+        // (`i.scdn.co`), since PlaylistDetailView/PlaylistCard render `CacheSnapshot.CoverImageUrl`
+        // directly (never re-hosted, per FR-031) - no other Spotify origin is granted anywhere.
+        app.Use(async (context, next) =>
+        {
+            var headers = context.Response.Headers;
+            headers.Append("X-Content-Type-Options", "nosniff");
+            headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+            headers.Append(
+                "Permissions-Policy",
+                "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()");
+            headers.Append(
+                "Content-Security-Policy",
+                "default-src 'self'; " +
+                "script-src 'self'; " +
+                "style-src 'self'; " +
+                "img-src 'self' https://i.scdn.co; " +
+                "frame-src https://open.spotify.com; " +
+                "frame-ancestors 'self'; " +
+                "object-src 'none'; " +
+                "base-uri 'self'; " +
+                "form-action 'self'");
+
+            await next();
+        });
+
         app.UseAntiforgery();
 
         // FR-024 / spec 16.2: readiness depends only on editorial content, never on DB reachability.

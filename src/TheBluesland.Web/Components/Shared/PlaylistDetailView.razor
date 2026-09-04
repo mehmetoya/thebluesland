@@ -30,7 +30,10 @@
        pipeline, not from unprocessed user input. *@
     <div class="curator-note">@((MarkupString)CuratorNoteRenderer.ToSanitizedHtml(Content.CuratorNote))</div>
 
-    @if (CacheSnapshot.IsPlayable)
+    @* US-012 AC2/spec 12.4(a)/SEC-004: CanPlay additionally requires a validated spotifyPlaylistId
+       (SpotifyPlaylistIdFormat.IsValid) so a malformed id - even one that happens to match an
+       existing/available cache row - can never reach the embed src below. *@
+    @if (CanPlay)
     {
         @if (CacheSnapshot.TrackCount is { } trackCount)
         {
@@ -81,10 +84,15 @@
     }
 
     @* US-010 AC3/FR-022: always present (even when the cache is unavailable, per FR-024) since it
-       is built only from the editorial spotifyPlaylistId, never from cache data. *@
-    <a href="@OpenInSpotifyUrl" class="open-in-spotify" target="_blank" rel="noopener noreferrer">
-        Open in Spotify
-    </a>
+       is built only from the editorial spotifyPlaylistId, never from cache data. US-012 AC2 adds
+       HasValidSpotifyPlaylistId: an unvalidated id must not become a Spotify URL at all, so this
+       link is simply omitted rather than pointing somewhere unvalidated. *@
+    @if (HasValidSpotifyPlaylistId)
+    {
+        <a href="@OpenInSpotifyUrl" class="open-in-spotify" target="_blank" rel="noopener noreferrer">
+            Open in Spotify
+        </a>
+    }
 
     @if (RelatedPlaylists.Count > 0)
     {
@@ -119,6 +127,10 @@
     [Parameter]
     public IReadOnlyDictionary<string, PlaylistCacheSnapshot> RelatedCacheSnapshots { get; set; } =
         new Dictionary<string, PlaylistCacheSnapshot>();
+
+    private bool HasValidSpotifyPlaylistId => SpotifyPlaylistIdFormat.IsValid(Content.SpotifyPlaylistId);
+
+    private bool CanPlay => CacheSnapshot.IsPlayable && HasValidSpotifyPlaylistId;
 
     private string OpenInSpotifyUrl => $"https://open.spotify.com/playlist/{Content.SpotifyPlaylistId}";
 

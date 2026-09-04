@@ -28,6 +28,7 @@ namespace TheBluesland.UnitTests.Web;
 public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
 {
     private const string PrimaryPlaylistSpotifyId = "0iJt9LMebhOY0KSHSJw3cS";
+    private const string InvalidSpotifyId = "not-a-real-id";
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
@@ -52,6 +53,19 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
                 TrackCount = 12,
                 Artists = ["Some Artist"],
                 CoverImageUrl = "https://i.scdn.co/image/cover.jpg",
+                SyncedAt = DateTimeOffset.UtcNow,
+                IsAvailable = true,
+            });
+            // US-012 AC2: seeded as available on purpose, so PlaylistDetailPage_...InvalidSpotifyId
+            // below proves the render-time guard rejects the malformed id even when a matching,
+            // playable cache row exists for it - not merely because the cache happens to miss it.
+            dbContext.SpotifyPlaylistCache.Add(new SpotifyPlaylistCacheEntry
+            {
+                SpotifyPlaylistId = InvalidSpotifyId,
+                Name = "Should never be reachable",
+                TrackCount = 1,
+                Artists = ["Some Artist"],
+                CoverImageUrl = "https://i.scdn.co/image/should-not-render.jpg",
                 SyncedAt = DateTimeOffset.UtcNow,
                 IsAvailable = true,
             });
@@ -196,6 +210,24 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
         {
             json.ShouldNotContain("track", Case.Insensitive);
         }
+    }
+
+    /// <summary>
+    /// US-012 AC2/spec 12.4(a)/SEC-004: even though the seeded cache row for
+    /// <see cref="InvalidSpotifyId"/> is available (so a naive `CacheSnapshot.IsPlayable` check
+    /// alone would pass), a non-22-character-base62 spotifyPlaylistId must never be turned into an
+    /// embed or "Open in Spotify" URL.
+    /// </summary>
+    [Fact]
+    public async Task PlaylistDetailPage_never_builds_an_embed_or_open_in_spotify_url_from_an_invalid_spotifyPlaylistId()
+    {
+        var response = await _httpClient.GetAsync("/playlists/invalid-spotify-id-fixture?listen=true");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldNotContain("<iframe");
+        body.ShouldNotContain(InvalidSpotifyId);
+        body.ShouldContain("currently unavailable");
     }
 
     /// <summary>US-011: visible breadcrumb navigation on the detail page (spec 14).</summary>

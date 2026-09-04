@@ -20,7 +20,6 @@ public sealed class PlaylistContentValidator
     private const string DraftStatus = "draft";
     private const string PublishedStatus = "published";
     private const int SupportedSchemaVersion = 1;
-    private const int SpotifyPlaylistIdLength = 22;
     private const int TitleMinLength = 3;
     private const int TitleMaxLength = 80;
     private const int SummaryMinLength = 40;
@@ -31,7 +30,6 @@ public sealed class PlaylistContentValidator
     private const string PublishedAtFormat = "yyyy-MM-dd";
 
     private static readonly Regex SlugPattern = new("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.Compiled);
-    private static readonly Regex SpotifyPlaylistIdPattern = new("^[A-Za-z0-9]{22}$", RegexOptions.Compiled);
 
     private readonly IDeserializer _deserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
@@ -205,11 +203,11 @@ public sealed class PlaylistContentValidator
         {
             AddIssue("spotifyPlaylistId", "spotifyPlaylistId is required.");
         }
-        else if (!SpotifyPlaylistIdPattern.IsMatch(spotifyPlaylistId))
+        else if (!SpotifyPlaylistIdFormat.IsValid(spotifyPlaylistId))
         {
             AddIssue(
                 "spotifyPlaylistId",
-                $"spotifyPlaylistId must be exactly {SpotifyPlaylistIdLength} base62 characters (A-Za-z0-9), found {spotifyPlaylistId.Length}.");
+                $"spotifyPlaylistId must be exactly {SpotifyPlaylistIdFormat.Length} base62 characters (A-Za-z0-9), found {spotifyPlaylistId.Length}.");
         }
 
         if (frontMatter.Status is not { Length: > 0 })

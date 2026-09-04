@@ -309,13 +309,13 @@ Spotify izinlerini yüklediğinden emin olmak istiyorum ki güvenlik riski ve i�
 
 Kabul kriterleri:
 
-- [ ] Production yanıtlarında `Content-Security-Policy`, `X-Content-Type-Options`,
+- [x] Production yanıtlarında `Content-Security-Policy`, `X-Content-Type-Options`,
       `Referrer-Policy`, `Permissions-Policy` başlıkları mevcuttur; CSP yalnızca click-to-load
       Spotify embed'i için gereken minimum directive'leri Spotify'a açar.
-- [ ] Embed URL'i yalnızca doğrulanmış (22 karakter base62) bir `spotifyPlaylistId`'den
+- [x] Embed URL'i yalnızca doğrulanmış (22 karakter base62) bir `spotifyPlaylistId`'den
       oluşturulur; içerik dosyasında rastgele bir iframe URL'i verilmeye çalışıldığında bu
       reddedilir/yok sayılır (US-006 ile birlikte doğrulanır).
-- [ ] Markdown içinde ham HTML kullanılmaya çalışıldığında, render edilen çıktıda bu HTML devre
+- [x] Markdown içinde ham HTML kullanılmaya çalışıldığında, render edilen çıktıda bu HTML devre
       dışı bırakılmış/temizlenmiş olarak görünür.
 
 Kapsam dışı: rate limiting, WAF (MVP kapsamında değil).
