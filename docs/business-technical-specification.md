@@ -254,7 +254,11 @@ permanent redirect from the previous slug.
 
 **FR-021 — Curator note**
 The detail page must display an original curator note written by Mehmet. The recommended length
-is 80–250 words.
+is 40–250 words (widened from 80–250 on 2026-09-05: the two Faz-0 flagship playlists were written
+at that length, but Mehmet's decision to publish all 120 owned playlists rather than a curated 8-15
+made a uniform 80-word floor impractical across a personal-library-scale catalogue. Actual notes
+across the full catalogue range 42-117 words; 40 is set as the floor with headroom rather than
+matching the observed minimum exactly).
 
 **FR-022 — Spotify listening actions**
 The page must provide:

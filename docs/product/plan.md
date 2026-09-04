@@ -4,18 +4,16 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 ## Aktif
 
-- **Faz 5 — Launch içeriği.** US-015 (sekiz playlist'in editoryal tamamlanması) — 2/8 published
-  (bkz. Tamamlanan). Faz 1-4 ile paralel yürütülebilir, ama public launch bunu bekler.
+- **US-016 — AI destekli kürator notu taslağı önerisi.** Tek açık backlog hikayesi. Fazlardan
+  bağımsız, yalnızca US-002'ye (salt-okunur DB rolü) bağımlı; `docs/adr/0005-ai-kurator-notu-siniri.md`
+  ile onaylandı.
 
 ## Sıradaki
 
-Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
-
-- **US-015 devamı.** Altı playlist daha (başlık/özet/etiket/kürator notu) launch eşiği için gerekli
-  (spec 7.1).
-- **US-016 — AI destekli kürator notu taslağı önerisi.** Fazlardan bağımsız, yalnızca US-002'ye
-  (salt-okunur DB rolü) bağımlı; `docs/adr/0005-ai-kurator-notu-siniri.md` ile onaylandı. US-015'i
-  destekleyici, paralel yürütülebilir.
+- Bilinen küçük doküman/hijyen açıkları (2026-09-05 denetiminde bulundu, kod değil): ADR
+  numaralandırmasında 0004 boşluğu (atlanmış mı belli değil); `displayOrder`/`publishedAt`in 120
+  playlist'in çoğunda ayrım yapmaması (ana sayfa sıralaması şu an dosya-adı sırasına yakın) —
+  Mehmet'in kararına bırakıldı, "burası kalsın" (2026-09-05).
 
 ## Tamamlanan
 
@@ -24,22 +22,37 @@ Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
   onaylandı. v0.2 taksonomisi (spec bölüm 8 — mood/genre/occasion/era, 4 liste) ve section 7'deki
   iki taslak playlist'in başlık/etiket/özet/kürator notu, Mehmet tarafından 2026-09-05'te nihai
   onaylandı (bkz. US-015'in ilk iki girdisi altında).
-- **Faz 4 — CI/CD.** US-013 + US-014 kod tarafı tamamlandı; Mehmet Render Blueprint'i bağladı,
-  ilk deploy `https://thebluesland.onrender.com`'da uçtan uca canlı doğrulandı (health-gated
-  traffic, GHCR image, otomatik deploy hook). Branch protection (altı CI job'u + PR zorunluluğu)
-  main üzerinde aktif — bkz. US-013/US-014 girdileri.
-- **US-015 (2/8) — Launch içeriği: ilk iki playlist.** Section 7'nin iki adayı yayınlandı:
-  "Masterpieces of Erkin the Father" (`0iJt9LMebhOY0KSHSJw3cS`, moods: energetic/raw, genres:
-  anadolu-rock/rock, occasion: night-drive, era: pre-1970, featured, displayOrder 1) ve "Dear Mr.
-  Fantasy" (`2m8X8fsMWor8A5AnmOHwzy`, moods: warm/nostalgic, genres: blues-rock/rock, occasion:
-  slow-evening, era: mixed-era, featured, displayOrder 2). Başlık/etiketler spec'in product-owner
-  taslağından değişmeden onaylandı; summary ve kürator notu prose'u bu oturumda taslak olarak
-  önerildi, Mehmet tarafından onaylandı. `validate-content` ve tam test suite (162/162) yeşil.
+- **Faz 4 — CI/CD (uçtan uca doğrulandı).** US-013 + US-014 tamam; Render Blueprint bağlandı, ilk
+  deploy `https://thebluesland.onrender.com`'da canlı (health-gated traffic, GHCR image, otomatik
+  deploy hook, salt-okunur Neon connection string). Branch protection (6 CI job'u + PR zorunluluğu)
+  `main` üzerinde aktif ve GitHub API'sinden doğrulandı (2026-09-05). Render'ın native rollback
+  özelliği hâlâ gerçek bir olayla denenmedi (mimari olarak destekleniyor, US-014'ün son AC'si
+  bilerek açık bırakıldı).
+- **Faz 5 — Launch içeriği tamamlandı, kapsam 8'den 120'ye genişledi.** Mehmet 2026-09-05'te
+  orijinal "en az sekiz playlist" launch eşiğini iptal edip sahip olduğu tüm herkese açık
+  playlist'lerin yayınlanmasını istedi ("bak benim sahip olduğum tüm playlistleri ve tüm türleri
+  istiyorum azar azar değil hepsini" → "Tüm 120'sini yayınla, taksonomiyi genişlet"). Bu kapsamda:
+  - Genre taksonomisi 6'dan 16 değere genişletildi (Mehmet onayı, `PlaylistTaxonomy.cs`).
+  - `tools/spotify-playlist-fetcher`'a salt-okunur `list-playlists` ve `dump-cache` modları
+    eklendi — Mehmet'ten playlist ID istemek yerine araç kendi keşfediyor (SEC-001 kapsamında,
+    yeni credential yok).
+  - `PlaylistCacheSyncService` per-playlist `SaveChangesAsync` yapacak şekilde düzeltildi (120
+    playlist'lik senkronda kısmi hata artık ilerlemeyi kaybettirmiyor); regresyon testi eklendi.
+  - **120/120 playlist yayında**: US-015'in ilk ikisi (Erkin Koray, Dear Mr. Fantasy — spec
+    section 7, 89-117 kelime), sonra 28'lik blues/blues-rock/anadolu-rock/folk partisi (PR #6),
+    sonra kalan 90'ı tek partide (PR #7). Her playlist gerçek senkronize edilmiş Spotify sanatçı
+    verisine dayanan tag + kürator notuyla yayınlandı. Küratör notu alt sınırı, 120-playlist
+    ölçeğinde pratik olmadığı için 80'den 40 kelimeye indirildi (spec FR-021, 2026-09-05 notu;
+    gerçek dağılım 42-117 kelime) — Mehmet'in kararı: "kelime sayısını gevşetip spec'i
+    güncelleyelim".
+  - Featured cap 4/4'te sabit (Erkin Koray, Dear Mr. Fantasy, Bluesland, Anatolian Domestic
+    Products); yeni playlist'lerin hepsi `featured: false`.
+  - `validate-content` 120/120 dosyada temiz; `dotnet build`/`dotnet test` 167/167 yeşil.
 
-- **US-014 — Render + Neon production deploy pipeline'ı (kod tarafı tamam, uçtan uca doğrulama
-  bekliyor).** `.github/workflows/deploy.yml` — `main`'e her push'ta US-013'ün doğruladığı aynı
-  `Dockerfile`'ı build edip `ghcr.io/mehmetoya/thebluesland`'a hem immutable `:<sha>` hem mutable
-  `:latest` etiketiyle push ediyor (yalnızca `GITHUB_TOKEN`, yeni hesap/secret yok), sonra
+- **US-014 — Render + Neon production deploy pipeline'ı (uçtan uca doğrulandı).**
+  `.github/workflows/deploy.yml` — `main`'e her push'ta US-013'ün doğruladığı aynı `Dockerfile`'ı
+  build edip `ghcr.io/mehmetoya/thebluesland`'a hem immutable `:<sha>` hem mutable `:latest`
+  etiketiyle push ediyor (yalnızca `GITHUB_TOKEN`, yeni hesap/secret yok), sonra
   `RENDER_DEPLOY_HOOK_URL` secret'ı tanımlıysa Render deploy hook'unu `curl` ile tetikliyor
   (tanımlı değilse hata vermeden uyarıp geçiyor). `.github/render.yaml` (Render Blueprint, agent'ın
   yazma kapsamı repo kökünü kapsamadığı için kasıtlı olarak burada — Render'a bağlanırken "render.yaml
@@ -47,11 +60,11 @@ Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
   (çift deploy yarışını önlemek için), tek env var `ConnectionStrings__SpotifyPlaylistCache`
   (`sync: false` — değer Render Dashboard'unda elle girilir, asla commit edilmez). SEC-001
   (Spotify/AI credential'ı Render'da yok) `DeployWorkflowSecretIsolationTests` ile regresyona
-  bağlandı. Render tarafında gerçek bir servis henüz kurulmadığı için health-gated traffic ve
-  rollback uçtan uca doğrulanmadı — Mehmet'in yapması gereken adımlar `render.yaml` başlık
-  yorumunda listeli (Blueprint bağlama, GHCR paketini erişilebilir kılma, connection string'i
-  girme, deploy hook URL'ini GitHub secret'ı olarak ekleme, `PORT=8080` varsayımını doğrulama).
-  `dotnet build`/`dotnet test`: 162/162 yeşil, `dotnet format --verify-no-changes` temiz.
+  bağlandı. Mehmet Render Blueprint'i bağladı, connection string'i salt-okunur rolle girdi;
+  `https://thebluesland.onrender.com` canlı ve `/health/ready` gerçek serviste doğrulandı. Tek
+  gerçekten hiç denenmemiş kalan madde: Render'ın native rollback'i (mimari destekleniyor, bir
+  olayla tetiklenip doğrulanmadı). `dotnet build`/`dotnet test`: 167/167 yeşil, `dotnet format
+  --verify-no-changes` temiz.
 - **US-013 — Pull request CI pipeline'ı.** `ci.yml` altı bağımsız job'a çıkarıldı:
   `content-validation` (US-007, değişmedi), `build-and-test` (restore/Release build/`dotnet format
   --verify-no-changes` her `.csproj` için/Testcontainers unit+integration testler),
