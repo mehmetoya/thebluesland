@@ -397,12 +397,14 @@ etiketler ve küratör notuyla tamamlanmasını istiyorum ki site boş/yarım g�
 Kabul kriterleri:
 
 - [ ] `content/playlists/` altında `status: published` olan en az sekiz dosya bulunur ve her biri
-      US-006'daki doğrulamayı geçer.
+      US-006'daki doğrulamayı geçer. 2/8 tamamlandı (Erkin Koray, Dear Mr. Fantasy) — altı playlist
+      daha gerekli.
 - [ ] Bu sekiz dosyanın her birinde en az bir mood, bir genre, bir occasion etiketi ve 80-250
-      kelimelik bir küratör notu bulunur.
-- [ ] Section 7'deki iki taslak playlist ("Masterpieces of Erkin the Father",
+      kelimelik bir küratör notu bulunur. Yayınlanan iki dosya bu kuralı sağlıyor (117 ve 89
+      kelime).
+- [x] Section 7'deki iki taslak playlist ("Masterpieces of Erkin the Father",
       "Dear Mr. Fantasy") için Mehmet'in onayladığı nihai başlık/özet/etiket/not, taslak
-      önerilerin yerini almıştır.
+      önerilerin yerini almıştır (2026-09-05, PR #1).
 - [ ] Sync workflow (US-004) bu sekiz playlist için en az bir kez başarıyla çalışmış ve her biri
       için `spotify_playlist_cache` içinde bir satır (ya veri dolu ya da onaylı `is_available =
       false`) oluşmuştur.
