@@ -6,6 +6,11 @@
 **Repository:** GitHub, public
 **Owner / curator:** Mehmet Oya
 **Supersedes:** `docs/business-technical-specification.v0.1.md` (kept for historical reference; do not implement against it)
+**Amended:** 3 September 2026 — the absolute "no Spotify Content to AI/ML, no exception" rule was
+deliberately narrowed by the owner: four playlist-level `spotify_playlist_cache` fields may now be
+used as AI input for curator-note *suggestions* only, output is always a draft, and the AI provider
+key never enters production. See `docs/adr/0005-ai-kurator-notu-siniri.md`; affected sections: 3.2,
+3.3, 9.4, 10.3, 11.1, 11.2, 13 (SEC-001, SEC-008), 17, 18.5, 20 (V1.2), 21, 24.
 
 ---
 
@@ -44,10 +49,14 @@ by the running web application. The two data sources are joined at read time by
 during sync solely to compute a track count and artist list, then discarded.
 
 This reverses one of v0.1's core assumptions (no database, no Spotify Web API) while preserving
-its others: no visitor accounts, no automated inference of mood/genre from Spotify content, no AI
-analysis of Spotify Content under any circumstance, and a click-to-load Spotify Embed for
-playback. The production web application still holds no Spotify or AI credential; those live only
-in GitHub Actions repository secrets, isolated to the monthly sync job.
+its others: no visitor accounts, no automated inference of mood/genre from Spotify content, and a
+click-to-load Spotify Embed for playback. One further v0.1 assumption was deliberately narrowed on
+3 September 2026: AI may now be given four playlist-level cache fields (`name`, `description`,
+`track_count`, `artists`) to draft a *suggested* curator note for Mehmet's own review. Track-level
+data, cover art and model-side retrieval of Spotify URLs remain forbidden, AI output is never
+published automatically, and the production web application still holds no Spotify or AI
+credential — those live only in GitHub Actions repository secrets, isolated to the sync job and the
+manually triggered suggestion job (section 11.2, SEC-008, ADR-0005).
 
 Hosting is Render (web, free tier) + Neon (Postgres, free tier) + GitHub Actions (scheduled sync),
 targeting $0/month operating cost.
@@ -104,8 +113,9 @@ TheBluesland adds value beyond the Spotify player through:
   sync.
 - CI rejects invalid or incomplete playlist content.
 - **The production web application requires no Spotify credential and no AI provider key.** It
-  holds only a Postgres (Neon) connection string. Spotify credentials and the sync job's database
-  credential exist exclusively as GitHub Actions repository secrets (see section 13, SEC-001).
+  holds only a Postgres (Neon) connection string. Spotify credentials, the sync job's database
+  credential and the AI provider key exist exclusively as GitHub Actions repository secrets, each
+  scoped to its own workflow (see section 13, SEC-001).
 
 ### 3.3 Non-goals for MVP
 
@@ -114,8 +124,13 @@ TheBluesland adds value beyond the Spotify player through:
   monthly sync solely to derive a track count and artist list; it is never written to storage. See
   section 11.2.)
 - Automatically inferring mood, genre, tempo, energy or valence from Spotify content.
-- Sending any Spotify Content — metadata, cover art, track or artist data — to an AI/ML model, for
-  training or inference, without exception.
+- Sending track-level Spotify data (track titles, IDs, durations, ISRCs, audio features),
+  cover-art image data, or any Spotify URL for model-side retrieval to an AI/ML model, and using
+  any Spotify Content for model training. (Narrowed on 3 September 2026: four playlist-level cache
+  fields may be used as AI *inference* input for a curator-note suggestion that a human must review
+  — section 11.2, SEC-008, ADR-0005.)
+- Publishing any AI-generated text without Mehmet's review; AI output never enters
+  `content/playlists/*.md` automatically and is never published as `status: published` by a machine.
 - Recommending individual tracks.
 - Visitor login, profiles or saved favourites.
 - Comments, reactions, ratings or voting.
@@ -126,6 +141,8 @@ TheBluesland adds value beyond the Spotify player through:
 - Monetisation or advertising.
 - Real-time or on-demand Spotify lookups from the production web app (all Spotify Web API access
   is confined to the monthly sync job — see section 12).
+- Any AI call from the production web application (all AI access is confined to a manually
+  triggered GitHub Actions workflow — section 18.5).
 
 ---
 
@@ -298,7 +315,8 @@ and curator note for both before publication (see section 23, item 3, still open
 
 No title, genre or mood will be inferred automatically from Spotify content; the draft tags above
 were assigned by a human (product owner) reading the playlist name and genre context, not by any
-automated or AI process.
+automated or AI process. Automated taxonomy assignment remains prohibited (section 11.2) — the
+narrowed AI allowance of ADR-0005 covers curator-note prose suggestions only, never tags.
 
 ### 7.1 Launch content requirement
 
@@ -454,6 +472,15 @@ and playlist owner/follower data. These are read transiently in memory during sy
 `track_count` and `artists`) and are never written to any store. This boundary is the direct
 implementation of section 11.2 and is documented in `docs/adr/0002-spotify-veri-mimarisi.md`.
 
+**Also excluded, by decision:** AI-generated curator-note suggestions (section 18.5). No
+`ai_suggested_*` column is added to this table and no suggestion table exists; the suggestion is a
+GitHub Actions job output only, so the web application has no store from which it could ever leak
+it to a public page. Rationale and the rejected column/table alternatives are in
+`docs/adr/0005-ai-kurator-notu-siniri.md`.
+
+Of the columns above, exactly four — `name`, `description`, `track_count`, `artists` — may be used
+as AI input (SEC-008); `cover_image_url` and the operational columns may not.
+
 ---
 
 ## 10. Visual and editorial direction
@@ -491,8 +518,10 @@ content authoring may proceed in English now.
 - First-person curator voice.
 - Concrete listening situations instead of generic promotional language.
 - No unsupported claims about artists, genres or musical characteristics.
-- AI-generated text must never be published without Mehmet's review, even for future permitted use
-  cases (section 20, V1.2).
+- AI-generated text must never be published without Mehmet's review. An AI curator-note suggestion
+  (section 18.5) is raw material for Mehmet, not publishable copy: the published note must be in
+  his own voice, which in practice means rewriting rather than pasting (section 20, V1.2;
+  ADR-0005).
 
 ---
 
@@ -510,23 +539,33 @@ content authoring may proceed in English now.
 - Render Spotify's official Embed for the playlist.
 - Link back to the corresponding Spotify playlist.
 - Use Spotify attribution according to its branding requirements.
+- Send exactly four cached playlist-level fields (`name`, `description`, `track_count`, `artists`)
+  to an AI model, from a manually triggered GitHub Actions workflow only, to obtain a *draft*
+  curator-note suggestion for Mehmet's own review. This is an owner-accepted narrowing of the
+  previous absolute prohibition (section 11.2, SEC-008, section 18.5, ADR-0005).
 
-### 11.2 Explicitly prohibited project behavior (narrowed from v0.1)
+### 11.2 Explicitly prohibited project behavior (narrowed from v0.1; AI boundary narrowed again on 3 September 2026)
 
-- **Sending any Spotify Content — playlist, track, artist, album, cover-art or metadata — to an
-  AI/ML model, for training or for inference, without exception.** This constraint does not
-  change with the hybrid architecture; per Spotify's Developer Policy machine-learning/content
-  restriction (internally tracked as "policy §14" in project decisions — see section 25), it
-  applies equally to data fetched via the official Web API and to any other source, and it applies
-  even though Spotify facts are now stored in TheBluesland's own database. AI text assistance
-  (section 20, V1.2) may only ever be given Mehmet's own curator-note draft text, never any field
-  from `spotify_playlist_cache` and never a Spotify playlist URL for retrieval.
+- **Sending Spotify Content to an AI/ML model, except the four playlist-level cache fields named
+  in SEC-008.** Specifically still prohibited: any track-level data (titles, IDs, durations, ISRCs,
+  per-track artist attribution, audio features), cover-art image data or any Spotify URL —
+  including `cover_image_url`, the playlist URL and the Embed URL — supplied so that the model can
+  retrieve Spotify content itself. Using any Spotify Content for model *training* or fine-tuning
+  also remains prohibited without exception; the allowance covers inference only. Spotify's
+  Developer Policy machine-learning/content restriction (internally tracked as "policy §14" in
+  project decisions — see section 25) may be read more broadly than this narrowing; that
+  interpretation risk is knowingly accepted by the owner and recorded in section 21 and ADR-0005.
 - Storing individual track titles, track IDs, durations, ISRCs or audio-feature data — permanently
   or transiently beyond the in-memory computation described in section 9.4. (Narrowed from v0.1's
   blanket "no independent permanent database of playlist tracks": a *cache of playlist-level,
   non-track metadata*, refreshed monthly from the official Web API, is now explicitly permitted —
   see section 9.4 for exactly which fields.)
 - Automatically analysing Spotify content to derive mood, genre, popularity or listener profiles.
+  The AI allowance above produces prose suggestions only; taxonomy tags stay human-assigned
+  (section 7, section 8).
+- Publishing AI output automatically. No machine may write to `content/playlists/*.md` or set
+  `status: published`; the pull-request review flow (section 18.3) remains the only path into
+  editorial content.
 - Scraping Spotify pages (all Spotify access is through the official Web API, never HTML scraping).
 - Downloading audio or preview clips.
 - Presenting TheBluesland as affiliated with or endorsed by Spotify.
@@ -552,7 +591,8 @@ a visitor request. What is new in v0.2 is a second, out-of-process, out-of-band 
 console tool that runs once a month, entirely outside the web application's process, to refresh
 the Postgres cache from the Spotify Web API. See `docs/adr/0002-spotify-veri-mimarisi.md` for the
 full rationale, including why this is a scheduled GitHub Actions job and not an in-process
-`BackgroundService`.
+`BackgroundService`. The AI curator-note suggestion tool (section 18.5) follows the same pattern
+for the same reasons: out-of-process, GitHub-Actions-only, never part of the web application.
 
 ```mermaid
 flowchart TD
@@ -565,6 +605,11 @@ flowchart TD
 
     SpotifyAPI["Spotify Web API"] -->|"Monthly cron, GitHub Actions"| Fetcher["tools/spotify-playlist-fetcher"]
     Fetcher -->|"Upsert cache rows only"| DB
+
+    DB -->|"Read-only, 4 fields, manual trigger"| Suggest["tools/curator-note-suggester (GitHub Actions)"]
+    Suggest -->|"Prompt"| AI["AI provider"]
+    AI -->|"Draft text as job artifact"| Mehmet["Mehmet reviews, rewrites, opens PR"]
+    Mehmet --> Content
 ```
 
 ### 12.2 Runtime stack
@@ -580,6 +625,7 @@ flowchart TD
 | Database | PostgreSQL (Neon, free tier) |
 | Data access | EF Core + Npgsql, read-only from the web app, read/write from the sync tool |
 | Spotify integration | Spotify Web API, Authorization Code + PKCE, used only by the sync tool |
+| AI integration | Anthropic Claude API, used only by the manually triggered suggestion workflow; no AI SDK is referenced by `TheBluesland.Web` |
 | Styling | Tailwind CSS 4 plus CSS custom properties |
 | Logging | `Microsoft.Extensions.Logging` structured logs |
 | Health | ASP.NET Core health checks |
@@ -616,6 +662,11 @@ own), and upserts rows into `spotify_playlist_cache` (section 9.4). This integra
 runs inside the production web application process, never runs on a visitor request, and never
 writes anything except the fields listed in section 9.4.
 
+The AI suggestion tool is deliberately **not** a third Spotify integration point: it holds no
+Spotify credential and cannot call Spotify at all. Its only data source is a read-only query
+against `spotify_playlist_cache` selecting the four fields permitted by SEC-008 (section 18.5,
+ADR-0005).
+
 ### 12.5 Repository structure
 
 ```text
@@ -624,7 +675,8 @@ TheBluesland/
 │   ├── workflows/
 │   │   ├── ci.yml
 │   │   ├── deploy.yml
-│   │   └── sync-spotify.yml
+│   │   ├── sync-spotify.yml
+│   │   └── suggest-curator-note.yml
 │   └── dependabot.yml
 ├── content/
 │   └── playlists/
@@ -650,8 +702,10 @@ TheBluesland/
 │       ├── wwwroot/
 │       └── TheBluesland.Web.csproj
 ├── tools/
-│   └── spotify-playlist-fetcher/
-│       └── TheBluesland.SpotifyFetcher.csproj
+│   ├── spotify-playlist-fetcher/
+│   │   └── TheBluesland.SpotifyFetcher.csproj
+│   └── curator-note-suggester/
+│       └── TheBluesland.CuratorNoteSuggester.csproj
 ├── tests/
 │   ├── TheBluesland.UnitTests/
 │   └── TheBluesland.E2ETests/
@@ -671,6 +725,11 @@ multi-client presentation reuse — see `docs/adr/0003-mimari-kapsam.md` for why
 not apply here. New projects or layers beyond `TheBluesland.Data` must only be introduced when
 they create a real dependency boundary; Clean Architecture ceremony is not a goal by itself.
 
+`tools/curator-note-suggester` is a third independent process for the same kind of reason as the
+fetcher: it needs a credential (the AI provider key) that must never exist in production, so it
+cannot live inside `TheBluesland.Web` (SEC-001). It reads the shared cache entity from
+`TheBluesland.Data` and adds no schema of its own.
+
 ---
 
 ## 13. Security and privacy requirements
@@ -682,11 +741,15 @@ variable; a Neon role scoped to read-only access on `spotify_playlist_cache` sho
 this connection where Neon's free tier supports role separation. The Spotify Client ID, refresh
 token, and the read/write Neon connection string used by the monthly sync job exist **only** as
 GitHub Actions repository secrets, scoped to the `sync-spotify.yml` workflow, and are never present
-in the Render production environment.
+in the Render production environment. The AI provider key (`ANTHROPIC_API_KEY`) follows the same
+pattern: it exists **only** as a GitHub Actions repository secret scoped to
+`suggest-curator-note.yml`, is never present in Render, and is not available to `ci.yml`,
+`deploy.yml` or `sync-spotify.yml`.
 
 **SEC-002 — Content Security Policy**
 CSP must default to self-hosted resources and allow Spotify only in the minimum directives required
-for the click-to-load Embed. Inline script exceptions require a nonce or hash.
+for the click-to-load Embed. Inline script exceptions require a nonce or hash. No AI provider
+origin is ever added to CSP — the web application does not talk to an AI provider.
 
 **SEC-003 — User-supplied content**
 Markdown raw HTML is disabled. Rendered Markdown is sanitised before output.
@@ -701,18 +764,48 @@ Production responses must set appropriate CSP, `X-Content-Type-Options`, `Referr
 iframe.
 
 **SEC-006 — Dependencies**
-Dependabot must monitor NuGet, GitHub Actions and npm/Tailwind build dependencies, across both
-`TheBluesland.Web` and `tools/spotify-playlist-fetcher`.
+Dependabot must monitor NuGet, GitHub Actions and npm/Tailwind build dependencies, across
+`TheBluesland.Web`, `tools/spotify-playlist-fetcher` and `tools/curator-note-suggester`.
 
 **SEC-007 — Privacy**
 TheBluesland must not add analytics, ad pixels or cross-site tracking in the MVP. Server logs must
 not retain unnecessary query strings or personal identifiers.
 
-**SEC-008 — AI content boundary (new)**
-Any future AI-assisted writing feature (section 20, V1.2) must only ever accept Mehmet's own
-curator-note draft text as input. It is a build/review-time requirement that no code path can
-construct an AI prompt from any `spotify_playlist_cache` field or from Spotify Content of any
-kind. This is a hard constraint, not a configurable one (section 11.2).
+**SEC-008 — AI input and output boundary (revised 3 September 2026)**
+This requirement replaces the earlier absolute prohibition. It is a build/review-time requirement,
+not a runtime configuration flag.
+
+*Permitted as AI input:* exactly four `spotify_playlist_cache` columns — `name`, `description`,
+`track_count`, `artists` — plus TheBluesland-owned text such as Mehmet's own draft prose and the
+editorial front matter he wrote.
+
+*Prohibited as AI input:* every other Spotify-derived value, including individual track titles,
+track IDs, durations, ISRCs, per-track artist attribution and audio-feature data (none of which
+exist in any store — section 9.4); cover-art image data; `cover_image_url`, the playlist URL, the
+Embed URL or any other URL supplied so the model can retrieve Spotify content itself; and
+`spotify_snapshot_id`, `synced_at`, `is_available`. No code path may construct a prompt from any
+of these, and this must be covered by a unit test (section 17.1).
+
+*Output:* AI output is always a draft. It must never be written to `content/playlists/*.md` by a
+machine, never set `status: published`, and never be rendered by `TheBluesland.Web` on any page —
+public or otherwise. It is not persisted in the database (section 9.4); it exists only as a GitHub
+Actions job output (section 18.5).
+
+*Prompt injection:* the prompt includes Spotify-sourced third-party text (`description`). The
+suggestion tool is non-agentic — no Spotify access, no write access to the database, `content/` or
+pull requests — and its output is always a human-reviewed draft, so adversarial text in
+`description` cannot trigger an automated action; worst case is a low-quality suggestion Mehmet
+discards. This mitigation depends on the tool staying non-agentic (section 21, ADR-0005).
+
+*Artifact visibility:* this repository is public, so the workflow's job summary and build artifact
+are visible to anyone with read access as soon as it runs — "never rendered by `TheBluesland.Web`"
+above is a guarantee about the public site, not about the artifact itself. This carries no
+confidentiality risk because AI input is limited to data already public on Spotify (section 21).
+
+*Credential:* see SEC-001. No AI credential in production, ever.
+
+Full rationale, rejected storage alternatives and the accepted Spotify-policy interpretation risk:
+`docs/adr/0005-ai-kurator-notu-siniri.md`.
 
 ---
 
@@ -778,6 +871,9 @@ Measured on a representative mobile profile in production:
   must not partially upsert a row it cannot fully populate. It must never delete or mark an
   existing cache row unavailable merely because of a transient failure — only an explicit "not
   found" response from Spotify sets `is_available = false`.
+- **Suggestion job failure:** if `suggest-curator-note.yml` fails (missing cache row, AI provider
+  error, rate limit), it fails the workflow run and produces no artifact. It has no effect on
+  the site, the database or the content files, so no recovery path is needed beyond re-running it.
 
 ### 16.2 Observability
 
@@ -788,8 +884,8 @@ Measured on a representative mobile profile in production:
   reported but does not fail readiness, consistent with 16.1.
 - The sync job logs, per playlist, whether it was created, updated, marked unavailable, or
   skipped, plus a summary count at the end of each run.
-- Do not log curator-note bodies, Spotify credentials, connection strings or visitor-identifying
-  data.
+- Do not log curator-note bodies, Spotify credentials, connection strings, the AI provider key or
+  visitor-identifying data.
 - Application Insights/OpenTelemetry is deferred until operational need justifies it.
 
 ---
@@ -809,6 +905,10 @@ Measured on a representative mobile profile in production:
 - Previous-slug redirect mapping.
 - Sync tool: mapping a Spotify API playlist response to a cache row (name, description, cover
   URL, track count, artist list extraction/deduplication), excluding all track-level fields.
+- **AI prompt builder:** given a fully populated cache row, the constructed prompt contains only
+  `name`, `description`, `track_count` and `artists`, and contains no URL, no
+  `spotify_snapshot_id`, no `synced_at` and no `is_available`. This is the direct regression test
+  for SEC-008 and is the sibling of the sync-side test in 17.4.
 
 ### 17.2 Integration/component tests
 
@@ -846,6 +946,13 @@ they run against seeded cache fixtures, not the real monthly sync.
 - Verifies that no track-level field ever appears in the object written to the database (a
   regression test directly enforcing section 9.4 and section 11.2).
 
+### 17.5 AI suggestion tool tests (new)
+
+- The prompt-content test in 17.1, run against a fixture cache row.
+- The tool never calls a live AI provider in CI; the provider client is stubbed.
+- The tool writes only to its job output (stdout/artifact) — a test asserts it performs no database
+  write and no file write under `content/`.
+
 ---
 
 ## 18. CI/CD and release process
@@ -865,8 +972,8 @@ Every pull request must run:
 8. Dependency and secret scanning available to the public GitHub repository.
 9. Docker image build (`TheBluesland.Web`).
 
-PR CI never runs the real `sync-spotify.yml` workflow and never uses live Spotify or Neon
-credentials.
+PR CI never runs the real `sync-spotify.yml` or `suggest-curator-note.yml` workflow and never uses
+live Spotify, Neon or AI provider credentials.
 
 ### 18.2 Deployment
 
@@ -893,6 +1000,10 @@ credentials.
    (`workflow_dispatch`) for an out-of-cycle refresh. The editorial page itself is fully functional
    in the meantime per FR-005.
 
+This pull-request flow is the **only** way editorial content enters the site. An AI suggestion
+(18.5) is an input to step 1, written by Mehmet in his own words; it is never merged as-is by a
+machine (SEC-008, ADR-0005).
+
 ### 18.4 Scheduled Spotify sync (new)
 
 `sync-spotify.yml`:
@@ -908,8 +1019,26 @@ credentials.
 - Fails the workflow run (non-zero exit) on authentication failure or unexpected API error;
   never partially writes a row it cannot fully populate (16.1).
 - Uses secrets `SPOTIFY_CLIENT_ID`, `SPOTIFY_REFRESH_TOKEN`, `NEON_SYNC_CONNECTION_STRING` — all
-  GitHub Actions repository secrets, never exposed to `ci.yml`, `deploy.yml`, or the production
-  Render environment (SEC-001).
+  GitHub Actions repository secrets, never exposed to `ci.yml`, `deploy.yml`,
+  `suggest-curator-note.yml`, or the production Render environment (SEC-001).
+
+### 18.5 Manual AI curator-note suggestion (new, 3 September 2026)
+
+`suggest-curator-note.yml`:
+
+- Trigger: `workflow_dispatch` only, with a `spotifyPlaylistId` input. Never on a schedule, never
+  on a pull request, never on deploy — the suggestion is wanted only while a note is being written.
+- Reads the four permitted fields (`name`, `description`, `track_count`, `artists`) for that one
+  playlist from `spotify_playlist_cache` using a read-only connection. It holds no Spotify
+  credential and makes no Spotify call (section 12.4).
+- Calls the AI provider with a prompt built only from those fields plus TheBluesland-owned
+  instructions (SEC-008).
+- Writes the suggested draft to the workflow job summary and as a build artifact. It writes
+  nothing to the database, nothing to `content/`, and opens no pull request.
+- Uses secret `ANTHROPIC_API_KEY` only; never exposed to any other workflow or to Render
+  (SEC-001).
+- Mehmet reads the draft and, if useful, writes the real curator note himself through the normal
+  pull-request flow (18.3).
 
 ---
 
@@ -922,6 +1051,10 @@ credentials.
   (section 9.4) — small, append/update-only, no user-generated data. Neon's free-tier
   auto-suspend behavior is compatible with a monthly-write, read-mostly workload.
 - **Scheduled sync:** GitHub Actions, free for a public repository, no separate always-on compute.
+- **AI suggestions:** GitHub Actions, manual trigger only. The only non-zero running cost in the
+  system is AI token usage, which is bounded by how rarely the workflow is invoked (a handful of
+  runs per new playlist); it is paid from Mehmet's own AI provider account and does not affect the
+  $0/month *hosting* target.
 - All editorial content is packaged with the immutable application release, exactly as in v0.1;
   only the Spotify-sourced cache lives outside the release artifact.
 - HTTPS is mandatory (provided by Render).
@@ -954,20 +1087,28 @@ schema.
 - Weekly (rather than monthly) Spotify sync, if the one-month staleness lag (FR-024, section 21)
   proves too slow in practice.
 
-### V1.2 — AI-assisted editorial writing
+### V1.2 — AI-assisted editorial writing (scope narrowed and clarified 3 September 2026)
 
-AI may assist only with TheBluesland-owned text supplied by Mehmet, such as an original rough
-curator note. It may produce a polished summary, social post or translation.
+Two permitted use cases, both draft-only:
 
-The following inputs remain forbidden, with no exception, per section 11.2 and SEC-008:
+1. **Polishing TheBluesland-owned text.** AI is given Mehmet's own rough curator note and produces
+   a polished summary, social post or translation. (Unchanged from v0.2.)
+2. **Curator-note suggestion from playlist-level cache fields (new).** AI is given exactly `name`,
+   `description`, `track_count` and `artists` for one playlist and produces a suggested draft note,
+   to break the blank-page problem when a new playlist is added. Delivery mechanism, credential
+   isolation and storage decision: section 18.5 and ADR-0005.
 
-- Spotify playlist URLs supplied for model retrieval.
-- Spotify playlist contents.
-- Spotify track, album or artist metadata.
-- Spotify cover art or audio.
-- Any field from `spotify_playlist_cache`.
+The following inputs remain forbidden, per section 11.2 and SEC-008:
 
-All generated text requires human review and explicit publication.
+- Spotify playlist, Embed or cover-image URLs supplied for model retrieval.
+- Spotify playlist track contents.
+- Spotify track or album metadata, and per-track artist attribution.
+- Spotify cover art image data or audio.
+- Any `spotify_playlist_cache` column other than the four named above.
+- Any Spotify Content used for model training or fine-tuning (inference only).
+
+All generated text requires human review and explicit publication; nothing generated is stored in
+the database or rendered by the web application.
 
 ### V2 — Optional private editorial administration
 
@@ -978,9 +1119,11 @@ Only if GitHub-based content editing becomes a measurable problem:
 - Database-backed TheBluesland editorial content (note: this would extend the existing
   `TheBluesland.Data` project to hold editorial data too, not introduce a new database).
 - Export back to repository or another durable content source.
+- Only in this scenario would persisting AI suggestions become worth its cost — and then in a
+  separate table behind authentication, never as a column on `spotify_playlist_cache` (ADR-0005).
 
 Spotify visitor authentication, third-party playlist submissions and automated Spotify content
-analysis remain outside the planned roadmap.
+analysis (mood/genre/tag inference) remain outside the planned roadmap.
 
 ---
 
@@ -998,7 +1141,11 @@ analysis remain outside the planned roadmap.
 | TheBluesland is perceived as Spotify-affiliated | Branding/policy issue | Independent visual language, clear attribution and disclaimer |
 | **Monthly sync staleness (new)** | A playlist edited or deleted on Spotify may show stale data or a stale "available" status for up to ~30 days | Manual `workflow_dispatch` trigger for out-of-cycle refresh; FR-024 fallback keeps the editorial page useful regardless; revisit sync frequency in V1.1 if this proves disruptive |
 | **Neon/Render free-tier limits (new)** | Cold starts, possible compute-hour caps, possible future forced upgrade | Both are explicitly accepted MVP trade-offs for $0/month; monitor usage; the architecture does not lock in either provider (section 19) |
-| **Credential leakage from CI (new)** | Spotify refresh token or Neon write credential exposed | Secrets scoped only to `sync-spotify.yml`, never printed in logs (16.2), never available to `ci.yml`/`deploy.yml`; SEC-001, SEC-006 |
+| **Credential leakage from CI (new)** | Spotify refresh token, Neon write credential or AI provider key exposed | Secrets scoped per workflow (`sync-spotify.yml`, `suggest-curator-note.yml`), never printed in logs (16.2), never available to `ci.yml`/`deploy.yml` or Render; SEC-001, SEC-006 |
+| **Spotify Developer Policy ML restriction may be read to cover playlist-level metadata too (new, owner-accepted)** | The narrowed AI allowance (SEC-008) could be judged non-compliant | Owner-accepted risk (ADR-0005). Input limited to four fields already public on the playlist's own Spotify page; inference only, no training; no track-level data anywhere; usage is manual and rare; reversal costs one workflow and one secret — no schema or web-code change |
+| **AI draft mistaken for publishable copy (new)** | A machine-voiced or factually wrong note reaches the public site | AI output never enters the repository automatically and is never rendered by the web app (SEC-008); the PR flow (18.3) is the only path; published notes must be in Mehmet's own voice (10.3) |
+| **Prompt injection via Spotify-sourced `description` text (new, owner-accepted)** | Adversarial text placed in a playlist's public Spotify description could attempt to manipulate the AI's output | The suggestion workflow is non-agentic: no Spotify access, no write access to the database, `content/` or pull requests (SEC-008); output is always a human-reviewed draft, never auto-published, so a manipulated suggestion at worst wastes one review, it cannot trigger an automated action. Revisit if the tool is ever given write or retrieval capability (ADR-0005) |
+| **AI suggestion artifact is publicly visible before review (new, owner-accepted)** | The workflow's job summary and build artifact are visible to anyone with read access to this public repository as soon as the workflow runs, before Mehmet reads or approves the draft | "Never rendered by `TheBluesland.Web`" (SEC-008) is a guarantee about the public site, not about the artifact's visibility. Accepted because the AI input is limited to data already public on Spotify (SEC-008), so an unreviewed draft carries no confidentiality risk — only a quality risk already covered by the row above |
 
 ---
 
@@ -1023,8 +1170,12 @@ The MVP is complete when:
   production Neon database before launch, and every published playlist's `spotifyPlaylistId` has a
   corresponding cache row (or a confirmed `is_available = false` if genuinely removed).**
 - **The Render production environment has been verified to contain no Spotify credential and no
-  AI provider key — its only secret is the read-scoped Neon connection string** (SEC-001).
+  AI provider key (including `ANTHROPIC_API_KEY`) — its only secret is the read-scoped Neon
+  connection string** (SEC-001).
 - README contains local setup, content-authoring, sync-job-authoring and deployment instructions.
+
+The AI suggestion workflow (18.5) is **not** part of the MVP Definition of Done: it is optional
+tooling for the owner and may ship before or after launch without affecting the public site.
 
 ---
 
@@ -1045,9 +1196,17 @@ The MVP is complete when:
 5. ~~**Domain**~~ — **Resolved as non-blocking:** launch on Render's free subdomain; custom domain
    deferred (section 19).
 
-### Still open — blocking
+### Resolved after v0.2
 
 <!-- markdownlint-disable MD029 -->
+
+5b. ~~**AI content boundary**~~ — **Resolved 3 September 2026 by the owner:** SEC-008's absolute
+prohibition is narrowed to permit four playlist-level cache fields as AI inference input for
+draft-only curator-note suggestions, with the AI key confined to a GitHub Actions secret
+(sections 11.2, 13, 18.5, 20; ADR-0005). The Spotify-policy interpretation risk is knowingly
+accepted (section 21).
+
+### Still open — blocking
 
 6. **Initial playlist content:** provide the final editorial title, summary, tags and curator note
    for both candidate playlists in section 7 (draft suggestions given, not yet Mehmet-approved).
@@ -1089,15 +1248,17 @@ Existing / newly written for v0.2:
 - **`docs/adr/0003-mimari-kapsam.md`** (new) — why TheBluesland is a single-project Blazor Web App
   (plus one narrowly-scoped shared data project) rather than the repository's default
   API-first/multi-client template.
+- **`docs/adr/0005-ai-kurator-notu-siniri.md`** (new, 3 September 2026) — the narrowed AI
+  boundary: which four `spotify_playlist_cache` fields may be sent to an AI model, why output is
+  always a draft that only the pull-request flow can publish, why the AI key lives only in a
+  GitHub Actions secret, and why the suggested text is a job artifact rather than a database
+  column or a new table.
 
-Recommended, not yet written (topics carried over from v0.1, renumbered to avoid collision with
-the two new ADRs above; create only when a concrete decision needs to be pinned down beyond what
-this specification already states):
+Recommended, not yet written (topics carried over from v0.1; create only when a concrete decision
+needs to be pinned down beyond what this specification already states):
 
 - **ADR-0004:** Use Spotify Embed instead of full Spotify Web API playback for visitors (the Web
   API is used only server-side, for sync — see ADR-0002).
-- **ADR-0005:** Do not send Spotify Content to AI/ML systems, under any circumstance (section 11.2,
-  SEC-008).
 - **ADR-0006:** Use .NET 10 Blazor static SSR with isolated interactivity.
 - **ADR-0007:** Require click-to-load for third-party Spotify content.
 

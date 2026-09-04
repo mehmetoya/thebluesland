@@ -103,3 +103,14 @@ alır. Bkz. `docs/business-technical-specification.md` bölüm 9.4, 11, 12, 18.4
   edilmiş MVP trade-off'larıdır; mimari her iki sağlayıcıya da kilitli değildir (spec bölüm 19).
 - SEC-001 revize edildi: production'da "hiç credential yok" değil, "hiç Spotify/AI credential'ı
   yok, yalnızca salt-okunur bir DB connection string var" hâline geldi.
+
+## Sonraki karar notu (2026-09-03)
+
+`docs/adr/0005-ai-kurator-notu-siniri.md`, bu ADR'ın veri sınırını **değiştirmez** ama SEC-008'i
+daraltır: bu ADR'ın madde 1'inde sayılan alanlardan yalnızca dördü (`name`, `description`,
+`track_count`, `artists`) AI'ya girdi olarak verilebilir hâle geldi. Bu ADR'ın madde 2'si (track
+listesi hiçbir zaman kalıcı saklanmaz veya işlenmez) ve madde 4'ü (credential izolasyonu) aynen
+geçerlidir; ADR-0005 madde 4'ün desenini AI sağlayıcı key'i için tekrar eder
+(`ANTHROPIC_API_KEY` yalnızca `suggest-curator-note.yml` workflow'una scope edilir). AI önerisi
+`spotify_playlist_cache` tablosuna yazılmaz — bu tablo hâlâ yalnızca senkron aracı tarafından
+yazılan bir cache'tir.
