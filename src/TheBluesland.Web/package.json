@@ -1,0 +1,12 @@
+{
+  "name": "thebluesland-web-css",
+  "private": true,
+  "description": "US-013 AC1 (spec 12.2 'Styling: Tailwind CSS 4 plus CSS custom properties'): production Tailwind CSS build chain for src/TheBluesland.Web. This is the build tool only - no Razor markup uses Tailwind utility classes yet, so today's output is Tailwind's base reset. Wiring the compiled stylesheet into App.razor and adopting utility classes across Components/ is separate, later design work.",
+  "scripts": {
+    "build:css": "tailwindcss -i ./Styles/app.css -o ./wwwroot/css/app.css --minify"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.3",
+    "tailwindcss": "4.3.3"
+  }
+}

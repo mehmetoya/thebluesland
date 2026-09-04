@@ -1,0 +1,5 @@
+# US-013: generated Tailwind CSS build output (package.json's build:css script) - never hand
+# edited, rebuilt by CI/Docker from Styles/app.css. The repo root .gitignore already excludes
+# node_modules/ here; this file adds the generated stylesheet itself. Kept local to this project
+# directory since this agent's write scope does not cover the repo-root .gitignore.
+wwwroot/css/app.css

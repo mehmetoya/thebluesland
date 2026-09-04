@@ -332,15 +332,19 @@ birleşsin.
 
 Kabul kriterleri:
 
-- [ ] `.github/workflows/ci.yml` bir pull request'te tetiklendiğinde şu adımları sırayla çalıştırır
+- [x] `.github/workflows/ci.yml` bir pull request'te tetiklendiğinde şu adımları sırayla çalıştırır
       ve her biri ayrı ayrı başarı/başarısızlık durumu raporlar: restore, Release build, içerik
       doğrulama (US-007), unit+integration testler (Testcontainers Postgres ile), format kontrolü,
       Tailwind production build, Playwright smoke testleri, dependency/secret scanning, Docker
       image build.
-- [ ] Bu adımlardan herhangi biri başarısız olduğunda PR birleştirilemez (branch protection).
-- [ ] `ci.yml` çalışırken `SPOTIFY_CLIENT_ID`, `SPOTIFY_REFRESH_TOKEN`,
+- [ ] Bu adımlardan herhangi biri başarısız olduğunda PR birleştirilemez (branch protection). Kod
+      tarafı tamam (her job kendi başarı/başarısızlığını raporlar); GitHub repo ayarlarında bu
+      job'ları zorunlu kılan branch protection toggle'ı (Settings > Branches) Mehmet'in elle yapması
+      gereken, koddan yapılamayan tek seferlik bir adım (US-007 ile aynı desen) — bu yüzden kutucuk
+      tam işaretlenmedi.
+- [x] `ci.yml` çalışırken `SPOTIFY_CLIENT_ID`, `SPOTIFY_REFRESH_TOKEN`,
       `NEON_SYNC_CONNECTION_STRING` secret'larına erişimi yoktur (US-004 ile birlikte doğrulanır).
-- [ ] Integration testler gerçek Neon veritabanına değil, geçici bir Testcontainers Postgres
+- [x] Integration testler gerçek Neon veritabanına değil, geçici bir Testcontainers Postgres
       instance'ına karşı çalışır.
 
 Kapsam dışı: deploy adımı (US-014), aylık senkron workflow'u (US-004).

@@ -1,24 +1,20 @@
 name: CI
 
-# US-007 (spec section 18.1, item 3 only): runs content validation (PlaylistContentValidator,
-# US-006) against content/playlists on every pull request, so a Markdown file that violates the
-# v0.2 schema/taxonomy or duplicates a slug/spotifyPlaylistId across files is caught before it can
-# reach main. Deliberately does NOT implement the other eight items in spec 18.1 (restore/build,
-# tests, formatting, Tailwind, Playwright, dependency/secret scanning, Docker build) - those are
-# US-013's full PR pipeline, a separate story. This workflow declares no secrets: content
-# validation only reads local Markdown files, so it must never reference SPOTIFY_CLIENT_ID,
-# SPOTIFY_REFRESH_TOKEN or NEON_SYNC_CONNECTION_STRING - those stay scoped exclusively to
-# sync-spotify.yml per that workflow's own header comment (SEC-001).
+# US-013 (spec 18.1): the full pull-request pipeline. Every job below runs on every pull request
+# and reports its own pass/fail status independently (AC1); making any of them actually block
+# merging main requires a one-time, code-external GitHub branch-protection setting (Settings >
+# Branches > require these checks to pass) for each job name below - that toggle is Mehmet's manual
+# step and cannot be configured from this YAML (AC2), same pattern already used for US-007's
+# original content-validation job.
 #
-# Triggers on every pull request rather than being path-scoped to content/playlists/**: the
-# validator also checks cross-file slug/spotifyPlaylistId uniqueness (US-006), so a PR that edits
-# only one of two colliding files must still run this check even if that PR's diff never touches
-# the file it collides with.
-#
-# Making this job's failure actually block merging main requires a one-time, code-external GitHub
-# branch-protection setting (Settings > Branches > require this check to pass) - that toggle is
-# Mehmet's manual step and cannot be configured from this YAML; this workflow only guarantees the
-# job itself fails (non-zero exit) on invalid content, giving that setting something to enforce.
+# SEC-001/US-013 AC3: this workflow declares NO secrets, anywhere, in any job. It must never
+# reference SPOTIFY_CLIENT_ID, SPOTIFY_REFRESH_TOKEN or NEON_SYNC_CONNECTION_STRING - those stay
+# scoped exclusively to sync-spotify.yml's own `env:` block (see that workflow's header comment).
+# None of the steps below need them: content validation reads local Markdown, the test job runs
+# integration tests against an ephemeral Testcontainers Postgres instance (AC4) rather than the
+# real Neon database, and the Docker/Tailwind/Playwright jobs only build and smoke-test the app
+# in-process. `CiWorkflowSecretIsolationTests` (tests/TheBluesland.UnitTests/Workflows) pins this as
+# a regression test.
 
 on:
   pull_request: {}
@@ -45,3 +41,157 @@ jobs:
         # silently treats a missing directory as valid (US-006), so a wrong relative path here would
         # make this job falsely report success instead of failing loudly.
         run: dotnet run --project src/TheBluesland.Web/TheBluesland.Web.csproj -- validate-content ${{ github.workspace }}/content/playlists
+
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # tests/TheBluesland.E2ETests is intentionally NOT part of TheBluesland.slnx (kept out by this
+      # agent's own write scope, see that project's .csproj comment) - it restores/builds/runs
+      # independently in the playwright-smoke job below.
+      - name: Restore
+        run: dotnet restore TheBluesland.slnx
+
+      - name: Build (Release)
+        run: dotnet build TheBluesland.slnx --configuration Release --no-restore
+
+      # US-013 AC1 "format kontrolü": every checked-in .csproj, discovered from disk rather than
+      # hardcoded, so a future new project (like tests/TheBluesland.E2ETests today) is covered
+      # automatically without editing this workflow.
+      - name: Format check
+        run: |
+          set -euo pipefail
+          status=0
+          while IFS= read -r -d '' project; do
+            echo "::group::dotnet format --verify-no-changes $project"
+            dotnet format "$project" --verify-no-changes || status=1
+            echo "::endgroup::"
+          done < <(find . -name '*.csproj' -not -path '*/bin/*' -not -path '*/obj/*' -print0)
+          exit $status
+
+      # US-013 AC4: TheBluesland.UnitTests' integration tests (Testcontainers.PostgreSql) start
+      # their own ephemeral Postgres container against the GitHub-hosted runner's preinstalled
+      # Docker daemon - never the real Neon database, and no NEON_* secret is available to do so
+      # even if a test tried (see this file's header comment / SEC-001).
+      - name: Unit and integration tests
+        run: dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --configuration Release --no-build
+
+  playwright-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore tests/TheBluesland.E2ETests/TheBluesland.E2ETests.csproj
+
+      - name: Build (Release)
+        run: dotnet build tests/TheBluesland.E2ETests/TheBluesland.E2ETests.csproj --configuration Release --no-restore
+
+      # Standard Microsoft.Playwright.NET CI pattern: the package emits a playwright.ps1 script into
+      # the build output that downloads the matching browser binaries; ubuntu-latest ships pwsh.
+      - name: Install Playwright browsers
+        run: pwsh tests/TheBluesland.E2ETests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+      # US-013 AC1 "Playwright smoke testleri": SmokeTests.cs starts the real app in-process
+      # (WebHostFactory, same pattern as WebHostIntegrationTests) and drives it with a real Chromium
+      # browser - home page render plus one click-through to a playlist detail page.
+      - name: Playwright smoke tests
+        run: dotnet test tests/TheBluesland.E2ETests/TheBluesland.E2ETests.csproj --configuration Release --no-build
+
+  tailwind-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/TheBluesland.Web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Tailwind CLI
+        run: npm ci
+
+      - name: Tailwind production build
+        run: npm run build:css
+
+      - name: Verify compiled stylesheet exists
+        run: test -f wwwroot/css/app.css
+
+  dependency-secret-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      # GitHub-native PR dependency diff (NuGet + npm manifests); needs no secret beyond the
+      # default, auto-issued GITHUB_TOKEN.
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+
+      - name: Restore
+        run: dotnet restore TheBluesland.slnx
+
+      # `dotnet list package --vulnerable` only prints findings and always exits 0 by itself; grep
+      # turns a real finding into a failing step rather than a silently ignored warning.
+      - name: NuGet vulnerable package scan
+        run: |
+          set -euo pipefail
+          dotnet list TheBluesland.slnx package --vulnerable --include-transitive | tee vulnerable-packages.txt
+          if grep -q "has the following vulnerable packages" vulnerable-packages.txt; then
+            echo "::error::Vulnerable NuGet packages found - see the log above."
+            exit 1
+          fi
+
+      # gitleaks-action is free for public repositories (this repo) and needs no license secret -
+      # only the default GITHUB_TOKEN, never SPOTIFY_CLIENT_ID/SPOTIFY_REFRESH_TOKEN/
+      # NEON_SYNC_CONNECTION_STRING (SEC-001).
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build-only (push: false) - publishing an image is deploy scope (US-014), not this story's.
+      # Dockerfile lives at src/TheBluesland.Web/Dockerfile (see that file's own header comment for
+      # why) with the repo root as build context, since TheBluesland.Web's build also needs
+      # Directory.Build.props/Directory.Packages.props and its src/TheBluesland.Data project reference.
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/TheBluesland.Web/Dockerfile
+          push: false

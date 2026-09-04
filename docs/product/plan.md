@@ -14,7 +14,7 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 4 — CI/CD (aktif).** US-013 (PR pipeline'ı), US-014 (Render+Neon deploy pipeline'ı).
+- **Faz 4 — CI/CD (aktif).** US-014 (Render+Neon deploy pipeline'ı) sırada.
 - **Faz 5 — Launch içeriği.** US-015 (sekiz playlist'in editoryal tamamlanması) — Faz 1-4 ile
   paralel yürütülebilir, ama public launch bunu bekler.
 - **US-016 — AI destekli kürator notu taslağı önerisi.** Fazlardan bağımsız, yalnızca US-002'ye
@@ -23,6 +23,23 @@ Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
 ## Tamamlanan
 
+- **US-013 — Pull request CI pipeline'ı.** `ci.yml` altı bağımsız job'a çıkarıldı:
+  `content-validation` (US-007, değişmedi), `build-and-test` (restore/Release build/`dotnet format
+  --verify-no-changes` her `.csproj` için/Testcontainers unit+integration testler),
+  `playwright-smoke` (yeni `tests/TheBluesland.E2ETests` — `WebHostFactory` in-process host'una
+  karşı gerçek Chromium ile home page + detay sayfası navigasyonu), `tailwind-build` (yeni
+  `src/TheBluesland.Web/package.json` — Tailwind CSS 4 npm build zinciri; ilk pinlenen `4.0.0` bir
+  CLI bug'ına çarptı — `Missing field 'negated' on ScannerOptions.sources` — `4.3.3`'e ve committed
+  `package-lock.json`+`npm ci`'ye geçilerek çözüldü), `dependency-secret-scan`
+  (`dependency-review-action` + `dotnet list package --vulnerable` + `gitleaks-action`), ve
+  `docker-build` (yeni non-root, multi-stage `src/TheBluesland.Web/Dockerfile` — context repo kökü,
+  Tailwind çıktısını ayrı bir stage'de derleyip publish'e overlay ediyor). Hiçbir job
+  `SPOTIFY_CLIENT_ID`/`SPOTIFY_REFRESH_TOKEN`/`NEON_SYNC_CONNECTION_STRING`'i bildirmiyor
+  (`CiWorkflowSecretIsolationTests` ile regresyona bağlandı); integration testler Testcontainers'a
+  karşı çalışıyor, gerçek Neon'a hiç dokunmuyor. Branch protection toggle'ı (US-007'deki gibi)
+  Mehmet'in elle yapacağı tek seferlik adım olarak kaldı. `dotnet build`/`dotnet test`: 152/152
+  yeşil; `docker build` ve `npm ci && npm run build:css` ana oturumda gerçekten çalıştırılıp
+  doğrulandı (agent sandbox'ında npm/docker/pwsh yasak).
 - **US-012 — Güvenlik başlıkları, CSP ve embed URL doğrulaması.** Her yanıta (2xx/404 dahil)
   `Content-Security-Policy`/`X-Content-Type-Options`/`Referrer-Policy`/`Permissions-Policy`
   ekleyen bir middleware (`WebHostFactory`); CSP'nin tek Spotify-özel izni `frame-src

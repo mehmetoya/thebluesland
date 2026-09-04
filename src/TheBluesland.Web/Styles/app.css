@@ -1,0 +1,5 @@
+/* US-013 AC1 / spec 12.2: Tailwind CSS 4 entry point. `npm run build:css` (see package.json)
+   compiles this into wwwroot/css/app.css. No Razor markup consumes that stylesheet yet - wiring
+   a <link> into Components/App.razor and adopting Tailwind utility classes is separate, later
+   design work; this story only sets up the build chain and proves it runs in CI/Docker. */
+@import "tailwindcss";

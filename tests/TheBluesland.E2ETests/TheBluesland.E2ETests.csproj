@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Shouldly" />
+    <!--
+      US-013 AC1 (spec 12.2, "Browser tests"): Directory.Packages.props is a repo-root file this
+      agent's write scope does not cover (src/tests/tools/.github only), so this single package's
+      version is pinned here via VersionOverride - the documented Central Package Management escape
+      hatch for one project - rather than in the central file. ManagePackageVersionsCentrally stays
+      true for every other package in the solution.
+    -->
+    <PackageReference Include="Microsoft.Playwright" VersionOverride="1.49.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/TheBluesland.Data/TheBluesland.Data.csproj" />
+    <ProjectReference Include="../../src/TheBluesland.Web/TheBluesland.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Same rationale as TheBluesland.UnitTests: hosts the real Kestrel/Blazor pipeline
+         in-process via WebHostFactory, without a WebApplicationFactory/TestHost NuGet package. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Fixtures/**/*.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
