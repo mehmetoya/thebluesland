@@ -3,9 +3,20 @@ schemaVersion: 1
 slug: slaves-of-cotton-field
 spotifyPlaylistId: 1gRDqcSGogJkcZZduyVciv
 title: "Slaves of Cotton Field"
-status: draft
+summary: "Three thousand tracks of pre-war and Delta blues — Albert Ammons, Alberta Hunter, Alan Lomax field recordings and more."
+moods:
+  - raw
+  - melancholic
+genres:
+  - blues
+occasions:
+  - late-night
+era: pre-1970
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (3195 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+This is the blues at its oldest and starkest: field recordings, Alan Lomax's archival work, and the first generation of recorded blues and boogie-woogie players. The title names the genre's origin directly rather than softening it, and the tracklist follows through — this is history as much as music, the sound the later, more famous blues-rock records were built on top of.
+
+Not background music. This one asks you to actually listen.
