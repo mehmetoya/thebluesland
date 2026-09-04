@@ -363,13 +363,23 @@ Kabul kriterleri:
 
 - [ ] `.github/workflows/deploy.yml`, `main`'e merge sonrası tetiklendiğinde, commit SHA ile
       etiketlenmiş bir immutable Docker image build eder ve Render'ın bunu çekebileceği bir yere
-      gönderir (veya Render deploy hook'unu tetikler).
+      gönderir (veya Render deploy hook'unu tetikler). Kod tarafı tamam (`deploy.yml` image'i
+      `ghcr.io/mehmetoya/thebluesland:<sha>` + `:latest` olarak push ediyor, `RENDER_DEPLOY_HOOK_URL`
+      secret'ı varsa deploy hook'u tetikliyor); gerçek bir Render servisi henüz bağlanmadığı için
+      uçtan uca doğrulanmadı — bkz. `.github/render.yaml` başlık yorumundaki manuel adımlar.
 - [ ] Yeni image Render'a alındığında, trafiğe yönlendirilmeden önce `/health/ready` kontrolü
-      başarılı olur; başarısız olursa trafik yönlendirilmez.
+      başarılı olur; başarısız olursa trafik yönlendirilmez. Kod tarafı tamam (`render.yaml`'da
+      `healthCheckPath: /health/ready`, US-005'teki DB-bağımsız health check'i kullanıyor); Render
+      bunu native destekliyor ama gerçek serviste henüz doğrulanmadı.
 - [ ] Render production ortam değişkenleri incelendiğinde, yalnızca salt-okunur Neon connection
-      string bulunur; hiçbir Spotify veya AI credential'ı yoktur (spec SEC-001, DoD maddesi).
+      string bulunur; hiçbir Spotify veya AI credential'ı yoktur (spec SEC-001, DoD maddesi). Kod
+      tarafı tamam (`render.yaml`'da tek env var `ConnectionStrings__SpotifyPlaylistCache`, `sync:
+      false` ile — değeri Mehmet'in Render Dashboard'unda salt-okunur `spotify_cache_readonly`
+      rolüyle elle girmesi gerekiyor); gerçek dashboard'da henüz doğrulanmadı.
 - [ ] Bir önceki sağlıklı deploy'a Render'ın rollback özelliğiyle geri dönüldüğünde site eski
-      sürümle çalışır durumda kalır.
+      sürümle çalışır durumda kalır. Mimari olarak destekleniyor (her deploy immutable SHA-tagged
+      image, Render'ın native rollback özelliği koddan bağımsız çalışır); gerçek serviste henüz
+      denenmedi.
 
 Kapsam dışı: özel domain bağlama (spec bölüm 19'da non-blocking olarak işaretli, ayrı, düşük
 öncelikli bir hikaye olarak ileride açılabilir).

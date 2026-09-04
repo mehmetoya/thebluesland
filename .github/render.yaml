@@ -1,0 +1,68 @@
+# US-014 AC2/AC3 (spec 18.2, 19, SEC-001): Render Blueprint for the production web service.
+#
+# Deliberately placed at `.github/render.yaml` rather than the repository root: this agent's write
+# scope is limited to `src/`, `tests/`, `tools/` and `.github/` (same constraint documented on
+# `src/TheBluesland.Web/Dockerfile`'s own header comment). Render supports a non-default Blueprint
+# path - when Mehmet connects this repository as a Render Blueprint (Render Dashboard > New >
+# Blueprint), he must set the "render.yaml Path" field to `.github/render.yaml` instead of leaving
+# it at the root default.
+#
+# This file only declares the SERVICE and its ENV VAR NAMES - it holds no secret value anywhere
+# (SEC-001). `sync: false` on an env var means Render requires that value to be entered once by
+# hand in the Render Dashboard (Environment tab) and will never read or overwrite it from this
+# file or from git history.
+#
+# Manual, code-external steps this depends on (none of these can be done by this agent):
+# 1. Create the Render Blueprint from this repo, pointing at `.github/render.yaml` as above.
+# 2. Make the `ghcr.io/mehmetoya/thebluesland` package pullable by Render: either make the GHCR
+#    package public (Package settings on GitHub, after deploy.yml has pushed at least once), or add
+#    a Render Registry Credential for ghcr.io (a GitHub PAT with `read:packages`) and reference it
+#    here once Render's exact Blueprint field for that is confirmed in the dashboard.
+# 3. In the Render Dashboard, set `ConnectionStrings__SpotifyPlaylistCache` to the Neon **read-only**
+#    role's connection string (`spotify_cache_readonly`, see
+#    `src/TheBluesland.Data/Scripts/create-spotify-cache-roles.sql`) - never the read/write string
+#    used by `sync-spotify.yml` (SEC-001).
+# 4. Copy the Render service's Deploy Hook URL (Settings > Deploy Hook) into this repo's GitHub
+#    Actions secret `RENDER_DEPLOY_HOOK_URL` (see `.github/workflows/deploy.yml`).
+# 5. Confirm the exact `PORT` value Render expects a Docker service to listen on for this account/
+#    plan (Render's dashboard shows this once the service exists) - 8080 below matches the
+#    aspnet:10.0 base image's documented default (`src/TheBluesland.Web/Dockerfile` line 39
+#    comment) and is the standard value used for .NET containers on Render, but this agent cannot
+#    provision a real Render service to verify it end-to-end.
+# 6. `region`/`plan` below are reasonable free-tier defaults (spec 19, "$0/month") - change them in
+#    the Render Dashboard or here if Mehmet prefers a different region.
+
+services:
+  - type: web
+    name: thebluesland
+    runtime: image
+    region: oregon
+    plan: free
+    # US-014 AC1: deploy.yml pushes every commit on main under both an immutable `:<sha>` tag and
+    # this mutable `:latest` pointer at the same digest; Render re-pulls whatever `:latest` points
+    # to when deploy.yml's plain POST to the Render deploy hook (no image reference in the request
+    # body) asks it to redeploy.
+    image:
+      url: ghcr.io/mehmetoya/thebluesland:latest
+    # US-014 AC2: Render will not route traffic to the new instance until this path returns healthy
+    # (US-005's PlaylistContentHealthCheck, DB-independent by design - spec 16.2) - the code-level
+    # half of the acceptance criterion; there is no separate deploy-strategy key to add for this,
+    # it is Render's default behavior for any web service with `healthCheckPath` set.
+    healthCheckPath: /health/ready
+    # Deploys are driven only by deploy.yml's explicit hook trigger (see that workflow), not by
+    # Render polling the registry on its own, to avoid a second, unpinned deploy racing the one
+    # deploy.yml just triggered for this exact commit.
+    autoDeploy: false
+    envVars:
+      # SEC-001: the ONLY runtime secret this service holds. Read-only Neon role, entered by hand
+      # in the Render Dashboard - never committed, never the sync tool's read/write connection
+      # string. No SPOTIFY_* or ANTHROPIC_API_KEY variable is declared here or anywhere else in this
+      # service - those exist only as GitHub Actions secrets scoped to sync-spotify.yml (and, when
+      # it exists, suggest-curator-note.yml), never in Render (spec SEC-001).
+      - key: ConnectionStrings__SpotifyPlaylistCache
+        sync: false
+      # Matches the aspnet:10.0 base image's ASPNETCORE_HTTP_PORTS default (8080) that
+      # src/TheBluesland.Web/Dockerfile already relies on without further change; tells Render
+      # which port to route traffic and health checks to on this container (see step 5 above).
+      - key: PORT
+        value: "8080"

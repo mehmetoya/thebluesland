@@ -14,15 +14,32 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 4 — CI/CD (aktif).** US-014 (Render+Neon deploy pipeline'ı) sırada.
-- **Faz 5 — Launch içeriği.** US-015 (sekiz playlist'in editoryal tamamlanması) — Faz 1-4 ile
-  paralel yürütülebilir, ama public launch bunu bekler.
+- **Faz 4 — CI/CD.** Kod tarafı tamam (US-013, US-014); Faz'ın kapanması Mehmet'in Render
+  Blueprint'i bağlayıp uçtan uca ilk deploy'u doğrulamasını bekliyor — bkz. US-014 kalan risk.
+- **Faz 5 — Launch içeriği (aktif).** US-015 (sekiz playlist'in editoryal tamamlanması) — Faz 1-4
+  ile paralel yürütülebilir, ama public launch bunu bekler.
 - **US-016 — AI destekli kürator notu taslağı önerisi.** Fazlardan bağımsız, yalnızca US-002'ye
   (salt-okunur DB rolü) bağımlı; `docs/adr/0005-ai-kurator-notu-siniri.md` ile onaylandı. US-015'i
   destekleyici, paralel yürütülebilir.
 
 ## Tamamlanan
 
+- **US-014 — Render + Neon production deploy pipeline'ı (kod tarafı tamam, uçtan uca doğrulama
+  bekliyor).** `.github/workflows/deploy.yml` — `main`'e her push'ta US-013'ün doğruladığı aynı
+  `Dockerfile`'ı build edip `ghcr.io/mehmetoya/thebluesland`'a hem immutable `:<sha>` hem mutable
+  `:latest` etiketiyle push ediyor (yalnızca `GITHUB_TOKEN`, yeni hesap/secret yok), sonra
+  `RENDER_DEPLOY_HOOK_URL` secret'ı tanımlıysa Render deploy hook'unu `curl` ile tetikliyor
+  (tanımlı değilse hata vermeden uyarıp geçiyor). `.github/render.yaml` (Render Blueprint, agent'ın
+  yazma kapsamı repo kökünü kapsamadığı için kasıtlı olarak burada — Render'a bağlanırken "render.yaml
+  Path" alanına elle girilmeli): `healthCheckPath: /health/ready` (US-005), `autoDeploy: false`
+  (çift deploy yarışını önlemek için), tek env var `ConnectionStrings__SpotifyPlaylistCache`
+  (`sync: false` — değer Render Dashboard'unda elle girilir, asla commit edilmez). SEC-001
+  (Spotify/AI credential'ı Render'da yok) `DeployWorkflowSecretIsolationTests` ile regresyona
+  bağlandı. Render tarafında gerçek bir servis henüz kurulmadığı için health-gated traffic ve
+  rollback uçtan uca doğrulanmadı — Mehmet'in yapması gereken adımlar `render.yaml` başlık
+  yorumunda listeli (Blueprint bağlama, GHCR paketini erişilebilir kılma, connection string'i
+  girme, deploy hook URL'ini GitHub secret'ı olarak ekleme, `PORT=8080` varsayımını doğrulama).
+  `dotnet build`/`dotnet test`: 162/162 yeşil, `dotnet format --verify-no-changes` temiz.
 - **US-013 — Pull request CI pipeline'ı.** `ci.yml` altı bağımsız job'a çıkarıldı:
   `content-validation` (US-007, değişmedi), `build-and-test` (restore/Release build/`dotnet format
   --verify-no-changes` her `.csproj` için/Testcontainers unit+integration testler),

@@ -1,0 +1,78 @@
+name: Deploy
+
+# US-014 (spec 18.2, 12.5): runs after a merge lands on `main`. `main` is protected by ci.yml's
+# required checks (branch-protection toggle is Mehmet's manual step, same pattern as US-007/
+# US-013 - see those workflows' header comments), so this workflow trusts `main` and does not
+# re-run tests; it only builds, publishes and deploys.
+#
+# Pipeline: build the same Dockerfile ci.yml's docker-build job already validates on every PR,
+# tag it immutably with the merge commit SHA (spec 18.2 "immutable Docker image identified by
+# commit SHA" - this is also what makes Render's own rollback-to-a-previous-deploy feature
+# meaningful, since every past deploy maps to one exact, re-pullable image), push it to GHCR
+# (ghcr.io) using only the default GITHUB_TOKEN (no new account or secret), then trigger Render's
+# deploy hook so Render pulls the new image and gates traffic on `/health/ready`
+# (render.yaml `healthCheckPath`, US-005) before routing to it.
+#
+# SEC-001: this workflow declares NO Spotify or AI provider secret, ever - see
+# DeployWorkflowSecretIsolationTests. Its only secret is RENDER_DEPLOY_HOOK_URL, a Render-issued
+# webhook URL that just asks Render to redeploy the service already configured (render.yaml) with
+# read-only Neon access; the hook URL itself carries no Spotify/AI/database credential.
+#
+# RENDER_DEPLOY_HOOK_URL does not exist yet - Mehmet must create the Render service (from
+# render.yaml) and add its deploy hook URL as a GitHub Actions repository secret. See render.yaml's
+# header comment for the full list of manual, code-external Render/GitHub steps this depends on.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/mehmetoya/thebluesland
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Same Dockerfile/context ci.yml's docker-build job already builds (build-only there); pushed
+      # here under two tags pointing at the identical image: the immutable commit SHA (spec 18.2,
+      # and the tag Render's per-deploy history/rollback should be read against) and `latest`, which
+      # is the mutable pointer render.yaml's `image.url` is pinned to so a plain deploy-hook POST
+      # (no image reference in the request) picks up this exact build.
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: src/TheBluesland.Web/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+
+      # Skips gracefully (rather than failing the whole deploy on a confusing curl error) until
+      # Mehmet adds the secret - see this file's header comment and render.yaml. Render performs
+      # its own `/health/ready` gate (AC2) after this trigger; this step only asks Render to start
+      # that process, it does not itself confirm the deploy succeeded.
+      - name: Trigger Render deploy
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: curl --fail --silent --show-error --request POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+      - name: Render deploy hook not configured
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL == '' }}
+        run: echo "::warning::RENDER_DEPLOY_HOOK_URL secret is not set - image was pushed to GHCR but Render was not asked to deploy it. See deploy.yml's header comment."
