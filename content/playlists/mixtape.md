@@ -3,9 +3,20 @@ schemaVersion: 1
 slug: mixtape
 spotifyPlaylistId: 43ujhOWnDyUDNsVeZnDksN
 title: "MixTape"
-status: draft
+summary: "A five-hundred-track personal rock mixtape spanning nu-metal, indie and classic rock alike."
+moods:
+  - energetic
+  - nostalgic
+genres:
+  - rock
+occasions:
+  - road-trip
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (499 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+Exactly what the title promises: a big, unsorted personal rock mixtape running from Arcade Fire and Björk's art-pop through Alter Bridge and Anthrax's heavier end, with Arthur Russell's outsider cello-disco thrown in for good measure. No single genre rules; it's a personality more than a playlist.
+
+Best on shuffle, the way a real mixtape used to surprise you.

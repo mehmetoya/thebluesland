@@ -3,9 +3,20 @@ schemaVersion: 1
 slug: dreaming
 spotifyPlaylistId: 5wx6y3ecKvQXaQAlPdkTVs
 title: "Dreaming"
-status: draft
+summary: "Modern classical and solo piano — Claude Debussy, Alexandre Tharaud and the Amsterdam Sinfonietta."
+moods:
+  - melancholic
+  - warm
+genres:
+  - classical
+occasions:
+  - slow-evening
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (94 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A ninety-four-track classical set anchored by Debussy's impressionism and carried forward by contemporary interpreters like Alexandre Tharaud and Bruce Brubaker. It sits closer to solo piano and chamber work than orchestral grandeur — intimate rather than sweeping.
+
+A slow-evening record for a quiet room.

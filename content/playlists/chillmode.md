@@ -3,9 +3,22 @@ schemaVersion: 1
 slug: chillmode
 spotifyPlaylistId: 7nTLgxrwoBnGz0KCfBjqUE
 title: "Chillmode"
-status: draft
+summary: "Laid-back blues-folk and desert rock — Hermanos Gutiérrez, John Frusciante, José González and Jack Johnson."
+moods:
+  - warm
+  - melancholic
+genres:
+  - indie
+  - blues-rock
+  - folk
+occasions:
+  - slow-evening
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (50 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A low-key set built around a specific texture: warm, unhurried guitar music — Hermanos Gutiérrez's cinematic instrumentals, José González's fingerpicked folk, John Mayer and Devendra Banhart's laid-back songwriting. Everything here is designed to lower a pulse rather than raise one.
+
+The playlist equivalent of taking your shoes off.

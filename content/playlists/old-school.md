@@ -3,9 +3,21 @@ schemaVersion: 1
 slug: old-school
 spotifyPlaylistId: 57eNskOnHBcMZT7FQgHK1H
 title: "Old School"
-status: draft
+summary: "Sixties and seventies pop-soul nostalgia — Al Green, Curtis Mayfield, David Bowie and Creedence Clearwater Revival."
+moods:
+  - nostalgic
+  - warm
+genres:
+  - rock
+  - soul
+occasions:
+  - road-trip
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (141 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A straightforward oldies set spanning soul (Al Green, Curtis Mayfield), classic rock (Creedence Clearwater Revival, David Bowie) and one-hit AM-radio staples (Blue Swede, Del Shannon). It doesn't argue for a specific era so much as celebrate the idea of "old school" itself.
+
+Comfort listening, no deeper agenda required.

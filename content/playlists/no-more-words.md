@@ -3,9 +3,21 @@ schemaVersion: 1
 slug: no-more-words
 spotifyPlaylistId: 3ojatK5Hl1fHg2AHKHHuKT
 title: "No More Words"
-status: draft
+summary: "The largest instrumental collection in the catalogue — over eight thousand wordless tracks, from ambient soundbaths to chamber ensembles."
+moods:
+  - melancholic
+  - warm
+genres:
+  - electronic
+  - classical
+occasions:
+  - headphones
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (8656 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+True to its title: nothing here has lyrics. Eight thousand six hundred fifty-six instrumental tracks, from meditative drone and "432Hz Crystal Hang Drums"-style sound-bath recordings to contemporary chamber groups like the 12 Ensemble — a genre-agnostic library built entirely around the absence of a voice, so nothing ever competes with a thought.
+
+Functional in the best way: put it on and forget it's there.

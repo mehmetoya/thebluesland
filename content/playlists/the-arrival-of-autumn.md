@@ -3,9 +3,21 @@ schemaVersion: 1
 slug: the-arrival-of-autumn
 spotifyPlaylistId: 5IVPFDGTFcgCvq2t4DLou7
 title: "The Arrival of Autumn 🍂🌰🍁🍃🌪️"
-status: draft
+summary: "Seasonal indie-folk for the turn toward autumn — Bon Iver, Fleet Foxes, Damien Rice and Coldplay."
+moods:
+  - melancholic
+  - warm
+genres:
+  - indie
+  - folk
+occasions:
+  - slow-evening
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (37 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+A seasonal companion to "Pumpkin Spice," leaning slightly more melancholic — Fleet Foxes' harmony-rich folk, Bon Iver's hushed intensity, Damien Rice's raw confessionals, Dire Straits' understated guitar work fitting the mood unexpectedly well. Thirty-seven tracks built entirely around one season's emotional weather.
+
+Best heard as the light actually starts to change.

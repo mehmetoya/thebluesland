@@ -3,9 +3,21 @@ schemaVersion: 1
 slug: songs-for-zuzi
 spotifyPlaylistId: 1KPc8NySIcoX8kfnsWNhWC
 title: "Songs for Zuzi"
-status: draft
+summary: "A thousand-track dedicated mixtape spanning decades of rock and pop, built for one person."
+moods:
+  - warm
+  - nostalgic
+genres:
+  - rock
+  - pop
+occasions:
+  - road-trip
+era: mixed-era
+status: published
+publishedAt: 2026-09-05
+featured: false
 ---
 
-TODO: curator note pending — Mehmet to review/write. Draft seeded from the account's
-Spotify playlist list (1079 tracks at discovery time) so the sync workflow can
-pull real name/description/artist data into spotify_playlist_cache for curation.
+One of the largest personal mixtapes in the catalogue — over a thousand tracks spanning 10cc's art-pop, ABBA's disco-pop, AC/DC's hard rock, and everything between, built for one named listener rather than a theme. The sheer range says more about the relationship than any single genre could.
+
+A gift disguised as a playlist.
