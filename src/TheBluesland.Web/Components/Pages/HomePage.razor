@@ -3,6 +3,15 @@
 @inject PlaylistCacheLookup CacheLookup
 
 <PageTitle>TheBluesland</PageTitle>
+@* US-011 AC1: CanonicalPath is the fixed "/" - never the current request's own query string, which
+   is what canonicalises every ?mood=/?genre=/?occasion=/?era= filtered view back to the base
+   catalogue (spec 14) regardless of which filters are active on this particular request. *@
+<PageMetadata
+    Title="TheBluesland"
+    Description="TheBluesland is Mehmet's curated collection of Spotify playlists - blues, rock and the records that connect them - each introduced with a short curator note."
+    CanonicalPath="/"
+    ImagePath="/og-image.png"
+    StructuredDataJson="@(new[] { WebSiteJsonLd })" />
 
 <section class="brand-intro">
     <h1>TheBluesland</h1>
@@ -149,4 +158,10 @@
 
     private PlaylistCacheSnapshot GetSnapshot(PlaylistContent playlist) =>
         _snapshots.GetValueOrDefault(playlist.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable);
+
+    private string WebSiteJsonLd =>
+        StructuredDataBuilder.BuildWebSite(BuildAbsoluteUrl("/"));
+
+    private string BuildAbsoluteUrl(string path) =>
+        HttpContext is null ? path : SiteUrl.BuildAbsolute(HttpContext, path);
 }

@@ -19,6 +19,15 @@
 *@
 @if (_content is not null)
 {
+    <PageTitle>@($"{_content.Title} - TheBluesland")</PageTitle>
+    @* US-011 AC1/AC3: ImagePath is the per-playlist generated card, never the cache's Spotify
+       cover_image_url (FR-031) - see WebHostFactory's "/playlists/{slug}/og-image.png" mapping. *@
+    <PageMetadata
+        Title="@($"{_content.Title} - TheBluesland")"
+        Description="@_content.Summary"
+        CanonicalPath="@($"/playlists/{_content.Slug}")"
+        ImagePath="@($"/playlists/{_content.Slug}/og-image.png")"
+        StructuredDataJson="@(new[] { CollectionPageJsonLd, BreadcrumbJsonLd })" />
     <PlaylistDetailView
         Content="_content"
         CacheSnapshot="_cacheSnapshot"
@@ -95,4 +104,16 @@ else if (_hasLoaded && !_redirected)
 
         _hasLoaded = true;
     }
+
+    private string CollectionPageJsonLd =>
+        StructuredDataBuilder.BuildCollectionPage(_content!, BuildAbsoluteUrl($"/playlists/{_content!.Slug}"));
+
+    private string BreadcrumbJsonLd =>
+        StructuredDataBuilder.BuildBreadcrumbList(
+            BuildAbsoluteUrl("/"),
+            _content!.Title,
+            BuildAbsoluteUrl($"/playlists/{_content!.Slug}"));
+
+    private string BuildAbsoluteUrl(string path) =>
+        HttpContext is null ? path : SiteUrl.BuildAbsolute(HttpContext, path);
 }

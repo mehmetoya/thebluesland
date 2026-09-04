@@ -1,0 +1,74 @@
+@*
+    US-011 AC1/AC4/FR-030/FR-032: shared per-page SEO head block - meta description, canonical link,
+    Open Graph and Twitter/X card tags, plus any JSON-LD structured data for that page. Each of the
+    five indexable pages already renders its own <PageTitle> for <title>; this covers everything
+    else, so call sites only pass the handful of values that actually differ per page instead of
+    repeating this same block five times.
+
+    Everything lives in exactly one <HeadContent> block, deliberately: Blazor's <HeadOutlet> treats
+    "head content" as a single named slot per page where the most recently rendered <HeadContent>
+    wins outright rather than the two combining (verified empirically - a second, separate
+    <HeadContent> on the same page silently replaced this one's tags rather than adding to them).
+    That is why StructuredDataJson is a parameter here instead of a sibling component: any page using
+    this component must route every non-title head tag through this single instance.
+
+    CanonicalPath/ImagePath are always fixed, caller-supplied site-relative paths - never built from
+    the current request's raw path/query string. That is what satisfies spec 14's "canonicalise
+    filtered catalogue views to the base catalogue" rule: HomePage.razor always passes "/" here
+    regardless of any active ?mood=/?genre=/?occasion=/?era= query string on the actual request.
+*@
+<HeadContent>
+    <meta name="description" content="@Description" />
+    <link rel="canonical" href="@CanonicalUrl" />
+    <meta property="og:title" content="@Title" />
+    <meta property="og:description" content="@Description" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="@CanonicalUrl" />
+    <meta property="og:image" content="@ImageUrl" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@Title" />
+    <meta name="twitter:description" content="@Description" />
+    <meta name="twitter:image" content="@ImageUrl" />
+    @* JSON built by Seo/StructuredDataBuilder.cs (System.Text.Json, correctly escaped) - never
+       string-concatenated markup - so the MarkupString cast below is safe: it is machine-generated
+       JSON, not unprocessed user/editorial input. *@
+    @foreach (var json in StructuredDataJson)
+    {
+        <script type="application/ld+json">@((MarkupString)json)</script>
+    }
+</HeadContent>
+
+@code {
+    [Parameter, EditorRequired]
+    public required string Title { get; set; }
+
+    [Parameter, EditorRequired]
+    public required string Description { get; set; }
+
+    /// <summary>Site-relative path, e.g. "/", "/about", "/playlists/{slug}".</summary>
+    [Parameter, EditorRequired]
+    public required string CanonicalPath { get; set; }
+
+    /// <summary>
+    /// Site-relative OG/Twitter image path (e.g. "/og-image.png" or
+    /// "/playlists/{slug}/og-image.png") - a TheBluesland-generated endpoint, never a
+    /// Spotify-hosted cover image URL (FR-031).
+    /// </summary>
+    [Parameter, EditorRequired]
+    public required string ImagePath { get; set; }
+
+    /// <summary>US-011 AC4/FR-032: zero or more JSON-LD documents (see StructuredDataBuilder) to
+    /// embed on this page - kept here rather than a sibling component; see the class doc comment.</summary>
+    [Parameter]
+    public IReadOnlyList<string> StructuredDataJson { get; set; } = [];
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string CanonicalUrl => BuildAbsolute(CanonicalPath);
+
+    private string ImageUrl => BuildAbsolute(ImagePath);
+
+    private string BuildAbsolute(string path) =>
+        HttpContext is null ? path : SiteUrl.BuildAbsolute(HttpContext, path);
+}

@@ -3,7 +3,9 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TheBluesland</title>
+    @* US-011 AC1: the per-page <PageTitle> (every route sets one) is the single source of <title> -
+       a static fallback here would render as a second, duplicate <title> element alongside it
+       (verified empirically), which is exactly what AC1's "unique <title> per page" rules out. *@
     <HeadOutlet />
 </head>
 <body>

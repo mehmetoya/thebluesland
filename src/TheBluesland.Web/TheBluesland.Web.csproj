@@ -11,6 +11,14 @@
     <PackageReference Include="YamlDotNet" />
     <!-- US-010/spec 12.2: renders curator-note Markdown to sanitized HTML (Markdig.DisableHtml()). -->
     <PackageReference Include="Markdig" />
+    <!--
+      US-011 AC3/FR-031: server-side text-on-image composition for the owned 1200x630 social card
+      (see Seo/SocialCardGenerator.cs for the full SkiaSharp-vs-ImageSharp license/native-dependency
+      rationale).
+    -->
+    <PackageReference Include="SixLabors.ImageSharp" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" />
+    <PackageReference Include="SixLabors.Fonts" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,11 @@
 <article class="playlist-detail">
+    @* spec 14 "visible breadcrumb navigation on detail pages"; mirrors StructuredData's
+       BreadcrumbList JSON-LD built alongside this page in PlaylistDetailPage.razor. *@
+    <nav aria-label="Breadcrumb" class="breadcrumb">
+        <a href="/">Home</a>
+        <span aria-hidden="true"> / </span>
+        <span aria-current="page">@Content.Title</span>
+    </nav>
     <h1>@Content.Title</h1>
     <p class="summary">@Content.Summary</p>
 

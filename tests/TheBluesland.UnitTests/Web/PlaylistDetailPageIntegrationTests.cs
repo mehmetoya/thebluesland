@@ -168,4 +168,44 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
         body.ShouldContain("<strong>bold</strong>");
         body.ShouldNotContain("<script>alert");
     }
+
+    /// <summary>US-011 AC4/FR-032: CollectionPage + BreadcrumbList JSON-LD is present and rendered
+    /// with no track-title-shaped content, since PlaylistContent has no track data to copy from.
+    /// Only the JSON-LD script bodies are checked for "track" (not the whole page), since this
+    /// fixture's seeded cache row does have a legitimate track *count* rendered elsewhere on the
+    /// page (US-010 AC1) - it is specifically structured data that must never carry a track list.</summary>
+    [Fact]
+    public async Task PlaylistDetailPage_includes_structured_data_with_no_track_shaped_content()
+    {
+        var response = await _httpClient.GetAsync("/playlists/primary-playlist");
+        var body = await response.Content.ReadAsStringAsync();
+
+        body.ShouldContain("\"@type\":\"CollectionPage\"");
+        body.ShouldContain("\"@type\":\"BreadcrumbList\"");
+
+        // "+" in the type="application/ld+json" attribute value is HTML-attribute-encoded by Razor
+        // (renders as "application/ld&#x2B;json"), so scripts are located by their common prefix.
+        var scriptBodies = body
+            .Split("<script type=\"application/ld", StringSplitOptions.RemoveEmptyEntries)
+            .Skip(1)
+            .Select(segment => segment[(segment.IndexOf('>') + 1)..segment.IndexOf("</script>", StringComparison.Ordinal)])
+            .ToList();
+
+        scriptBodies.Count.ShouldBe(2);
+        foreach (var json in scriptBodies)
+        {
+            json.ShouldNotContain("track", Case.Insensitive);
+        }
+    }
+
+    /// <summary>US-011: visible breadcrumb navigation on the detail page (spec 14).</summary>
+    [Fact]
+    public async Task PlaylistDetailPage_includes_visible_breadcrumb_navigation()
+    {
+        var response = await _httpClient.GetAsync("/playlists/primary-playlist");
+        var body = await response.Content.ReadAsStringAsync();
+
+        body.ShouldContain("aria-label=\"Breadcrumb\"");
+        body.ShouldContain("Primary Playlist Fixture");
+    }
 }

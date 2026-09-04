@@ -285,14 +285,14 @@ göründüğünü istiyorum ki paylaşılan bağlantılar profesyonel görünsü
 
 Kabul kriterleri:
 
-- [ ] Her indexlenebilir sayfa (`/`, `/playlists/{slug}`, `/about`, `/privacy`, `/terms`) benzersiz
+- [x] Her indexlenebilir sayfa (`/`, `/playlists/{slug}`, `/about`, `/privacy`, `/terms`) benzersiz
       `<title>`, meta description, canonical URL, Open Graph ve Twitter/X card meta etiketleri
       döner.
-- [ ] `/sitemap.xml` yalnızca `status: published` olan playlist'leri içerir; draft içerik ve
+- [x] `/sitemap.xml` yalnızca `status: published` olan playlist'leri içerir; draft içerik ve
       filtreli query-string varyasyonları sitemap'te yer almaz.
-- [ ] Playlist detay sayfasının Open Graph görseli TheBluesland'e ait, üretilmiş bir 1200×630
+- [x] Playlist detay sayfasının Open Graph görseli TheBluesland'e ait, üretilmiş bir 1200×630
       görseldir; Spotify'ın kapak görseli URL'i doğrudan `og:image` olarak kullanılmaz.
-- [ ] Playlist detay sayfasının structured data'sı (`CollectionPage`/ilgili şema) hiçbir track
+- [x] Playlist detay sayfasının structured data'sı (`CollectionPage`/ilgili şema) hiçbir track
       başlığı listelemez.
 
 Kapsam dışı: `/feed.xml` (launch için opsiyonel, ayrı hikaye olarak V1.1'e ertelenebilir).
@@ -395,4 +395,41 @@ Kabul kriterleri:
 
 Kapsam dışı: dokuzuncu ve sonraki playlist'lerin eklenmesi (launch sonrası, sürekli içerik akışı).
 Öncelik: Must
+Platform: web
+
+---
+
+## US-016 — AI destekli kürator notu taslağı önerisi
+
+Kullanıcı olarak proje sahibi (Mehmet), Spotify'dan çekilen bir playlist için elle tetiklediğim bir
+araçtan AI tarafından üretilmiş bir kürator notu taslağı istiyorum ki boş bir sayfadan başlamak
+yerine bir ilk taslağı düzenleyerek yayına hazırlayabileyim (`docs/adr/0005-ai-kurator-notu-siniri.md`).
+
+Kabul kriterleri:
+
+- [ ] `workflow_dispatch` ile bir `spotifyPlaylistId` girdisi verildiğinde, araç
+      `spotify_playlist_cache` tablosundan yalnızca `name`, `description`, `track_count`, `artists`
+      alanlarını okur ve Anthropic Claude API'ye yalnızca bu dört alanı girdi olarak gönderir; prompt
+      builder'a tüm cache satırı (`is_available`, `synced_at`, `spotify_snapshot_id`,
+      `cover_image_url`, `spotify_playlist_id` dahil) verildiğinde üretilen prompt metninde bu dört
+      alan dışındaki hiçbir değerin geçmediği bir regresyon testiyle doğrulanır.
+- [ ] Üretilen taslak metin hiçbir veritabanı tablosuna/kolonuna yazılmaz ve hiçbir koşulda
+      `content/playlists/*.md` dosyasına otomatik yazılmaz; yalnızca workflow'un job summary'sine ve
+      bir build artifact'ına (Markdown dosyası) yazılır.
+- [ ] Verilen `spotifyPlaylistId`, `spotify_playlist_cache` içinde bulunamadığında (henüz senkronize
+      edilmemiş) veya `is_available = false` olduğunda, araç anlamlı bir hata mesajıyla başarısız
+      olur; AI'ya boş veya eksik veri gönderilmez.
+- [ ] `ANTHROPIC_API_KEY`, yalnızca `suggest-curator-note.yml` workflow'una scope edilmiş bir GitHub
+      Actions repository secret'ıdır; `ci.yml`, `deploy.yml`, `sync-spotify.yml` workflow'larından bu
+      secret'a erişim yoktur (repo secret scope'u ile doğrulanır).
+- [ ] Araç Spotify Web API'ye hiçbir istek atmaz ve hiçbir Spotify credential'ı almaz; tek veri
+      kaynağı Neon'daki salt-okunur bağlantıdır (US-002'deki salt-okunur rol kullanılır).
+- [ ] Workflow loglarında `ANTHROPIC_API_KEY` değeri açık metin olarak görünmez.
+
+Kapsam dışı: otomatik mood/genre/occasion/era etiketleme, track önerisi veya Spotify içeriğinden
+herhangi bir çıkarım (ADR-0005 madde 1, spec bölüm 11.2 — hâlâ yasak); taslağın otomatik olarak PR'a
+dönüştürülmesi; aylık `sync-spotify.yml` job'una entegrasyon (bu araç bağımsız ve yalnızca elle
+tetiklenir).
+Bağımlılık: US-002 (salt-okunur DB rolü), `docs/adr/0005-ai-kurator-notu-siniri.md`.
+Öncelik: Should
 Platform: web

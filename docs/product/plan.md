@@ -14,14 +14,27 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 Sıra, `docs/product/backlog.md`'deki bağımlılık zincirini takip eder.
 
-- **Faz 3 — Blazor scaffold (aktif).** US-011 (SEO/sitemap/sosyal kart) sırada. Ardından US-012
-  (güvenlik başlıkları/CSP).
+- **Faz 3 — Blazor scaffold (aktif).** US-012 (güvenlik başlıkları/CSP) sırada — Faz 3'ün son
+  hikayesi.
 - **Faz 4 — CI/CD.** US-013 (PR pipeline'ı), US-014 (Render+Neon deploy pipeline'ı).
 - **Faz 5 — Launch içeriği.** US-015 (sekiz playlist'in editoryal tamamlanması) — Faz 1-4 ile
   paralel yürütülebilir, ama public launch bunu bekler.
+- **US-016 — AI destekli kürator notu taslağı önerisi.** Fazlardan bağımsız, yalnızca US-002'ye
+  (salt-okunur DB rolü) bağımlı; `docs/adr/0005-ai-kurator-notu-siniri.md` ile onaylandı. US-015'i
+  destekleyici, paralel yürütülebilir.
 
 ## Tamamlanan
 
+- **US-011 — SEO metadata, sitemap ve sosyal kartlar.** Her indexlenebilir sayfada `PageMetadata`
+  bileşeni (description/canonical/OG/Twitter, tek `<HeadContent>` slotu altında — Blazor'un
+  `HeadOutlet`'inin ayrı `<HeadContent>` bloklarını birleştirmek yerine üzerine yazdığı ampirik
+  olarak keşfedildi). Ana sayfanın canonical'ı aktif filtre query-string'inden bağımsız hep `/`.
+  `/sitemap.xml` ve `/robots.txt` (yalnızca published, sorgu varyasyonu yok), `WebSite`/
+  `CollectionPage`/`BreadcrumbList` JSON-LD (track verisi sızdırmadığı testle sabitlendi). OG görseli
+  SixLabors.ImageSharp ile sunucu tarafında üretiliyor (SkiaSharp'a göre native bağımlılıksız,
+  Split License uygun); font yoksa arka plan-only'e zarif düşüş. Site URL'i istekten türetiliyor
+  (config yok) — Render'ın TLS-sonlandırma riski US-014'e not edildi. Testcontainers Postgres'e
+  karşı 137/137 test yeşil.
 - **US-010 — Playlist detay sayfası: curator note, cache alanları, Spotify embed.** Curator note
   artık Markdig ile (raw HTML devre dışı) sanitize edilmiş HTML olarak render ediliyor; review'da
   bulunan bir XSS açığı (markdown link syntax'ında `javascript:`/`data:` şeması) ayrıca kapatıldı.
