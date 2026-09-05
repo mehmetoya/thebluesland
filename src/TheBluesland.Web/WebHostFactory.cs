@@ -101,6 +101,29 @@ public static class WebHostFactory
             Predicate = _ => false,
         });
 
+        // Deliberately DB-dependent (unlike /health/ready, FR-024/16.2) - a public, read-only probe
+        // so cache connectivity can be checked without Render dashboard/log access, matching
+        // PlaylistCacheLookup's own never-throws contract. Reports only row counts (already implied
+        // by the public catalogue's size - no new information disclosure) and, on failure, the
+        // exception type name only - never ex.Message or the connection string, since some Npgsql
+        // failure modes echo connection details back in the message.
+        app.MapGet("/health/cache", async (
+            IDbContextFactory<TheBlueslandDbContext> dbContextFactory,
+            CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+                var total = await dbContext.SpotifyPlaylistCache.CountAsync(cancellationToken);
+                var available = await dbContext.SpotifyPlaylistCache.CountAsync(row => row.IsAvailable, cancellationToken);
+                return Results.Json(new { reachable = true, totalRows = total, availableRows = available });
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                return Results.Json(new { reachable = false, errorType = ex.GetType().Name });
+            }
+        });
+
         // US-011 AC2/spec 14: server-generated from published content only, never a static file, so
         // it always reflects the current content and always uses this request's own scheme/host
         // (see Seo/SiteUrl's doc comment for why that beats a configured base-URL setting here).
