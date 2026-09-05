@@ -150,19 +150,21 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     }
 
     /// <summary>
-    /// US-021 AC1: the whole filter form is wrapped in one more &lt;details
-    /// class="filter-mobile-panel"&gt; that CSS turns into a full-screen panel only at the mobile
-    /// breakpoint - same markup, same &lt;form&gt;, no duplication. This proves the wrapper exists
-    /// and that its "Filters (N)" trigger totals the active count across every dimension.
+    /// US-021 AC1: a visually-hidden checkbox plus its &lt;label&gt; (the "checkbox hack" - native
+    /// :checked/click toggling, no JavaScript, no reliance on overriding &lt;details&gt;'s own
+    /// open/closed rendering) is what CSS turns into a full-screen panel only at the mobile
+    /// breakpoint - same &lt;form&gt;, no duplication. This proves the toggle markup exists and
+    /// that its "Filters (N)" trigger totals the active count across every dimension.
     /// </summary>
     [Fact]
-    public async Task HomePage_wraps_the_filter_form_in_a_mobile_panel_with_a_combined_active_count()
+    public async Task HomePage_has_a_mobile_filter_toggle_with_a_combined_active_count()
     {
         var response = await _httpClient.GetAsync("/?mood=warm&occasion=road-trip");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
-        body.ShouldContain("<details class=\"filter-mobile-panel\">");
+        body.ShouldContain("<input type=\"checkbox\" id=\"filter-mobile-toggle\" class=\"filter-mobile-toggle\"");
+        body.ShouldContain("<label for=\"filter-mobile-toggle\" class=\"filter-mobile-trigger\">");
         body.ShouldContain("class=\"filter-mobile-trigger-label\">Filters (2)</span>");
     }
 
