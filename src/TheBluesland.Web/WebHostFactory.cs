@@ -81,6 +81,12 @@ public static class WebHostFactory
             await next();
         });
 
+        // US-013 AC1/spec 12.2: serves wwwroot/css/app.css (the compiled Tailwind stylesheet) and
+        // wwwroot/images/ (the grain texture asset). Placed after the security-headers middleware
+        // above so static responses carry them too, and before UseAntiforgery/routing since static
+        // files need no antiforgery/component-endpoint handling.
+        app.UseStaticFiles();
+
         app.UseAntiforgery();
 
         // FR-024 / spec 16.2: readiness depends only on editorial content, never on DB reachability.
