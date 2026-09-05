@@ -399,7 +399,7 @@ Mehmet approved 10 additional values in the same session:
 This is still a content change, not an architecture change (section 8.1) - the taxonomy remains
 whatever list `PlaylistTaxonomy.Genres` currently holds.
 
-### 8.4 Occasion vocabulary (v0.2, 5 values; widened to 7 on 2026-09-06)
+### 8.4 Occasion vocabulary (v0.2, 5 values; widened to 7 on 2026-09-06, then 8)
 
 - `late-night`
 - `night-drive`
@@ -408,6 +408,7 @@ whatever list `PlaylistTaxonomy.Genres` currently holds.
 - `headphones`
 - `focus`
 - `dancing`
+- `deep-listen`
 
 Dropped from v0.1: `sunday-morning`, `working` (reinstated below as `focus`), `reading`,
 `rainy-day`, `pre-concert`.
@@ -423,6 +424,19 @@ Mehmet approved both values as named, `focus` and `dancing`, without renaming. `
 effectively v0.1's dropped `working` value resurfacing under a different name now that the
 catalogue is 120 playlists rather than a curated handful - the same "reinstated once the library
 outgrew the original curated scope" pattern as `folk`'s return in section 8.3's genre widening.
+
+**2026-09-06 second widening.** A deeper, full-catalogue re-read (all 120 curator notes, not a
+keyword scan) found a ninth recurring theme distinct from `focus`: the opposite instinct, where a
+curator note explicitly says the playlist rewards close, attentive listening rather than
+background play - "Not background music. This one asks you to actually listen" (`slaves-of-cotton-field`),
+"rewards close listening over background play... revisited on purpose rather than by accident"
+(`weekly-intricate`), "Headphones recommended - the detail in the playing is the whole point"
+(`harmonica-blues`), and the same pattern in at least six more (`weight-of-the-guitar`,
+`history-of-the-blues-guitar-riffs-with-all-respect-the-band`, `jazzstation`, `z-report`,
+`prepare-for-ginger-baker-tribute`, `covers-of-crossroads`). Most of these were already tagged
+`headphones` as the nearest available value before `deep-listen` existed - the same
+"squeezed into the closest fit" pattern that motivated the first widening. Mehmet approved
+`deep-listen` as named.
 
 ### 8.5 Era vocabulary (v0.2, 5 values)
 

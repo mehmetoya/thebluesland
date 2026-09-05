@@ -55,6 +55,13 @@ internal static class PlaylistTaxonomy
         // listening and dance/party listening.
         "focus",
         "dancing",
+        // Added 2026-09-06 (a second, deeper content-analysis pass, Mehmet's approval): distinct
+        // from "focus" (background/concentration listening) - this is the opposite instinct,
+        // recurring across at least nine curator notes that explicitly say the playlist rewards
+        // close, attentive listening rather than background play ("Not background music. This one
+        // asks you to actually listen", "rewards close listening over background play", "Headphones
+        // recommended - the detail in the playing is the whole point").
+        "deep-listen",
     ];
 
     public static readonly IReadOnlyCollection<string> Eras =
