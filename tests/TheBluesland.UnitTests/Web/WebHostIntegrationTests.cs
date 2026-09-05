@@ -60,29 +60,18 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HealthReady_reports_healthy_even_though_the_database_is_unreachable()
+    public async Task HealthReady_rejects_the_fixture_catalogue_with_duplicate_playlist_ids()
     {
         var response = await _httpClient.GetAsync("/health/ready");
 
-        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
     }
 
-    /// <summary>
-    /// The /health/cache diagnostic endpoint: unlike /health/ready (FR-024), this one is
-    /// deliberately DB-dependent, so an unreachable database must be reported as
-    /// reachable:false (with a safe, generic error type, never the connection string or a raw
-    /// exception message) rather than crashing the request.
-    /// </summary>
     [Fact]
-    public async Task HealthCache_reports_unreachable_when_the_database_cannot_be_reached()
+    public async Task HealthCache_diagnostic_endpoint_is_not_publicly_available()
     {
-        var response = await _httpClient.GetAsync("/health/cache");
-        var body = await response.Content.ReadAsStringAsync();
-
-        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
-        body.ShouldContain("\"reachable\":false");
-        body.ShouldNotContain("127.0.0.1");
-        body.ShouldNotContain("postgres");
+        using var response = await _httpClient.GetAsync("/health/cache");
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]

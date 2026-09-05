@@ -15,14 +15,14 @@ public static class PlaylistCataloguePage
 
     public static IReadOnlyList<PlaylistContent> Take(IReadOnlyList<PlaylistContent> playlists, int? pageQuery)
     {
-        var visibleCount = Math.Min(playlists.Count, NormalizePage(pageQuery) * PageSize);
+        var visibleCount = (int)Math.Min(playlists.Count, (long)NormalizePage(pageQuery) * PageSize);
         return playlists.Take(visibleCount).ToList();
     }
 
     public static bool HasMore(IReadOnlyList<PlaylistContent> playlists, int? pageQuery) =>
-        NormalizePage(pageQuery) * PageSize < playlists.Count;
+        (long)NormalizePage(pageQuery) * PageSize < playlists.Count;
 
-    public static int NextPage(int? pageQuery) => NormalizePage(pageQuery) + 1;
+    public static int NextPage(int? pageQuery) => (int)Math.Min(int.MaxValue, (long)NormalizePage(pageQuery) + 1);
 
     // Anything not a positive integer (missing, zero, negative, or a tampered-with value) falls
     // back to page 1 rather than throwing or showing nothing.

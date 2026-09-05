@@ -58,7 +58,7 @@ public sealed class SitemapIntegrationTests : IAsyncLifetime
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         response.Content.Headers.ContentType!.MediaType.ShouldBe("application/xml");
-        body.ShouldContain("<loc>http://127.0.0.1");
+        body.ShouldContain("<loc>https://thebluesland.onrender.com");
         body.ShouldContain("/playlists/masterpieces-of-erkin-the-father</loc>");
         body.ShouldContain("/about</loc>");
         body.ShouldContain("/privacy</loc>");
@@ -102,7 +102,7 @@ public sealed class SitemapIntegrationTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldContain("User-agent: *");
         body.ShouldContain("Allow: /");
-        body.ShouldContain("Sitemap: http://127.0.0.1");
+        body.ShouldContain("Sitemap: https://thebluesland.onrender.com");
         body.ShouldContain("/sitemap.xml");
         body.ShouldContain("User-agent: OAI-SearchBot\nAllow: /");
         body.ShouldContain("User-agent: Claude-SearchBot\nAllow: /");

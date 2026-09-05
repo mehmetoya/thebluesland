@@ -77,7 +77,8 @@
         // Leave the (still-attached, unmodified) trigger clickable as a manual fallback.
         trigger.textContent = originalLabel;
         trigger.removeAttribute("aria-disabled");
-        enhance(trigger);
+        // Keep the manual link. Re-observing a visible trigger would retry forever
+        // while the server is unavailable.
       });
   }
 

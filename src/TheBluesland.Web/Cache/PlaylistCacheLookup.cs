@@ -75,13 +75,14 @@ public sealed class PlaylistCacheLookup
             var entries = await dbContext.SpotifyPlaylistCache
                 .AsNoTracking()
                 .Where(row => distinctIds.Contains(row.SpotifyPlaylistId))
-                .ToListAsync(cancellationToken);
+                .Select(row => new { row.SpotifyPlaylistId, row.IsAvailable, row.TrackCount, row.CoverImageUrl })
+                .ToDictionaryAsync(row => row.SpotifyPlaylistId, cancellationToken);
 
             return distinctIds.ToDictionary(
                 id => id,
                 id =>
                 {
-                    var entry = entries.SingleOrDefault(row => row.SpotifyPlaylistId == id);
+                    var entry = entries.GetValueOrDefault(id);
                     return entry is null || !entry.IsAvailable
                         ? PlaylistCacheSnapshot.Unavailable
                         : new PlaylistCacheSnapshot(IsPlayable: true, entry.TrackCount, entry.CoverImageUrl);

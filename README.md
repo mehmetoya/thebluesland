@@ -130,3 +130,25 @@ Host=<neon-host>;Database=<db>;Username=<role>;Password=<password>;SSL Mode=Requ
 - [`docs/adr/`](docs/adr/) — architecture decision records
 - [`docs/product/backlog.md`](docs/product/backlog.md) — implementation-ordered user stories
 - [`docs/product/plan.md`](docs/product/plan.md) — current phase and progress
+
+### Runtime content and security
+
+The application loads a catalogue snapshot once per process. Restart after editing Markdown;
+production content changes take effect with the next deployment. `/health/ready` requires a
+nonempty published catalogue that passes schema validation, independently of database availability.
+Draft detail pages, draft aliases and draft social cards return 404. The temporary `/health/cache`
+diagnostic endpoint has been removed; use operational logs for database diagnostics.
+
+Canonical URLs use `Site__PublicOrigin` (default `https://thebluesland.onrender.com`). Set it to
+an HTTPS origin when introducing a custom domain. Only that host and local development hosts are
+accepted. Request and forwarded headers never determine canonical URLs; no untrusted proxy headers
+are enabled. Social card responses are cached server-side for 24 hours within a 16 MiB cache;
+a new deployment clears the cache.
+
+The taxonomy report is an explicit local tool, not a test. From the repository root:
+
+```sh
+dotnet run --project tools/playlist-taxonomy-report -- content/playlists /tmp/thebluesland-taxonomy
+```
+
+It writes `taxonomy-distribution.txt` and `all-playlists-taxonomy-scan.txt` to the requested directory.

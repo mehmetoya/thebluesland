@@ -23,8 +23,10 @@ public sealed class PlaylistContentHealthCheck : IHealthCheck
     {
         try
         {
-            await _contentRepository.LoadAllAsync(cancellationToken);
-            return HealthCheckResult.Healthy("Playlist content loaded.");
+            var isReady = await _contentRepository.IsReadyAsync(cancellationToken);
+            return isReady
+                ? HealthCheckResult.Healthy("Validated playlist content loaded.")
+                : HealthCheckResult.Unhealthy("A valid catalogue with published playlists is required.");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
