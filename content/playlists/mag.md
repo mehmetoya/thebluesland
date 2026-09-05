@@ -12,7 +12,7 @@ genres:
   - folk
   - electronic
 occasions:
-  - headphones
+  - focus
 era: mixed-era
 status: published
 publishedAt: 2026-09-05

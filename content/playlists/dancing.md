@@ -11,6 +11,7 @@ genres:
   - electronic
 occasions:
   - night-drive
+  - dancing
 era: 2000s-present
 status: published
 publishedAt: 2026-09-05

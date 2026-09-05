@@ -12,6 +12,7 @@ genres:
   - indie
 occasions:
   - slow-evening
+  - focus
 era: mixed-era
 status: published
 publishedAt: 2026-09-05

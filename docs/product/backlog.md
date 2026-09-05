@@ -486,15 +486,31 @@ Kabul kriterleri:
       taşımaz (regresyon: tüm katalog doğrulamadan geçmeye devam eder).
 - [x] Yeni değerler eklendiği bir PR açıldığında CI yeşil kalır; onaylanmamış bir değer hâlâ
       reddedilir.
-- [ ] (Could) US-020'de isimlendirilen 6+4 aday dosyanın occasion etiketi, Mehmet uygun görürse
+- [x] (Could) US-020'de isimlendirilen 6+4 aday dosyanın occasion etiketi, Mehmet uygun görürse
       yeni değerle güncellenir (ör. `focus.md`'nin occasion'ı `headphones`'tan `focus`'a taşınır) —
       bu bir içerik PR'ı, kod değişikliği değil.
 
-**Durum: İlk üç kriter tamamlandı (2026-09-06).** `PlaylistTaxonomy.Occasions`'a `focus`/`dancing`
-eklendi, spec bölüm 8.4 genre'nin 8.3'teki desenine uygun güncellendi. Testcontainers Postgres'e
-karşı 188/188 test yeşil (gerçek 120 published + 1 draft dosya dahil). Dördüncü (Could) kriter —
-10 aday dosyanın occasion etiketinin yeni değerlere taşınması — henüz yapılmadı, ayrı bir içerik
-PR'ı olarak istenirse yapılabilir.
+**Durum: Tamamlandı (2026-09-06).** İlk üç kriter zaten tamamdı. Dördüncü (Could) kriter için
+US-020'nin 10 aday dosyası tek tek incelendi (mekanik toplu değişiklik değil) — 9'u güncellendi,
+1'i bilinçli olarak atlandı:
+
+- **Doğrudan taşındı** (eski etiket zaten genericti, yeni değer daha isabetli): `focus.md`,
+  `be-comfortable.md`, `no-more-words.md`, `mag.md` (`headphones` → `focus`); `sad-dance.md`
+  (`night-drive` → `dancing`, küratör notu tamamen dans temalı, sürüşten hiç bahsetmiyor).
+- **Eklendi, eski etiket korundu** (ikisi de gerçekten uyuyor): `coffee-circle.md`
+  (`slow-evening` ile birlikte `focus`), `dancing.md` (`night-drive` ile birlikte `dancing` —
+  kendi notu zaten "for late-night driving or an actual dance floor" diyor), `funkers.md`
+  (`road-trip` ile birlikte `dancing`), `saint-patrick-s-day-slainte.md` (`road-trip` ile birlikte
+  `dancing`).
+- **Atlandı:** `weekly-intricate.md`. US-020'nin analizi bunu `focus` adayı saymıştı, ama küratör
+  notu tam tersini söylüyor: "the collection rewards close listening over background play" ve
+  "revisited on purpose rather than by accident" — bu tam olarak `focus`'un tanımladığı
+  arka-plan/konsantrasyon dinlemesinin zıddı (aktif, dikkatli dinleme). Orijinal US-020 taramasının
+  bu dosyada yanlış eşleştiği görüldü; etiketi değiştirilmedi. Mehmet uygun görürse ayrıca ele
+  alınabilir.
+
+Gerçek `content/playlists/` dizinine karşı `validate-content` temiz (120/120), Testcontainers
+Postgres'e karşı 206/206 test yeşil (davranış değişikliği yok, yalnızca içerik).
 
 Kapsam dışı: Mood/Era genişletmesi (US-020 bulgusuna göre gerekçe yok, ayrı bir ihtiyaç ortaya
 çıkarsa yeniden değerlendirilir).
