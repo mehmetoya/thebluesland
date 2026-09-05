@@ -67,8 +67,8 @@ public sealed class SmokeTests : IAsyncLifetime
     {
         var page = await _browser.NewPageAsync();
         await page.AddInitScriptAsync("Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => { throw new Error('Denied'); } } });");
-        var url = _baseAddress + "/playlists/masterpieces-of-erkin-the-father";
-        await page.GotoAsync(url + "?utm_source=test");
+        const string url = "https://thebluesland.onrender.com/playlists/masterpieces-of-erkin-the-father";
+        await page.GotoAsync(_baseAddress + "/playlists/masterpieces-of-erkin-the-father?utm_source=test");
         await page.GetByText("Share playlist", new() { Exact = true }).ClickAsync();
         var share = page.Locator(".playlist-share");
         (await share.Locator("a").First.GetAttributeAsync("href") ?? string.Empty).ShouldContain(Uri.EscapeDataString(url));
@@ -90,8 +90,8 @@ public sealed class SmokeTests : IAsyncLifetime
             } });
             Object.defineProperty(navigator, 'clipboard', { value: { writeText: async text => { window.copiedPlaylist = text; } } });
             """);
-        var url = _baseAddress + "/playlists/masterpieces-of-erkin-the-father";
-        await page.GotoAsync(url);
+        const string url = "https://thebluesland.onrender.com/playlists/masterpieces-of-erkin-the-father";
+        await page.GotoAsync(_baseAddress + "/playlists/masterpieces-of-erkin-the-father");
         await page.GetByText("Share playlist", new() { Exact = true }).ClickAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Share via device" }).ClickAsync();
         (await page.EvaluateAsync<string>("window.sharedPlaylist.url")).ShouldBe(url);

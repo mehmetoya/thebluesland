@@ -117,7 +117,7 @@ public sealed class SitemapIntegrationTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.ShouldBe("text/plain");
         body.ShouldStartWith("# TheBluesland\n");
-        body.ShouldContain($"{_httpClient.BaseAddress}playlists/masterpieces-of-erkin-the-father");
+        body.ShouldContain("https://thebluesland.onrender.com/playlists/masterpieces-of-erkin-the-father");
         body.ShouldNotContain("dear-mr-fantasy");
         body.ShouldNotContain("masterpieces-of-erkin-the-father-alt-slug");
     }
