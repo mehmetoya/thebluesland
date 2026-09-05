@@ -313,6 +313,134 @@
   background-color: var(--color-accent-strong);
 }
 
+.filter-clear {
+  align-self: flex-start;
+  background-color: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.filter-clear:hover {
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+
+/* US-021: the mobile full-screen filter panel reuses the exact same <form> as the desktop navbar
+   (no duplicate markup) - see the design-decision comment above HomePage.razor's filter-navbar
+   for how the two CSS tricks below make one DOM tree serve both breakpoints with zero JS. */
+.filter-mobile-trigger {
+  display: none;
+}
+
+/* Desktop: the outer <details class="filter-mobile-panel"> wrapper is inert. Author CSS overrides
+   the <details> UA stylesheet's own "hide content unless [open]" rule (author-origin rules beat
+   user-agent-origin rules regardless of specificity), so the real filter form always renders here
+   exactly as it did before this wrapper existed. */
+.filter-mobile-panel > .filter-navbar-form {
+  display: flex;
+}
+
+@media (max-width: 40rem) {
+  .filter-navbar {
+    padding: 0.5rem;
+  }
+
+  /* Mobile: the wrapper becomes a real toggle - hide the actual form until <details> is [open]. */
+  .filter-mobile-panel > .filter-navbar-form {
+    display: none;
+  }
+
+  .filter-mobile-trigger {
+    display: inline-flex;
+    align-items: center;
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--color-text);
+  }
+
+  .filter-mobile-trigger::-webkit-details-marker {
+    display: none;
+  }
+
+  .filter-mobile-trigger-close {
+    display: none;
+  }
+
+  /* AC1: opening the trigger reveals a full-screen panel with every dimension visible together. */
+  .filter-mobile-panel[open] > .filter-mobile-trigger {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 51;
+  }
+
+  .filter-mobile-panel[open] > .filter-mobile-trigger .filter-mobile-trigger-label {
+    display: none;
+  }
+
+  .filter-mobile-panel[open] > .filter-mobile-trigger .filter-mobile-trigger-close {
+    display: inline;
+  }
+
+  .filter-mobile-panel[open] > .filter-navbar-form {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background-color: var(--color-bg);
+    padding: 4rem 1.25rem 1.25rem;
+    overflow-y: auto;
+    gap: 1rem;
+  }
+
+  /* All four dimensions need to be visible together (AC1), not opened one at a time - force each
+     inner dropdown's panel open and turn its own <summary> into an inert heading. */
+  .filter-mobile-panel[open] .filter-dropdown {
+    position: static;
+  }
+
+  .filter-mobile-panel[open] .filter-dropdown > summary {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .filter-mobile-panel[open] .filter-dropdown > summary::after {
+    display: none;
+  }
+
+  .filter-mobile-panel[open] .filter-dropdown-panel {
+    display: flex;
+    position: static;
+    max-height: none;
+    box-shadow: none;
+  }
+
+  .filter-mobile-panel[open] .filter-apply,
+  .filter-mobile-panel[open] .filter-clear {
+    align-self: stretch;
+    text-align: center;
+  }
+}
+
+/* AC2: locks background scroll while the mobile panel is open - CSS-only (:has()), no JS. If a
+   browser lacks :has() support the fixed, full-viewport panel above still visually covers the
+   list either way. */
+body:has(.filter-mobile-panel[open]) {
+  overflow: hidden;
+}
+
 .catalogue h2 {
   font-size: 1.125rem;
   text-transform: uppercase;

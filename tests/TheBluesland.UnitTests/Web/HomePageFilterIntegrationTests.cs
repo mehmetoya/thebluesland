@@ -148,4 +148,35 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
         body.ShouldContain("<summary>Genre</summary>");
         body.ShouldContain("<summary>Era</summary>");
     }
+
+    /// <summary>
+    /// US-021 AC1: the whole filter form is wrapped in one more &lt;details
+    /// class="filter-mobile-panel"&gt; that CSS turns into a full-screen panel only at the mobile
+    /// breakpoint - same markup, same &lt;form&gt;, no duplication. This proves the wrapper exists
+    /// and that its "Filters (N)" trigger totals the active count across every dimension.
+    /// </summary>
+    [Fact]
+    public async Task HomePage_wraps_the_filter_form_in_a_mobile_panel_with_a_combined_active_count()
+    {
+        var response = await _httpClient.GetAsync("/?mood=warm&occasion=road-trip");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("<details class=\"filter-mobile-panel\">");
+        body.ShouldContain("class=\"filter-mobile-trigger-label\">Filters (2)</span>");
+    }
+
+    /// <summary>
+    /// US-021 AC2: the "Uygula"/"Temizle" actions must both be reachable inside the panel - Apply
+    /// already existed (US-018); Clear is new here, a plain zero-JS link back to "/".
+    /// </summary>
+    [Fact]
+    public async Task HomePage_filter_form_includes_a_clear_filters_link_alongside_apply()
+    {
+        var response = await _httpClient.GetAsync("/");
+        var body = await response.Content.ReadAsStringAsync();
+
+        body.ShouldContain("<button type=\"submit\" class=\"filter-apply\">Apply filters</button>");
+        body.ShouldContain("href=\"/\" class=\"filter-clear\">Clear filters</a>");
+    }
 }

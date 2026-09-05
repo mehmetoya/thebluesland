@@ -16,4 +16,8 @@ public sealed record PlaylistFilterCriteria(
     /// <summary>True when at least one dimension has an active selection (US-009 AC4: the empty
     /// "no results" state and its clear-filters affordance only apply when filters are active).</summary>
     public bool IsActive => Moods.Count > 0 || Genres.Count > 0 || Occasions.Count > 0 || Eras.Count > 0;
+
+    /// <summary>Total active selections across all four dimensions - US-021's mobile full-screen
+    /// panel shows one combined "Filters (N)" trigger, unlike US-018's per-dimension counts.</summary>
+    public int ActiveCount => Moods.Count + Genres.Count + Occasions.Count + Eras.Count;
 }
