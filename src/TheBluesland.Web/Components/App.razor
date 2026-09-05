@@ -1,3 +1,4 @@
+@inject IWebHostEnvironment Environment
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,14 +17,18 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     @* Spec section 10.2: dark-first design, so the compiled Tailwind stylesheet (US-013 AC1) is
        the only stylesheet the app ever links - no inline <style> blocks or style="" attributes
-       anywhere in Components/, since CSP's style-src is 'self' with no 'unsafe-inline' (US-012). *@
-    <link rel="stylesheet" href="/css/app.css" />
+       anywhere in Components/, since CSP's style-src is 'self' with no 'unsafe-inline' (US-012).
+       2026-09-06: the "?v=" content-hash query string (StaticAssetVersion) is cache-busting - a
+       plain `UseStaticFiles()` sets no explicit Cache-Control, so without a URL that changes when
+       the file's bytes change, a browser can keep serving an old cached copy past a deploy (a
+       mismatched "new HTML, old CSS" screenshot is exactly what surfaced this). *@
+    <link rel="stylesheet" href="@($"/css/app.css?v={StaticAssetVersion.For(Environment, "css/app.css")}")" />
     @* US-019: progressive enhancement only - the home page's "Show more playlists" link (a plain
        GET, see PlaylistCataloguePage) works with zero JavaScript; this external, same-origin
        script (CSP's script-src 'self' has no 'unsafe-inline', so it can't be inlined) automates
        clicking that link via IntersectionObserver. `defer` keeps it non-blocking and off the
        critical rendering path; it silently no-ops on every page without a ".load-more" element. *@
-    <script src="/js/infinite-scroll.js" defer></script>
+    <script src="@($"/js/infinite-scroll.js?v={StaticAssetVersion.For(Environment, "js/infinite-scroll.js")}")" defer></script>
     @* US-011 AC1: the per-page <PageTitle> (every route sets one) is the single source of <title> -
        a static fallback here would render as a second, duplicate <title> element alongside it
        (verified empirically), which is exactly what AC1's "unique <title> per page" rules out. *@

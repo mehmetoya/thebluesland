@@ -114,11 +114,43 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
     {
         var pageResponse = await _httpClient.GetAsync("/");
         var pageBody = await pageResponse.Content.ReadAsStringAsync();
-        pageBody.ShouldContain("<script src=\"/js/infinite-scroll.js\" defer></script>");
 
-        var scriptResponse = await _httpClient.GetAsync("/js/infinite-scroll.js");
+        // 2026-09-06: the "?v=<hash>" suffix is StaticAssetVersion's cache-busting - a fixed
+        // "/js/infinite-scroll.js" exact match would miss it (and did, until this test was
+        // updated), so extract the actual src rather than asserting one literal string.
+        var scriptTagStart = pageBody.IndexOf("<script src=\"/js/infinite-scroll.js", StringComparison.Ordinal);
+        scriptTagStart.ShouldBeGreaterThanOrEqualTo(0);
+        var srcStart = pageBody.IndexOf('"', scriptTagStart) + 1;
+        var srcEnd = pageBody.IndexOf('"', srcStart);
+        var scriptSrc = pageBody[srcStart..srcEnd];
+        scriptSrc.ShouldMatch(@"^/js/infinite-scroll\.js\?v=[0-9a-f]{8}$");
+
+        var scriptResponse = await _httpClient.GetAsync(scriptSrc);
         scriptResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
         var scriptBody = await scriptResponse.Content.ReadAsStringAsync();
         scriptBody.ShouldContain("IntersectionObserver");
+    }
+
+    /// <summary>
+    /// 2026-09-06: without a cache-busting query string, a browser that aggressively caches
+    /// "/css/app.css" (UseStaticFiles() sets no explicit Cache-Control) can keep serving stale CSS
+    /// after a deploy changes it - exactly the "new HTML, old CSS" mismatch a live screenshot
+    /// showed. StaticAssetVersion's hash must actually track the file's current bytes.
+    /// </summary>
+    [Fact]
+    public async Task HomePage_stylesheet_link_is_cache_busted_and_actually_served()
+    {
+        var pageResponse = await _httpClient.GetAsync("/");
+        var pageBody = await pageResponse.Content.ReadAsStringAsync();
+
+        var linkTagStart = pageBody.IndexOf("<link rel=\"stylesheet\" href=\"/css/app.css", StringComparison.Ordinal);
+        linkTagStart.ShouldBeGreaterThanOrEqualTo(0);
+        var hrefStart = pageBody.IndexOf("href=\"", linkTagStart, StringComparison.Ordinal) + "href=\"".Length;
+        var hrefEnd = pageBody.IndexOf('"', hrefStart);
+        var stylesheetHref = pageBody[hrefStart..hrefEnd];
+        stylesheetHref.ShouldMatch(@"^/css/app\.css\?v=[0-9a-f]{8}$");
+
+        var cssResponse = await _httpClient.GetAsync(stylesheetHref);
+        cssResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 }
