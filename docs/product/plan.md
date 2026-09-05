@@ -12,8 +12,6 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 Backlog'daki tüm US-001..US-021 hikayelerinin kod gerektiren kriterleri tamamlandı. Kalanlar
 içerik/manuel adımlar:
 
-- US-017'nin Could kriteri (10 aday dosyanın occasion etiketinin `focus`/`dancing`'e taşınması) —
-  içerik PR'ı, kod değişikliği değil; Mehmet uygun görürse ayrı istenebilir.
 - Bilinen küçük doküman/hijyen açıkları (2026-09-05 denetiminde bulundu, kod değil): ADR
   numaralandırmasında 0004 boşluğu (atlanmış mı belli değil); `displayOrder`/`publishedAt`in 120
   playlist'in çoğunda ayrım yapmaması (ana sayfa sıralaması şu an dosya-adı sırasına yakın) —
@@ -26,6 +24,16 @@ içerik/manuel adımlar:
 
 ## Tamamlanan
 
+- **US-017'nin Could kriteri — occasion etiketlerinin taşınması (2026-09-06).** US-020'nin
+  isimlendirdiği 10 aday dosya tek tek incelendi (mekanik toplu değişiklik değil): 4 dosyada eski
+  etiket (`headphones`) `focus`'a taşındı, 1 dosyada (`sad-dance.md`) `night-drive` yerine
+  `dancing`'e taşındı, 4 dosyada eski etiket geçerli kaldığı için yeni değer eklendi
+  (`coffee-circle.md`, `dancing.md`, `funkers.md`, `saint-patrick-s-day-slainte.md`).
+  `weekly-intricate.md` bilinçli olarak atlandı: küratör notu "rewards close listening over
+  background play" diyor - `focus`'un tanımladığı arka-plan dinlemesinin tam tersi; US-020'nin
+  taramasının bu dosyada yanlış eşleştiği görüldü. Gerçek `content/playlists/`'e karşı
+  `validate-content` temiz, Testcontainers Postgres'e karşı 206/206 test yeşil (davranış
+  değişikliği yok, saf içerik).
 - **US-021 — Mobil tam-ekran filtre deneyimi (2026-09-06).** US-018'in dört
   `<details class="filter-dropdown">`'ı hiç değişmedi; tüm form bir `<details
   class="filter-mobile-panel">` ile sarmalandı (`HomePage.razor`) — tek DOM ağacı iki breakpoint'e

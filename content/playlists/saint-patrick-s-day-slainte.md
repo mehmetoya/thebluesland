@@ -12,6 +12,7 @@ genres:
   - folk
 occasions:
   - road-trip
+  - dancing
 era: mixed-era
 status: published
 publishedAt: 2026-09-05
