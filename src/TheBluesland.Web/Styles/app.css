@@ -577,9 +577,16 @@ body:has(.filter-mobile-toggle:checked) {
 }
 
 .playlist-card .track-count {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
   color: var(--color-secondary);
   font-size: 0.8125rem;
   margin: 0.125rem 0 0;
+}
+
+.playlist-card .track-count-icon {
+  flex: none;
 }
 
 /* Playlist detail page */
