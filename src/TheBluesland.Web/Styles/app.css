@@ -656,24 +656,11 @@ body:has(.filter-mobile-toggle:checked) {
   font-size: 0.875rem;
 }
 
-.spotify-embed {
-  border-radius: 0.75rem;
-  border: 1px solid var(--color-border);
-  margin: 1rem 0 1.5rem;
-  display: block;
-}
-
-.player-placeholder,
 .player-unavailable {
   color: var(--color-text-muted);
   font-size: 0.9375rem;
   max-width: 32rem;
   margin: 1rem 0 1.5rem;
-}
-
-.load-player-link {
-  color: var(--color-accent);
-  font-weight: 600;
 }
 
 .open-in-spotify {

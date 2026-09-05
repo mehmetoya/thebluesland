@@ -107,9 +107,9 @@ public sealed class PlaylistRenderSurfaceTests
         html.ShouldContain("<img class=\"cover-image\" src=\"https://i.scdn.co/image/cover.jpg\"");
     }
 
-    /// <summary>US-010 AC2/spec 11.3: no iframe in the markup until ShowEmbed is explicitly true.</summary>
+    /// <summary>Playback uses the direct Spotify link without an embedded player.</summary>
     [Fact]
-    public async Task PlaylistDetailView_shows_a_click_to_load_link_and_no_iframe_by_default()
+    public async Task PlaylistDetailView_shows_direct_spotify_link_without_embedded_player()
     {
         var playableSnapshot = new PlaylistCacheSnapshot(IsPlayable: true, TrackCount: 34, CoverImageUrl: null);
 
@@ -120,23 +120,8 @@ public sealed class PlaylistRenderSurfaceTests
         });
 
         html.ShouldNotContain("<iframe");
-        html.ShouldContain("href=\"?listen=true\"");
-    }
-
-    /// <summary>US-010 AC2: once ShowEmbed is true, the iframe is present with the spec 12.4(a) embed URL shape.</summary>
-    [Fact]
-    public async Task PlaylistDetailView_shows_the_iframe_with_the_embed_url_when_ShowEmbed_is_true()
-    {
-        var playableSnapshot = new PlaylistCacheSnapshot(IsPlayable: true, TrackCount: 34, CoverImageUrl: null);
-
-        var html = await RenderAsync<PlaylistDetailView>(new Dictionary<string, object?>
-        {
-            [nameof(PlaylistDetailView.Content)] = SamplePlaylist,
-            [nameof(PlaylistDetailView.CacheSnapshot)] = playableSnapshot,
-            [nameof(PlaylistDetailView.ShowEmbed)] = true,
-        });
-
-        html.ShouldContain($"<iframe class=\"spotify-embed\" src=\"https://open.spotify.com/embed/playlist/{SamplePlaylist.SpotifyPlaylistId}\"");
+        html.ShouldNotContain("Listen here");
+        html.ShouldContain($"href=\"https://open.spotify.com/playlist/{SamplePlaylist.SpotifyPlaylistId}\"");
     }
 
     /// <summary>US-010 AC3/FR-024: present even when the cache is unavailable, built only from the playlist ID.</summary>
