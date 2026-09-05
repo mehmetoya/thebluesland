@@ -585,8 +585,28 @@ fixture seti (26 dosya, PageSize+2) ile 3 entegrasyon testi + `PlaylistCatalogue
 birim testi eklendi. Testcontainers Postgres'e karşı 204/204 test yeşil, `dotnet format
 --verify-no-changes` temiz, Tailwind `build:css` başarılı.
 
-Kapsam dışı: IntersectionObserver/animasyon detayları; client-side/API tabanlı pagination (proje
-sunucu tarafı render'a sadık kalmalı, US-008/US-009 ile tutarlı).
+> **2026-09-06 takip:** Mehmet, yalnızca tıklamayla çalışan mekanizmanın "sonsuz scroll" beklentisini
+> karşılamadığını belirtti ve gerçek kaydırma-tetiklemeli otomatik yüklemeyi istedi. Bu, sitede ilk kez
+> JavaScript'e bağımlı bir davranış ekliyor — `wwwroot/js/infinite-scroll.js`, "Show more" linkini
+> (`App.razor`'da `<script src="/js/infinite-scroll.js" defer>`, CSP'nin `script-src 'self'`'i yalnız
+> same-origin harici dosyaya izin verdiği için inline değil) IntersectionObserver + `fetch` ile
+> progressive enhancement olarak otomatikleştiriyor: link görünüm alanına yaklaştığında href'i fetch
+> eder, dönen sayfadan henüz gösterilmeyen kartları ayıklayıp ekler, bir sonraki "load-more" varsa onu
+> da aynı şekilde bağlar. Link/markup değişmedi — JS onu otomatikleştiriyor, ona ek bir fallback değil.
+> IntersectionObserver/fetch veya CSP tarafından engellenirse (ya da JS tamamen kapalıysa) link olduğu
+> gibi tıklanabilir kalıyor, hiçbir bozuk/yarım güncellenmiş durum oluşmuyor. Bu süreçte, referans
+> veren bir projenin `wwwroot`'unun kendi test çıktı dizinine kopyalanmadığı (var olan ama hiç test
+> edilmemiş) bir boşluk bulundu; `WebHostFactory.Create` artık test'lerin gerçek `wwwroot`'u
+> gösterebilmesi için opsiyonel bir `webRootPath` parametresi alıyor. Yeni entegrasyon testi script'in
+> hem sayfada referanslandığını hem gerçekten servis edildiğini doğruluyor; ayrıca gerçek tarayıcı JS
+> yürütmesi gerektiren asıl davranış (scroll-tetiklemeli otomatik yükleme VE JS kapalıyken tıklamanın
+> hâlâ çalışması) için `TheBluesland.E2ETests`'e `InfiniteScrollTests` eklendi (bu sandbox'ta Playwright
+> tarayıcı ikili dosyaları kurulu değildi, bu yüzden bu iki test yalnızca derlendi, henüz gerçek
+> tarayıcıda çalıştırılmadı — CI'da çalışacak).
+
+Kapsam dışı: animasyon detayları; client-side/API tabanlı pagination (proje sunucu tarafı render'a
+sadık kalmalı, US-008/US-009 ile tutarlı — IntersectionObserver artık kapsam dışı değil, yukarıdaki
+takip notuna bakın).
 Öncelik: Should
 Platform: web
 

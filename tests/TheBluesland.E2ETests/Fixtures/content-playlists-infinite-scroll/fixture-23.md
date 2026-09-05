@@ -1,0 +1,19 @@
+---
+schemaVersion: 1
+slug: infinite-scroll-fixture-23
+spotifyPlaylistId: infscroll0000000000023
+title: Infinite Scroll Fixture 23
+summary: A solid summary describing infinite scroll fixture number 23 in plain, sufficiently long prose.
+moods:
+  - warm
+genres:
+  - rock
+occasions:
+  - road-trip
+era: mixed-era
+status: published
+publishedAt: 2026-03-01
+displayOrder: 22
+---
+
+Curator note body for infinite scroll fixture 23.

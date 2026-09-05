@@ -30,12 +30,22 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
     {
         var contentDirectory = Path.Combine(AppContext.BaseDirectory, "Fixtures", "content-playlists-pagination");
 
-        _app = WebHostFactory.Create([], builder =>
-        {
-            builder.WebHost.UseUrls("http://127.0.0.1:0");
-            builder.Configuration[PlaylistContentRepository.ContentDirectoryConfigKey] = contentDirectory;
-            builder.Configuration[$"ConnectionStrings:{WebHostFactory.ConnectionStringName}"] = UnreachableConnectionString;
-        });
+        // See WebHostFactory.Create's webRootPath parameter doc: a referenced project's wwwroot
+        // isn't copied into this test project's own output directory, so UseStaticFiles() needs
+        // to be pointed at the real one for the infinite-scroll script test below to actually
+        // exercise a served file rather than a 404.
+        var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        var webRootPath = Path.Combine(repoRoot, "src", "TheBluesland.Web", "wwwroot");
+
+        _app = WebHostFactory.Create(
+            [],
+            builder =>
+            {
+                builder.WebHost.UseUrls("http://127.0.0.1:0");
+                builder.Configuration[PlaylistContentRepository.ContentDirectoryConfigKey] = contentDirectory;
+                builder.Configuration[$"ConnectionStrings:{WebHostFactory.ConnectionStringName}"] = UnreachableConnectionString;
+            },
+            webRootPath);
 
         await _app.StartAsync();
 
@@ -90,5 +100,25 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("href=\"/?page=2\" class=\"load-more\"");
+    }
+
+    /// <summary>
+    /// US-019: infinite-scroll is progressive enhancement over the "Show more" link above, not a
+    /// replacement for it - the home page must reference the script, and the script itself must
+    /// actually be served (a 404 here would silently break scroll-triggered loading for every
+    /// visitor while every other test in this class kept passing, since they only exercise the
+    /// zero-JS path).
+    /// </summary>
+    [Fact]
+    public async Task HomePage_references_the_infinite_scroll_script_and_it_is_actually_served()
+    {
+        var pageResponse = await _httpClient.GetAsync("/");
+        var pageBody = await pageResponse.Content.ReadAsStringAsync();
+        pageBody.ShouldContain("<script src=\"/js/infinite-scroll.js\" defer></script>");
+
+        var scriptResponse = await _httpClient.GetAsync("/js/infinite-scroll.js");
+        scriptResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var scriptBody = await scriptResponse.Content.ReadAsStringAsync();
+        scriptBody.ShouldContain("IntersectionObserver");
     }
 }
