@@ -61,6 +61,21 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # The static-file integration tests request the generated CSS from wwwroot.
+      # The separate tailwind-build job does not share its output with this job.
+      - name: Install Tailwind CLI
+        working-directory: src/TheBluesland.Web
+        run: npm ci
+
+      - name: Tailwind production build
+        working-directory: src/TheBluesland.Web
+        run: npm run build:css
+
       # tests/TheBluesland.E2ETests is intentionally NOT part of TheBluesland.slnx (kept out by this
       # agent's own write scope, see that project's .csproj comment) - it restores/builds/runs
       # independently in the playwright-smoke job below.
