@@ -109,4 +109,43 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
 
         body.ShouldContain("href=\"/\" class=\"clear-filters\"");
     }
+
+    /// <summary>
+    /// US-018 AC1/AC2: the four dimensions render as independent, native &lt;details&gt; disclosures
+    /// inside the navbar-styled filter bar - not the old always-open &lt;fieldset&gt; stack. Native
+    /// &lt;details&gt; means opening one never depends on JavaScript and never shows another
+    /// dimension's options, since each has its own separate markup with no shared open/close state.
+    /// </summary>
+    [Fact]
+    public async Task HomePage_renders_each_filter_dimension_as_an_independent_details_dropdown_in_the_navbar()
+    {
+        var response = await _httpClient.GetAsync("/");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("<nav aria-label=\"Filters\" class=\"filter-navbar\">");
+        body.Split("class=\"filter-dropdown\"").Length.ShouldBe(5); // 4 dropdowns -> 5 split parts
+        body.ShouldContain("<summary>Mood</summary>");
+        body.ShouldContain("<summary>Genre</summary>");
+        body.ShouldContain("<summary>Occasion</summary>");
+        body.ShouldContain("<summary>Era</summary>");
+    }
+
+    /// <summary>
+    /// US-018 AC4: an active filter is surfaced in its own dropdown's summary as "Dimension (N)" -
+    /// here "warm" is one active mood and "road-trip" is one active occasion, while genre/era stay
+    /// unfiltered and keep their plain (no count) label.
+    /// </summary>
+    [Fact]
+    public async Task HomePage_shows_an_active_filter_count_next_to_the_dimension_name_it_belongs_to()
+    {
+        var response = await _httpClient.GetAsync("/?mood=warm&occasion=road-trip");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("<summary>Mood (1)</summary>");
+        body.ShouldContain("<summary>Occasion (1)</summary>");
+        body.ShouldContain("<summary>Genre</summary>");
+        body.ShouldContain("<summary>Era</summary>");
+    }
 }

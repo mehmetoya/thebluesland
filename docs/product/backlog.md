@@ -512,17 +512,27 @@ görünsün.
 
 Kabul kriterleri:
 
-- [ ] Ana sayfa açıldığında Mood/Genre/Occasion/Era filtreleri, mevcut inline `<form>` bloğu yerine
+- [x] Ana sayfa açıldığında Mood/Genre/Occasion/Era filtreleri, mevcut inline `<form>` bloğu yerine
       üst navbar'da dört ayrı dropdown/pill kontrolü olarak görünür.
-- [ ] Bir dropdown açıldığında yalnızca o boyutun seçenekleri görünür; diğerleri kapalı kalır.
-- [ ] Seçim yapıldığında URL query string güncellenir ve liste filtrelenir; paylaşılan bir linkte
+- [x] Bir dropdown açıldığında yalnızca o boyutun seçenekleri görünür; diğerleri kapalı kalır.
+- [x] Seçim yapıldığında URL query string güncellenir ve liste filtrelenir; paylaşılan bir linkte
       aynı filtre durumu geri yüklenir (US-009 AC3 korunur).
-- [ ] Aktif filtre sayısı navbar'da görünür bir göstergeyle belirtilir (ör. "Genre (2)").
-- [ ] JavaScript devre dışıyken filtreleme tamamen bozulmaz — en az temel bir seç/uygula akışı
+- [x] Aktif filtre sayısı navbar'da görünür bir göstergeyle belirtilir (ör. "Genre (2)").
+- [x] JavaScript devre dışıyken filtreleme tamamen bozulmaz — en az temel bir seç/uygula akışı
       çalışmaya devam eder (US-009'un zero-JS static-SSR ilkesi korunur, spec 12.3).
-- [ ] (Could — düşük öncelik) Dropdown açma/kapama geçişinde sade bir mikro-etkileşim/animasyon
+- [x] (Could — düşük öncelik) Dropdown açma/kapama geçişinde sade bir mikro-etkileşim/animasyon
       vardır; `prefers-reduced-motion` saygı gösterilir (spec 10.2). Bu bir tasarım/CSS detayıdır,
       yukarıdaki fonksiyonel kriterleri bloklamaz.
+
+**Durum: Tamamlandı.** Eski hep-açık `<fieldset>` yığını, dört bağımsız native `<details>`/
+`<summary>` dropdown'una (`.filter-navbar` — `HomePage.razor`) dönüştürüldü. `<details>` native
+olduğu için her dropdown yalnızca kendi panelini gösterir ve açma/kapama JavaScript gerektirmez
+(AC2/AC5 aynı anda karşılanıyor); alttaki `<form method="get">`/query-string mekanizması US-009'dan
+değişmeden korundu (AC3). Her `<summary>`, aktif seçim sayısını "Dimension (N)" biçiminde gösteriyor
+(`DimensionLabel` helper'ı, AC4). Ok ikonunun açık/kapalı dönüşü `prefers-reduced-motion: no-preference`
+ile korumalı bir CSS transition (Could kriteri). Yeni `HomePageFilterIntegrationTests` testleri
+dropdown yapısını ve aktif-sayı etiketlerini gerçek render edilmiş HTML'e karşı doğruluyor;
+Testcontainers Postgres'e karşı 193/193 test yeşil, `dotnet format --verify-no-changes` temiz.
 
 Kapsam dışı: mobil için tam-ekran filtre deneyimi (bkz. US-021, ayrı hikâye).
 Öncelik: Should

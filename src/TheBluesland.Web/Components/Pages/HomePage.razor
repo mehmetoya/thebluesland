@@ -23,64 +23,71 @@
 </section>
 
 @*
-    US-009 design decision: filtering is a plain `<form method="get">` bound to
-    [SupplyParameterFromQuery] array parameters below (@code block), evaluated server-side at
-    static-SSR render time - not an `@rendermode InteractiveServer` island, even though spec
-    section 5 labels this route "Static SSR + interactive filter island". Every AC bullet is
-    satisfied by this alone: the query string *is* the filter state (so opening a filtered URL
-    directly reproduces the same result a form submission would), and a normal browser GET form
-    submission both updates the URL and re-renders the filtered list with zero JavaScript/SignalR
-    involved. Spec 12.3's "a lost SignalR connection must not prevent navigation" is trivially
-    satisfied because this page never opens a SignalR connection in the first place; an Interactive
-    Server filter component would still need this exact static form/query-string mechanism
-    underneath it as the 12.3-mandated no-JS fallback, making it additive complexity rather than a
-    replacement for anything an AC bullet requires.
+    US-009 design decision (still load-bearing under US-018's navbar restyle): filtering is a plain
+    `<form method="get">` bound to [SupplyParameterFromQuery] array parameters below (@code block),
+    evaluated server-side at static-SSR render time - not an `@rendermode InteractiveServer` island.
+    The query string *is* the filter state (so opening a filtered URL directly reproduces the same
+    result a form submission would), and a normal browser GET form submission both updates the URL
+    and re-renders the filtered list with zero JavaScript/SignalR involved.
+
+    US-018: the four dimensions are now `<details>`/`<summary>` disclosures instead of always-open
+    `<fieldset>`s. `<details>` is native HTML - opening one reveals only its own panel (AC2) and
+    needs no JavaScript (AC5), so the zero-JS guarantee above is unaffected. The active count in
+    each summary (DimensionLabel) is the "Genre (2)"-style indicator from AC4.
 *@
-<section class="catalogue-filters">
-    <form method="get" action="/" class="filter-form">
-        <fieldset>
-            <legend>Mood</legend>
-            @foreach (var mood in PlaylistTaxonomy.Moods)
-            {
-                <label>
-                    <input type="checkbox" name="mood" value="@mood" checked="@_criteria.Moods.Contains(mood)" />
-                    @mood
-                </label>
-            }
-        </fieldset>
-        <fieldset>
-            <legend>Genre</legend>
-            @foreach (var genre in PlaylistTaxonomy.Genres)
-            {
-                <label>
-                    <input type="checkbox" name="genre" value="@genre" checked="@_criteria.Genres.Contains(genre)" />
-                    @genre
-                </label>
-            }
-        </fieldset>
-        <fieldset>
-            <legend>Occasion</legend>
-            @foreach (var occasion in PlaylistTaxonomy.Occasions)
-            {
-                <label>
-                    <input type="checkbox" name="occasion" value="@occasion" checked="@_criteria.Occasions.Contains(occasion)" />
-                    @occasion
-                </label>
-            }
-        </fieldset>
-        <fieldset>
-            <legend>Era</legend>
-            @foreach (var era in PlaylistTaxonomy.Eras)
-            {
-                <label>
-                    <input type="checkbox" name="era" value="@era" checked="@_criteria.Eras.Contains(era)" />
-                    @era
-                </label>
-            }
-        </fieldset>
-        <button type="submit">Apply filters</button>
+<nav aria-label="Filters" class="filter-navbar">
+    <form method="get" action="/" class="filter-navbar-form">
+        <details class="filter-dropdown">
+            <summary>@DimensionLabel("Mood", _criteria.Moods.Count)</summary>
+            <div class="filter-dropdown-panel">
+                @foreach (var mood in PlaylistTaxonomy.Moods)
+                {
+                    <label>
+                        <input type="checkbox" name="mood" value="@mood" checked="@_criteria.Moods.Contains(mood)" />
+                        @mood
+                    </label>
+                }
+            </div>
+        </details>
+        <details class="filter-dropdown">
+            <summary>@DimensionLabel("Genre", _criteria.Genres.Count)</summary>
+            <div class="filter-dropdown-panel">
+                @foreach (var genre in PlaylistTaxonomy.Genres)
+                {
+                    <label>
+                        <input type="checkbox" name="genre" value="@genre" checked="@_criteria.Genres.Contains(genre)" />
+                        @genre
+                    </label>
+                }
+            </div>
+        </details>
+        <details class="filter-dropdown">
+            <summary>@DimensionLabel("Occasion", _criteria.Occasions.Count)</summary>
+            <div class="filter-dropdown-panel">
+                @foreach (var occasion in PlaylistTaxonomy.Occasions)
+                {
+                    <label>
+                        <input type="checkbox" name="occasion" value="@occasion" checked="@_criteria.Occasions.Contains(occasion)" />
+                        @occasion
+                    </label>
+                }
+            </div>
+        </details>
+        <details class="filter-dropdown">
+            <summary>@DimensionLabel("Era", _criteria.Eras.Count)</summary>
+            <div class="filter-dropdown-panel">
+                @foreach (var era in PlaylistTaxonomy.Eras)
+                {
+                    <label>
+                        <input type="checkbox" name="era" value="@era" checked="@_criteria.Eras.Contains(era)" />
+                        @era
+                    </label>
+                }
+            </div>
+        </details>
+        <button type="submit" class="filter-apply">Apply filters</button>
     </form>
-</section>
+</nav>
 
 <section class="catalogue">
     <h2>Playlists</h2>
@@ -158,6 +165,10 @@
 
     private PlaylistCacheSnapshot GetSnapshot(PlaylistContent playlist) =>
         _snapshots.GetValueOrDefault(playlist.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable);
+
+    // US-018 AC4: "Genre (2)" - the active-count indicator shown in each dropdown's <summary>.
+    private static string DimensionLabel(string name, int activeCount) =>
+        activeCount > 0 ? $"{name} ({activeCount})" : name;
 
     private string WebSiteJsonLd =>
         StructuredDataBuilder.BuildWebSite(BuildAbsoluteUrl("/"));
