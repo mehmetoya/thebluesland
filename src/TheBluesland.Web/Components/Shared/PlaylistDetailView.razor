@@ -47,13 +47,21 @@
         @if (ShowEmbed)
         {
             @* US-010 AC2/spec 11.3/12.4(a): embed URL built only from the validated
-               spotifyPlaylistId, never from content-file input. *@
+               spotifyPlaylistId, never from content-file input.
+
+               height=152 (Spotify's compact size) rather than their 352 "with tracklist" default:
+               at 352 the widget rendered its content in the top portion and left the remainder as
+               a bare white block against this site's dark page (reported twice from production,
+               reproduced in a fresh incognito window, so not a caching or first-paint artifact).
+               That space is inside Spotify's own cross-origin document, so no CSS of ours can
+               reach it; the compact size is the one shape that has no leftover area to show
+               through. The full tracklist is still one click away via "Open in Spotify" below. *@
             <iframe
                 class="spotify-embed"
                 src="@EmbedUrl"
                 title="Spotify player"
                 width="100%"
-                height="352"
+                height="152"
                 frameborder="0"
                 allowfullscreen
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"

@@ -43,6 +43,7 @@ public static class WebHostFactory
             options.UseNpgsql(connectionString);
         });
 
+        builder.Services.AddSingleton<StaticAssetVersion>();
         builder.Services.AddSingleton<PlaylistContentReader>();
         builder.Services.AddSingleton<PlaylistContentRepository>();
         builder.Services.AddScoped<PlaylistCacheLookup>();
