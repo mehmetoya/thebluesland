@@ -1,0 +1,58 @@
+@page "/collections/{Slug}"
+@inject PlaylistContentRepository ContentRepository
+@inject PlaylistCacheLookup CacheLookup
+
+@if (_collection is not null)
+{
+    <PageTitle>@(_collection.Title + " - TheBluesland")</PageTitle>
+    <PageMetadata Title="@(_collection.Title + " - TheBluesland")"
+                  Description="@_collection.Description"
+                  CanonicalPath="@($"/collections/{_collection.Slug}")" ImagePath="/og-image.png" />
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a> / <a href="/collections">Collections</a> / <span aria-current="page">@_collection.Title</span>
+    </nav>
+    <section class="brand-intro">
+        <h1>@_collection.Title</h1>
+        <p>@_collection.Introduction</p>
+    </section>
+    <section class="catalogue" aria-label="Playlists in this collection">
+        @foreach (var playlist in _playlists)
+        {
+            <a class="playlist-card-link" href="@($"/playlists/{playlist.Slug}")">
+                <PlaylistCard Content="playlist" CacheSnapshot="@_snapshots.GetValueOrDefault(playlist.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable)" />
+            </a>
+        }
+    </section>
+    <p><a href="/collections">Explore other collections</a> · <a href="/">Browse all playlists</a></p>
+}
+else
+{
+    <ResponseStatusCode Code="StatusCodes.Status404NotFound" />
+}
+
+@code {
+    [Parameter]
+    public string Slug { get; set; } = string.Empty;
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private PlaylistCollection? _collection;
+    private IReadOnlyList<PlaylistContent> _playlists = [];
+    private IReadOnlyDictionary<string, PlaylistCacheSnapshot> _snapshots = new Dictionary<string, PlaylistCacheSnapshot>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _collection = PlaylistCollections.Find(Slug);
+        if (_collection is null)
+        {
+            return;
+        }
+
+        var cancellationToken = HttpContext?.RequestAborted ?? CancellationToken.None;
+        var published = await ContentRepository.FindAllPublishedAsync(cancellationToken);
+        _playlists = PlaylistFilter.Apply(published, _collection.Criteria);
+        _snapshots = await CacheLookup.GetSnapshotsAsync(
+            _playlists.Select(playlist => playlist.SpotifyPlaylistId).ToList(), cancellationToken);
+    }
+}

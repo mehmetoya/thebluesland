@@ -13,9 +13,7 @@ namespace TheBluesland.Web.Seo;
 /// </summary>
 public static class SitemapGenerator
 {
-    // "/collections/{slug}" and similar do not exist yet (per WebHostFactory's route table) - kept
-    // to only the static pages that actually exist, per this story's scope decision.
-    private static readonly string[] StaticPaths = ["/", "/about", "/privacy", "/terms"];
+    private static readonly string[] StaticPaths = ["/", "/collections", "/about", "/privacy", "/terms"];
 
     public static string Generate(HttpContext httpContext, IReadOnlyList<PlaylistContent> publishedPlaylists)
     {
@@ -26,6 +24,11 @@ public static class SitemapGenerator
         foreach (var path in StaticPaths)
         {
             AppendUrl(builder, SiteUrl.BuildAbsolute(httpContext, path));
+        }
+
+        foreach (var collection in PlaylistCollections.All)
+        {
+            AppendUrl(builder, SiteUrl.BuildAbsolute(httpContext, $"/collections/{collection.Slug}"));
         }
 
         foreach (var playlist in publishedPlaylists)

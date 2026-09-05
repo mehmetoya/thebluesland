@@ -62,6 +62,29 @@ public sealed class SmokeTests : IAsyncLifetime
         await _app.DisposeAsync();
     }
 
+    [Theory]
+    [InlineData(390)]
+    [InlineData(1280)]
+    public async Task Collections_are_navigable_without_horizontal_overflow(int width)
+    {
+        var page = await _browser.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = 900 },
+        });
+        await page.GotoAsync(_baseAddress + "/collections");
+        (await page.Locator(".collection-link").CountAsync()).ShouldBe(3);
+        (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= window.innerWidth")).ShouldBeTrue();
+        var screenshots = Path.Combine(AppContext.BaseDirectory, "Screenshots");
+        Directory.CreateDirectory(screenshots);
+        await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            Path = Path.Combine(screenshots, $"collections-{width}.png"), FullPage = true,
+        });
+        await page.Locator(".collection-link[href='/collections/anadolu-rock']").ClickAsync();
+        await page.GetByRole(AriaRole.Heading, new() { Name = "Anadolu Rock Playlists", Exact = true }).WaitForAsync();
+        (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= window.innerWidth")).ShouldBeTrue();
+    }
+
     [Fact]
     public async Task Share_links_and_clipboard_fallback_use_the_canonical_playlist_url()
     {

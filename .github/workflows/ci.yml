@@ -120,6 +120,17 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build stylesheet for browser tests
+        working-directory: src/TheBluesland.Web
+        run: |
+          npm ci
+          npm run build:css
+
       - name: Restore
         run: dotnet restore tests/TheBluesland.E2ETests/TheBluesland.E2ETests.csproj
 

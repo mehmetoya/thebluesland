@@ -107,6 +107,7 @@
   margin: 0 auto;
   padding: 1.25rem 1.5rem;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -126,6 +127,7 @@
 
 .site-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
   font-size: 0.9375rem;
 }
@@ -745,4 +747,28 @@ body:has(.filter-mobile-toggle:checked) {
   color: var(--color-text-muted);
   margin-bottom: 1.1em;
   font-size: 1.0625rem;
+}
+
+/* Permanent collection entry points share the catalogue's visual language. */
+.collection-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.collection-link {
+  display: block;
+  padding: 1.25rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+}
+
+.collection-link h2 {
+  font-size: 1.125rem;
+}
+
+.collection-link p {
+  color: var(--color-text-muted);
+  margin-bottom: 0;
 }

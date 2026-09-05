@@ -1,0 +1,10 @@
+@inject IConfiguration Configuration
+
+@if (!string.IsNullOrWhiteSpace(Configuration["SearchVerification:Google"]))
+{
+    <meta name="google-site-verification" content="@Configuration["SearchVerification:Google"]" />
+}
+@if (!string.IsNullOrWhiteSpace(Configuration["SearchVerification:Bing"]))
+{
+    <meta name="msvalidate.01" content="@Configuration["SearchVerification:Bing"]" />
+}
