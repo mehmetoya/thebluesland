@@ -427,7 +427,7 @@ Kabul kriterleri:
 
 - [x] `workflow_dispatch` ile bir `spotifyPlaylistId` girdisi verildiğinde, araç
       `spotify_playlist_cache` tablosundan yalnızca `name`, `description`, `track_count`, `artists`
-      alanlarını okur ve Anthropic Claude API'ye yalnızca bu dört alanı girdi olarak gönderir; prompt
+      alanlarını okur ve Google Gemini API'ye yalnızca bu dört alanı girdi olarak gönderir; prompt
       builder'a tüm cache satırı (`is_available`, `synced_at`, `spotify_snapshot_id`,
       `cover_image_url`, `spotify_playlist_id` dahil) verildiğinde üretilen prompt metninde bu dört
       alan dışındaki hiçbir değerin geçmediği bir regresyon testiyle doğrulanır
@@ -439,7 +439,7 @@ Kabul kriterleri:
       edilmemiş) veya `is_available = false` olduğunda, araç anlamlı bir hata mesajıyla başarısız
       olur; AI'ya boş veya eksik veri gönderilmez (`CuratorNoteSuggestionServiceTests` - sahte bir
       AI client'ı çağrılırsa test'i patlatacak şekilde, her iki dal için de doğrulandı).
-- [x] `ANTHROPIC_API_KEY`, yalnızca `suggest-curator-note.yml` workflow'una scope edilmiş bir GitHub
+- [x] `GEMINI_API_KEY`, yalnızca `suggest-curator-note.yml` workflow'una scope edilmiş bir GitHub
       Actions repository secret'ıdır; `ci.yml`, `deploy.yml`, `sync-spotify.yml` workflow'larından bu
       secret'a erişim yoktur (`SuggestCuratorNoteWorkflowSecretIsolationTests` ile doğrulandı; repo
       ayarlarında secret'ı bu workflow'a scope etmek Mehmet'in elle yapacağı tek seferlik adım,
@@ -449,7 +449,7 @@ Kabul kriterleri:
       `NEON_READONLY_CONNECTION_STRING` secret'ı üzerinden — Render'ın env var'ıyla aynı rol/değer,
       ayrı bir secret olarak tutulur çünkü Render'ın ortam değişkenlerine GitHub Actions'tan
       erişilemez).
-- [x] Workflow loglarında `ANTHROPIC_API_KEY` değeri açık metin olarak görünmez (kod hiçbir yerde
+- [x] Workflow loglarında `GEMINI_API_KEY` değeri açık metin olarak görünmez (kod hiçbir yerde
       `Console.WriteLine`/log ile yazmıyor; ayrıca GitHub Actions kayıtlı secret değerlerini otomatik
       maskeler).
 

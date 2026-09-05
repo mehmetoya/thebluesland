@@ -2,11 +2,16 @@ name: Suggest curator note
 
 # US-016 (spec section 18.5, ADR-0005): a manually-triggered, independent draft-suggestion tool -
 # never part of sync-spotify.yml's monthly job. This is the ONLY workflow that may reference the
-# ANTHROPIC_API_KEY and NEON_READONLY_CONNECTION_STRING secrets - ci.yml, deploy.yml and
+# GEMINI_API_KEY and NEON_READONLY_CONNECTION_STRING secrets - ci.yml, deploy.yml and
 # sync-spotify.yml must never declare them (mirrors sync-spotify.yml's own secret-scope comment).
 # Mehmet must additionally restrict these two secrets to this workflow in the GitHub repo settings
 # (Settings > Secrets and variables > Actions) - that scoping is a one-time, code-external step and
 # cannot be enforced from the YAML alone.
+#
+# Google Gemini rather than Anthropic Claude (ADR-0005's 2026-09-05 amendment): Mehmet requires
+# genuinely zero marginal cost, and Gemini has a real free tier (an API key from
+# https://aistudio.google.com/apikey needs no billing account attached) where Anthropic's API is
+# usage-based from the first request.
 #
 # NEON_READONLY_CONNECTION_STRING must be the spotify_cache_readonly role's connection string
 # (same role, same value, as Render's ConnectionStrings__SpotifyPlaylistCache env var) - never the
@@ -26,7 +31,7 @@ on:
         required: true
         type: string
       model:
-        description: "Anthropic model id (optional - defaults to a small, current model in the tool itself if left blank)."
+        description: "Gemini model id (optional - defaults to a free-tier-eligible current model in the tool itself if left blank)."
         required: false
         default: ""
         type: string
@@ -35,9 +40,9 @@ jobs:
   suggest:
     runs-on: ubuntu-latest
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       NEON_READONLY_CONNECTION_STRING: ${{ secrets.NEON_READONLY_CONNECTION_STRING }}
-      ANTHROPIC_MODEL: ${{ inputs.model }}
+      GEMINI_MODEL: ${{ inputs.model }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

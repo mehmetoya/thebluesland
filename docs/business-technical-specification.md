@@ -649,7 +649,7 @@ flowchart TD
 | Database | PostgreSQL (Neon, free tier) |
 | Data access | EF Core + Npgsql, read-only from the web app, read/write from the sync tool |
 | Spotify integration | Spotify Web API, Authorization Code + PKCE, used only by the sync tool |
-| AI integration | Anthropic Claude API, used only by the manually triggered suggestion workflow; no AI SDK is referenced by `TheBluesland.Web` |
+| AI integration | Google Gemini API, used only by the manually triggered suggestion workflow; no AI SDK is referenced by `TheBluesland.Web` |
 | Styling | Tailwind CSS 4 plus CSS custom properties |
 | Logging | `Microsoft.Extensions.Logging` structured logs |
 | Health | ASP.NET Core health checks |
@@ -765,7 +765,7 @@ variable; a Neon role scoped to read-only access on `spotify_playlist_cache` sho
 this connection where Neon's free tier supports role separation. The Spotify Client ID, refresh
 token, and the read/write Neon connection string used by the monthly sync job exist **only** as
 GitHub Actions repository secrets, scoped to the `sync-spotify.yml` workflow, and are never present
-in the Render production environment. The AI provider key (`ANTHROPIC_API_KEY`) follows the same
+in the Render production environment. The AI provider key (`GEMINI_API_KEY`) follows the same
 pattern: it exists **only** as a GitHub Actions repository secret scoped to
 `suggest-curator-note.yml`, is never present in Render, and is not available to `ci.yml`,
 `deploy.yml` or `sync-spotify.yml`.
@@ -1046,7 +1046,7 @@ machine (SEC-008, ADR-0005).
   GitHub Actions repository secrets, never exposed to `ci.yml`, `deploy.yml`,
   `suggest-curator-note.yml`, or the production Render environment (SEC-001).
 
-### 18.5 Manual AI curator-note suggestion (new, 3 September 2026)
+### 18.5 Manual AI curator-note suggestion (new, 3 September 2026; provider changed to Google Gemini 5 September 2026 — see ADR-0005's dated note — for a genuinely zero-cost free tier, since Anthropic's API is usage-based from the first request)
 
 `suggest-curator-note.yml`:
 
@@ -1059,7 +1059,7 @@ machine (SEC-008, ADR-0005).
   instructions (SEC-008).
 - Writes the suggested draft to the workflow job summary and as a build artifact. It writes
   nothing to the database, nothing to `content/`, and opens no pull request.
-- Uses secrets `ANTHROPIC_API_KEY` and `NEON_READONLY_CONNECTION_STRING` only (the latter is the
+- Uses secrets `GEMINI_API_KEY` and `NEON_READONLY_CONNECTION_STRING` only (the latter is the
   `spotify_cache_readonly` role's connection string — the same role/value as Render's
   `ConnectionStrings__SpotifyPlaylistCache`, stored separately as its own GitHub Actions secret
   since Render's environment variables aren't reachable from a GitHub Actions workflow); never
@@ -1197,7 +1197,7 @@ The MVP is complete when:
   production Neon database before launch, and every published playlist's `spotifyPlaylistId` has a
   corresponding cache row (or a confirmed `is_available = false` if genuinely removed).**
 - **The Render production environment has been verified to contain no Spotify credential and no
-  AI provider key (including `ANTHROPIC_API_KEY`) — its only secret is the read-scoped Neon
+  AI provider key (including `GEMINI_API_KEY`) — its only secret is the read-scoped Neon
   connection string** (SEC-001).
 - README contains local setup, content-authoring, sync-job-authoring and deployment instructions.
 

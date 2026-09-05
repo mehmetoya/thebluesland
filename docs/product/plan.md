@@ -15,7 +15,7 @@ hikaye yok; sıradaki iş kullanıcı talebiyle belirlenecek.
   Mehmet'in kararına bırakıldı, "burası kalsın" (2026-09-05).
 - Render'ın native rollback özelliği hâlâ gerçek bir olayla denenmedi (US-014'ün bilerek açık
   bırakılan tek maddesi).
-- `suggest-curator-note.yml`'ın `ANTHROPIC_API_KEY`/`NEON_READONLY_CONNECTION_STRING`
+- `suggest-curator-note.yml`'ın `GEMINI_API_KEY`/`NEON_READONLY_CONNECTION_STRING`
   secret'larını bu workflow'a scope etmek (GitHub repo ayarları) Mehmet'in elle yapacağı tek
   seferlik adım — US-004/US-007 ile aynı desen.
 
@@ -26,11 +26,14 @@ hikaye yok; sıradaki iş kullanıcı talebiyle belirlenecek.
   verb'i eklendi (ADR-0005): `NEON_READONLY_CONNECTION_STRING` (yeni, `suggest-curator-note.yml`'a
   scope edilmiş bir GitHub secret) ile cache'den tek satırı okuyor, `CuratorNotePromptBuilder`
   yalnızca dört izinli alanı (name/description/track_count/artists) prompt'a koyuyor (tüm satır
-  builder'a verilse bile), `AnthropicClient` (yeni paket yok, ham `HttpClient` + Anthropic Messages
-  API) taslağı üretiyor, sonuç yalnızca job summary + `actions/upload-artifact`'a yazılıyor — DB'ye
-  veya `content/`'e hiçbir yazma yok. Playlist cache'de yoksa veya `is_available=false` ise AI
-  client'ı hiç çağrılmıyor (regresyon testiyle sabitlendi). Yeni `suggest-curator-note.yml`
-  workflow'u yalnızca `workflow_dispatch`; `ANTHROPIC_API_KEY`/`NEON_READONLY_CONNECTION_STRING`
+  builder'a verilse bile), `GeminiClient` (yeni paket yok, ham `HttpClient` + Gemini
+  `generateContent` API) taslağı üretiyor, sonuç yalnızca job summary + `actions/upload-artifact`'a
+  yazılıyor — DB'ye veya `content/`'e hiçbir yazma yok. Playlist cache'de yoksa veya
+  `is_available=false` ise AI client'ı hiç çağrılmıyor (regresyon testiyle sabitlendi). 2026-09-05:
+  Mehmet gerçek $0 maliyet istedi (Anthropic kullanım bazlı ücretlendiriyor); sağlayıcı Google
+  Gemini'ye çevrildi (kalıcı ücretsiz katman, ödeme yöntemi gerekmiyor) — bkz. ADR-0005'in dated
+  notu. Yeni `suggest-curator-note.yml`
+  workflow'u yalnızca `workflow_dispatch`; `GEMINI_API_KEY`/`NEON_READONLY_CONNECTION_STRING`
   izolasyonu `SuggestCuratorNoteWorkflowSecretIsolationTests` ile doğrulandı (ci/deploy/sync
   workflow'larının hiçbiri bu iki secret'a erişemiyor). `actionlint` temiz. `dotnet build/test`:
   182/182 yeşil, `dotnet format --verify-no-changes` temiz.

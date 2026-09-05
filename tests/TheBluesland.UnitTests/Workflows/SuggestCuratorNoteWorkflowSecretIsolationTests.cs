@@ -6,7 +6,7 @@ namespace TheBluesland.UnitTests.Workflows;
 /// <summary>
 /// US-016 AC4/ADR-0005 madde 3: mirrors the isolation pattern already pinned for
 /// sync-spotify.yml/ci.yml/deploy.yml onto suggest-curator-note.yml - it must have exactly the two
-/// secrets it needs (ANTHROPIC_API_KEY, NEON_READONLY_CONNECTION_STRING) and none of the
+/// secrets it needs (GEMINI_API_KEY, NEON_READONLY_CONNECTION_STRING) and none of the
 /// sync-only ones. Reads the checked-in workflow file as plain text, same approach as the sibling
 /// tests.
 /// </summary>
@@ -37,7 +37,7 @@ public sealed class SuggestCuratorNoteWorkflowSecretIsolationTests
     {
         var yaml = File.ReadAllText(FindRepoFile(".github/workflows/suggest-curator-note.yml"));
 
-        yaml.ShouldContain(SecretExpression("ANTHROPIC_API_KEY"));
+        yaml.ShouldContain(SecretExpression("GEMINI_API_KEY"));
         yaml.ShouldContain(SecretExpression("NEON_READONLY_CONNECTION_STRING"));
     }
 
@@ -59,7 +59,7 @@ public sealed class SuggestCuratorNoteWorkflowSecretIsolationTests
     {
         var yaml = File.ReadAllText(FindRepoFile(relativePath));
 
-        yaml.ShouldNotContain(SecretExpression("ANTHROPIC_API_KEY"));
+        yaml.ShouldNotContain(SecretExpression("GEMINI_API_KEY"));
         yaml.ShouldNotContain(SecretExpression("NEON_READONLY_CONNECTION_STRING"));
     }
 

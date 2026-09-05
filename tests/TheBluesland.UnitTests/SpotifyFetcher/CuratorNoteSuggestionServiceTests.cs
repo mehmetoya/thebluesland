@@ -32,8 +32,8 @@ public sealed class CuratorNoteSuggestionServiceTests : IAsyncLifetime
     public async Task SuggestAsync_throws_and_never_calls_the_ai_client_when_no_row_exists()
     {
         await using var dbContext = await CreateMigratedDbContextAsync();
-        var anthropicClient = new NeverCalledAnthropicClient();
-        var service = new CuratorNoteSuggestionService(dbContext, anthropicClient);
+        var aiClient = new NeverCalledAiClient();
+        var service = new CuratorNoteSuggestionService(dbContext, aiClient);
 
         await Should.ThrowAsync<InvalidOperationException>(
             () => service.SuggestAsync(MissingPlaylistId, CancellationToken.None));
@@ -46,8 +46,8 @@ public sealed class CuratorNoteSuggestionServiceTests : IAsyncLifetime
         dbContext.SpotifyPlaylistCache.Add(BuildEntry(UnavailablePlaylistId, isAvailable: false));
         await dbContext.SaveChangesAsync();
 
-        var anthropicClient = new NeverCalledAnthropicClient();
-        var service = new CuratorNoteSuggestionService(dbContext, anthropicClient);
+        var aiClient = new NeverCalledAiClient();
+        var service = new CuratorNoteSuggestionService(dbContext, aiClient);
 
         await Should.ThrowAsync<InvalidOperationException>(
             () => service.SuggestAsync(UnavailablePlaylistId, CancellationToken.None));
@@ -60,14 +60,14 @@ public sealed class CuratorNoteSuggestionServiceTests : IAsyncLifetime
         dbContext.SpotifyPlaylistCache.Add(BuildEntry(AvailablePlaylistId, isAvailable: true));
         await dbContext.SaveChangesAsync();
 
-        var anthropicClient = new StubAnthropicClient("A drafted curator note.");
-        var service = new CuratorNoteSuggestionService(dbContext, anthropicClient);
+        var aiClient = new StubAiClient("A drafted curator note.");
+        var service = new CuratorNoteSuggestionService(dbContext, aiClient);
 
         var suggestion = await service.SuggestAsync(AvailablePlaylistId, CancellationToken.None);
 
         suggestion.ShouldBe("A drafted curator note.");
-        anthropicClient.CallCount.ShouldBe(1);
-        anthropicClient.LastPrompt.ShouldNotBeNull().ShouldContain("Masterpieces of Erkin the Father");
+        aiClient.CallCount.ShouldBe(1);
+        aiClient.LastPrompt.ShouldNotBeNull().ShouldContain("Masterpieces of Erkin the Father");
     }
 
     private static SpotifyPlaylistCacheEntry BuildEntry(string spotifyPlaylistId, bool isAvailable) => new()
@@ -92,13 +92,13 @@ public sealed class CuratorNoteSuggestionServiceTests : IAsyncLifetime
         return dbContext;
     }
 
-    private sealed class NeverCalledAnthropicClient : IAnthropicClient
+    private sealed class NeverCalledAiClient : IAiClient
     {
         public Task<string> GenerateAsync(string prompt, CancellationToken cancellationToken) =>
             throw new InvalidOperationException("The AI client must not be called for a missing/unavailable playlist.");
     }
 
-    private sealed class StubAnthropicClient(string response) : IAnthropicClient
+    private sealed class StubAiClient(string response) : IAiClient
     {
         public int CallCount { get; private set; }
         public string? LastPrompt { get; private set; }
