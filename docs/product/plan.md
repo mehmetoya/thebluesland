@@ -9,8 +9,9 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 ## Sıradaki
 
-- **US-021 — Mobil tam-ekran filtre deneyimi (Could).** Sırada bir sonraki: bağımlılığı US-018
-  (tamamlandı); aynı URL query-string mekanizmasını paylaşıyor.
+Backlog'daki tüm US-001..US-021 hikayelerinin kod gerektiren kriterleri tamamlandı. Kalanlar
+içerik/manuel adımlar:
+
 - US-017'nin Could kriteri (10 aday dosyanın occasion etiketinin `focus`/`dancing`'e taşınması) —
   içerik PR'ı, kod değişikliği değil; Mehmet uygun görürse ayrı istenebilir.
 - Bilinen küçük doküman/hijyen açıkları (2026-09-05 denetiminde bulundu, kod değil): ADR
@@ -25,6 +26,18 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 ## Tamamlanan
 
+- **US-021 — Mobil tam-ekran filtre deneyimi (2026-09-06).** US-018'in dört
+  `<details class="filter-dropdown">`'ı hiç değişmedi; tüm form bir `<details
+  class="filter-mobile-panel">` ile sarmalandı (`HomePage.razor`) — tek DOM ağacı iki breakpoint'e
+  de hizmet ediyor, JS yok. Desktop'ta author CSS `<details>`'ın kendi "[open] değilse gizle" UA
+  kuralını ezip formu her zaman gösteriyor (dış sarmalayıcı işlevsiz); `max-width: 40rem`'de bu
+  kapanıyor ve dış `<summary>` gerçek bir "Filters (N)" toggle'ına dönüşüp formu `position:fixed`
+  tam ekran panel yapıyor, iç dört dropdown da panel içinde zorla açık tutuluyor. `body:has(.filter
+  -mobile-panel[open])` arka plan kaydırmasını CSS-only kilitliyor. Yeni `.filter-clear` linki
+  Uygula'nın yanına eklendi. 2 yeni entegrasyon testi eklendi. Testcontainers Postgres'e karşı
+  206/206 test yeşil, `dotnet format --verify-no-changes` temiz. Gerçek mobil görsel doğrulama
+  yapılamadı (bu oturumda tarayıcı/ağ erişimi kısıtlıydı) — Mehmet'in bir cihazda/DevTools'ta göz
+  atması önerilir.
 - **US-019 — Playlist kataloğunu kaydırdıkça kademeli yükle (2026-09-06).** Yeni saf
   `PlaylistCataloguePage` sınıfı (US-009'daki `PlaylistFilter` ile aynı desen): `page` N ilk
   N × 24 (`PageSize`) playlist'i kümülatif gösteriyor (pencereli bir dilim değil), böylece

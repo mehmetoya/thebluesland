@@ -635,15 +635,34 @@ olsun.
 
 Kabul kriterleri:
 
-- [ ] Dar ekranda (mobil breakpoint) navbar'daki filtre kontrollerinin yerini tam ekranı kaplayan bir
+- [x] Dar ekranda (mobil breakpoint) navbar'daki filtre kontrollerinin yerini tam ekranı kaplayan bir
       filtre paneli/sayfası alır; tüm dört boyut (Mood/Genre/Occasion/Era) tek panelde birlikte
       görünür.
-- [ ] Panel açıldığında arka plandaki playlist listesi kaydırılamaz hâle gelir (odak filtre
+- [x] Panel açıldığında arka plandaki playlist listesi kaydırılamaz hâle gelir (odak filtre
       panelindedir); "Uygula" ve "Temizle" eylemleri belirgin şekilde erişilebilir.
-- [ ] Panel, US-018'deki aynı URL query-string mekanizmasını kullanır — masaüstü navbar'ından
+- [x] Panel, US-018'deki aynı URL query-string mekanizmasını kullanır — masaüstü navbar'ından
       girilen bir filtreli link mobilde de aynı sonucu üretir ve tersi.
-- [ ] JavaScript devre dışıyken mobilde de en az temel bir seç/uygula akışı çalışmaya devam eder
+- [x] JavaScript devre dışıyken mobilde de en az temel bir seç/uygula akışı çalışmaya devam eder
       (US-018 AC5 ile aynı ilke).
+
+**Durum: Tamamlandı.** Mevcut dört `<details class="filter-dropdown">` (US-018) hiç değişmedi;
+tüm form bir `<details class="filter-mobile-panel">` ile sarmalandı (`HomePage.razor`) — tek DOM
+ağacı iki breakpoint'e de hizmet ediyor, JS yok. İki CSS tekniği: (1) desktop'ta author CSS,
+`<details>` UA stylesheet'inin "[open] değilse içeriği gizle" kuralını (author-origin, UA-origin'i
+specificity'den bağımsız her zaman yener) ezip formu her zaman gösteriyor — dış sarmalayıcı işlevsiz
+kalıyor, sadece iç dört dropdown önemli (US-018'den değişmedi); (2) `max-width: 40rem`'de bu
+işlevsizlik kapanıyor, dış `<summary>` gerçek bir "Filters (N)" toggle'ına dönüşüyor ve formu
+`position:fixed` tam ekran panel olarak açığa çıkarıyor (AC1), iç dört dropdown da panel içinde
+zorla açık tutuluyor (dördü birden görünür, ayrı ayrı dokunma gerekmiyor). `body:has(.filter-mobile
+-panel[open]) { overflow: hidden; }` arka plan kaydırmasını CSS-only kilitliyor (AC2) —
+`:has()` desteklemeyen bir tarayıcıda bile tam ekran panel görsel olarak listeyi zaten kaplıyor.
+Yeni `.filter-clear` linki (`href="/"`) hem masaüstü hem mobilde Uygula'nın yanında duruyor (AC2).
+AC3/AC4 ekstra kod gerektirmedi: aynı `<form>`/query-string, JS yok. 2 yeni entegrasyon testi
+(`HomePageFilterIntegrationTests`) sarmalayıcıyı ve kombine "Filters (N)" sayacını, Clear linkinin
+varlığını doğruluyor. Testcontainers Postgres'e karşı 206/206 test yeşil, `dotnet format
+--verify-no-changes` temiz, Tailwind `build:css` başarılı. Gerçek bir mobil tarayıcıda görsel
+doğrulama yapılmadı (bu oturumda ağ/tarayıcı erişimi kısıtlıydı) — CSS mantığı yorum satırlarında
+gerekçelendirildi, ancak Mehmet'in gerçek bir cihazda/DevTools'ta bir kez göz atması önerilir.
 
 Kapsam dışı: masaüstü navbar tasarımı (US-018); filtre animasyon detayları (US-018 kapsamında ele
 alınabilir).
