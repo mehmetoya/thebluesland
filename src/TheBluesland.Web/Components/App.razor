@@ -33,6 +33,8 @@
        a static fallback here would render as a second, duplicate <title> element alongside it
        (verified empirically), which is exactly what AC1's "unique <title> per page" rules out. *@
     <HeadOutlet />
+    <link rel="describedby" href="/llms.txt" type="text/plain" />
+    <script src="@($"/js/share.js?v={AssetVersion.For("js/share.js")}")" defer></script>
 </head>
 <body>
     <SiteHeader />

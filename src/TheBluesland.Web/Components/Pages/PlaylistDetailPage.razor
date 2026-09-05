@@ -15,6 +15,7 @@
         StructuredDataJson="@(new[] { CollectionPageJsonLd, BreadcrumbJsonLd })" />
     <PlaylistDetailView
         Content="_content"
+        ShareUrl="@BuildAbsoluteUrl($"/playlists/{_content.Slug}")"
         CacheSnapshot="_cacheSnapshot"
         RelatedPlaylists="_relatedPlaylists"
         RelatedCacheSnapshots="_relatedCacheSnapshots" />

@@ -19,17 +19,38 @@ public static class StructuredDataBuilder
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
     public static string BuildWebSite(string siteUrl) =>
         JsonSerializer.Serialize(
-            new WebSiteSchema("https://schema.org", "WebSite", "TheBluesland", siteUrl),
+            new WebSiteSchema("https://schema.org", "WebSite", "TheBluesland", siteUrl)
+            {
+                Id = siteUrl + "#website",
+                Description = "Hand-curated Spotify playlists with original curator notes and mood, genre, occasion, and era tags.",
+            },
             Options);
 
     public static string BuildCollectionPage(PlaylistContent content, string canonicalUrl) =>
         JsonSerializer.Serialize(
-            new CollectionPageSchema("https://schema.org", "CollectionPage", content.Title, content.Summary, canonicalUrl),
+            new CollectionPageSchema("https://schema.org", "CollectionPage", content.Title, content.Summary, canonicalUrl)
+            {
+                Id = canonicalUrl + "#webpage",
+                DatePublished = content.PublishedAt,
+                Keywords = PlaylistTags.All(content),
+                Image = canonicalUrl + "/og-image.png",
+                MainEntity = new MusicPlaylistSchema("MusicPlaylist", content.Title, content.Summary, canonicalUrl + "#playlist")
+                {
+                    Genre = content.Genres,
+                    Url = GetSpotifyUrl(content),
+                },
+            },
             Options);
+
+    private static string? GetSpotifyUrl(PlaylistContent content) =>
+        SpotifyPlaylistIdFormat.IsValid(content.SpotifyPlaylistId)
+            ? $"https://open.spotify.com/playlist/{content.SpotifyPlaylistId}"
+            : null;
 
     public static string BuildBreadcrumbList(string homeUrl, string playlistTitle, string canonicalUrl) =>
         JsonSerializer.Serialize(
@@ -44,14 +65,37 @@ public static class StructuredDataBuilder
         [property: JsonPropertyName("@context")] string Context,
         [property: JsonPropertyName("@type")] string Type,
         string Name,
-        string Url);
+        string Url)
+    {
+        [JsonPropertyName("@id")]
+        public string? Id { get; init; }
+        public string? Description { get; init; }
+    }
 
     private sealed record CollectionPageSchema(
         [property: JsonPropertyName("@context")] string Context,
         [property: JsonPropertyName("@type")] string Type,
         string Name,
         string Description,
-        string Url);
+        string Url)
+    {
+        [JsonPropertyName("@id")]
+        public string? Id { get; init; }
+        public DateOnly? DatePublished { get; init; }
+        public IReadOnlyList<string>? Keywords { get; init; }
+        public string? Image { get; init; }
+        public MusicPlaylistSchema? MainEntity { get; init; }
+    }
+
+    private sealed record MusicPlaylistSchema(
+        [property: JsonPropertyName("@type")] string Type,
+        string Name,
+        string Description,
+        [property: JsonPropertyName("@id")] string Id)
+    {
+        public IReadOnlyList<string>? Genre { get; init; }
+        public string? Url { get; init; }
+    }
 
     private sealed record BreadcrumbListSchema(
         [property: JsonPropertyName("@context")] string Context,
