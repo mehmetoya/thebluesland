@@ -68,6 +68,70 @@ public sealed class GeminiClientTests
             () => client.GenerateAsync("prompt", CancellationToken.None));
     }
 
+    /// <summary>
+    /// A real suggest-curator-note.yml run on 2026-09-05 hit a genuine 503 from Gemini being
+    /// momentarily overloaded - a transient, non-code failure that succeeded on a bare re-run.
+    /// GeminiClient must absorb that itself rather than making Mehmet notice and re-trigger it.
+    /// </summary>
+    [Fact]
+    public async Task GenerateAsync_retries_a_transient_503_and_returns_the_eventual_success()
+    {
+        var attempts = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ =>
+        {
+            attempts++;
+            return attempts == 1
+                ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+                : JsonResponse(SuccessResponseJson("A drafted curator note."));
+        }));
+        var client = new GeminiClient(httpClient, ApiKey, Model, retryDelay: TimeSpan.Zero);
+
+        var result = await client.GenerateAsync("prompt", CancellationToken.None);
+
+        result.ShouldBe("A drafted curator note.");
+        attempts.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_throws_a_clear_message_after_exhausting_retries_on_a_persistent_503()
+    {
+        var attempts = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ =>
+        {
+            attempts++;
+            return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+        }));
+        var client = new GeminiClient(httpClient, ApiKey, Model, retryDelay: TimeSpan.Zero);
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => client.GenerateAsync("prompt", CancellationToken.None));
+
+        exception.Message.ShouldContain("503");
+        attempts.ShouldBe(3);
+    }
+
+    /// <summary>
+    /// The bug that motivated the retry logic above (a bad model name) must still fail on the
+    /// first attempt - retrying a 404 would only delay a real, actionable error for no benefit.
+    /// </summary>
+    [Fact]
+    public async Task GenerateAsync_does_not_retry_a_non_transient_error_such_as_a_bad_model_name()
+    {
+        var attempts = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ =>
+        {
+            attempts++;
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        }));
+        var client = new GeminiClient(httpClient, ApiKey, Model, retryDelay: TimeSpan.Zero);
+
+        var exception = await Should.ThrowAsync<InvalidOperationException>(
+            () => client.GenerateAsync("prompt", CancellationToken.None));
+
+        exception.Message.ShouldContain("404");
+        attempts.ShouldBe(1);
+    }
+
     private static string SuccessResponseJson(string text) =>
         $$"""
         {
