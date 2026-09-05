@@ -76,6 +76,40 @@ public sealed class PlaylistContentValidatorTests
         result.Issues.ShouldContain(issue => issue.Field == "occasions" && issue.Message.Contains("bogus-occasion"));
     }
 
+    /// <summary>
+    /// US-017: focus and dancing were added to the occasion taxonomy on 2026-09-06 after US-020's
+    /// content-analysis pass. These three fixtures confirm the widening was applied correctly
+    /// (each new value alone, and combined with an existing value) without loosening validation
+    /// generally - <see cref="ValidateAllAsync_fails_when_occasions_contains_an_unapproved_value"/>
+    /// above still fails a genuinely bogus value.
+    /// </summary>
+    [Fact]
+    public async Task ValidateAllAsync_passes_when_occasions_contains_the_new_focus_value()
+    {
+        var result = await ValidateFixtureAsync("valid-occasion-focus");
+
+        result.IsValid.ShouldBeTrue();
+        result.Issues.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateAllAsync_passes_when_occasions_contains_the_new_dancing_value()
+    {
+        var result = await ValidateFixtureAsync("valid-occasion-dancing");
+
+        result.IsValid.ShouldBeTrue();
+        result.Issues.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task ValidateAllAsync_passes_when_occasions_mixes_existing_and_new_values()
+    {
+        var result = await ValidateFixtureAsync("valid-occasion-mixed");
+
+        result.IsValid.ShouldBeTrue();
+        result.Issues.ShouldBeEmpty();
+    }
+
     [Fact]
     public async Task ValidateAllAsync_fails_when_era_is_an_unapproved_value()
     {

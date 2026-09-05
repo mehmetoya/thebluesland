@@ -399,15 +399,30 @@ Mehmet approved 10 additional values in the same session:
 This is still a content change, not an architecture change (section 8.1) - the taxonomy remains
 whatever list `PlaylistTaxonomy.Genres` currently holds.
 
-### 8.4 Occasion vocabulary (v0.2, 5 values)
+### 8.4 Occasion vocabulary (v0.2, 5 values; widened to 7 on 2026-09-06)
 
 - `late-night`
 - `night-drive`
 - `road-trip`
 - `slow-evening`
 - `headphones`
+- `focus`
+- `dancing`
 
-Dropped from v0.1: `sunday-morning`, `working`, `reading`, `rainy-day`, `pre-concert`.
+Dropped from v0.1: `sunday-morning`, `working` (reinstated below as `focus`), `reading`,
+`rainy-day`, `pre-concert`.
+
+**2026-09-06 widening (US-017/US-020).** A content-analysis pass over all 120 published playlists'
+curator notes (US-020) found no gap in mood or era - both dimensions already show healthy
+distribution across their existing 5 values - but two recurring occasion themes that show up
+repeatedly in curator-note prose without fitting any existing value: at least six playlists
+(`focus`, `be-comfortable`, `no-more-words`, `coffee-circle`, `mag`, `weekly-intricate`) explicitly
+describe themselves as background/concentration listening, and at least four (`dancing`,
+`sad-dance`, `funkers`, `saint-patrick-s-day-slainte`) explicitly describe a dance/party context.
+Mehmet approved both values as named, `focus` and `dancing`, without renaming. `focus` is
+effectively v0.1's dropped `working` value resurfacing under a different name now that the
+catalogue is 120 playlists rather than a curated handful - the same "reinstated once the library
+outgrew the original curated scope" pattern as `folk`'s return in section 8.3's genre widening.
 
 ### 8.5 Era vocabulary (v0.2, 5 values)
 
