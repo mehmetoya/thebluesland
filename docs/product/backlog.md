@@ -460,3 +460,165 @@ tetiklenir).
 Bağımlılık: US-002 (salt-okunur DB rolü), `docs/adr/0005-ai-kurator-notu-siniri.md`.
 Öncelik: Should
 Platform: web
+
+---
+
+## US-017 — Occasion taksonomisini geniş kütüphaneye göre genişlet
+
+Kullanıcı olarak proje sahibi (Mehmet), 120 playlist'lik geniş kütüphanede curator notlarında
+tekrar eden ama hiçbir mevcut Occasion etiketine tam oturmayan iki gerçek kullanım senaryosunu
+(`focus`, `dancing`) filtrelenebilir hâle getirmek istiyorum.
+
+> **2026-09-06 kapsam daraltması (US-020 bulgusu):** Başlangıçta mood/occasion/era'nın üçünün de
+> genre gibi genişletilmesi öngörülmüştü. US-020'nin 120 dosyalık taraması, mood ve era'da
+> genişletme için gerçek bir gerekçe bulamadı (her iki boyut da mevcut 5 değerle sağlıklı dağılım
+> gösteriyor); yalnızca Occasion'da curator notunda açıkça geçen ama etiketlenemeyen iki tema
+> (`focus`, `dancing`) tespit edildi. Bu hikaye buna göre yalnızca Occasion'a daraltıldı.
+>
+> **2026-09-06 isim onayı:** Mehmet, `focus` ve `dancing` isimlerini olduğu gibi onayladı
+> (alternatif olarak sorulan `concentration`/`party` değil).
+
+Kabul kriterleri:
+
+- [ ] `focus` ve `dancing` değerleri `PlaylistTaxonomy.Occasions`'a eklendiğinde, içerik doğrulayıcı
+      (US-006) güncel listeyi kullanır ve CI (US-007) buna göre doğrular.
+- [ ] Genişletme sonrası, mevcut 120 playlist'in hiçbiri artık geçersiz sayılan bir occasion değeri
+      taşımaz (regresyon: tüm katalog doğrulamadan geçmeye devam eder).
+- [ ] Yeni değerler eklendiği bir PR açıldığında CI yeşil kalır; onaylanmamış bir değer hâlâ
+      reddedilir.
+- [ ] (Could) US-020'de isimlendirilen 6+4 aday dosyanın occasion etiketi, Mehmet uygun görürse
+      yeni değerle güncellenir (ör. `focus.md`'nin occasion'ı `headphones`'tan `focus`'a taşınır) —
+      bu bir içerik PR'ı, kod değişikliği değil.
+
+Kapsam dışı: Mood/Era genişletmesi (US-020 bulgusuna göre gerekçe yok, ayrı bir ihtiyaç ortaya
+çıkarsa yeniden değerlendirilir).
+Bağımlılık: US-020 (aday liste analizi — tamamlandı).
+Öncelik: Should
+Platform: web
+
+---
+
+## US-018 — Filtreleri navbar'a taşı (dropdown deseni)
+
+Kullanıcı olarak ziyaretçi, filtreleri sayfanın üstünü kaplayan büyük bir inline form yerine kompakt
+bir navbar'dan kullanmak istiyorum ki playlist listesine daha hızlı ulaşayım ve sayfa daha ferah
+görünsün.
+
+Kabul kriterleri:
+
+- [ ] Ana sayfa açıldığında Mood/Genre/Occasion/Era filtreleri, mevcut inline `<form>` bloğu yerine
+      üst navbar'da dört ayrı dropdown/pill kontrolü olarak görünür.
+- [ ] Bir dropdown açıldığında yalnızca o boyutun seçenekleri görünür; diğerleri kapalı kalır.
+- [ ] Seçim yapıldığında URL query string güncellenir ve liste filtrelenir; paylaşılan bir linkte
+      aynı filtre durumu geri yüklenir (US-009 AC3 korunur).
+- [ ] Aktif filtre sayısı navbar'da görünür bir göstergeyle belirtilir (ör. "Genre (2)").
+- [ ] JavaScript devre dışıyken filtreleme tamamen bozulmaz — en az temel bir seç/uygula akışı
+      çalışmaya devam eder (US-009'un zero-JS static-SSR ilkesi korunur, spec 12.3).
+- [ ] (Could — düşük öncelik) Dropdown açma/kapama geçişinde sade bir mikro-etkileşim/animasyon
+      vardır; `prefers-reduced-motion` saygı gösterilir (spec 10.2). Bu bir tasarım/CSS detayıdır,
+      yukarıdaki fonksiyonel kriterleri bloklamaz.
+
+Kapsam dışı: mobil için tam-ekran filtre deneyimi (bkz. US-021, ayrı hikâye).
+Öncelik: Should
+Platform: web
+
+---
+
+## US-019 — Playlist kataloğunu kaydırdıkça kademeli yükle
+
+Kullanıcı olarak ziyaretçi, 100+ playlist'lik kataloğu tek seferde devasa bir sayfa yerine aşağı
+kaydırdıkça akıcı yüklenen bir liste olarak görmek istiyorum ki sayfa hızlı açılsın.
+
+Kabul kriterleri:
+
+- [ ] Ana sayfa (aktif filtrelerle) ilk yüklemede yalnızca ilk N (ör. 24) eşleşen playlist'i render
+      eder; eşleşen sayı N'den fazlaysa bir "daha fazla yükle" mekanizması vardır.
+- [ ] Ziyaretçi listenin sonuna yaklaştığında (veya "Daha fazla göster" bağlantısına tıkladığında)
+      bir sonraki N playlist eklenir.
+- [ ] JavaScript olmadan da progressive enhancement ile en azından "Daha fazla göster" linki
+      üzerinden tüm katalog adım adım erişilebilir kalır.
+- [ ] Filtre değiştiğinde sayfalama sıfırlanır.
+- [ ] URL kaçıncı sayfada olunduğunu yansıtır, derin link paylaşıldığında aynı miktarda içerik geri
+      yüklenir.
+
+Kapsam dışı: IntersectionObserver/animasyon detayları; client-side/API tabanlı pagination (proje
+sunucu tarafı render'a sadık kalmalı, US-008/US-009 ile tutarlı).
+Öncelik: Should
+Platform: web
+
+---
+
+## US-020 — Mood/Occasion/Era için aday taksonomi listesi analizi
+
+Kullanıcı olarak proje sahibi (Mehmet), mevcut 120 playlist'in curator notu/özet metinlerinin
+taranarak mood/occasion/era için genişletilmiş bir aday değer listesi önerilmesini istiyorum ki
+US-017'deki genişletme keyfi değil, gerçek kütüphaneyi yansıtan bir temele dayansın (genre'nin
+2026-09-05'teki genişletilme sürecindeki gibi).
+
+Kabul kriterleri:
+
+- [x] `content/playlists/*.md` içindeki tüm curator notu/özet metinleri taranıp, mevcut 5 değerlik
+      mood/occasion/era listelerinde karşılığı olmayan tekrar eden betimleyici kelime/temalar
+      çıkarılır.
+- [x] Çıktı, her aday değer için kaç playlist'te geçtiğini gösteren, Mehmet'in tek tek
+      onaylayabileceği bir öneri listesi (ayrı bir doküman veya bu backlog girdisinin altına not)
+      olarak sunulur.
+- [x] Analiz, yeni bir taksonomi değeri dayatmaz — yalnızca aday sunar; nihai onay Mehmet'e aittir
+      (spec 8.6 taksonomi governance ilkesiyle tutarlı).
+
+**Durum: Tamamlandı (2026-09-06).** 120/120 `content/playlists/*.md` dosyasının front-matter
+etiketleri ve curator notu/özet metinleri tarandı.
+
+- **Mood ve Era için genişletme gerekçesi bulunamadı.** Her dosya mevcut 5 mood değerinden 1-2'sini,
+  mevcut 5 era değerinden tam olarak birini kullanıyor; her iki listenin de tüm değerleri gerçek
+  kullanımda ve dağılım makul (mood: melancholic 43, warm 62, energetic 46, raw 37, nostalgic 44 —
+  toplamda 232/120 dosya ≈ dosya başına 1.93; era: mixed-era 94, 2000s-present 11, pre-1970 10,
+  1970s 4, 1980s-1990s 1). Curator notu metninde de bu iki boyut için tekrar eden, etikete
+  dönüşmemiş bir tema kümesi çıkmadı. **Öneri: US-017'nin kapsamını yalnızca Occasion'a daraltmak
+  — mood/era'yı bugün genişletmeye gerekçe yok.**
+- **Occasion'da iki gerçek aday bulundu**, curator notunda açıkça adı geçtiği hâlde mevcut 5 değerin
+  (`late-night`, `night-drive`, `road-trip`, `slow-evening`, `headphones`) hiçbirine tam
+  oturmadıkları için en yakın etikete "sıkıştırılmışlar":
+  - **`focus`** (odaklanma/arka plan dinlemesi) — en az 6 dosyada açıkça bu temayla tarif ediliyor:
+    `focus.md` ("A concentration playlist... built to sit underneath work"), `be-comfortable.md`
+    ("Background music... designed to lower a room's tempo"), `no-more-words.md` ("put it on and
+    forget it's there"), `coffee-circle.md` ("run in the background of a slow conversation"),
+    `mag.md` ("soundtrack a whole quiet week"), `weekly-intricate.md` ("revisited on purpose rather
+    than by accident").
+  - **`dancing`** (dans/parti) — en az 4 dosyada: `dancing.md` ("an actual dance floor"),
+    `sad-dance.md` ("For dancing alone in a dark room"), `funkers.md` ("Impossible to sit still
+    through"), `saint-patrick-s-day-slainte.md` ("built for a crowd").
+
+Nihai onay Mehmet'e ait (spec 8.6). Ham tarama scratchpad'te (`all-playlists.txt`, kalıcı değil,
+tekrar üretilebilir) yapıldı; kalıcı içerik dosyalarına dokunulmadı.
+
+Kapsam dışı: adayların `PlaylistTaxonomy`'ye eklenmesi (bkz. US-017); genre listesinin tekrar
+gözden geçirilmesi (zaten genişletildi).
+Öncelik: Should
+Platform: content
+
+---
+
+## US-021 — Mobil tam-ekran filtre deneyimi
+
+Kullanıcı olarak mobil ziyaretçi, dört filtre boyutunu dar bir ekranda navbar dropdown'ları yerine
+tam ekranı kaplayan bir panelde kullanmak istiyorum ki küçük ekranda filtreleme rahat ve okunabilir
+olsun.
+
+Kabul kriterleri:
+
+- [ ] Dar ekranda (mobil breakpoint) navbar'daki filtre kontrollerinin yerini tam ekranı kaplayan bir
+      filtre paneli/sayfası alır; tüm dört boyut (Mood/Genre/Occasion/Era) tek panelde birlikte
+      görünür.
+- [ ] Panel açıldığında arka plandaki playlist listesi kaydırılamaz hâle gelir (odak filtre
+      panelindedir); "Uygula" ve "Temizle" eylemleri belirgin şekilde erişilebilir.
+- [ ] Panel, US-018'deki aynı URL query-string mekanizmasını kullanır — masaüstü navbar'ından
+      girilen bir filtreli link mobilde de aynı sonucu üretir ve tersi.
+- [ ] JavaScript devre dışıyken mobilde de en az temel bir seç/uygula akışı çalışmaya devam eder
+      (US-018 AC5 ile aynı ilke).
+
+Kapsam dışı: masaüstü navbar tasarımı (US-018); filtre animasyon detayları (US-018 kapsamında ele
+alınabilir).
+Bağımlılık: US-018 (aynı URL query-string mekanizmasını paylaşır).
+Öncelik: Could
+Platform: web
