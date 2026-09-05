@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TheBluesland.Data;
 using TheBluesland.SpotifyFetcher.Content;
+using TheBluesland.SpotifyFetcher.CuratorNote;
 using TheBluesland.SpotifyFetcher.Spotify;
 using TheBluesland.SpotifyFetcher.Sync;
 
@@ -29,6 +30,21 @@ if (args.Length > 0 && string.Equals(args[0], "list-playlists", StringComparison
 if (args.Length > 0 && string.Equals(args[0], "dump-cache", StringComparison.Ordinal))
 {
     return await DumpCacheAsync(cancellationToken);
+}
+
+// US-016/ADR-0005: independent, manually-triggered AI curator-note draft suggestion. Runs only
+// from suggest-curator-note.yml, never from the monthly sync-spotify.yml job. Reads the cache via
+// the read-only role (NEON_READONLY_CONNECTION_STRING) - never the sync tool's write-scoped
+// connection string - and never touches Spotify or content/playlists.
+if (args.Length > 0 && string.Equals(args[0], "suggest-curator-note", StringComparison.Ordinal))
+{
+    if (args.Length < 2 || string.IsNullOrWhiteSpace(args[1]))
+    {
+        Console.Error.WriteLine("Usage: suggest-curator-note <spotifyPlaylistId>");
+        return 1;
+    }
+
+    return await SuggestCuratorNoteAsync(args[1], cancellationToken);
 }
 
 var contentDirectory = args.Length > 0
@@ -124,6 +140,48 @@ static async Task<int> DumpCacheAsync(CancellationToken cancellationToken)
             Console.WriteLine($"  {entry.Description}");
         }
     }
+
+    return 0;
+}
+
+static async Task<int> SuggestCuratorNoteAsync(string spotifyPlaylistId, CancellationToken cancellationToken)
+{
+    var apiKey = RequireEnvironmentVariable("ANTHROPIC_API_KEY");
+    var connectionString = RequireEnvironmentVariable("NEON_READONLY_CONNECTION_STRING");
+    // Overridable per US-016's own suggest-curator-note.yml `model` input; a small, current,
+    // cost-effective default is enough for a short draft that a human will rewrite anyway.
+    var model = Environment.GetEnvironmentVariable("ANTHROPIC_MODEL") is { Length: > 0 } configuredModel
+        ? configuredModel
+        : "claude-haiku-4-5-20251001";
+
+    var optionsBuilder = new DbContextOptionsBuilder<TheBlueslandDbContext>().UseNpgsql(connectionString);
+    await using var dbContext = new TheBlueslandDbContext(optionsBuilder.Options);
+
+    using var httpClient = new HttpClient();
+    var anthropicClient = new AnthropicClient(httpClient, apiKey, model);
+    var suggestionService = new CuratorNoteSuggestionService(dbContext, anthropicClient);
+
+    string suggestion;
+    try
+    {
+        suggestion = await suggestionService.SuggestAsync(spotifyPlaylistId, cancellationToken);
+    }
+    catch (InvalidOperationException ex)
+    {
+        // A known, actionable failure (no row / unavailable) - a clear one-line message rather
+        // than an unhandled-exception stack trace, matching RequireEnvironmentVariable's style.
+        Console.Error.WriteLine(ex.Message);
+        return 1;
+    }
+
+    // ADR-0005 madde 5: the suggestion never touches the database or content/playlists - it is
+    // written only to stdout (piped to $GITHUB_STEP_SUMMARY by the workflow) and this file (picked
+    // up as a build artifact by the workflow's upload-artifact step).
+    Console.WriteLine($"Curator note suggestion for '{spotifyPlaylistId}':");
+    Console.WriteLine();
+    Console.WriteLine(suggestion);
+
+    await File.WriteAllTextAsync("curator-note-suggestion.md", suggestion, cancellationToken);
 
     return 0;
 }
