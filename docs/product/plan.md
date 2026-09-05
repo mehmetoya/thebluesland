@@ -56,6 +56,14 @@ içerik/manuel adımlar:
   değiştiriyor. Yeni `content-playlists-pagination` fixture seti (26 dosya), 3 entegrasyon testi
   ve 8 saf birim testi eklendi. Testcontainers Postgres'e karşı 204/204 test yeşil, `dotnet format
   --verify-no-changes` temiz.
+  **Takip (2026-09-06):** Mehmet gerçek scroll-tetiklemeli otomatik yükleme istedi (tıklama değil)
+  — bkz. backlog.md'deki US-019 takip notu. `wwwroot/js/infinite-scroll.js` (IntersectionObserver
+  ve fetch, progressive enhancement, site genelinde ilk JS bağımlılığı) eklendi; aynı süreçte
+  `WebHostFactory`'ye test'lerin gerçek `wwwroot`'u görebilmesi için `webRootPath` parametresi
+  eklendi (önceden var olan, hiç test edilmemiş bir boşluğu kapatıyor). `TheBluesland.E2ETests`'e
+  gerçek tarayıcıda scroll-yükleme ve JS-kapalı-tıklama'yı doğrulayan `InfiniteScrollTests`
+  eklendi; bu sandbox'ta Playwright tarayıcıları kurulu olmadığı için yalnızca derlendi, henüz
+  çalıştırılmadı.
 - **US-018 — Filtreleri navbar'a taşı (dropdown deseni) (2026-09-06).** Ana sayfanın hep-açık
   `<fieldset>` filtre formu, dört bağımsız native `<details>`/`<summary>` dropdown'undan oluşan
   bir `.filter-navbar`'a dönüştürüldü (`HomePage.razor`, `Styles/app.css`). `<details>` native

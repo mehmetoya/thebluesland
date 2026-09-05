@@ -1,0 +1,19 @@
+---
+schemaVersion: 1
+slug: infinite-scroll-fixture-05
+spotifyPlaylistId: infscroll0000000000005
+title: Infinite Scroll Fixture 05
+summary: A solid summary describing infinite scroll fixture number 05 in plain, sufficiently long prose.
+moods:
+  - warm
+genres:
+  - rock
+occasions:
+  - road-trip
+era: mixed-era
+status: published
+publishedAt: 2026-03-01
+displayOrder: 4
+---
+
+Curator note body for infinite scroll fixture 05.

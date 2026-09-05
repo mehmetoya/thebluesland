@@ -133,7 +133,10 @@
         }
         @* US-019 AC1/AC2/AC5: a plain GET link (no JavaScript needed) that cumulatively reveals
            the next PageSize playlists - the URL's own "page" value is the amount of content
-           loaded, so a shared deep link restores exactly that much. *@
+           loaded, so a shared deep link restores exactly that much. wwwroot/js/infinite-scroll.js
+           progressively enhances this into real scroll-triggered auto-loading; this link/markup
+           is unchanged either way - it is the mechanism JS automates, not a fallback bolted on
+           afterward. *@
         @if (PlaylistCataloguePage.HasMore(_filteredPlaylists, PageQuery))
         {
             <a href="@BuildLoadMoreUrl()" class="load-more">Show more playlists</a>

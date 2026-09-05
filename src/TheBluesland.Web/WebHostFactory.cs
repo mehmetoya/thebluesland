@@ -19,9 +19,19 @@ public static class WebHostFactory
 {
     public const string ConnectionStringName = "SpotifyPlaylistCache";
 
-    public static WebApplication Create(string[] args, Action<WebApplicationBuilder>? configureForTests = null)
+    // webRootPath: WebApplicationBuilder.WebHost.UseWebRoot(...) throws at Build() time ("web root
+    // changed... not supported") - the minimal-hosting API only accepts a web root via
+    // WebApplicationOptions at CreateBuilder time. A test project referencing this one doesn't get
+    // TheBluesland.Web's own wwwroot copied into its own output directory (unlike this project's
+    // own bin folder when it runs for real), so a test that needs UseStaticFiles() to actually
+    // serve something passes the real path here instead. Null (every other caller) preserves the
+    // exact default resolution WebApplication.CreateBuilder(args) already used.
+    public static WebApplication Create(
+        string[] args,
+        Action<WebApplicationBuilder>? configureForTests = null,
+        string? webRootPath = null)
     {
-        var builder = WebApplication.CreateBuilder(args);
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, WebRootPath = webRootPath });
         configureForTests?.Invoke(builder);
 
         builder.Services.AddRazorComponents();
