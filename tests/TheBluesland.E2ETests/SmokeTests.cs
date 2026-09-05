@@ -35,13 +35,15 @@ public sealed class SmokeTests : IAsyncLifetime
     public async Task InitializeAsync()
     {
         var contentDirectory = Path.Combine(AppContext.BaseDirectory, "Fixtures", "content-playlists");
+        var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        var webRootPath = Path.Combine(repoRoot, "src", "TheBluesland.Web", "wwwroot");
 
         _app = WebHostFactory.Create([], builder =>
         {
             builder.WebHost.UseUrls("http://127.0.0.1:0");
             builder.Configuration[PlaylistContentRepository.ContentDirectoryConfigKey] = contentDirectory;
             builder.Configuration[$"ConnectionStrings:{WebHostFactory.ConnectionStringName}"] = UnreachableConnectionString;
-        });
+        }, webRootPath);
 
         await _app.StartAsync();
 
@@ -58,6 +60,45 @@ public sealed class SmokeTests : IAsyncLifetime
         _playwright.Dispose();
         await _app.StopAsync();
         await _app.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task Share_links_and_clipboard_fallback_use_the_canonical_playlist_url()
+    {
+        var page = await _browser.NewPageAsync();
+        await page.AddInitScriptAsync("Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => { throw new Error('Denied'); } } });");
+        var url = _baseAddress + "/playlists/masterpieces-of-erkin-the-father";
+        await page.GotoAsync(url + "?utm_source=test");
+        await page.GetByText("Share playlist", new() { Exact = true }).ClickAsync();
+        var share = page.Locator(".playlist-share");
+        (await share.Locator("a").First.GetAttributeAsync("href") ?? string.Empty).ShouldContain(Uri.EscapeDataString(url));
+        (await share.Locator("a").Last.GetAttributeAsync("href") ?? string.Empty).ShouldContain(Uri.EscapeDataString(url));
+        await page.GetByRole(AriaRole.Button, new() { Name = "Copy link" }).ClickAsync();
+        await Assertions.Expect(share.Locator("[role=status]")).ToHaveTextAsync("Copy the selected link to share this playlist.");
+        (await share.Locator("input").InputValueAsync()).ShouldBe(url);
+        (await share.Locator("input").EvaluateAsync<bool>("input => document.activeElement === input && input.selectionEnd === input.value.length")).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task Native_share_cancellation_is_quiet_and_copy_reports_success()
+    {
+        var page = await _browser.NewPageAsync();
+        await page.AddInitScriptAsync("""
+            Object.defineProperty(navigator, 'share', { value: async data => {
+                window.sharedPlaylist = data;
+                throw new DOMException('Cancelled', 'AbortError');
+            } });
+            Object.defineProperty(navigator, 'clipboard', { value: { writeText: async text => { window.copiedPlaylist = text; } } });
+            """);
+        var url = _baseAddress + "/playlists/masterpieces-of-erkin-the-father";
+        await page.GotoAsync(url);
+        await page.GetByText("Share playlist", new() { Exact = true }).ClickAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Share via device" }).ClickAsync();
+        (await page.EvaluateAsync<string>("window.sharedPlaylist.url")).ShouldBe(url);
+        await Assertions.Expect(page.Locator("[data-share-status]")).ToBeEmptyAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Copy link" }).ClickAsync();
+        await Assertions.Expect(page.Locator("[data-share-status]")).ToHaveTextAsync("Link copied.");
+        (await page.EvaluateAsync<string>("window.copiedPlaylist")).ShouldBe(url);
     }
 
     [Fact]

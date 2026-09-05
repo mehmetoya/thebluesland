@@ -104,5 +104,21 @@ public sealed class SitemapIntegrationTests : IAsyncLifetime
         body.ShouldContain("Allow: /");
         body.ShouldContain("Sitemap: http://127.0.0.1");
         body.ShouldContain("/sitemap.xml");
+        body.ShouldContain("User-agent: OAI-SearchBot\nAllow: /");
+        body.ShouldContain("User-agent: Claude-SearchBot\nAllow: /");
+    }
+
+    [Fact]
+    public async Task Llms_lists_only_published_editorial_pages_without_database_access()
+    {
+        var response = await _httpClient.GetAsync("/llms.txt");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        response.Content.Headers.ContentType!.MediaType.ShouldBe("text/plain");
+        body.ShouldStartWith("# TheBluesland\n");
+        body.ShouldContain($"{_httpClient.BaseAddress}playlists/masterpieces-of-erkin-the-father");
+        body.ShouldNotContain("dear-mr-fantasy");
+        body.ShouldNotContain("masterpieces-of-erkin-the-father-alt-slug");
     }
 }

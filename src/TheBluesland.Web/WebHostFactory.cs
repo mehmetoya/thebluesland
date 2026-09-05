@@ -161,8 +161,16 @@ public static class WebHostFactory
         // /sitemap.xml exists.
         app.MapGet("/robots.txt", (HttpContext context) =>
         {
-            var sitemapUrl = SiteUrl.BuildAbsolute(context, "/sitemap.xml");
-            return Results.Text($"User-agent: *\nAllow: /\nSitemap: {sitemapUrl}\n", "text/plain");
+            return Results.Text(AiDiscoveryGenerator.BuildRobots(context), "text/plain");
+        });
+
+        app.MapGet("/llms.txt", async (
+            HttpContext context,
+            PlaylistContentRepository repository,
+            CancellationToken cancellationToken) =>
+        {
+            var published = await repository.FindAllPublishedAsync(cancellationToken);
+            return Results.Text(AiDiscoveryGenerator.BuildLlms(context, published), "text/plain");
         });
 
         // US-011 AC3/FR-031: site-wide default social card for pages with no dedicated playlist

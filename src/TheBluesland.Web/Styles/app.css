@@ -663,6 +663,19 @@ body:has(.filter-mobile-toggle:checked) {
   margin: 1rem 0 1.5rem;
 }
 
+.playlist-share {
+  margin-block: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+.playlist-share summary { cursor: pointer; color: var(--color-accent); }
+.share-options { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; align-items: center; }
+.share-options button { cursor: pointer; color: var(--color-accent); }
+.share-options label { width: 100%; }
+.share-options input { display: block; width: 100%; padding: 0.5rem; border: 1px solid var(--color-border); }
+.share-options [role="status"] { width: 100%; }
+
 .open-in-spotify {
   display: inline-block;
   background-color: transparent;

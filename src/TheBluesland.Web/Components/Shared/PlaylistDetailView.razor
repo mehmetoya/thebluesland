@@ -64,6 +64,11 @@
         </a>
     }
 
+    @if (!string.IsNullOrEmpty(ShareUrl))
+    {
+        <SharePlaylist Title="@Content.Title" Url="@ShareUrl" />
+    }
+
     @if (RelatedPlaylists.Count > 0)
     {
         <section class="related-playlists">
@@ -79,6 +84,9 @@
 </article>
 
 @code {
+    [Parameter]
+    public string? ShareUrl { get; set; }
+
     /// <summary>Editorial-only fields (US-005 AC1/AC3): must render fully with no cache data.</summary>
     [Parameter, EditorRequired]
     public required PlaylistContent Content { get; set; }

@@ -30,6 +30,18 @@ public sealed class StructuredDataBuilderTests
         PreviousSlugs: []);
 
     [Fact]
+    public void CollectionPage_describes_playlist_and_omits_invalid_spotify_urls()
+    {
+        using var document = System.Text.Json.JsonDocument.Parse(StructuredDataBuilder.BuildCollectionPage(
+            Content with { SpotifyPlaylistId = "invalid" }, "https://example.com/playlists/primary-playlist"));
+        var page = document.RootElement;
+        page.GetProperty("datePublished").GetString().ShouldBe("2026-01-01");
+        page.GetProperty("mainEntity").GetProperty("@type").GetString().ShouldBe("MusicPlaylist");
+        page.GetProperty("mainEntity").TryGetProperty("url", out _).ShouldBeFalse();
+        page.GetProperty("keywords").GetArrayLength().ShouldBe(4);
+    }
+
+    [Fact]
     public void BuildCollectionPage_contains_no_track_shaped_field()
     {
         var json = StructuredDataBuilder.BuildCollectionPage(Content, "https://thebluesland.example/playlists/primary-playlist");
