@@ -12,8 +12,8 @@
 # ---- Stage 1: Tailwind CSS 4 production build (US-013's npm-based build chain) ----
 FROM node:22-alpine AS css-build
 WORKDIR /src
-COPY src/TheBluesland.Web/package.json ./
-RUN npm install --no-audit --no-fund
+COPY src/TheBluesland.Web/package.json src/TheBluesland.Web/package-lock.json ./
+RUN npm ci --no-audit --no-fund
 COPY src/TheBluesland.Web/Styles ./Styles
 COPY src/TheBluesland.Web/Components ./Components
 RUN npm run build:css

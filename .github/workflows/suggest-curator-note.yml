@@ -36,6 +36,9 @@ on:
         default: ""
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   suggest:
     runs-on: ubuntu-latest
@@ -59,9 +62,15 @@ jobs:
         run: dotnet build tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-restore
 
       - name: Suggest curator note
+        env:
+          SPOTIFY_PLAYLIST_ID: ${{ inputs.spotifyPlaylistId }}
         run: |
           set -euo pipefail
-          dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build -- suggest-curator-note "${{ inputs.spotifyPlaylistId }}" | tee -a "$GITHUB_STEP_SUMMARY"
+          if [[ ! "$SPOTIFY_PLAYLIST_ID" =~ ^[A-Za-z0-9]{22}$ ]]; then
+            echo "::error::Playlist ID must contain exactly 22 ASCII letters or digits."
+            exit 1
+          fi
+          dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build -- suggest-curator-note "$SPOTIFY_PLAYLIST_ID" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload suggestion artifact
         uses: actions/upload-artifact@v4
