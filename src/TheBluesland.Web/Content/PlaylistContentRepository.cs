@@ -1,10 +1,11 @@
+using System.Collections.Frozen;
+
 namespace TheBluesland.Web.Content;
 
 /// <summary>
-/// Read-only access to editorial playlist content for the render surface and for
-/// <see cref="TheBluesland.Web.HealthChecks.PlaylistContentHealthCheck"/>. Content is small
-/// (a handful of Markdown files) and re-read on demand rather than cached, matching
-/// <c>tools/spotify-playlist-fetcher</c>'s own approach.
+/// One catalogue snapshot per application instance. Editorial files are immutable within a
+/// deployment; restart the host after editing them. Canceling one request never cancels the
+/// shared load for other visitors. A failed load remains failed until the next deployment.
 /// </summary>
 public sealed class PlaylistContentRepository
 {
@@ -12,45 +13,68 @@ public sealed class PlaylistContentRepository
 
     private readonly string _contentDirectory;
     private readonly PlaylistContentReader _reader;
+    private readonly Lazy<Task<Catalogue>> _catalogue;
+    private readonly Lazy<Task<PlaylistContentValidationResult>> _validation;
 
     public PlaylistContentRepository(IConfiguration configuration, PlaylistContentReader reader)
     {
         _contentDirectory = configuration[ContentDirectoryConfigKey]
             ?? Path.Combine(Directory.GetCurrentDirectory(), "content", "playlists");
         _reader = reader;
+        _catalogue = new Lazy<Task<Catalogue>>(LoadCatalogueAsync);
+        _validation = new Lazy<Task<PlaylistContentValidationResult>>(() =>
+            new PlaylistContentValidator().ValidateAllAsync(_contentDirectory, CancellationToken.None));
     }
 
-    public Task<IReadOnlyList<PlaylistContent>> LoadAllAsync(CancellationToken cancellationToken) =>
-        _reader.ReadAllAsync(_contentDirectory, cancellationToken);
+    public async Task<IReadOnlyList<PlaylistContent>> LoadAllAsync(CancellationToken cancellationToken) =>
+        (await _catalogue.Value.WaitAsync(cancellationToken)).All;
 
-    public async Task<PlaylistContent?> FindBySlugAsync(string slug, CancellationToken cancellationToken)
-    {
-        var playlists = await LoadAllAsync(cancellationToken);
-        return playlists.FirstOrDefault(playlist => string.Equals(playlist.Slug, slug, StringComparison.Ordinal));
-    }
+    public async Task<PlaylistContent?> FindBySlugAsync(string slug, CancellationToken cancellationToken) =>
+        (await _catalogue.Value.WaitAsync(cancellationToken)).PublishedBySlug.GetValueOrDefault(slug);
 
-    /// <summary>
-    /// US-010 AC5/FR-020: resolves an old slug (one a playlist's <c>previousSlugs</c> front-matter
-    /// array still lists) to the playlist now owning it, so the detail page can issue a permanent
-    /// redirect to its current slug. Only consulted once <see cref="FindBySlugAsync"/> has already
-    /// failed to find a current-slug match - a slug's own current owner always wins over any other
-    /// playlist that happens to list it as a former slug.
-    /// </summary>
     public async Task<PlaylistContent?> FindByPreviousSlugAsync(string slug, CancellationToken cancellationToken)
     {
-        var playlists = await LoadAllAsync(cancellationToken);
-        return playlists.FirstOrDefault(playlist => playlist.PreviousSlugs.Contains(slug, StringComparer.Ordinal));
+        var catalogue = await _catalogue.Value.WaitAsync(cancellationToken);
+        // A current draft slug must not redirect through another playlist's historical alias.
+        return catalogue.CurrentSlugs.Contains(slug)
+            ? null
+            : catalogue.PublishedByPreviousSlug.GetValueOrDefault(slug);
     }
 
-    /// <summary>
-    /// Playlists the home page catalogue (US-008) may show; drafts are never listed. Sorted per
-    /// US-009 AC1/FR-001 (<see cref="PlaylistCatalogueSort"/>) - the home page renders this order
-    /// directly, before any filter is applied.
-    /// </summary>
-    public async Task<IReadOnlyList<PlaylistContent>> FindAllPublishedAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<PlaylistContent>> FindAllPublishedAsync(CancellationToken cancellationToken) =>
+        (await _catalogue.Value.WaitAsync(cancellationToken)).Published;
+
+    public async Task<bool> IsReadyAsync(CancellationToken cancellationToken)
     {
-        var playlists = await LoadAllAsync(cancellationToken);
-        var published = playlists.Where(playlist => playlist.IsPublished).ToList();
-        return PlaylistCatalogueSort.Apply(published);
+        var catalogue = await _catalogue.Value.WaitAsync(cancellationToken);
+        var validation = await _validation.Value.WaitAsync(cancellationToken);
+        return catalogue.Published.Count > 0 && validation.IsValid;
     }
+
+    private async Task<Catalogue> LoadCatalogueAsync()
+    {
+        if (!Directory.Exists(_contentDirectory))
+        {
+            throw new DirectoryNotFoundException("Playlist content directory is missing.");
+        }
+
+        var all = await _reader.ReadAllAsync(_contentDirectory, CancellationToken.None);
+        var published = PlaylistCatalogueSort.Apply(all.Where(playlist => playlist.IsPublished).ToList());
+        return new Catalogue(
+            all,
+            published,
+            all.Select(playlist => playlist.Slug).ToFrozenSet(StringComparer.Ordinal),
+            published.GroupBy(playlist => playlist.Slug, StringComparer.Ordinal)
+                .ToFrozenDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal),
+            published.SelectMany(playlist => playlist.PreviousSlugs.Select(slug => (Slug: slug, Playlist: playlist)))
+                .GroupBy(entry => entry.Slug, StringComparer.Ordinal)
+                .ToFrozenDictionary(group => group.Key, group => group.First().Playlist, StringComparer.Ordinal));
+    }
+
+    private sealed record Catalogue(
+        IReadOnlyList<PlaylistContent> All,
+        IReadOnlyList<PlaylistContent> Published,
+        FrozenSet<string> CurrentSlugs,
+        FrozenDictionary<string, PlaylistContent> PublishedBySlug,
+        FrozenDictionary<string, PlaylistContent> PublishedByPreviousSlug);
 }

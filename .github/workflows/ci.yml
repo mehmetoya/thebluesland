@@ -76,6 +76,9 @@ jobs:
         working-directory: src/TheBluesland.Web
         run: npm run build:css
 
+      - name: JavaScript regression tests
+        run: node --test tests/JavaScript/*.test.cjs
+
       # tests/TheBluesland.E2ETests is intentionally NOT part of TheBluesland.slnx (kept out by this
       # agent's own write scope, see that project's .csproj comment) - it restores/builds/runs
       # independently in the playwright-smoke job below.
@@ -184,40 +187,29 @@ jobs:
       - name: Restore
         run: dotnet restore TheBluesland.slnx
 
-      # `dotnet list package --vulnerable` only prints findings and always exits 0 by itself; below
-      # turns a real finding into a failing step rather than a silently ignored warning - EXCEPT for
-      # an advisory already triaged and accepted via a project's own <NuGetAuditSuppress> (a
-      # design-time-only EF tooling dependency and a test-only Testcontainers dependency, neither
-      # ever part of the published runtime, see TheBluesland.Data.csproj/
-      # TheBluesland.UnitTests.csproj for the investigation). NuGetAuditSuppress only silences
-      # `dotnet build`'s own NuGet Audit warnings, not this separate `list package --vulnerable`
-      # command, so this step re-derives the same allowlist from those entries rather than
-      # re-flagging already-accepted risk on every run; a genuinely new advisory (not in any
-      # project's NuGetAuditSuppress list) still fails the job.
+      # Audit all transitive packages without a suppression allowlist.
       - name: NuGet vulnerable package scan
         run: |
           set -euo pipefail
-          dotnet list TheBluesland.slnx package --vulnerable --include-transitive | tee vulnerable-packages.txt
-
-          mapfile -t suppressed < <(grep -rhoE 'NuGetAuditSuppress Include="https://[^"]+"' --include='*.csproj' . | grep -oE 'https://[^"]+')
-          mapfile -t found < <(grep -oE 'https://github.com/advisories/[A-Za-z0-9-]+' vulnerable-packages.txt | sort -u)
-
-          new_findings=()
-          for url in "${found[@]}"; do
-            is_suppressed=0
-            for s in "${suppressed[@]}"; do
-              [[ "$url" == "$s" ]] && is_suppressed=1 && break
-            done
-            [[ "$is_suppressed" -eq 0 ]] && new_findings+=("$url")
-          done
-
-          if [[ "${#new_findings[@]}" -gt 0 ]]; then
-            echo "::error::New vulnerable NuGet packages found (not already triaged via NuGetAuditSuppress) - see the log above:"
-            printf '%s\n' "${new_findings[@]}"
-            exit 1
-          fi
-
-          echo "All findings already triaged via an existing NuGetAuditSuppress entry."
+          dotnet list TheBluesland.slnx package --vulnerable --include-transitive --format json > vulnerable-packages.json
+          python3 - <<'PYTHON'
+          import json
+          import sys
+          with open("vulnerable-packages.json") as report:
+              data = json.load(report)
+          affected = [
+              package
+              for project in data.get("projects", [])
+              for framework in project.get("frameworks", [])
+              for kind in ("topLevelPackages", "transitivePackages")
+              for package in framework.get(kind, [])
+              if package.get("vulnerabilities")
+          ]
+          for package in affected:
+              print(f"::error::{package['id']}: {package['vulnerabilities']}")
+          print(f"Vulnerable packages: {len(affected)}")
+          sys.exit(bool(affected))
+          PYTHON
 
       # gitleaks-action is free for public repositories (this repo) and needs no license secret -
       # only the default GITHUB_TOKEN, never SPOTIFY_CLIENT_ID/SPOTIFY_REFRESH_TOKEN/

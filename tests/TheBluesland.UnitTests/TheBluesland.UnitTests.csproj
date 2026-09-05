@@ -41,15 +41,4 @@
     </None>
   </ItemGroup>
 
-  <!--
-    Testcontainers.PostgreSql transitively pulls SSH.NET (for Docker daemon SSH tunneling), which
-    NuGet audit flags under the advisory below regardless of which published version is resolved
-    (verified against 2023.0.0 and 2024.2.0 - flagged identically). This is a test-only dependency,
-    never part of the published runtime output. Suppressing this specific, unavoidable, test-only
-    advisory rather than disabling audit or TreatWarningsAsErrors project-wide.
-  -->
-  <ItemGroup>
-    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-q939-rpr3-3284" />
-  </ItemGroup>
-
 </Project>

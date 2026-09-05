@@ -65,7 +65,7 @@ public sealed class PageMetadataIntegrationTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldContain(expectedTitleTag);
         body.ShouldContain("<meta name=\"description\"");
-        body.ShouldContain("<link rel=\"canonical\" href=\"http://");
+        body.ShouldContain("<link rel=\"canonical\" href=\"https://");
         body.ShouldContain("property=\"og:title\"");
         body.ShouldContain("property=\"og:description\"");
         body.ShouldContain("property=\"og:type\" content=\"website\"");
@@ -84,7 +84,7 @@ public sealed class PageMetadataIntegrationTests : IAsyncLifetime
         var response = await _httpClient.GetAsync("/playlists/masterpieces-of-erkin-the-father");
         var body = await response.Content.ReadAsStringAsync();
 
-        body.ShouldContain("property=\"og:image\" content=\"http://127.0.0.1");
+        body.ShouldContain("property=\"og:image\" content=\"https://thebluesland.onrender.com");
         body.ShouldContain("/playlists/masterpieces-of-erkin-the-father/og-image.png");
         body.ShouldNotContain("scdn.co");
     }
@@ -114,7 +114,7 @@ public sealed class PageMetadataIntegrationTests : IAsyncLifetime
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
-        var expectedCanonical = $"<link rel=\"canonical\" href=\"{_httpClient.BaseAddress}\" />";
+        var expectedCanonical = "<link rel=\"canonical\" href=\"https://thebluesland.onrender.com/\" />";
         body.ShouldContain(expectedCanonical);
     }
 }

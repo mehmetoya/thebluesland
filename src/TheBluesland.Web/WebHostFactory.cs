@@ -18,6 +18,9 @@ namespace TheBluesland.Web;
 public static class WebHostFactory
 {
     public const string ConnectionStringName = "SpotifyPlaylistCache";
+    private const long SocialCardCacheSizeBytes = 16 * 1024 * 1024;
+    private const long SocialCardMaximumBodySizeBytes = 1024 * 1024;
+    private static readonly TimeSpan SocialCardCacheDuration = TimeSpan.FromHours(24);
 
     // webRootPath: WebApplicationBuilder.WebHost.UseWebRoot(...) throws at Build() time ("web root
     // changed... not supported") - the minimal-hosting API only accepts a web root via
@@ -34,6 +37,24 @@ public static class WebHostFactory
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { Args = args, WebRootPath = webRootPath });
         configureForTests?.Invoke(builder);
 
+        var publicOrigin = builder.Configuration[SiteUrl.PublicOriginConfigKey] ?? SiteUrl.DefaultPublicOrigin;
+        if (!Uri.TryCreate(publicOrigin, UriKind.Absolute, out var publicUri) ||
+            publicUri.Scheme != Uri.UriSchemeHttps || publicUri.AbsolutePath != "/" ||
+            !string.IsNullOrEmpty(publicUri.Query) || !string.IsNullOrEmpty(publicUri.Fragment) ||
+            !string.IsNullOrEmpty(publicUri.UserInfo))
+        {
+            throw new InvalidOperationException("Site:PublicOrigin must be an HTTPS origin without a path, query or credentials.");
+        }
+
+        // Local hostnames permit local development; public traffic must use the configured host.
+        builder.Configuration["AllowedHosts"] = $"{publicUri.Host};localhost;127.0.0.1;[::1]";
+        builder.Services.AddHostFiltering(options =>
+            options.AllowedHosts = [publicUri.Host, "localhost", "127.0.0.1", "[::1]"]);
+        builder.Services.AddOutputCache(options =>
+        {
+            options.SizeLimit = SocialCardCacheSizeBytes;
+            options.MaximumBodySize = SocialCardMaximumBodySizeBytes;
+        });
         builder.Services.AddRazorComponents();
 
         builder.Services.AddDbContextFactory<TheBlueslandDbContext>(options =>
@@ -55,6 +76,7 @@ public static class WebHostFactory
             .AddCheck<PlaylistContentHealthCheck>("playlist-content", tags: ["ready"]);
 
         var app = builder.Build();
+        app.UseHostFiltering();
 
         if (app.Environment.IsDevelopment())
         {
@@ -107,6 +129,7 @@ public static class WebHostFactory
         // files need no antiforgery/component-endpoint handling.
         app.UseStaticFiles();
 
+        app.UseOutputCache();
         app.UseAntiforgery();
 
         // FR-024 / spec 16.2: readiness depends only on editorial content, never on DB reachability.
@@ -121,32 +144,8 @@ public static class WebHostFactory
             Predicate = _ => false,
         });
 
-        // Deliberately DB-dependent (unlike /health/ready, FR-024/16.2) - a public, read-only probe
-        // so cache connectivity can be checked without Render dashboard/log access, matching
-        // PlaylistCacheLookup's own never-throws contract. Reports only row counts (already implied
-        // by the public catalogue's size - no new information disclosure) and, on failure, the
-        // exception type name only - never ex.Message or the connection string, since some Npgsql
-        // failure modes echo connection details back in the message.
-        app.MapGet("/health/cache", async (
-            IDbContextFactory<TheBlueslandDbContext> dbContextFactory,
-            CancellationToken cancellationToken) =>
-        {
-            try
-            {
-                await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
-                var total = await dbContext.SpotifyPlaylistCache.CountAsync(cancellationToken);
-                var available = await dbContext.SpotifyPlaylistCache.CountAsync(row => row.IsAvailable, cancellationToken);
-                return Results.Json(new { reachable = true, totalRows = total, availableRows = available });
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                return Results.Json(new { reachable = false, errorType = ex.GetType().Name });
-            }
-        });
-
-        // US-011 AC2/spec 14: server-generated from published content only, never a static file, so
-        // it always reflects the current content and always uses this request's own scheme/host
-        // (see Seo/SiteUrl's doc comment for why that beats a configured base-URL setting here).
+        // Only published content enters the sitemap. SiteUrl uses the configured public origin,
+        // independent of the incoming Host and forwarded headers.
         app.MapGet("/sitemap.xml", async (
             HttpContext context,
             PlaylistContentRepository repository,
@@ -169,7 +168,8 @@ public static class WebHostFactory
         // (home/about/privacy/terms) - a real generated image, never Spotify cover art.
         app.MapGet("/og-image.png", (SocialCardGenerator generator) => Results.File(
             generator.Generate("TheBluesland", "Curated Spotify playlists, one curator note at a time."),
-            "image/png"));
+            "image/png"))
+            .CacheOutput(policy => policy.Expire(SocialCardCacheDuration).SetVaryByQuery([]));
 
         // US-011 AC3/FR-031: per-playlist card, built from that playlist's own editorial title and
         // summary - never from the cache's Spotify-hosted cover_image_url.
@@ -183,7 +183,7 @@ public static class WebHostFactory
             return content is null
                 ? Results.NotFound()
                 : Results.File(generator.Generate(content.Title, content.Summary), "image/png");
-        });
+        }).CacheOutput(policy => policy.Expire(SocialCardCacheDuration).SetVaryByQuery([]));
 
         app.MapRazorComponents<App>();
 
