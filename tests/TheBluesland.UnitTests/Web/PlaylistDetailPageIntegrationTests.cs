@@ -128,26 +128,28 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
-    /// <summary>US-010 AC2/spec 11.3: no iframe/Spotify contact until the visitor clicks "Listen here".</summary>
+    /// <summary>The detail page offers direct Spotify playback without an embed.</summary>
     [Fact]
-    public async Task PlaylistDetailPage_does_not_include_the_iframe_before_the_listen_query_flag_is_present()
+    public async Task PlaylistDetailPage_does_not_offer_embedded_playback()
     {
         var response = await _httpClient.GetAsync("/playlists/primary-playlist");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldNotContain("<iframe");
-        body.ShouldContain("href=\"?listen=true\"");
+        body.ShouldNotContain("Listen here");
     }
 
     [Fact]
-    public async Task PlaylistDetailPage_includes_the_iframe_once_the_listen_query_flag_is_present()
+    public async Task PlaylistDetailPage_ignores_legacy_listen_query_flag()
     {
         var response = await _httpClient.GetAsync("/playlists/primary-playlist?listen=true");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
-        body.ShouldContain($"<iframe class=\"spotify-embed\" src=\"https://open.spotify.com/embed/playlist/{PrimaryPlaylistSpotifyId}\"");
+        body.ShouldNotContain("<iframe");
+        body.ShouldNotContain("Listen here");
+        body.ShouldContain($"href=\"https://open.spotify.com/playlist/{PrimaryPlaylistSpotifyId}\"");
     }
 
     /// <summary>US-010 AC3: the exact `https://open.spotify.com/playlist/{id}` shape, distinct from the embed URL.</summary>

@@ -43,48 +43,12 @@
         {
             <img class="cover-image" src="@coverImageUrl" alt="@($"{Content.Title} cover art")" />
         }
-
-        @if (ShowEmbed)
-        {
-            @* US-010 AC2/spec 11.3/12.4(a): embed URL built only from the validated
-               spotifyPlaylistId, never from content-file input.
-
-               height=152 (Spotify's compact size) rather than their 352 "with tracklist" default:
-               at 352 the widget rendered its content in the top portion and left the remainder as
-               a bare white block against this site's dark page (reported twice from production,
-               reproduced in a fresh incognito window, so not a caching or first-paint artifact).
-               That space is inside Spotify's own cross-origin document, so no CSS of ours can
-               reach it; the compact size is the one shape that has no leftover area to show
-               through. The full tracklist is still one click away via "Open in Spotify" below. *@
-            <iframe
-                class="spotify-embed"
-                src="@EmbedUrl"
-                title="Spotify player"
-                width="100%"
-                height="152"
-                frameborder="0"
-                allowfullscreen
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                loading="lazy">
-            </iframe>
-        }
-        else
-        {
-            @* US-010 AC2/spec 11.3: click-to-load - no iframe in the initial HTML and no contact
-               with Spotify until this link is followed. A plain static-SSR link to "?listen=1"
-               (full navigation, re-rendering this same static page with the iframe now present),
-               not an @rendermode InteractiveServer island - see the design-decision comment on
-               PlaylistDetailPage.razor for why. *@
-            <p class="player-placeholder">
-                <a href="?listen=true" class="load-player-link">Listen here</a>
-            </p>
-        }
     }
     else
     {
         <!-- US-005 AC2/FR-024: never a bare/broken iframe, always a readable fallback message. -->
         <p class="player-unavailable" role="status">
-            The Spotify player is currently unavailable for this playlist. The curator note above is
+            Spotify details are currently unavailable for this playlist. The curator note above is
             still complete.
         </p>
     }
@@ -122,10 +86,6 @@
     [Parameter, EditorRequired]
     public required PlaylistCacheSnapshot CacheSnapshot { get; set; }
 
-    /// <summary>US-010 AC2: true only once the visitor has followed the "Listen here" click-to-load link.</summary>
-    [Parameter]
-    public bool ShowEmbed { get; set; }
-
     /// <summary>US-010 AC4: at most three related playlists, already ranked/capped by <see cref="RelatedPlaylistRanking"/>.</summary>
     [Parameter]
     public IReadOnlyList<PlaylistContent> RelatedPlaylists { get; set; } = [];
@@ -139,8 +99,6 @@
     private bool CanPlay => CacheSnapshot.IsPlayable && HasValidSpotifyPlaylistId;
 
     private string OpenInSpotifyUrl => $"https://open.spotify.com/playlist/{Content.SpotifyPlaylistId}";
-
-    private string EmbedUrl => $"https://open.spotify.com/embed/playlist/{Content.SpotifyPlaylistId}";
 
     private PlaylistCacheSnapshot GetRelatedCacheSnapshot(PlaylistContent related) =>
         RelatedCacheSnapshots.GetValueOrDefault(related.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable);
