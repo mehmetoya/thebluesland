@@ -55,9 +55,18 @@ public static class WebHostFactory
         // environment. Set before UseAntiforgery/routing so no downstream branch (404, redirect,
         // health check, ...) can skip it. `frame-src` is the only Spotify-specific grant: the
         // click-to-load embed (PlaylistDetailView.EmbedUrl) is the sole reason this page ever loads
-        // a cross-origin iframe. `img-src` additionally allows Spotify's cover-art CDN
-        // (`i.scdn.co`), since PlaylistDetailView/PlaylistCard render `CacheSnapshot.CoverImageUrl`
-        // directly (never re-hosted, per FR-031) - no other Spotify origin is granted anywhere.
+        // a cross-origin iframe. `img-src` additionally allows Spotify's cover-art CDNs, since
+        // PlaylistDetailView/PlaylistCard render `CacheSnapshot.CoverImageUrl` directly (never
+        // re-hosted, per FR-031) - no other Spotify origin is granted anywhere.
+        //
+        // Wildcarded to `*.scdn.co`/`*.spotifycdn.com` rather than pinned to `i.scdn.co` alone:
+        // confirmed in production 2026-09-05 that Spotify now also serves cover art from
+        // `image-cdn-ak.spotifycdn.com`/`image-cdn-fa.spotifycdn.com` (per-region CDN pool) and
+        // `mosaic.scdn.co` (the 4-image collage Spotify generates for playlists with no custom
+        // cover), silently CSP-blocked until this fix even though the cache lookup itself was
+        // reachable - same "Spotify quietly renamed/added a hostname" pattern already hit twice
+        // this project (the Feb-2026 API track-count field rename). Still scoped to Spotify's own
+        // two root domains, not a broad host wildcard.
         app.Use(async (context, next) =>
         {
             var headers = context.Response.Headers;
@@ -71,7 +80,7 @@ public static class WebHostFactory
                 "default-src 'self'; " +
                 "script-src 'self'; " +
                 "style-src 'self'; " +
-                "img-src 'self' https://i.scdn.co; " +
+                "img-src 'self' https://*.scdn.co https://*.spotifycdn.com; " +
                 "frame-src https://open.spotify.com; " +
                 "frame-ancestors 'self'; " +
                 "object-src 'none'; " +

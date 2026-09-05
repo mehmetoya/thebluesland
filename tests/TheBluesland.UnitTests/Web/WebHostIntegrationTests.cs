@@ -167,6 +167,24 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
         cspValue.ShouldContain("default-src 'self'");
     }
 
+    /// <summary>
+    /// Regression test (2026-09-05): production cover art started 404-ing under CSP because
+    /// Spotify serves it from `image-cdn-ak/fa.spotifycdn.com` and `mosaic.scdn.co`, not only the
+    /// originally-pinned `i.scdn.co` - confirmed live via a real Chromium console error
+    /// ("Refused to load the image ... violates ... img-src"). Asserts the wildcarded form so a
+    /// future accidental narrowing back to a single subdomain fails this test instead of silently
+    /// breaking cover art again.
+    /// </summary>
+    [Fact]
+    public async Task HomePage_csp_allows_every_current_spotify_cover_art_cdn_host()
+    {
+        var response = await _httpClient.GetAsync("/");
+
+        response.Headers.TryGetValues("Content-Security-Policy", out var csp).ShouldBeTrue();
+        var cspValue = csp!.Single();
+        cspValue.ShouldContain("img-src 'self' https://*.scdn.co https://*.spotifycdn.com;");
+    }
+
     /// <summary>US-012 AC1: the security headers apply to a 404 response too, not only 2xx ones.</summary>
     [Fact]
     public async Task NotFoundResponse_still_includes_the_security_headers()
