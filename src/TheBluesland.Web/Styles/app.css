@@ -331,18 +331,17 @@
 }
 
 /* US-021: the mobile full-screen filter panel reuses the exact same <form> as the desktop navbar
-   (no duplicate markup) - see the design-decision comment above HomePage.razor's filter-navbar
-   for how the two CSS tricks below make one DOM tree serve both breakpoints with zero JS. */
-.filter-mobile-trigger {
-  display: none;
+   (no duplicate markup, no touching the four US-018 dropdowns) - see the design-decision comment
+   above HomePage.razor's filter-navbar for why this uses the classic zero-JS "checkbox hack"
+   (:checked + the ~ general-sibling combinator) instead of a second <details> wrapper. */
+.filter-mobile-toggle {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
-/* Desktop: the outer <details class="filter-mobile-panel"> wrapper is inert. Author CSS overrides
-   the <details> UA stylesheet's own "hide content unless [open]" rule (author-origin rules beat
-   user-agent-origin rules regardless of specificity), so the real filter form always renders here
-   exactly as it did before this wrapper existed. */
-.filter-mobile-panel > .filter-navbar-form {
-  display: flex;
+.filter-mobile-trigger {
+  display: none;
 }
 
 @media (max-width: 40rem) {
@@ -350,15 +349,9 @@
     padding: 0.5rem;
   }
 
-  /* Mobile: the wrapper becomes a real toggle - hide the actual form until <details> is [open]. */
-  .filter-mobile-panel > .filter-navbar-form {
-    display: none;
-  }
-
   .filter-mobile-trigger {
     display: inline-flex;
     align-items: center;
-    list-style: none;
     cursor: pointer;
     user-select: none;
     background-color: var(--color-bg);
@@ -369,31 +362,34 @@
     color: var(--color-text);
   }
 
-  .filter-mobile-trigger::-webkit-details-marker {
-    display: none;
-  }
-
   .filter-mobile-trigger-close {
     display: none;
   }
 
-  /* AC1: opening the trigger reveals a full-screen panel with every dimension visible together. */
-  .filter-mobile-panel[open] > .filter-mobile-trigger {
+  /* Mobile: the form starts hidden and only the "Filters (N)" trigger label shows. */
+  .filter-navbar-form {
+    display: none;
+  }
+
+  /* AC1: checking the (visually hidden) toggle reveals a full-screen panel with every dimension
+     visible together, and turns the trigger itself into a fixed "Close" button so it stays
+     reachable while the panel covers the whole viewport. */
+  .filter-mobile-toggle:checked ~ .filter-mobile-trigger {
     position: fixed;
     top: 1rem;
     right: 1rem;
     z-index: 51;
   }
 
-  .filter-mobile-panel[open] > .filter-mobile-trigger .filter-mobile-trigger-label {
+  .filter-mobile-toggle:checked ~ .filter-mobile-trigger .filter-mobile-trigger-label {
     display: none;
   }
 
-  .filter-mobile-panel[open] > .filter-mobile-trigger .filter-mobile-trigger-close {
+  .filter-mobile-toggle:checked ~ .filter-mobile-trigger .filter-mobile-trigger-close {
     display: inline;
   }
 
-  .filter-mobile-panel[open] > .filter-navbar-form {
+  .filter-mobile-toggle:checked ~ .filter-navbar-form {
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -407,37 +403,36 @@
 
   /* All four dimensions need to be visible together (AC1), not opened one at a time - force each
      inner dropdown's panel open and turn its own <summary> into an inert heading. */
-  .filter-mobile-panel[open] .filter-dropdown {
+  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-dropdown {
     position: static;
   }
 
-  .filter-mobile-panel[open] .filter-dropdown > summary {
+  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-dropdown > summary {
     cursor: default;
     pointer-events: none;
   }
 
-  .filter-mobile-panel[open] .filter-dropdown > summary::after {
+  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-dropdown > summary::after {
     display: none;
   }
 
-  .filter-mobile-panel[open] .filter-dropdown-panel {
+  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-dropdown-panel {
     display: flex;
     position: static;
     max-height: none;
     box-shadow: none;
   }
 
-  .filter-mobile-panel[open] .filter-apply,
-  .filter-mobile-panel[open] .filter-clear {
+  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-apply,
+  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-clear {
     align-self: stretch;
     text-align: center;
   }
 }
 
 /* AC2: locks background scroll while the mobile panel is open - CSS-only (:has()), no JS. If a
-   browser lacks :has() support the fixed, full-viewport panel above still visually covers the
-   list either way. */
-body:has(.filter-mobile-panel[open]) {
+   browser lacks :has() the fixed, full-viewport panel above still visually covers the list. */
+body:has(.filter-mobile-toggle:checked) {
   overflow: hidden;
 }
 

@@ -37,79 +37,76 @@
     needs no JavaScript (AC5), so the zero-JS guarantee above is unaffected. The active count in
     each summary (DimensionLabel) is the "Genre (2)"-style indicator from AC4.
 
-    US-021: on narrow screens the whole form is additionally wrapped in one more `<details
-    class="filter-mobile-panel">`. Nothing here changes structurally for that - it is still the
-    exact same <form>/checkboxes/query-string. Two CSS-only tricks make one piece of markup serve
-    both breakpoints with zero JavaScript (AC4): (1) author CSS beats the `<details>` UA
-    stylesheet's own "hide content unless [open]" rule at equal-or-lower specificity, so on desktop
-    `.filter-navbar-form` is forced to always render regardless of the outer wrapper's open state -
-    it is functionally inert there, only the four inner dropdowns matter (unchanged from US-018);
-    (2) at the mobile breakpoint that inertness is turned off, so the outer `<summary>` becomes a
-    real "Filters (N)" toggle that reveals `.filter-navbar-form` as a `position:fixed` full-screen
-    overlay (AC1), and the four inner dropdowns are force-open within it so all four dimensions
-    are visible together rather than needing four separate taps. `body:has(.filter-mobile-panel
-    [open])` locks background scroll (AC2) - CSS-only, no JS, and if a browser lacks `:has()`
-    support the overlay still visually covers the full viewport regardless.
+    US-021: on narrow screens the same form additionally opens as a full-screen panel via the
+    classic zero-JS "checkbox hack" - a visually-hidden `<input type="checkbox">` plus a `<label
+    for="...">` that native HTML already toggles on click/tap/Enter with no JavaScript, styled with
+    the `:checked` pseudo-class and the `~` general-sibling combinator in CSS. Deliberately not
+    reusing a second `<details>` wrapper here: that would have required overriding <details>'s own
+    "hide content unless [open]" behavior on desktop, which depends on exactly how a given browser
+    implements that hiding internally - `:checked`/`~` carries no such ambiguity, and the four
+    inner per-dimension `<details class="filter-dropdown">` (US-018) are completely untouched by
+    this - same markup unconditionally, only CSS keyed off the checkbox's state changes at the
+    mobile breakpoint. `body:has(.filter-mobile-toggle:checked)` locks background scroll (AC2) -
+    if a browser lacks `:has()` the fixed, full-viewport panel still covers the list visually.
 *@
 <nav aria-label="Filters" class="filter-navbar">
-    <details class="filter-mobile-panel">
-        <summary class="filter-mobile-trigger">
-            <span class="filter-mobile-trigger-label">@DimensionLabel("Filters", _criteria.ActiveCount)</span>
-            <span class="filter-mobile-trigger-close">Close</span>
-        </summary>
-        <form method="get" action="/" class="filter-navbar-form">
-            <details class="filter-dropdown">
-                <summary>@DimensionLabel("Mood", _criteria.Moods.Count)</summary>
-                <div class="filter-dropdown-panel">
-                    @foreach (var mood in PlaylistTaxonomy.Moods)
-                    {
-                        <label>
-                            <input type="checkbox" name="mood" value="@mood" checked="@_criteria.Moods.Contains(mood)" />
-                            @mood
-                        </label>
-                    }
-                </div>
-            </details>
-            <details class="filter-dropdown">
-                <summary>@DimensionLabel("Genre", _criteria.Genres.Count)</summary>
-                <div class="filter-dropdown-panel">
-                    @foreach (var genre in PlaylistTaxonomy.Genres)
-                    {
-                        <label>
-                            <input type="checkbox" name="genre" value="@genre" checked="@_criteria.Genres.Contains(genre)" />
-                            @genre
-                        </label>
-                    }
-                </div>
-            </details>
-            <details class="filter-dropdown">
-                <summary>@DimensionLabel("Occasion", _criteria.Occasions.Count)</summary>
-                <div class="filter-dropdown-panel">
-                    @foreach (var occasion in PlaylistTaxonomy.Occasions)
-                    {
-                        <label>
-                            <input type="checkbox" name="occasion" value="@occasion" checked="@_criteria.Occasions.Contains(occasion)" />
-                            @occasion
-                        </label>
-                    }
-                </div>
-            </details>
-            <details class="filter-dropdown">
-                <summary>@DimensionLabel("Era", _criteria.Eras.Count)</summary>
-                <div class="filter-dropdown-panel">
-                    @foreach (var era in PlaylistTaxonomy.Eras)
-                    {
-                        <label>
-                            <input type="checkbox" name="era" value="@era" checked="@_criteria.Eras.Contains(era)" />
-                            @era
-                        </label>
-                    }
-                </div>
-            </details>
-            <button type="submit" class="filter-apply">Apply filters</button>
-            <a href="/" class="filter-clear">Clear filters</a>
-        </form>
-    </details>
+    <input type="checkbox" id="filter-mobile-toggle" class="filter-mobile-toggle" />
+    <label for="filter-mobile-toggle" class="filter-mobile-trigger">
+        <span class="filter-mobile-trigger-label">@DimensionLabel("Filters", _criteria.ActiveCount)</span>
+        <span class="filter-mobile-trigger-close">Close</span>
+    </label>
+    <form method="get" action="/" class="filter-navbar-form">
+        <details class="filter-dropdown">
+            <summary>@DimensionLabel("Mood", _criteria.Moods.Count)</summary>
+            <div class="filter-dropdown-panel">
+                @foreach (var mood in PlaylistTaxonomy.Moods)
+                {
+                    <label>
+                        <input type="checkbox" name="mood" value="@mood" checked="@_criteria.Moods.Contains(mood)" />
+                        @mood
+                    </label>
+                }
+            </div>
+        </details>
+        <details class="filter-dropdown">
+            <summary>@DimensionLabel("Genre", _criteria.Genres.Count)</summary>
+            <div class="filter-dropdown-panel">
+                @foreach (var genre in PlaylistTaxonomy.Genres)
+                {
+                    <label>
+                        <input type="checkbox" name="genre" value="@genre" checked="@_criteria.Genres.Contains(genre)" />
+                        @genre
+                    </label>
+                }
+            </div>
+        </details>
+        <details class="filter-dropdown">
+            <summary>@DimensionLabel("Occasion", _criteria.Occasions.Count)</summary>
+            <div class="filter-dropdown-panel">
+                @foreach (var occasion in PlaylistTaxonomy.Occasions)
+                {
+                    <label>
+                        <input type="checkbox" name="occasion" value="@occasion" checked="@_criteria.Occasions.Contains(occasion)" />
+                        @occasion
+                    </label>
+                }
+            </div>
+        </details>
+        <details class="filter-dropdown">
+            <summary>@DimensionLabel("Era", _criteria.Eras.Count)</summary>
+            <div class="filter-dropdown-panel">
+                @foreach (var era in PlaylistTaxonomy.Eras)
+                {
+                    <label>
+                        <input type="checkbox" name="era" value="@era" checked="@_criteria.Eras.Contains(era)" />
+                        @era
+                    </label>
+                }
+            </div>
+        </details>
+        <button type="submit" class="filter-apply">Apply filters</button>
+        <a href="/" class="filter-clear">Clear filters</a>
+    </form>
 </nav>
 
 <section class="catalogue">
