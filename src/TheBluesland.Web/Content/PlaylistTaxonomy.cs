@@ -49,6 +49,12 @@ internal static class PlaylistTaxonomy
         "road-trip",
         "slow-evening",
         "headphones",
+        // Added 2026-09-06 (US-017, Mehmet's approval) after US-020's content-analysis pass over
+        // all 120 playlists found no gap in mood or era but two occasion themes that recur in
+        // curator note prose without fitting any existing value: background/concentration
+        // listening and dance/party listening.
+        "focus",
+        "dancing",
     ];
 
     public static readonly IReadOnlyCollection<string> Eras =

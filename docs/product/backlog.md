@@ -480,15 +480,21 @@ tekrar eden ama hiçbir mevcut Occasion etiketine tam oturmayan iki gerçek kull
 
 Kabul kriterleri:
 
-- [ ] `focus` ve `dancing` değerleri `PlaylistTaxonomy.Occasions`'a eklendiğinde, içerik doğrulayıcı
+- [x] `focus` ve `dancing` değerleri `PlaylistTaxonomy.Occasions`'a eklendiğinde, içerik doğrulayıcı
       (US-006) güncel listeyi kullanır ve CI (US-007) buna göre doğrular.
-- [ ] Genişletme sonrası, mevcut 120 playlist'in hiçbiri artık geçersiz sayılan bir occasion değeri
+- [x] Genişletme sonrası, mevcut 120 playlist'in hiçbiri artık geçersiz sayılan bir occasion değeri
       taşımaz (regresyon: tüm katalog doğrulamadan geçmeye devam eder).
-- [ ] Yeni değerler eklendiği bir PR açıldığında CI yeşil kalır; onaylanmamış bir değer hâlâ
+- [x] Yeni değerler eklendiği bir PR açıldığında CI yeşil kalır; onaylanmamış bir değer hâlâ
       reddedilir.
 - [ ] (Could) US-020'de isimlendirilen 6+4 aday dosyanın occasion etiketi, Mehmet uygun görürse
       yeni değerle güncellenir (ör. `focus.md`'nin occasion'ı `headphones`'tan `focus`'a taşınır) —
       bu bir içerik PR'ı, kod değişikliği değil.
+
+**Durum: İlk üç kriter tamamlandı (2026-09-06).** `PlaylistTaxonomy.Occasions`'a `focus`/`dancing`
+eklendi, spec bölüm 8.4 genre'nin 8.3'teki desenine uygun güncellendi. Testcontainers Postgres'e
+karşı 188/188 test yeşil (gerçek 120 published + 1 draft dosya dahil). Dördüncü (Could) kriter —
+10 aday dosyanın occasion etiketinin yeni değerlere taşınması — henüz yapılmadı, ayrı bir içerik
+PR'ı olarak istenirse yapılabilir.
 
 Kapsam dışı: Mood/Era genişletmesi (US-020 bulgusuna göre gerekçe yok, ayrı bir ihtiyaç ortaya
 çıkarsa yeniden değerlendirilir).
