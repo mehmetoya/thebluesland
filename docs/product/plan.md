@@ -9,11 +9,8 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 ## Sıradaki
 
-- **US-019 — Playlist kataloğunu kaydırdıkça kademeli yükle (Should).** Sırada bir sonraki:
-  120 playlist'lik kataloğu ilk yüklemede yalnızca ilk N (ör. 24) ile göstermek, "daha fazla
-  yükle" ile devam etmek — bağımlılığı yok, US-018'den sonra doğal sıradaki.
-- **US-021 — Mobil tam-ekran filtre deneyimi (Could).** Bağımlılığı US-018 (tamamlandı); aynı
-  URL query-string mekanizmasını paylaşıyor.
+- **US-021 — Mobil tam-ekran filtre deneyimi (Could).** Sırada bir sonraki: bağımlılığı US-018
+  (tamamlandı); aynı URL query-string mekanizmasını paylaşıyor.
 - US-017'nin Could kriteri (10 aday dosyanın occasion etiketinin `focus`/`dancing`'e taşınması) —
   içerik PR'ı, kod değişikliği değil; Mehmet uygun görürse ayrı istenebilir.
 - Bilinen küçük doküman/hijyen açıkları (2026-09-05 denetiminde bulundu, kod değil): ADR
@@ -28,6 +25,16 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 ## Tamamlanan
 
+- **US-019 — Playlist kataloğunu kaydırdıkça kademeli yükle (2026-09-06).** Yeni saf
+  `PlaylistCataloguePage` sınıfı (US-009'daki `PlaylistFilter` ile aynı desen): `page` N ilk
+  N × 24 (`PageSize`) playlist'i kümülatif gösteriyor (pencereli bir dilim değil), böylece
+  paylaşılan bir `?page=3` linki "Show more"a iki kez tıklanmış hâliyle aynı içeriği üretiyor.
+  "Show more" düz bir `<a class="load-more">` linki — aktif filtre query parametrelerini koruyup
+  `page`'i artırıyor, JavaScript'e ihtiyaç yok. Sayfalama sıfırlama ekstra kod gerektirmedi: `page`
+  filtre formunda gizli alan olarak taşınmıyor, formun GET submit'i zaten tüm query string'i
+  değiştiriyor. Yeni `content-playlists-pagination` fixture seti (26 dosya), 3 entegrasyon testi
+  ve 8 saf birim testi eklendi. Testcontainers Postgres'e karşı 204/204 test yeşil, `dotnet format
+  --verify-no-changes` temiz.
 - **US-018 — Filtreleri navbar'a taşı (dropdown deseni) (2026-09-06).** Ana sayfanın hep-açık
   `<fieldset>` filtre formu, dört bağımsız native `<details>`/`<summary>` dropdown'undan oluşan
   bir `.filter-navbar`'a dönüştürüldü (`HomePage.razor`, `Styles/app.css`). `<details>` native

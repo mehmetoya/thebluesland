@@ -1,4 +1,6 @@
 @page "/"
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Primitives
 @inject PlaylistContentRepository ContentRepository
 @inject PlaylistCacheLookup CacheLookup
 
@@ -105,11 +107,18 @@
     }
     else
     {
-        @foreach (var playlist in _filteredPlaylists)
+        @foreach (var playlist in _visiblePlaylists)
         {
             <a href="@($"/playlists/{playlist.Slug}")" class="playlist-card-link">
                 <PlaylistCard Content="playlist" CacheSnapshot="GetSnapshot(playlist)" />
             </a>
+        }
+        @* US-019 AC1/AC2/AC5: a plain GET link (no JavaScript needed) that cumulatively reveals
+           the next PageSize playlists - the URL's own "page" value is the amount of content
+           loaded, so a shared deep link restores exactly that much. *@
+        @if (PlaylistCataloguePage.HasMore(_filteredPlaylists, PageQuery))
+        {
+            <a href="@BuildLoadMoreUrl()" class="load-more">Show more playlists</a>
         }
     }
 </section>
@@ -138,7 +147,16 @@
     [SupplyParameterFromQuery(Name = "era")]
     public string[]? EraQuery { get; set; }
 
+    // US-019 AC5: the page number lives in the URL, not in any server/session/interactive state -
+    // deliberately not carried as a hidden field on the filter-navbar form above, so submitting
+    // that form (a plain GET that replaces the whole query string) naturally resets pagination
+    // whenever the active filters change (AC4), with no extra reset code needed.
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "page")]
+    public int? PageQuery { get; set; }
+
     private IReadOnlyList<PlaylistContent> _filteredPlaylists = [];
+    private IReadOnlyList<PlaylistContent> _visiblePlaylists = [];
     private PlaylistFilterCriteria _criteria = PlaylistFilterCriteria.None;
     private IReadOnlyDictionary<string, PlaylistCacheSnapshot> _snapshots =
         new Dictionary<string, PlaylistCacheSnapshot>();
@@ -156,15 +174,42 @@
         // Already sorted by displayOrder, then publishedAt descending (US-009 AC1/FR-001).
         var allPublished = await ContentRepository.FindAllPublishedAsync(cancellationToken);
         _filteredPlaylists = PlaylistFilter.Apply(allPublished, _criteria);
+        _visiblePlaylists = PlaylistCataloguePage.Take(_filteredPlaylists, PageQuery);
 
         // Never throws (spec 16.1): a DB outage must still yield a 200 with editorial content.
+        // Only the playlists actually rendered on this page need a cache lookup.
         _snapshots = await CacheLookup.GetSnapshotsAsync(
-            _filteredPlaylists.Select(playlist => playlist.SpotifyPlaylistId).ToList(),
+            _visiblePlaylists.Select(playlist => playlist.SpotifyPlaylistId).ToList(),
             cancellationToken);
     }
 
     private PlaylistCacheSnapshot GetSnapshot(PlaylistContent playlist) =>
         _snapshots.GetValueOrDefault(playlist.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable);
+
+    private string BuildLoadMoreUrl()
+    {
+        var query = new Dictionary<string, StringValues>
+        {
+            ["page"] = PlaylistCataloguePage.NextPage(PageQuery).ToString(),
+        };
+        if (MoodQuery is { Length: > 0 })
+        {
+            query["mood"] = MoodQuery;
+        }
+        if (GenreQuery is { Length: > 0 })
+        {
+            query["genre"] = GenreQuery;
+        }
+        if (OccasionQuery is { Length: > 0 })
+        {
+            query["occasion"] = OccasionQuery;
+        }
+        if (EraQuery is { Length: > 0 })
+        {
+            query["era"] = EraQuery;
+        }
+        return QueryHelpers.AddQueryString("/", query);
+    }
 
     // US-018 AC4: "Genre (2)" - the active-count indicator shown in each dropdown's <summary>.
     private static string DimensionLabel(string name, int activeCount) =>

@@ -547,15 +547,27 @@ kaydırdıkça akıcı yüklenen bir liste olarak görmek istiyorum ki sayfa hı
 
 Kabul kriterleri:
 
-- [ ] Ana sayfa (aktif filtrelerle) ilk yüklemede yalnızca ilk N (ör. 24) eşleşen playlist'i render
+- [x] Ana sayfa (aktif filtrelerle) ilk yüklemede yalnızca ilk N (ör. 24) eşleşen playlist'i render
       eder; eşleşen sayı N'den fazlaysa bir "daha fazla yükle" mekanizması vardır.
-- [ ] Ziyaretçi listenin sonuna yaklaştığında (veya "Daha fazla göster" bağlantısına tıkladığında)
+- [x] Ziyaretçi listenin sonuna yaklaştığında (veya "Daha fazla göster" bağlantısına tıkladığında)
       bir sonraki N playlist eklenir.
-- [ ] JavaScript olmadan da progressive enhancement ile en azından "Daha fazla göster" linki
+- [x] JavaScript olmadan da progressive enhancement ile en azından "Daha fazla göster" linki
       üzerinden tüm katalog adım adım erişilebilir kalır.
-- [ ] Filtre değiştiğinde sayfalama sıfırlanır.
-- [ ] URL kaçıncı sayfada olunduğunu yansıtır, derin link paylaşıldığında aynı miktarda içerik geri
+- [x] Filtre değiştiğinde sayfalama sıfırlanır.
+- [x] URL kaçıncı sayfada olunduğunu yansıtır, derin link paylaşıldığında aynı miktarda içerik geri
       yüklenir.
+
+**Durum: Tamamlandı.** Yeni saf `PlaylistCataloguePage` sınıfı (`Content/PlaylistCataloguePage.cs`),
+US-009'daki `PlaylistFilter` ile aynı desende: `page` N, ilk N × 24 (`PageSize`) playlist'i kümülatif
+gösterir — pencereli bir "N..2N" dilimi değil, böylece paylaşılan bir `?page=3` linki "Daha fazla
+göster"e iki kez tıklanmış hâliyle aynı miktarda içerik üretir (AC5). "Show more" düz bir `<a>` linki
+(`HomePage.razor`, `.load-more`), aktif mood/genre/occasion/era query parametrelerini koruyup `page`'i
+bir artırıyor — JavaScript'e ihtiyaç yok (AC2/AC3). Sayfalama sıfırlama (AC4) ekstra kod gerektirmedi:
+`page`, filtre navbar formunda gizli bir alan olarak taşınmıyor, bu yüzden formun düz GET submit'i
+zaten tüm query string'i (page dahil) filtre alanlarıyla değiştiriyor. Yeni `content-playlists-pagination`
+fixture seti (26 dosya, PageSize+2) ile 3 entegrasyon testi + `PlaylistCataloguePage` için 8 saf
+birim testi eklendi. Testcontainers Postgres'e karşı 204/204 test yeşil, `dotnet format
+--verify-no-changes` temiz, Tailwind `build:css` başarılı.
 
 Kapsam dışı: IntersectionObserver/animasyon detayları; client-side/API tabanlı pagination (proje
 sunucu tarafı render'a sadık kalmalı, US-008/US-009 ile tutarlı).
