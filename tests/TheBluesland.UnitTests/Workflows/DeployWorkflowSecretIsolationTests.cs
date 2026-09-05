@@ -66,7 +66,7 @@ public sealed class DeployWorkflowSecretIsolationTests
     [InlineData("SPOTIFY_CLIENT_ID")]
     [InlineData("SPOTIFY_REFRESH_TOKEN")]
     [InlineData("NEON_SYNC_CONNECTION_STRING")]
-    [InlineData("ANTHROPIC_API_KEY")]
+    [InlineData("GEMINI_API_KEY")]
     public void RenderBlueprint_never_declares_a_spotify_or_ai_credential(string credentialName)
     {
         var renderYaml = File.ReadAllText(FindRepoFile(".github/render.yaml"));

@@ -146,20 +146,23 @@ static async Task<int> DumpCacheAsync(CancellationToken cancellationToken)
 
 static async Task<int> SuggestCuratorNoteAsync(string spotifyPlaylistId, CancellationToken cancellationToken)
 {
-    var apiKey = RequireEnvironmentVariable("ANTHROPIC_API_KEY");
+    var apiKey = RequireEnvironmentVariable("GEMINI_API_KEY");
     var connectionString = RequireEnvironmentVariable("NEON_READONLY_CONNECTION_STRING");
-    // Overridable per US-016's own suggest-curator-note.yml `model` input; a small, current,
-    // cost-effective default is enough for a short draft that a human will rewrite anyway.
-    var model = Environment.GetEnvironmentVariable("ANTHROPIC_MODEL") is { Length: > 0 } configuredModel
+    // Overridable per US-016's own suggest-curator-note.yml `model` input. Gemini rather than
+    // Anthropic (ADR-0005's 2026-09-05 amendment): Mehmet requires genuinely zero marginal cost,
+    // and Gemini has a real free tier (no billing account needed) unlike Anthropic's usage-based
+    // API. Flash is on that free tier and gives noticeably better prose than Flash-Lite for a
+    // short creative draft.
+    var model = Environment.GetEnvironmentVariable("GEMINI_MODEL") is { Length: > 0 } configuredModel
         ? configuredModel
-        : "claude-haiku-4-5-20251001";
+        : "gemini-2.5-flash";
 
     var optionsBuilder = new DbContextOptionsBuilder<TheBlueslandDbContext>().UseNpgsql(connectionString);
     await using var dbContext = new TheBlueslandDbContext(optionsBuilder.Options);
 
     using var httpClient = new HttpClient();
-    var anthropicClient = new AnthropicClient(httpClient, apiKey, model);
-    var suggestionService = new CuratorNoteSuggestionService(dbContext, anthropicClient);
+    var aiClient = new GeminiClient(httpClient, apiKey, model);
+    var suggestionService = new CuratorNoteSuggestionService(dbContext, aiClient);
 
     string suggestion;
     try

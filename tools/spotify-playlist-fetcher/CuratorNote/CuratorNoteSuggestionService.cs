@@ -5,20 +5,20 @@ namespace TheBluesland.SpotifyFetcher.CuratorNote;
 
 /// <summary>
 /// US-016/ADR-0005: reads exactly one <c>spotify_playlist_cache</c> row via the read-only
-/// connection, then asks Anthropic for a draft curator note built only from that row's four
+/// connection, then asks the AI provider for a draft curator note built only from that row's four
 /// permitted fields (<see cref="CuratorNotePromptBuilder"/>). Fails fast on a missing or
-/// unavailable row - <see cref="IAnthropicClient"/> is never called in either case, so no
+/// unavailable row - <see cref="IAiClient"/> is never called in either case, so no
 /// empty/incomplete data ever reaches the AI (US-016 AC3).
 /// </summary>
 public sealed class CuratorNoteSuggestionService
 {
     private readonly TheBlueslandDbContext _dbContext;
-    private readonly IAnthropicClient _anthropicClient;
+    private readonly IAiClient _aiClient;
 
-    public CuratorNoteSuggestionService(TheBlueslandDbContext dbContext, IAnthropicClient anthropicClient)
+    public CuratorNoteSuggestionService(TheBlueslandDbContext dbContext, IAiClient aiClient)
     {
         _dbContext = dbContext;
-        _anthropicClient = anthropicClient;
+        _aiClient = aiClient;
     }
 
     public async Task<string> SuggestAsync(string spotifyPlaylistId, CancellationToken cancellationToken)
@@ -42,6 +42,6 @@ public sealed class CuratorNoteSuggestionService
         }
 
         var prompt = CuratorNotePromptBuilder.Build(entry);
-        return await _anthropicClient.GenerateAsync(prompt, cancellationToken);
+        return await _aiClient.GenerateAsync(prompt, cancellationToken);
     }
 }

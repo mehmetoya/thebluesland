@@ -111,6 +111,6 @@ daraltır: bu ADR'ın madde 1'inde sayılan alanlardan yalnızca dördü (`name`
 `track_count`, `artists`) AI'ya girdi olarak verilebilir hâle geldi. Bu ADR'ın madde 2'si (track
 listesi hiçbir zaman kalıcı saklanmaz veya işlenmez) ve madde 4'ü (credential izolasyonu) aynen
 geçerlidir; ADR-0005 madde 4'ün desenini AI sağlayıcı key'i için tekrar eder
-(`ANTHROPIC_API_KEY` yalnızca `suggest-curator-note.yml` workflow'una scope edilir). AI önerisi
+(`GEMINI_API_KEY` yalnızca `suggest-curator-note.yml` workflow'una scope edilir). AI önerisi
 `spotify_playlist_cache` tablosuna yazılmaz — bu tablo hâlâ yalnızca senkron aracı tarafından
 yazılan bir cache'tir.

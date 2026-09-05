@@ -108,7 +108,7 @@ header comment for the exact steps, including rotating the placeholder passwords
   `sync-spotify.yml`. It is never present in the Render production environment.
 
 Spotify credentials (`SPOTIFY_CLIENT_ID`, `SPOTIFY_REFRESH_TOKEN`) are likewise GitHub Actions
-secrets scoped only to the monthly sync workflow, and `ANTHROPIC_API_KEY` is scoped only to
+secrets scoped only to the monthly sync workflow, and `GEMINI_API_KEY` is scoped only to
 `suggest-curator-note.yml` — none of these four secrets are ever present in Render, `ci.yml`, or
 `deploy.yml`, and `suggest-curator-note.yml` never receives the Spotify or sync-write secrets
 either. This isolation is pinned by regression tests

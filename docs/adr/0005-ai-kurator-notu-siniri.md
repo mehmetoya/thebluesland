@@ -4,6 +4,14 @@ Durum: Kabul edildi ve onaylandı — Mehmet, 2026-09-03 tarihinde bu daraltılm
 açıkça onayladı; Spotify Developer Policy'nin makine-öğrenmesi kısıtlamasından doğan riski bilerek
 kabul etti.
 
+> **2026-09-05 değişikliği — sağlayıcı Anthropic Claude'dan Google Gemini'ye geçti.** Mehmet
+> gerçek $0 maliyet istedi; Anthropic'in API'si ilk istekten itibaren kullanım bazlı ücretlendirme
+> gerektiriyor (ödeme yöntemi zorunlu), Gemini API'nin ise ödeme yöntemi gerektirmeyen, kalıcı bir
+> ücretsiz katmanı var. Bu ADR'ın karar maddeleri (girdi sınırı, taslak-only çıktı, credential
+> izolasyon deseni, bağımsız workflow, DB'ye/web'e hiç ulaşmama) sağlayıcıdan bağımsızdır ve
+> değişmedi — yalnızca somut sağlayıcı adı ve secret adı (`ANTHROPIC_API_KEY` → `GEMINI_API_KEY`)
+> güncellendi, aşağıdaki metinde buna göre yansıtılmıştır.
+
 ## Bağlam
 
 v0.1 ve v0.2 spec'lerinde sabit bir kural vardı: hiçbir Spotify-kaynaklı veri hiçbir AI/ML
@@ -48,7 +56,7 @@ credential deseni), `docs/adr/0003-mimari-kapsam.md` (proje sınırları), spec 
    yazarak veya kopyalayarak) gerçek Markdown kürator notuna taşıması için üretilir. Editoryal
    içeriğe giden tek yol, ADR-0002 madde 5'teki PR-tabanlı içerik onay akışı olarak kalır.
 
-3. **Credential izolasyonu: mevcut Spotify deseniyle aynı.** `ANTHROPIC_API_KEY` yalnızca bir
+3. **Credential izolasyonu: mevcut Spotify deseniyle aynı.** `GEMINI_API_KEY` yalnızca bir
    GitHub Actions repository secret'ı olarak yaşar ve yalnızca öneri workflow'una scope edilir.
    Production Render ortamına asla girmez; `TheBluesland.Web` hiçbir AI sağlayıcısıyla konuşmaz ve
    hiçbir AI SDK'sına referans vermez. SEC-001'in "production'da hiç Spotify/AI credential'ı yok,
@@ -156,7 +164,7 @@ credential deseni), `docs/adr/0003-mimari-kapsam.md` (proje sınırları), spec 
   uygulamasının bu metni render etme ihtimali sıfırdır" garantisi yalnızca canlı siteyi kapsar —
   "kimse göremez" anlamına gelmez. Girdi zaten yalnızca public Spotify verisinden türediği için
   bunun bir gizlilik riski yoktur; yalnızca yanlış anlaşılmasın diye burada açıkça yazılmıştır.
-- `ANTHROPIC_API_KEY` yeni bir GitHub Actions secret'ı olarak eklenir ve yalnızca
+- `GEMINI_API_KEY` yeni bir GitHub Actions secret'ı olarak eklenir ve yalnızca
   `suggest-curator-note.yml` workflow'una scope edilir; `ci.yml`, `deploy.yml` ve
   `sync-spotify.yml` bu secret'a erişmez (ADR-0002 madde 4'ün ayna kuralı).
 - Bu ADR yalnızca kürator notu **önerisini** kapsar. Otomatik mood/genre/occasion/era etiketleme,
