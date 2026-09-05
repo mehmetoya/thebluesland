@@ -425,24 +425,33 @@ yerine bir ilk taslağı düzenleyerek yayına hazırlayabileyim (`docs/adr/0005
 
 Kabul kriterleri:
 
-- [ ] `workflow_dispatch` ile bir `spotifyPlaylistId` girdisi verildiğinde, araç
+- [x] `workflow_dispatch` ile bir `spotifyPlaylistId` girdisi verildiğinde, araç
       `spotify_playlist_cache` tablosundan yalnızca `name`, `description`, `track_count`, `artists`
       alanlarını okur ve Anthropic Claude API'ye yalnızca bu dört alanı girdi olarak gönderir; prompt
       builder'a tüm cache satırı (`is_available`, `synced_at`, `spotify_snapshot_id`,
       `cover_image_url`, `spotify_playlist_id` dahil) verildiğinde üretilen prompt metninde bu dört
-      alan dışındaki hiçbir değerin geçmediği bir regresyon testiyle doğrulanır.
-- [ ] Üretilen taslak metin hiçbir veritabanı tablosuna/kolonuna yazılmaz ve hiçbir koşulda
+      alan dışındaki hiçbir değerin geçmediği bir regresyon testiyle doğrulanır
+      (`CuratorNotePromptBuilderTests`).
+- [x] Üretilen taslak metin hiçbir veritabanı tablosuna/kolonuna yazılmaz ve hiçbir koşulda
       `content/playlists/*.md` dosyasına otomatik yazılmaz; yalnızca workflow'un job summary'sine ve
-      bir build artifact'ına (Markdown dosyası) yazılır.
-- [ ] Verilen `spotifyPlaylistId`, `spotify_playlist_cache` içinde bulunamadığında (henüz senkronize
+      bir build artifact'ına (Markdown dosyası, `actions/upload-artifact`) yazılır.
+- [x] Verilen `spotifyPlaylistId`, `spotify_playlist_cache` içinde bulunamadığında (henüz senkronize
       edilmemiş) veya `is_available = false` olduğunda, araç anlamlı bir hata mesajıyla başarısız
-      olur; AI'ya boş veya eksik veri gönderilmez.
-- [ ] `ANTHROPIC_API_KEY`, yalnızca `suggest-curator-note.yml` workflow'una scope edilmiş bir GitHub
+      olur; AI'ya boş veya eksik veri gönderilmez (`CuratorNoteSuggestionServiceTests` - sahte bir
+      AI client'ı çağrılırsa test'i patlatacak şekilde, her iki dal için de doğrulandı).
+- [x] `ANTHROPIC_API_KEY`, yalnızca `suggest-curator-note.yml` workflow'una scope edilmiş bir GitHub
       Actions repository secret'ıdır; `ci.yml`, `deploy.yml`, `sync-spotify.yml` workflow'larından bu
-      secret'a erişim yoktur (repo secret scope'u ile doğrulanır).
-- [ ] Araç Spotify Web API'ye hiçbir istek atmaz ve hiçbir Spotify credential'ı almaz; tek veri
-      kaynağı Neon'daki salt-okunur bağlantıdır (US-002'deki salt-okunur rol kullanılır).
-- [ ] Workflow loglarında `ANTHROPIC_API_KEY` değeri açık metin olarak görünmez.
+      secret'a erişim yoktur (`SuggestCuratorNoteWorkflowSecretIsolationTests` ile doğrulandı; repo
+      ayarlarında secret'ı bu workflow'a scope etmek Mehmet'in elle yapacağı tek seferlik adım,
+      US-004/US-007 ile aynı desen).
+- [x] Araç Spotify Web API'ye hiçbir istek atmaz ve hiçbir Spotify credential'ı almaz; tek veri
+      kaynağı Neon'daki salt-okunur bağlantıdır (US-002'deki `spotify_cache_readonly` rolü,
+      `NEON_READONLY_CONNECTION_STRING` secret'ı üzerinden — Render'ın env var'ıyla aynı rol/değer,
+      ayrı bir secret olarak tutulur çünkü Render'ın ortam değişkenlerine GitHub Actions'tan
+      erişilemez).
+- [x] Workflow loglarında `ANTHROPIC_API_KEY` değeri açık metin olarak görünmez (kod hiçbir yerde
+      `Console.WriteLine`/log ile yazmıyor; ayrıca GitHub Actions kayıtlı secret değerlerini otomatik
+      maskeler).
 
 Kapsam dışı: otomatik mood/genre/occasion/era etiketleme, track önerisi veya Spotify içeriğinden
 herhangi bir çıkarım (ADR-0005 madde 1, spec bölüm 11.2 — hâlâ yasak); taslağın otomatik olarak PR'a

@@ -1,0 +1,66 @@
+name: Suggest curator note
+
+# US-016 (spec section 18.5, ADR-0005): a manually-triggered, independent draft-suggestion tool -
+# never part of sync-spotify.yml's monthly job. This is the ONLY workflow that may reference the
+# ANTHROPIC_API_KEY and NEON_READONLY_CONNECTION_STRING secrets - ci.yml, deploy.yml and
+# sync-spotify.yml must never declare them (mirrors sync-spotify.yml's own secret-scope comment).
+# Mehmet must additionally restrict these two secrets to this workflow in the GitHub repo settings
+# (Settings > Secrets and variables > Actions) - that scoping is a one-time, code-external step and
+# cannot be enforced from the YAML alone.
+#
+# NEON_READONLY_CONNECTION_STRING must be the spotify_cache_readonly role's connection string
+# (same role, same value, as Render's ConnectionStrings__SpotifyPlaylistCache env var) - never the
+# sync tool's write-scoped NEON_SYNC_CONNECTION_STRING. This tool has no Spotify credential and
+# makes no Spotify Web API call; its only inputs are this read-only DB connection and the
+# playlist's own already-synced cache row.
+#
+# The suggestion is written only to this run's job summary and a build artifact - never to the
+# database or content/playlists (ADR-0005 madde 2/5). Mehmet reads it and, if useful, writes the
+# real curator note himself through the normal pull-request flow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      spotifyPlaylistId:
+        description: "The spotifyPlaylistId to draft a curator-note suggestion for (must already have a spotify_playlist_cache row - run/dispatch sync-spotify.yml first if not)."
+        required: true
+        type: string
+      model:
+        description: "Anthropic model id (optional - defaults to a small, current model in the tool itself if left blank)."
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  suggest:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      NEON_READONLY_CONNECTION_STRING: ${{ secrets.NEON_READONLY_CONNECTION_STRING }}
+      ANTHROPIC_MODEL: ${{ inputs.model }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj
+
+      - name: Build
+        run: dotnet build tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-restore
+
+      - name: Suggest curator note
+        run: |
+          set -euo pipefail
+          dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build -- suggest-curator-note "${{ inputs.spotifyPlaylistId }}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload suggestion artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: curator-note-suggestion
+          path: curator-note-suggestion.md
+          retention-days: 14

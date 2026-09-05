@@ -1059,8 +1059,11 @@ machine (SEC-008, ADR-0005).
   instructions (SEC-008).
 - Writes the suggested draft to the workflow job summary and as a build artifact. It writes
   nothing to the database, nothing to `content/`, and opens no pull request.
-- Uses secret `ANTHROPIC_API_KEY` only; never exposed to any other workflow or to Render
-  (SEC-001).
+- Uses secrets `ANTHROPIC_API_KEY` and `NEON_READONLY_CONNECTION_STRING` only (the latter is the
+  `spotify_cache_readonly` role's connection string — the same role/value as Render's
+  `ConnectionStrings__SpotifyPlaylistCache`, stored separately as its own GitHub Actions secret
+  since Render's environment variables aren't reachable from a GitHub Actions workflow); never
+  exposed to any other workflow or to Render (SEC-001).
 - Mehmet reads the draft and, if useful, writes the real curator note himself through the normal
   pull-request flow (18.3).
 

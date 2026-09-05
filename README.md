@@ -98,17 +98,22 @@ native, immutable-image-based rollback (see `.github/render.yaml`).
 header comment for the exact steps, including rotating the placeholder passwords it ships with):
 
 - `spotify_cache_readonly` — SELECT only. Its connection string is stored as the Render environment
-  variable `ConnectionStrings__SpotifyPlaylistCache` (`.github/render.yaml`). This is the production
-  web app's **only** runtime database access, and its only runtime credential of any kind.
+  variable `ConnectionStrings__SpotifyPlaylistCache` (`.github/render.yaml`) — the production web
+  app's **only** runtime database access — and separately as `NEON_READONLY_CONNECTION_STRING`, a
+  GitHub Actions repository secret scoped only to `suggest-curator-note.yml` (US-016/ADR-0005;
+  Render's environment variables aren't reachable from a GitHub Actions workflow, so the same
+  role's connection string is stored a second time rather than shared).
 - `spotify_cache_readwrite` — SELECT/INSERT/UPDATE. Its connection string is stored as
   `NEON_SYNC_CONNECTION_STRING`, a GitHub Actions repository secret scoped only to
   `sync-spotify.yml`. It is never present in the Render production environment.
 
 Spotify credentials (`SPOTIFY_CLIENT_ID`, `SPOTIFY_REFRESH_TOKEN`) are likewise GitHub Actions
-secrets scoped only to the monthly sync workflow — never Render, never `ci.yml`, never `deploy.yml`.
-This isolation is pinned by regression tests
-(`tests/TheBluesland.UnitTests/Workflows/CiWorkflowSecretIsolationTests.cs` and
-`DeployWorkflowSecretIsolationTests.cs`).
+secrets scoped only to the monthly sync workflow, and `ANTHROPIC_API_KEY` is scoped only to
+`suggest-curator-note.yml` — none of these four secrets are ever present in Render, `ci.yml`, or
+`deploy.yml`, and `suggest-curator-note.yml` never receives the Spotify or sync-write secrets
+either. This isolation is pinned by regression tests
+(`tests/TheBluesland.UnitTests/Workflows/CiWorkflowSecretIsolationTests.cs`,
+`DeployWorkflowSecretIsolationTests.cs` and `SuggestCuratorNoteWorkflowSecretIsolationTests.cs`).
 
 **Connection string format:** Neon's dashboard gives you a `postgresql://user:pass@host/db?...` URI
 by default, which Npgsql also accepts directly. If you hit a
