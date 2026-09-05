@@ -181,4 +181,38 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
         body.ShouldContain("<button type=\"submit\" class=\"filter-apply\">Apply filters</button>");
         body.ShouldContain("href=\"/\" class=\"filter-clear\">Clear filters</a>");
     }
+
+    /// <summary>
+    /// 2026-09-06 fix: the four dropdowns share <c>name="filter-dropdown-group"</c> so the browser
+    /// treats them as one native exclusive-accordion group (opening one auto-closes the others) -
+    /// before this, nothing stopped a visitor opening all four simultaneously (the reported bug).
+    /// </summary>
+    [Fact]
+    public async Task HomePage_filter_dropdowns_share_the_same_details_group_name_for_exclusivity()
+    {
+        var response = await _httpClient.GetAsync("/");
+        var body = await response.Content.ReadAsStringAsync();
+
+        body.Split("name=\"filter-dropdown-group\"").Length.ShouldBe(5); // 4 dropdowns -> 5 split parts
+    }
+
+    /// <summary>
+    /// 2026-09-06 fix: the mobile full-screen panel no longer tries to force the desktop
+    /// &lt;details&gt; dropdowns open via CSS (that never reliably works on a closed
+    /// &lt;details&gt; - see the design-decision comment on HomePage.razor). Instead each
+    /// dimension's checkbox list is rendered a second time inside a plain, always-in-the-DOM
+    /// "filter-mobile-dimension" block, sharing the exact same checked state as its desktop
+    /// counterpart.
+    /// </summary>
+    [Fact]
+    public async Task HomePage_mobile_panel_renders_each_dimension_a_second_time_with_matching_checked_state()
+    {
+        var response = await _httpClient.GetAsync("/?mood=warm");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.Split("class=\"filter-mobile-dimension\"").Length.ShouldBe(5); // 4 blocks -> 5 split parts
+        body.ShouldContain("<h3>Mood (1)</h3>");
+        body.Split("name=\"mood\" value=\"warm\" checked").Length.ShouldBe(3); // desktop + mobile copy
+    }
 }

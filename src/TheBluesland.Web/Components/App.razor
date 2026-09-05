@@ -4,6 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#12141a" />
+    @* A hand-authored SVG vinyl-record mark (amber ring/label/spindle-hole on the site's own navy,
+       spec 10.2's palette) - no third-party asset, no license to track. SVG is the primary icon
+       (scalable, modern browser support); the 32x32 PNG is the fallback for the handful of
+       contexts that still need a raster favicon; apple-touch-icon.png (180x180, Apple's required
+       size) is for iOS/iPadOS "Add to Home Screen", which does not accept SVG at all. All three
+       generated from the identical geometry (see git history for the one-off ImageSharp script),
+       not drawn separately, so they can never visually drift from each other. *@
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     @* Spec section 10.2: dark-first design, so the compiled Tailwind stylesheet (US-013 AC1) is
        the only stylesheet the app ever links - no inline <style> blocks or style="" attributes
        anywhere in Components/, since CSP's style-src is 'self' with no 'unsafe-inline' (US-012). *@

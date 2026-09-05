@@ -40,14 +40,28 @@
     US-021: on narrow screens the same form additionally opens as a full-screen panel via the
     classic zero-JS "checkbox hack" - a visually-hidden `<input type="checkbox">` plus a `<label
     for="...">` that native HTML already toggles on click/tap/Enter with no JavaScript, styled with
-    the `:checked` pseudo-class and the `~` general-sibling combinator in CSS. Deliberately not
-    reusing a second `<details>` wrapper here: that would have required overriding <details>'s own
-    "hide content unless [open]" behavior on desktop, which depends on exactly how a given browser
-    implements that hiding internally - `:checked`/`~` carries no such ambiguity, and the four
-    inner per-dimension `<details class="filter-dropdown">` (US-018) are completely untouched by
-    this - same markup unconditionally, only CSS keyed off the checkbox's state changes at the
-    mobile breakpoint. `body:has(.filter-mobile-toggle:checked)` locks background scroll (AC2) -
-    if a browser lacks `:has()` the fixed, full-viewport panel still covers the list visually.
+    the `:checked` pseudo-class and the `~` general-sibling combinator in CSS.
+
+    2026-09-06 fix: two real bugs found after shipping. (1) The four `<details class="filter-dropdown">`
+    had no relationship to each other, so a visitor could open all four at once with nothing closing
+    the others - a genuine UX mess (screenshot from production), not a rendering bug. Fixed with the
+    native `name` attribute: same-named `<details>` form a browser-managed exclusive group (opening
+    one closes the rest) - zero JS, zero CSS, a purpose-built platform feature for exactly this.
+    (2) The mobile panel originally tried to force all four dropdowns' panels visible via CSS alone
+    while their own `<details>` stayed closed - i.e. override a *closed* `<details>`'s native
+    "don't render this content" behavior. That is the same category of bug that broke the outer
+    wrapper before the checkbox-hack rewrite above: browsers do not reliably let author CSS override
+    it, even when the CSS looks unconditional. `FilterDimensionOptions` (the checkbox loop for one
+    dimension) is therefore rendered twice - once inside each real `<details>` for desktop, once
+    inside a plain, always-rendered `.filter-mobile-dimension` block for the mobile panel - sharing
+    identical name/value/checked attributes either way, so submitting from whichever copy is
+    CSS-visible at the current breakpoint produces the same query string. Plain <div>s carry no
+    "hide unless open" behavior of their own to fight, so this direction needed no override at all -
+    only the safe, always-reliable direction (unconditionally hiding one whole copy or the other per
+    breakpoint) is used anywhere here now.
+
+    `body:has(.filter-mobile-toggle:checked)` locks background scroll (AC2) - if a browser lacks
+    `:has()` the fixed, full-viewport panel still covers the list visually.
 *@
 <nav aria-label="Filters" class="filter-navbar">
     <input type="checkbox" id="filter-mobile-toggle" class="filter-mobile-toggle" />
@@ -56,54 +70,48 @@
         <span class="filter-mobile-trigger-close">Close</span>
     </label>
     <form method="get" action="/" class="filter-navbar-form">
-        <details class="filter-dropdown">
+        <details class="filter-dropdown" name="filter-dropdown-group">
             <summary>@DimensionLabel("Mood", _criteria.Moods.Count)</summary>
             <div class="filter-dropdown-panel">
-                @foreach (var mood in PlaylistTaxonomy.Moods)
-                {
-                    <label>
-                        <input type="checkbox" name="mood" value="@mood" checked="@_criteria.Moods.Contains(mood)" />
-                        @mood
-                    </label>
-                }
+                <FilterDimensionOptions FieldName="mood" Values="PlaylistTaxonomy.Moods" Selected="_criteria.Moods" />
             </div>
         </details>
-        <details class="filter-dropdown">
+        <details class="filter-dropdown" name="filter-dropdown-group">
             <summary>@DimensionLabel("Genre", _criteria.Genres.Count)</summary>
             <div class="filter-dropdown-panel">
-                @foreach (var genre in PlaylistTaxonomy.Genres)
-                {
-                    <label>
-                        <input type="checkbox" name="genre" value="@genre" checked="@_criteria.Genres.Contains(genre)" />
-                        @genre
-                    </label>
-                }
+                <FilterDimensionOptions FieldName="genre" Values="PlaylistTaxonomy.Genres" Selected="_criteria.Genres" />
             </div>
         </details>
-        <details class="filter-dropdown">
+        <details class="filter-dropdown" name="filter-dropdown-group">
             <summary>@DimensionLabel("Occasion", _criteria.Occasions.Count)</summary>
             <div class="filter-dropdown-panel">
-                @foreach (var occasion in PlaylistTaxonomy.Occasions)
-                {
-                    <label>
-                        <input type="checkbox" name="occasion" value="@occasion" checked="@_criteria.Occasions.Contains(occasion)" />
-                        @occasion
-                    </label>
-                }
+                <FilterDimensionOptions FieldName="occasion" Values="PlaylistTaxonomy.Occasions" Selected="_criteria.Occasions" />
             </div>
         </details>
-        <details class="filter-dropdown">
+        <details class="filter-dropdown" name="filter-dropdown-group">
             <summary>@DimensionLabel("Era", _criteria.Eras.Count)</summary>
             <div class="filter-dropdown-panel">
-                @foreach (var era in PlaylistTaxonomy.Eras)
-                {
-                    <label>
-                        <input type="checkbox" name="era" value="@era" checked="@_criteria.Eras.Contains(era)" />
-                        @era
-                    </label>
-                }
+                <FilterDimensionOptions FieldName="era" Values="PlaylistTaxonomy.Eras" Selected="_criteria.Eras" />
             </div>
         </details>
+
+        <div class="filter-mobile-dimension">
+            <h3>@DimensionLabel("Mood", _criteria.Moods.Count)</h3>
+            <FilterDimensionOptions FieldName="mood" Values="PlaylistTaxonomy.Moods" Selected="_criteria.Moods" />
+        </div>
+        <div class="filter-mobile-dimension">
+            <h3>@DimensionLabel("Genre", _criteria.Genres.Count)</h3>
+            <FilterDimensionOptions FieldName="genre" Values="PlaylistTaxonomy.Genres" Selected="_criteria.Genres" />
+        </div>
+        <div class="filter-mobile-dimension">
+            <h3>@DimensionLabel("Occasion", _criteria.Occasions.Count)</h3>
+            <FilterDimensionOptions FieldName="occasion" Values="PlaylistTaxonomy.Occasions" Selected="_criteria.Occasions" />
+        </div>
+        <div class="filter-mobile-dimension">
+            <h3>@DimensionLabel("Era", _criteria.Eras.Count)</h3>
+            <FilterDimensionOptions FieldName="era" Values="PlaylistTaxonomy.Eras" Selected="_criteria.Eras" />
+        </div>
+
         <button type="submit" class="filter-apply">Apply filters</button>
         <a href="/" class="filter-clear">Clear filters</a>
     </form>
