@@ -344,6 +344,40 @@
   display: none;
 }
 
+/* 2026-09-06 fix: the mobile panel's four dimensions are plain, always-rendered <div>s (see
+   HomePage.razor's design-decision comment) - a duplicate of the same checkboxes the desktop
+   <details> accordions render, kept out of view on desktop by simply hiding the whole block. A
+   plain <div> has no "hide unless open" behavior of its own to fight, unlike a closed <details>'s
+   content - this is the one direction (hiding something CSS is fully entitled to hide regardless
+   of anything else) that is always safe. */
+.filter-mobile-dimension {
+  display: none;
+}
+
+.filter-mobile-dimension h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.filter-mobile-dimension label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  padding: 0.375rem 0;
+}
+
+.filter-mobile-dimension input[type="checkbox"] {
+  accent-color: var(--color-accent);
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
 @media (max-width: 40rem) {
   .filter-navbar {
     padding: 0.5rem;
@@ -401,26 +435,16 @@
     gap: 1rem;
   }
 
-  /* All four dimensions need to be visible together (AC1), not opened one at a time - force each
-     inner dropdown's panel open and turn its own <summary> into an inert heading. */
-  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-dropdown {
-    position: static;
-  }
-
-  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-dropdown > summary {
-    cursor: default;
-    pointer-events: none;
-  }
-
-  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-dropdown > summary::after {
+  /* AC1: all four dimensions visible together, not opened one at a time - swap which of the two
+     always-in-the-DOM copies (see HomePage.razor/the .filter-mobile-dimension rule above) is
+     shown. The desktop accordions are entirely hidden here (safe: hiding a <details> regardless
+     of its own open state, not touching its content); the mobile blocks become visible instead. */
+  .filter-dropdown {
     display: none;
   }
 
-  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-dropdown-panel {
-    display: flex;
-    position: static;
-    max-height: none;
-    box-shadow: none;
+  .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-mobile-dimension {
+    display: block;
   }
 
   .filter-mobile-toggle:checked ~ .filter-navbar-form .filter-apply,

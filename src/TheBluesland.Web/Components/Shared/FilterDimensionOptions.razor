@@ -1,0 +1,23 @@
+@* US-018/US-021: the raw checkbox list for one filter dimension (mood/genre/occasion/era),
+   factored out so it can be rendered twice - once inside the desktop `<details>` accordion, once
+   inside the mobile always-visible panel - without duplicating the loop itself. Both renderings
+   share the same `name`/`value`/`checked` triples, so which one is CSS-visible at a given
+   breakpoint is purely presentational; either one produces an identical query string on submit. *@
+@foreach (var value in Values)
+{
+    <label>
+        <input type="checkbox" name="@FieldName" value="@value" checked="@Selected.Contains(value)" />
+        @value
+    </label>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public required string FieldName { get; set; }
+
+    [Parameter, EditorRequired]
+    public required IReadOnlyCollection<string> Values { get; set; }
+
+    [Parameter, EditorRequired]
+    public required IReadOnlyCollection<string> Selected { get; set; }
+}
