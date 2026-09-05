@@ -4,11 +4,18 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 ## Aktif
 
-Backlog'daki 16 hikayenin (US-001..US-016) hepsi tamamlandı — bkz. Tamamlanan. Şu an aktif bir
-hikaye yok; sıradaki iş kullanıcı talebiyle belirlenecek.
+Şu an aktif bir hikaye yok; sıradaki iş açık backlog sırasına göre ilerliyor (Mehmet, 2026-09-05:
+"açık backloglardan sıradan gidelim").
 
 ## Sıradaki
 
+- **US-019 — Playlist kataloğunu kaydırdıkça kademeli yükle (Should).** Sırada bir sonraki:
+  120 playlist'lik kataloğu ilk yüklemede yalnızca ilk N (ör. 24) ile göstermek, "daha fazla
+  yükle" ile devam etmek — bağımlılığı yok, US-018'den sonra doğal sıradaki.
+- **US-021 — Mobil tam-ekran filtre deneyimi (Could).** Bağımlılığı US-018 (tamamlandı); aynı
+  URL query-string mekanizmasını paylaşıyor.
+- US-017'nin Could kriteri (10 aday dosyanın occasion etiketinin `focus`/`dancing`'e taşınması) —
+  içerik PR'ı, kod değişikliği değil; Mehmet uygun görürse ayrı istenebilir.
 - Bilinen küçük doküman/hijyen açıkları (2026-09-05 denetiminde bulundu, kod değil): ADR
   numaralandırmasında 0004 boşluğu (atlanmış mı belli değil); `displayOrder`/`publishedAt`in 120
   playlist'in çoğunda ayrım yapmaması (ana sayfa sıralaması şu an dosya-adı sırasına yakın) —
@@ -21,6 +28,18 @@ hikaye yok; sıradaki iş kullanıcı talebiyle belirlenecek.
 
 ## Tamamlanan
 
+- **US-018 — Filtreleri navbar'a taşı (dropdown deseni) (2026-09-06).** Ana sayfanın hep-açık
+  `<fieldset>` filtre formu, dört bağımsız native `<details>`/`<summary>` dropdown'undan oluşan
+  bir `.filter-navbar`'a dönüştürüldü (`HomePage.razor`, `Styles/app.css`). `<details>` native
+  olduğu için her dropdown yalnızca kendi panelini gösterir ve JavaScript'e ihtiyaç duymaz;
+  US-009'daki `<form method="get">`/query-string filtre mekanizması değişmeden korundu. Her
+  dropdown'ın `<summary>`'si aktif seçim sayısını "Dimension (N)" biçiminde gösteriyor. Ok
+  ikonunun dönüşü `prefers-reduced-motion: no-preference` ile korumalı (Could kriteri). Yeni iki
+  `HomePageFilterIntegrationTests` testi dropdown yapısını ve aktif-sayı etiketlerini gerçek
+  render edilmiş HTML'e karşı doğruluyor. Testcontainers Postgres'e karşı 193/193 test yeşil,
+  `dotnet format --verify-no-changes` temiz, Tailwind `build:css` başarılı. Çalışma
+  `fix/gemini-retry-transient-5xx` (açık PR #17, ilgisiz Gemini retry fix'i) yerine ondan ayrı
+  `feature/us-018-filter-navbar` dalına taşındı, PR kapsamları karışmasın diye.
 - **US-016 — AI destekli kürator notu taslağı önerisi (2026-09-05).** Backlog'un son açık
   hikayesi. `tools/spotify-playlist-fetcher`'a yeni bir `suggest-curator-note <spotifyPlaylistId>`
   verb'i eklendi (ADR-0005): `NEON_READONLY_CONNECTION_STRING` (yeni, `suggest-curator-note.yml`'a
