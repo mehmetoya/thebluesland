@@ -153,9 +153,14 @@ static async Task<int> SuggestCuratorNoteAsync(string spotifyPlaylistId, Cancell
     // and Gemini has a real free tier (no billing account needed) unlike Anthropic's usage-based
     // API. Flash is on that free tier and gives noticeably better prose than Flash-Lite for a
     // short creative draft.
+    //
+    // gemini-2.5-flash was the first choice but 404s as of 2026-09-05 - Gemini's model catalog
+    // rotates quickly (ai.google.dev's own current examples had already moved to 3.8-flash by this
+    // date). Verified end-to-end against the real API (a live workflow_dispatch run, not just
+    // documentation) before picking this default - see PR history for that verification.
     var model = Environment.GetEnvironmentVariable("GEMINI_MODEL") is { Length: > 0 } configuredModel
         ? configuredModel
-        : "gemini-2.5-flash";
+        : "gemini-3.8-flash";
 
     var optionsBuilder = new DbContextOptionsBuilder<TheBlueslandDbContext>().UseNpgsql(connectionString);
     await using var dbContext = new TheBlueslandDbContext(optionsBuilder.Options);

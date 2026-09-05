@@ -15,7 +15,7 @@ namespace TheBluesland.UnitTests.SpotifyFetcher;
 public sealed class GeminiClientTests
 {
     private const string ApiKey = "test-api-key";
-    private const string Model = "gemini-2.5-flash";
+    private const string Model = "gemini-3.8-flash";
 
     [Fact]
     public async Task GenerateAsync_sends_the_api_key_as_a_header_and_the_prompt_as_the_request_body()
