@@ -1,0 +1,21 @@
+@page "/collections"
+
+<PageTitle>Spotify Playlist Collections - TheBluesland</PageTitle>
+<PageMetadata Title="Spotify Playlist Collections - TheBluesland"
+              Description="Explore TheBluesland's hand-curated Spotify library through Anadolu rock, blues and late-night listening collections."
+              CanonicalPath="/collections" ImagePath="/og-image.png" />
+
+<section class="brand-intro">
+    <h1>Find your next playlist</h1>
+    <p>Start with a genre or a listening occasion. Each collection leads to playlists with their own curator notes and Spotify links.</p>
+</section>
+<div class="collection-links">
+    @foreach (var collection in PlaylistCollections.All)
+    {
+        <a class="collection-link" href="@($"/collections/{collection.Slug}")">
+            <h2>@collection.Title</h2>
+            <p>@collection.Description</p>
+        </a>
+    }
+</div>
+<p><a href="/">Browse all playlists and filters</a></p>

@@ -23,6 +23,7 @@ public static class AiDiscoveryGenerator
         var text = new StringBuilder("# TheBluesland\n\n> ").Append(SiteDescription)
             .Append("\n\nPlaylist pages contain editorial descriptions, not complete track listings. Listen through the Spotify links on each page.\n\n## Site\n\n")
             .Append("- [Catalogue](").Append(SiteUrl.BuildAbsolute(context, "/")).Append("): Browse published playlists.\n")
+            .Append("- [Collections](").Append(SiteUrl.BuildAbsolute(context, "/collections")).Append("): Explore genres and listening occasions.\n")
             .Append("- [About](").Append(SiteUrl.BuildAbsolute(context, "/about")).Append("): About the collection.\n")
             .Append("\n## Playlists\n\n");
         foreach (var playlist in playlists.Where(item => item.IsPublished).OrderBy(item => item.Slug, StringComparer.Ordinal))
