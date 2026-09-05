@@ -1,10 +1,20 @@
 <article class="playlist-card">
-    <h2>@Content.Title</h2>
-    <p class="summary">@Content.Summary</p>
-    @if (CacheSnapshot is { IsPlayable: true, TrackCount: { } trackCount })
+    @if (CacheSnapshot is { IsPlayable: true, CoverImageUrl: { } coverImageUrl })
     {
-        <p class="track-count">@trackCount tracks</p>
+        <img class="playlist-card-cover" src="@coverImageUrl" alt="" loading="lazy" />
     }
+    else
+    {
+        <div class="playlist-card-cover playlist-card-cover-placeholder" aria-hidden="true"></div>
+    }
+    <div class="playlist-card-body">
+        <h2>@Content.Title</h2>
+        <p class="summary">@Content.Summary</p>
+        @if (CacheSnapshot is { IsPlayable: true, TrackCount: { } trackCount })
+        {
+            <p class="track-count">@trackCount tracks</p>
+        }
+    </div>
 </article>
 
 @code {

@@ -3,12 +3,21 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#12141a" />
+    @* Spec section 10.2: dark-first design, so the compiled Tailwind stylesheet (US-013 AC1) is
+       the only stylesheet the app ever links - no inline <style> blocks or style="" attributes
+       anywhere in Components/, since CSP's style-src is 'self' with no 'unsafe-inline' (US-012). *@
+    <link rel="stylesheet" href="/css/app.css" />
     @* US-011 AC1: the per-page <PageTitle> (every route sets one) is the single source of <title> -
        a static fallback here would render as a second, duplicate <title> element alongside it
        (verified empirically), which is exactly what AC1's "unique <title> per page" rules out. *@
     <HeadOutlet />
 </head>
 <body>
-    <Routes />
+    <SiteHeader />
+    <main class="site-main">
+        <Routes />
+    </main>
+    <SiteFooter />
 </body>
 </html>

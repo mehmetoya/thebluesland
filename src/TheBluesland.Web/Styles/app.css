@@ -1,5 +1,520 @@
-/* US-013 AC1 / spec 12.2: Tailwind CSS 4 entry point. `npm run build:css` (see package.json)
-   compiles this into wwwroot/css/app.css. No Razor markup consumes that stylesheet yet - wiring
-   a <link> into Components/App.razor and adopting Tailwind utility classes is separate, later
-   design work; this story only sets up the build chain and proves it runs in CI/Docker. */
+/* US-013 AC1 / spec 12.2: Tailwind CSS 4 entry point, compiled by `npm run build:css` into
+   wwwroot/css/app.css and linked from Components/App.razor. Design tokens and component styles
+   below implement spec section 10 ("late-night record room" visual direction, approved
+   2026-09-05) - see docs/business-technical-specification.md#10-visual-and-editorial-direction
+   for the brief this is built from. */
 @import "tailwindcss";
+
+@theme {
+  /* Deep navy/charcoal foundation (10.2) - no pure black, so elevated surfaces can read as
+     lighter without ever approaching white. */
+  --color-bg: #12141b;
+  --color-bg-elevated: #1a1d27;
+  --color-bg-elevated-hover: #212533;
+  --color-border: rgb(233 224 210 / 12%);
+  --color-border-strong: rgb(233 224 210 / 22%);
+
+  /* Warm off-white text (10.2) - never pure white, which would read as cold/clinical against
+     the navy background. */
+  --color-text: #ece5d8;
+  --color-text-muted: #a79f92;
+
+  /* One warm accent (10.2: amber/rust/aged gold) - used sparingly for links, focus states and
+     the one primary action (Open in Spotify). Never green (10.2: "no Spotify-green-dominated
+     visual identity"). */
+  --color-accent: #d99a4e;
+  --color-accent-strong: #e8ac66;
+  --color-accent-contrast: #1a1206;
+
+  /* Muted electric-blue (10.2) - a quiet secondary accent for tags/breadcrumbs, distinct enough
+     from the amber accent to signal "metadata" rather than "action". */
+  --color-secondary: #6f93b8;
+
+  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  /* Subtle grain texture (10.2: "implemented as a lightweight owned asset") - a small self-made
+     SVG noise tile (wwwroot/images/grain.svg), never an unlicensed photograph. Fixed and
+     pointer-events:none so it never intercepts clicks or scrolls with the page. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("/images/grain.svg");
+    background-repeat: repeat;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--color-text);
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration-color: rgb(217 154 78 / 45%);
+    text-underline-offset: 0.15em;
+  }
+
+  a:hover {
+    color: var(--color-accent-strong);
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-accent-contrast);
+  }
+}
+
+/* Site chrome (header/footer): not covered by any US story's markup - added alongside this
+   design pass because a stylesheet alone cannot fix a site with no persistent navigation between
+   Home/About/Privacy/Terms. */
+.site-header {
+  position: relative;
+  z-index: 1;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-header-inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.site-wordmark {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.site-wordmark:hover {
+  color: var(--color-accent);
+}
+
+.site-nav {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.9375rem;
+}
+
+.site-nav a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.site-nav a:hover {
+  color: var(--color-accent);
+}
+
+.site-main {
+  position: relative;
+  z-index: 1;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+}
+
+.site-footer {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--color-border);
+  margin-top: 3rem;
+}
+
+.site-footer-inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.site-footer-nav {
+  display: flex;
+  gap: 1.25rem;
+  font-size: 0.875rem;
+}
+
+.site-footer-nav a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.site-footer-nav a:hover {
+  color: var(--color-accent);
+}
+
+.site-footer-attribution {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  max-width: 40rem;
+}
+
+/* Home page */
+.brand-intro {
+  max-width: 42rem;
+  margin-bottom: 2.5rem;
+}
+
+.brand-intro h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.brand-intro p {
+  color: var(--color-text-muted);
+  font-size: 1.0625rem;
+}
+
+.catalogue-filters {
+  margin-bottom: 2.5rem;
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.filter-form fieldset {
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem 1rem;
+  background-color: var(--color-bg-elevated);
+  min-width: 0;
+}
+
+.filter-form legend {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  padding: 0 0.375rem;
+}
+
+.filter-form label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  margin: 0.25rem 0.75rem 0.25rem 0;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.filter-form input[type="checkbox"] {
+  accent-color: var(--color-accent);
+  width: 1rem;
+  height: 1rem;
+}
+
+.filter-form button {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  background-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-form button:hover {
+  background-color: var(--color-accent-strong);
+}
+
+.catalogue h2 {
+  font-size: 1.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.catalogue {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1.25rem;
+}
+
+/* The <h2>Playlists</h2> heading is a grid sibling, not a grid item - override the shorthand
+   grid above just for it so it spans the full row instead of taking one card-sized cell. */
+.catalogue > h2,
+.catalogue > .no-results,
+.catalogue > p,
+.catalogue > .clear-filters {
+  grid-column: 1 / -1;
+}
+
+.no-results {
+  color: var(--color-text-muted);
+}
+
+.clear-filters {
+  display: inline-block;
+  width: fit-content;
+}
+
+.playlist-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.playlist-card {
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .playlist-card-link:hover .playlist-card {
+    transform: translateY(-2px);
+  }
+}
+
+.playlist-card-link:hover .playlist-card {
+  background-color: var(--color-bg-elevated-hover);
+  border-color: var(--color-border-strong);
+}
+
+.playlist-card-cover {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background-color: var(--color-bg-elevated-hover);
+}
+
+.playlist-card-cover-placeholder {
+  background: linear-gradient(135deg, var(--color-bg-elevated-hover), var(--color-bg));
+}
+
+.playlist-card-body {
+  padding: 1rem 1.125rem 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  flex: 1;
+}
+
+.playlist-card h2 {
+  font-size: 1.0625rem;
+  margin: 0;
+}
+
+.playlist-card .summary {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.playlist-card .track-count {
+  color: var(--color-secondary);
+  font-size: 0.8125rem;
+  margin: 0.125rem 0 0;
+}
+
+/* Playlist detail page */
+.breadcrumb {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1rem;
+}
+
+.breadcrumb a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  color: var(--color-accent);
+}
+
+.breadcrumb [aria-current="page"] {
+  color: var(--color-text);
+}
+
+.playlist-detail h1 {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.playlist-detail .summary {
+  color: var(--color-text-muted);
+  font-size: 1.0625rem;
+  max-width: 42rem;
+}
+
+.tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 1rem 0 1.5rem;
+}
+
+.tags li {
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  color: var(--color-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+}
+
+.curator-note {
+  max-width: 42rem;
+  font-size: 1.0625rem;
+  color: var(--color-text);
+}
+
+.curator-note p {
+  margin-bottom: 1.1em;
+}
+
+.cover-image {
+  max-width: 20rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+  border: 1px solid var(--color-border);
+}
+
+.track-count {
+  color: var(--color-secondary);
+  font-size: 0.875rem;
+}
+
+.spotify-embed {
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border);
+  margin: 1rem 0 1.5rem;
+  display: block;
+}
+
+.player-placeholder,
+.player-unavailable {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  max-width: 32rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.load-player-link {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.open-in-spotify {
+  display: inline-block;
+  background-color: transparent;
+  color: var(--color-accent);
+  border: 1px solid var(--color-accent);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1.125rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 2rem;
+}
+
+.open-in-spotify:hover {
+  background-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.related-playlists {
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 2rem;
+}
+
+.related-playlists h2 {
+  font-size: 1.125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.related-playlists {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1.25rem;
+}
+
+.related-playlists > h2 {
+  grid-column: 1 / -1;
+}
+
+/* About/Privacy/Terms - simple readable article pages */
+.about,
+.privacy,
+.terms {
+  max-width: 38rem;
+}
+
+.about h1,
+.privacy h1,
+.terms h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.about p,
+.privacy p,
+.terms p {
+  color: var(--color-text-muted);
+  margin-bottom: 1.1em;
+  font-size: 1.0625rem;
+}
