@@ -78,7 +78,8 @@ public sealed class SmokeTests : IAsyncLifetime
         Directory.CreateDirectory(screenshots);
         await page.ScreenshotAsync(new PageScreenshotOptions
         {
-            Path = Path.Combine(screenshots, $"collections-{width}.png"), FullPage = true,
+            Path = Path.Combine(screenshots, $"collections-{width}.png"),
+            FullPage = true,
         });
         await page.Locator(".collection-link[href='/collections/anadolu-rock']").ClickAsync();
         await page.GetByRole(AriaRole.Heading, new() { Name = "Anadolu Rock Playlists", Exact = true }).WaitForAsync();
