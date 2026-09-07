@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using TheBluesland.Data;
@@ -45,6 +47,11 @@ public static class WebHostFactory
         {
             throw new InvalidOperationException("Site:PublicOrigin must be an HTTPS origin without a path, query or credentials.");
         }
+
+        // Gates /health/cache below. Read here (rather than via injected IConfiguration in the
+        // handler) so a missing value fails the same way a wrong one does - no special-cased "not
+        // configured" branch to forget.
+        var cacheHealthKey = builder.Configuration["Diagnostics:CacheHealthKey"];
 
         // Local hostnames permit local development; public traffic must use the configured host.
         builder.Configuration["AllowedHosts"] = $"{publicUri.Host};localhost;127.0.0.1;[::1]";
@@ -144,6 +151,43 @@ public static class WebHostFactory
             Predicate = _ => false,
         });
 
+        // Deliberately DB-dependent (unlike /health/ready, FR-024/16.2) - a read-only probe so
+        // cache connectivity can be checked without Render dashboard/log access, matching
+        // PlaylistCacheLookup's own never-throws contract. A 2026-09-06 security review (PR #29)
+        // removed the original, fully public version of this endpoint as an information-disclosure
+        // finding; re-added here gated on a shared-secret `key` query parameter (constant-time
+        // compared against Diagnostics__CacheHealthKey, a Render-only value, never committed).
+        // Query string rather than a header: the only real consumer - fetching this without Render
+        // dashboard access - can only issue a plain unauthenticated GET with no custom headers. A
+        // missing, wrong, or unconfigured key returns 404 rather than 401/403, so an anonymous
+        // prober gets no signal this route exists at all, same as before the security review.
+        // Reports only row counts (already implied by the public catalogue's size to anyone who
+        // does hold the key) and, on failure, the exception type name only - never ex.Message or
+        // the connection string, since some Npgsql failure modes echo connection details back in
+        // the message.
+        app.MapGet("/health/cache", async (
+            HttpContext context,
+            IDbContextFactory<TheBlueslandDbContext> dbContextFactory,
+            CancellationToken cancellationToken) =>
+        {
+            if (!IsAuthorizedCacheHealthRequest(context, cacheHealthKey))
+            {
+                return Results.NotFound();
+            }
+
+            try
+            {
+                await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+                var total = await dbContext.SpotifyPlaylistCache.CountAsync(cancellationToken);
+                var available = await dbContext.SpotifyPlaylistCache.CountAsync(row => row.IsAvailable, cancellationToken);
+                return Results.Json(new { reachable = true, totalRows = total, availableRows = available });
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                return Results.Json(new { reachable = false, errorType = ex.GetType().Name });
+            }
+        });
+
         // Only published content enters the sitemap. SiteUrl uses the configured public origin,
         // independent of the incoming Host and forwarded headers.
         app.MapGet("/sitemap.xml", async (
@@ -196,5 +240,22 @@ public static class WebHostFactory
         app.MapRazorComponents<App>();
 
         return app;
+    }
+
+    // Length-checked before FixedTimeEquals (which requires equal-length spans) so an unconfigured
+    // or wrong-length key still compares in a way that reveals nothing timing-wise beyond "no".
+    private static bool IsAuthorizedCacheHealthRequest(HttpContext context, string? configuredKey)
+    {
+        if (string.IsNullOrEmpty(configuredKey))
+        {
+            return false;
+        }
+
+        var providedKey = context.Request.Query["key"].ToString();
+        var configuredBytes = Encoding.UTF8.GetBytes(configuredKey);
+        var providedBytes = Encoding.UTF8.GetBytes(providedKey);
+
+        return configuredBytes.Length == providedBytes.Length &&
+            CryptographicOperations.FixedTimeEquals(configuredBytes, providedBytes);
     }
 }

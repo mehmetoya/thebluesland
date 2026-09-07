@@ -22,6 +22,7 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     // Nothing listens on loopback port 1 (tcpmux); connection attempts fail fast and reliably.
     private const string UnreachableConnectionString =
         "Host=127.0.0.1;Port=1;Username=postgres;Password=postgres;Database=thebluesland;Timeout=2";
+    private const string CacheHealthKey = "test-diagnostic-key";
 
     private WebApplication _app = null!;
     private HttpClient _httpClient = null!;
@@ -35,6 +36,7 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
             builder.WebHost.UseUrls("http://127.0.0.1:0");
             builder.Configuration[TheBluesland.Web.Content.PlaylistContentRepository.ContentDirectoryConfigKey] = contentDirectory;
             builder.Configuration[$"ConnectionStrings:{WebHostFactory.ConnectionStringName}"] = UnreachableConnectionString;
+            builder.Configuration["Diagnostics:CacheHealthKey"] = CacheHealthKey;
         });
 
         await _app.StartAsync();
@@ -68,10 +70,27 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task HealthCache_diagnostic_endpoint_is_not_publicly_available()
+    public async Task HealthCache_is_not_available_to_a_request_with_no_key()
     {
         using var response = await _httpClient.GetAsync("/health/cache");
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task HealthCache_is_not_available_to_a_request_with_the_wrong_key()
+    {
+        using var response = await _httpClient.GetAsync("/health/cache?key=wrong-key");
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task HealthCache_reports_unreachable_to_a_request_with_the_correct_key()
+    {
+        using var response = await _httpClient.GetAsync($"/health/cache?key={CacheHealthKey}");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("\"reachable\":false");
     }
 
     [Fact]
