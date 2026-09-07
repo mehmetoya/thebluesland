@@ -23,12 +23,16 @@ namespace TheBluesland.SpotifyFetcher.Spotify;
 public sealed class SpotifyPlaylistClient
 {
     private const string BaseUrl = "https://api.spotify.com/v1";
+    private const int MaxRateLimitAttempts = 5;
+    private static readonly TimeSpan DefaultRateLimitRetryDelay = TimeSpan.FromSeconds(1);
 
     private readonly HttpClient _httpClient;
+    private readonly TimeSpan _rateLimitRetryDelay;
 
-    public SpotifyPlaylistClient(HttpClient httpClient)
+    public SpotifyPlaylistClient(HttpClient httpClient, TimeSpan? rateLimitRetryDelay = null)
     {
         _httpClient = httpClient;
+        _rateLimitRetryDelay = rateLimitRetryDelay ?? DefaultRateLimitRetryDelay;
     }
 
     public async Task<SpotifyPlaylistFetchResult> FetchAsync(
@@ -256,8 +260,39 @@ public sealed class SpotifyPlaylistClient
         string accessToken,
         CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(method, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-        return await _httpClient.SendAsync(request, cancellationToken);
+        for (var attempt = 1; attempt <= MaxRateLimitAttempts; attempt++)
+        {
+            using var request = new HttpRequestMessage(method, url);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            if (response.StatusCode != HttpStatusCode.TooManyRequests
+                || attempt == MaxRateLimitAttempts)
+            {
+                return response;
+            }
+
+            var retryDelay = GetRateLimitRetryDelay(response, attempt);
+            response.Dispose();
+            await Task.Delay(retryDelay, cancellationToken);
+        }
+
+        throw new InvalidOperationException("Spotify rate-limit retry loop ended unexpectedly.");
+    }
+
+    private TimeSpan GetRateLimitRetryDelay(HttpResponseMessage response, int attempt)
+    {
+        if (response.Headers.RetryAfter?.Delta is { } delta)
+        {
+            return delta;
+        }
+
+        if (response.Headers.RetryAfter?.Date is { } retryAt)
+        {
+            var delay = retryAt - DateTimeOffset.UtcNow;
+            return delay > TimeSpan.Zero ? delay : TimeSpan.Zero;
+        }
+
+        return TimeSpan.FromTicks(_rateLimitRetryDelay.Ticks * attempt);
     }
 }
