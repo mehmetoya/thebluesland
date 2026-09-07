@@ -93,14 +93,20 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
         body.ShouldContain("\"reachable\":false");
     }
 
+    /// <summary>
+    /// 2026-09-07: a connection-level Npgsql failure (this fixture's whole point) must never echo
+    /// ex.Message - some Npgsql failure modes include host/credential fragments in it, the same
+    /// concern the aggregate branch above was already built to avoid.
+    /// </summary>
     [Fact]
-    public async Task HealthCache_with_an_id_also_reports_unreachable_when_the_database_cannot_be_reached()
+    public async Task HealthCache_with_an_id_reports_unreachable_without_leaking_the_exception_message()
     {
         using var response = await _httpClient.GetAsync($"/health/cache?key={CacheHealthKey}&id=someId");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldContain("\"reachable\":false");
+        body.ShouldContain("\"errorMessage\":null");
     }
 
     [Fact]
