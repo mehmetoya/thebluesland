@@ -319,8 +319,8 @@ and curator note for both before publication (see section 23, item 3, still open
 
 No title, genre or mood will be inferred automatically from Spotify content; the draft tags above
 were assigned by a human (product owner) reading the playlist name and genre context, not by any
-automated or AI process. Automated taxonomy assignment remains prohibited (section 11.2) — the
-narrowed AI allowance of ADR-0005 covers curator-note prose suggestions only, never tags.
+automated or AI process. Automated taxonomy assignment remains prohibited except for the era
+fallback in section 8.6 (section 11.2). The narrowed AI allowance of ADR-0005 covers curator-note prose suggestions only, never tags.
 
 ### 7.1 Launch content requirement
 
@@ -332,8 +332,8 @@ realistic entries before release.
 
 ## 8. Editorial taxonomy
 
-The taxonomy is owned by TheBluesland and must be manually assigned. Values are stable
-identifiers; display labels may later be localised.
+The taxonomy is owned by TheBluesland and is manually assigned except for the automatic era
+fallback approved in section 8.6. Values are stable identifiers; display labels may later be localised.
 
 ### 8.1 Taxonomy width — resolved
 
@@ -457,6 +457,16 @@ this is a content sign-off, not a blocker for starting the technical scaffold (s
 this item resolved). Once content is published, identifiers should remain stable even if their
 user-facing labels change.
 
+**2026-09-07 owner decision — automatic eras (US-023).** Monthly sync calculates era tags from
+Spotify album release dates in the same paginated pass as artist names and stores only the
+playlist-level `computed_eras` array. The web app automatically replaces a sole `mixed-era` tag
+with this array; explicitly assigned periods (including multi-era lists) take precedence.
+At least 10 dated tracks are required. Each bucket with at least 20% qualifies; `mixed-era`
+remains when no bucket reaches 60%. Insufficient data, missing/unavailable cache rows or database
+failure retain the editorial tags. No per-playlist approval is required. Dates describe the
+Spotify album release, which can be a reissue rather than the original recording date.
+The web era cache refreshes within five minutes; a sync does not require a web restart.
+
 ---
 
 ## 9. Content model
@@ -515,6 +525,7 @@ from the web application:
 | `cover_image_url` | text, nullable | Spotify-hosted URL, referenced only, never downloaded or re-hosted (FR-031) |
 | `track_count` | integer | Total track count as of last sync |
 | `artists` | text array | Distinct contributing artist display names; order not significant |
+| `computed_eras` | text array, nullable | Automatic playlist era tags (8.6); null before first era sync, empty for insufficient data |
 | `spotify_snapshot_id` | text, nullable | Spotify's own change-detection token, stored for future incremental sync |
 | `synced_at` | timestamptz | UTC time of the last successful sync |
 | `is_available` | boolean | False if the last sync could not find the playlist on Spotify (see FR-024) |
@@ -522,8 +533,8 @@ from the web application:
 **Explicitly excluded from this table, permanently:** individual track titles, track IDs, track
 durations, ISRCs, audio-feature data (tempo/energy/valence/etc.), per-track artist attribution,
 and playlist owner/follower data. These are read transiently in memory during sync (to compute
-`track_count` and `artists`) and are never written to any store. This boundary is the direct
-implementation of section 11.2 and is documented in `docs/adr/0002-spotify-veri-mimarisi.md`.
+`track_count`, `artists` and `computed_eras`) and are never written to any store. This boundary
+is the direct implementation of section 11.2 and is documented in `docs/adr/0002-spotify-veri-mimarisi.md`.
 
 **Also excluded, by decision:** AI-generated curator-note suggestions (section 18.5). No
 `ai_suggested_*` column is added to this table and no suggestion table exists; the suggestion is a
@@ -615,7 +626,7 @@ content authoring may proceed in English now.
   see section 9.4 for exactly which fields.)
 - Automatically analysing Spotify content to derive mood, genre, popularity or listener profiles.
   The AI allowance above produces prose suggestions only; taxonomy tags stay human-assigned
-  (section 7, section 8).
+  except for the deterministic era fallback approved in section 8.6.
 - Publishing AI output automatically. No machine may write to `content/playlists/*.md` or set
   `status: published`; the pull-request review flow (section 18.3) remains the only path into
   editorial content.

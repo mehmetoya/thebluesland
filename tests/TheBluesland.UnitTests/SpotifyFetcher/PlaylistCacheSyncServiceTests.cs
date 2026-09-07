@@ -176,6 +176,42 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
         rowCount.ShouldBe(0);
     }
 
+    [Fact]
+    public async Task SyncAsync_persists_recalculates_and_clears_eras_when_data_becomes_insufficient()
+    {
+        var year = "1971";
+        var datedCount = 10;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+        {
+            if (request.RequestUri!.AbsolutePath == $"/v1/playlists/{AvailablePlaylistId}")
+            {
+                return JsonResponse("""{"name":"Era test","items":{"total":10}}""");
+            }
+
+            var items = Enumerable.Range(0, datedCount).Select(_ => new
+            {
+                item = new { album = new { release_date = year } },
+            });
+            return JsonResponse(System.Text.Json.JsonSerializer.Serialize(new { items, next = (string?)null }));
+        }));
+        await using var dbContext = await CreateMigratedDbContextAsync();
+        var service = new PlaylistCacheSyncService(new SpotifyPlaylistClient(httpClient), dbContext);
+
+        await service.SyncAsync([AvailablePlaylistId], AccessToken, CancellationToken.None);
+        var entry = await dbContext.SpotifyPlaylistCache.AsNoTracking().SingleAsync();
+        entry.ComputedEras.ShouldBe(["1970s"]);
+
+        year = "1985";
+        await service.SyncAsync([AvailablePlaylistId], AccessToken, CancellationToken.None);
+        entry = await dbContext.SpotifyPlaylistCache.AsNoTracking().SingleAsync();
+        entry.ComputedEras.ShouldBe(["1980s-1990s"]);
+
+        datedCount = 9;
+        await service.SyncAsync([AvailablePlaylistId], AccessToken, CancellationToken.None);
+        entry = await dbContext.SpotifyPlaylistCache.AsNoTracking().SingleAsync();
+        entry.ComputedEras.ShouldNotBeNull().ShouldBeEmpty();
+    }
+
     private async Task<TheBlueslandDbContext> CreateMigratedDbContextAsync()
     {
         var optionsBuilder = new DbContextOptionsBuilder<TheBlueslandDbContext>()

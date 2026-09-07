@@ -1,12 +1,9 @@
 namespace TheBluesland.SpotifyFetcher.EraReport;
 
 /// <summary>
-/// US-023: turns a playlist's readable track release years into a suggested <c>eras</c> value
-/// set. This is a curatorial suggestion, not a rule the taxonomy enforces (spec 8.6 taxonomy
-/// governance - Mehmet decides which suggestion to accept, through a normal content pull
-/// request); the thresholds below are a starting point and can be tuned in this one place if the
-/// suggestion turns out too aggressive or too timid once run against the real 85-playlist
-/// backlog.
+/// US-023: turns readable release years into playlist-level era tags. The report displays
+/// these tags as suggestions; monthly sync persists them for automatic assignment to playlists
+/// whose editorial era is only mixed-era (owner decision, 2026-09-07).
 ///
 /// Rules (all percentages are of the tracks that had a readable release year, not the playlist's
 /// total track count):

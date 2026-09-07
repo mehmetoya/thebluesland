@@ -2,6 +2,13 @@
 
 Durum: Kabul edildi
 
+2026-09-07 güncellemesi (US-023, Mehmet'in açık kararı): Yalnız `mixed-era` taşıyan playlist'ler
+Spotify albüm yayın tarihlerinden hesaplanan dönemleri otomatik kullanır. Sync, sanatçıları
+okuduğu aynı sayfalı istekte dönemleri hesaplar; yalnız `computed_eras` etiket dizisini cache'e
+yazar. Ham tarihler/track kayıtları saklanmaz. Açıkça atanmış dönemler önceliklidir; yetersiz
+veride editoryal etiket kalır. Bu istisna, aşağıdaki ilk kararın era alanını elle yönetme şartını
+daraltır; ayrıntılar spec 8.6 ve `docs/automatic-eras.md` içinde.
+
 ## Bağlam
 
 v0.1 spec'i "embed-first" ilkesi üzerine kuruluydu: veritabanı yok, Spotify Web API entegrasyonu

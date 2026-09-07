@@ -562,51 +562,26 @@ Platform: web
 
 ## US-023 — Kalan `mixed-era` playlist'lerin dönem zenginleştirmesi
 
-Kullanıcı olarak ziyaretçi, Era filtresinin 120 playlist'in tamamında anlamlı sonuç vermesini
-istiyorum; şu an 85 playlist yalnızca `mixed-era` taşıdığı için dönem filtresinde görünmüyor.
+Ziyaretçi olarak, dönem filtresinde yalnız `mixed-era` taşıyan playlist'leri de bulmak istiyorum.
 
-Kabul kriterleri:
+**2026-09-07 karar değişikliği:** Mehmet otomatik atamayı açıkça istedi. Öneriyi tek tek onaylama
+şartı kaldırıldı; aşağıdaki kriterler önceki salt-okunur rapor kapsamının yerine geçer.
 
-- [x] Kaynak, tahmin değil ölçülebilir bir sinyal olur: Spotify track `album.release_date`
-      verisinden playlist başına dönem dağılımı hesaplanır.
-- [x] Araç bir **öneri** üretir; `content/playlists/*.md` dosyalarına asla otomatik yazmaz
-      (spec 8.6 taksonomi governance — nihai karar Mehmet'in, normal PR akışıyla).
-- [x] Track-seviyesi veri hiçbir yere kalıcı yazılmaz; yalnızca toplulaştırılmış yüzdeler ve
-      öneri çıktı olur (ADR-0002 / spec 9.4).
-- [ ] 85 `mixed-era` playlist'in her biri için, kapsadığı dönem(ler) belirlenip `eras` listesine
-      eklenir; `mixed-era` gerçekten karışık olanlarda kalır.
+- [x] Kaynak: Spotify `album.release_date`; sanatçıların toplandığı aynı sayfalı sync isteği.
+- [x] Yalnız toplulaştırılmış dönem etiketleri `computed_eras` olarak cache'e yazılır.
+- [x] Yalnız `mixed-era` taşıyan playlist'ler hesaplanan dönemleri otomatik kullanır;
+      açıkça atanmış dönemler önceliklidir. Markdown dosyaları fallback olarak korunur.
+- [x] En az 10 tarihli parça; %20+ kovalar atanır. Hiçbiri %60'a ulaşmıyorsa `mixed-era` kalır.
+- [x] Yetersiz veri ve erişilemeyen cache durumunda mevcut editoryal etiketler kullanılır.
+- [x] Filtreler, detay ve ilgili playlist sıralaması aynı etkili dönemleri kullanır.
+- [ ] Production migration, deploy ve ilk gerçek sync sonrası sonuçların kontrolü.
 
-**Durum: Araç tamamlandı (2026-09-07), içerik ataması bekliyor.** Yaklaşım 1 (Spotify release-date)
-uygulandı; yaklaşım 2 (elle geçiş) gereksiz kaldı.
-
-Eklenenler: `report-eras` modu (`Program.cs`, mevcut `list-playlists`/`dump-cache`/
-`suggest-curator-note` salt-okunur mod deseninin aynısı), `SpotifyPlaylistClient.
-GetTrackReleaseYearsAsync` (yalnız `fields=items(item(album(release_date))),next`, sayfalı),
-`EraReport/` altında `EraBucketMapper` + `PlaylistEraDistributionCalculator` +
-`PlaylistEraReportService`, ve `.github/workflows/report-eras.yml` (yalnız `workflow_dispatch`,
-`permissions: contents: read`, çıktı job summary + artifact).
-
-Öneri kuralı (tek yerde sabit, ayarlanabilir): tarihi okunabilen track sayısı 10'un altındaysa
-öneri üretilmez; payı %20+ olan her kova önerilir; hiçbir kova %60'a ulaşmıyorsa `mixed-era` de
-önerilir, ulaşıyorsa önerilmez.
-
-ADR-0002 sınırı tip düzeyinde korunuyor: `GetTrackReleaseYearsAsync` `IReadOnlyList<int>` döndürür,
-yani ham tarih dizesi bile client'ın dışına çıkmaz. Bir regresyon testi, mock'lanan yanıta bilerek
-konmuş track id/başlık/ISRC/tam tarihin rapor metnine sızmadığını doğruluyor.
-
-Doğrulama: `dotnet build` + `dotnet format --verify-no-changes` temiz, 255/255 test yeşil (+20),
-`content/playlists` dokunulmadı, kimlik bilgisiz çalıştırmada net hata + non-zero exit.
-
-**Kalan tek adım Mehmet'te:** `SPOTIFY_CLIENT_ID`/`SPOTIFY_REFRESH_TOKEN` secret'larını GitHub repo
-ayarlarından bu workflow'a da scope etmek (US-004/US-016 ile aynı tek seferlik adım), sonra
-workflow'u elle tetikleyip çıkan öneri raporunu gözden geçirmek ve kabul ettiklerini bir içerik
-PR'ıyla uygulamak. Araç gerçek Spotify verisine karşı hiç çalıştırılmadı (tüm testler mock'lu).
-
-Kapsam dışı: yeni era değeri eklemek (mevcut 5 değer yeterli, sorun atama granülerliğiydi);
-önerinin otomatik olarak PR'a dönüşmesi.
-Bağımlılık: US-022 (çoklu-değer şeması — tamamlandı).
+Durum: Otomatik atama kodu tamamlandı; canlıya alma ve gerçek veriyle doğrulama bekliyor.
+`report-eras` salt-okunur inceleme aracı olarak kullanılmaya devam edebilir.
+Devreye alma: `docs/automatic-eras.md`.
+Bağımlılık: US-022 (tamamlandı).
 Öncelik: Could
-Platform: content
+Platform: sync + data + web
 
 ---
 

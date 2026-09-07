@@ -58,6 +58,7 @@ public sealed class SpotifyPlaylistCacheMigrationTests : IAsyncLifetime
         actualColumns.Keys.ShouldBe(
             [
                 "artists",
+                "computed_eras",
                 "cover_image_url",
                 "description",
                 "is_available",
@@ -75,6 +76,8 @@ public sealed class SpotifyPlaylistCacheMigrationTests : IAsyncLifetime
         actualColumns["cover_image_url"].IsNullable.ShouldBeTrue();
         actualColumns["track_count"].DataType.ShouldBe("integer");
         actualColumns["track_count"].IsNullable.ShouldBeFalse();
+        actualColumns["computed_eras"].DataType.ShouldBe("ARRAY");
+        actualColumns["computed_eras"].IsNullable.ShouldBeTrue();
         actualColumns["artists"].DataType.ShouldBe("ARRAY");
         actualColumns["artists"].IsNullable.ShouldBeFalse();
         actualColumns["spotify_snapshot_id"].IsNullable.ShouldBeTrue();

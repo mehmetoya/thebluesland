@@ -73,6 +73,8 @@ public static class WebHostFactory
 
         builder.Services.AddSingleton<StaticAssetVersion>();
         builder.Services.AddSingleton<PlaylistContentReader>();
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<PlaylistEraCache>();
         builder.Services.AddSingleton<PlaylistContentRepository>();
         builder.Services.AddScoped<PlaylistCacheLookup>();
         // US-011 AC3: stateless (each call builds its own Image<T> locally), safe as a singleton.

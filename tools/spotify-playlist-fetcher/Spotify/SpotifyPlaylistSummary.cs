@@ -19,5 +19,8 @@ public sealed record SpotifyPlaylistSummary
 
     public required string[] Artists { get; init; }
 
+    /// <summary>Automatically calculated playlist-level era tags; null before the first era sync, empty when data is insufficient.</summary>
+    public string[]? ComputedEras { get; init; }
+
     public string? SnapshotId { get; init; }
 }
