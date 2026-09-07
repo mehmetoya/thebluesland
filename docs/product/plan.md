@@ -9,8 +9,13 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 
 ## Sıradaki
 
-Backlog'daki tüm US-001..US-021 hikayelerinin kod gerektiren kriterleri tamamlandı. Kalanlar
-içerik/manuel adımlar:
+Backlog'daki US-001..US-022'nin kod gerektiren kriterleri tamamlandı. Kalanlar içerik/manuel
+adımlar:
+
+- **US-023 — kalan 85 `mixed-era` playlist'in dönem zenginleştirmesi (Could).** US-022 şemayı
+  hazırladı; içerik tarafı Mehmet'in kararına bağlı. Önerilen yol: senkron aracının Spotify'dan
+  çektiği track `release_date` verisinden playlist başına dönem dağılımı hesaplamak — tahmin
+  yerine ölçülebilir sinyal. Alternatif: 85 dosyayı elle etiketlemek.
 
 - Bilinen küçük doküman/hijyen açıkları (2026-09-05 denetiminde bulundu, kod değil): ADR
   numaralandırmasında 0004 boşluğu (atlanmış mı belli değil); `displayOrder`/`publishedAt`in 120
@@ -23,6 +28,17 @@ içerik/manuel adımlar:
   seferlik adım — US-004/US-007 ile aynı desen.
 
 ## Tamamlanan
+
+- **US-022 — Era çoklu-değer + `deep-listen` occasion (2026-09-06).** Era'nın sorunu değer sayısı
+  değil, tek-değerli olmasıydı: 120 playlist'in 94'ü `mixed-era` kutusunda sıkışıp filtreyi
+  işlevsiz bırakıyordu. `PlaylistContent.Era` → `Eras` listesi; front matter `era: X` → `eras:`
+  listesi (402 dosya); doğrulayıcı era'yı diğer üç boyutla aynı paylaşılan array yolundan geçiriyor
+  (kendine özel dal silindi); `PlaylistTags`'ın "blank era" özel durumu gereksizleşip kalktı.
+  `?era=1970s` artık 4 değil 6 playlist döndürüyor — gerçek Chromium'da ekran görüntüsüyle
+  doğrulandı. `deep-listen`, küratör notunda açık kanıt bulunan 9 playlist'e eklendi. Kalan 85
+  `mixed-era` dosyası bilinçli olarak dokunulmadan bırakıldı (US-023): metinde dönem kanıtı yok ve
+  sanatçıdan dönem çıkarmak spec 8.6 gereği Mehmet'in editoryal kararı. 235 unit + 8 E2E test
+  yeşil, `validate-content` temiz.
 
 - **US-017'nin Could kriteri — occasion etiketlerinin taşınması (2026-09-06).** US-020'nin
   isimlendirdiği 10 aday dosya tek tek incelendi (mekanik toplu değişiklik değil): 4 dosyada eski

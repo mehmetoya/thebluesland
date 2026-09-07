@@ -11,12 +11,14 @@ genres:
   - rock
 occasions:
   - night-drive
-era: mixed-era
+eras:
+  - mixed-era
+  - 1980s-1990s
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A generational bridge playlist: 1960s-70s psychedelic and blues-rock (Cream, Jefferson Airplane, David Bowie) sitting next to the post-punk and new wave acts who inherited its restlessness a decade later (Depeche Mode, Joy Division, Echo & The Bunnymen). The throughline is a certain cosmic unease running under both eras.
+Cream, Jefferson Airplane and David Bowie share space with Depeche Mode, Joy Division and Echo & The Bunnymen. The mix moves from psychedelic guitars to darker post-punk and electronic textures.
 
-A good night-drive pick when the mood needs to shift between eras.
+A night-drive selection with a changing atmosphere.

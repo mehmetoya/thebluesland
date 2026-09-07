@@ -12,12 +12,14 @@ genres:
   - soul
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
+  - 1970s
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A straightforward oldies set spanning soul (Al Green, Curtis Mayfield), classic rock (Creedence Clearwater Revival, David Bowie) and one-hit AM-radio staples (Blue Swede, Del Shannon). It doesn't argue for a specific era so much as celebrate the idea of "old school" itself.
+Al Green and Curtis Mayfield bring soul, while Creedence Clearwater Revival and David Bowie take the mix towards rock. Blue Swede and Del Shannon add familiar pop melodies.
 
-Comfort listening, no deeper agenda required.
+A warm selection to return to when you want something familiar.

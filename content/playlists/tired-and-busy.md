@@ -11,12 +11,13 @@ genres:
   - blues
 occasions:
   - late-night
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Some blues playlists are about energy; this one is about the opposite — the sound of being worn down and still finding a groove anyway. Aretha Franklin's gospel-trained soul and B.B. King's patient phrasing both fit here, alongside guitarists who understand that restraint can hit harder than volume.
+Aretha Franklin's voice and B.B. King's measured guitar phrasing fit an end-of-day blues mood. Albert Collins adds a sharper edge without losing the steady groove.
 
-For the end of a long day, not the start of one.
+Put it on when the work is done.

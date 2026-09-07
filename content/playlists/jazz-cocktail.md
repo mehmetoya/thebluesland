@@ -11,12 +11,13 @@ genres:
   - jazz
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A twenty-track set built for the exact mood its name promises — Jobim and Astrud Gilberto's bossa nova warmth, Duke Ellington and Dizzy Gillespie's big-band swing, Diana Krall's more contemporary vocal jazz. Short, polished, and unapologetically about atmosphere over depth.
+Antônio Carlos Jobim and Astrud Gilberto bring bossa nova warmth, alongside Duke Ellington, Dizzy Gillespie and Diana Krall. Swing, soft vocals and an easy flow make this a welcoming jazz selection.
 
-Ideal dinner-party or slow-evening background.
+For dinner with friends or a slow evening at home.

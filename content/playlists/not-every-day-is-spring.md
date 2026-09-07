@@ -11,12 +11,13 @@ genres:
   - folk
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A second, closely related folk collection — Ezginin Günlüğü's more song-oriented approach alongside Erkan Oğur's instrumental work, held together by a title that borrows a Turkish idiom about hardship and change. It leans slightly more melancholic than "My Folklore," built for the days the title describes.
+Cengiz Özkan, Erkan Oğur and Ezginin Günlüğü bring a reflective mood to this folk selection. Voices and acoustic textures carry the music at an unhurried pace.
 
-Best paired with quiet rather than a drive.
+A companion to My Folklore for a quieter day.

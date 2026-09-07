@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: mixtape
 spotifyPlaylistId: 43ujhOWnDyUDNsVeZnDksN
 title: "MixTape"
-summary: "A five-hundred-track personal rock mixtape spanning nu-metal, indie and classic rock alike."
+summary: "A personal mix crossing rock, pop and heavier guitars, with Arcade Fire, Björk, Alter Bridge and Anthrax."
 moods:
   - energetic
   - nostalgic
@@ -11,12 +11,13 @@ genres:
   - rock
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Exactly what the title promises: a big, unsorted personal rock mixtape running from Arcade Fire and Björk's art-pop through Alter Bridge and Anthrax's heavier end, with Arthur Russell's outsider cello-disco thrown in for good measure. No single genre rules; it's a personality more than a playlist.
+Arcade Fire and Björk sit alongside Alter Bridge and Anthrax, with Arthur Russell bringing another change of texture. The appeal is in the range and the abrupt turns between sounds.
 
-Best on shuffle, the way a real mixtape used to surprise you.
+Try it on shuffle when you feel like letting the next song decide the direction.

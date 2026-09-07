@@ -5,7 +5,7 @@ namespace TheBluesland.Web.Seo;
 
 public static class AiDiscoveryGenerator
 {
-    private const string SiteDescription = "Mehmet's hand-curated Spotify playlist library, with original curator notes and mood, genre, occasion, and era tags.";
+    private const string SiteDescription = "Mehmet's personal collection of Spotify playlists, rooted in blues and spanning rock, folk, jazz, soul and electronic music. Each playlist has a short listening note.";
     private static readonly string[] AiBots = ["OAI-SearchBot", "ChatGPT-User", "GPTBot", "Claude-SearchBot", "Claude-User", "ClaudeBot", "PerplexityBot", "Google-Extended"];
 
     public static string BuildRobots(HttpContext context)

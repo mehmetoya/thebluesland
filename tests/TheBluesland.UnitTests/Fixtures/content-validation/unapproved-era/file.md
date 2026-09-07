@@ -10,7 +10,8 @@ genres:
   - blues
 occasions:
   - late-night
-era: bogus-era
+eras:
+  - bogus-era
 status: published
 publishedAt: 2026-01-01
 ---

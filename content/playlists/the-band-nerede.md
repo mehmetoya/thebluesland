@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: the-band-nerede
 spotifyPlaylistId: 11GZx2XjsRzXkBGCLaOGiI
 title: "The Band Nerede ?"
-summary: "A search for a live band's energy across soul and blues-rock — B.B. King, Bruce Springsteen, Dire Straits and Chuck Berry."
+summary: "Band energy across soul, blues and rock, with B.B. King, Bruce Springsteen, Dire Straits and Chuck Berry."
 moods:
   - warm
   - energetic
@@ -13,12 +13,13 @@ genres:
   - blues-rock
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-"The Band Nerede" translates roughly to "where's the band" — a search for the specific energy of a great live band, answered here with B.B. King and Chuck Berry's foundational showmanship, Bruce Springsteen and Dire Straits' road-tested arrangements, and Daft Punk's studio precision as an odd but effective counterpoint.
+B.B. King, Chuck Berry, Bruce Springsteen and Dire Straits give different answers to the title's question: where's the band? The selection follows rhythm, guitar lines and arrangements that feel like musicians working together.
 
-A playlist about musicianship as much as songs.
+Daft Punk adds an electronic turn along the way.

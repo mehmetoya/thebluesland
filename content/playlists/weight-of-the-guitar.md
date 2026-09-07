@@ -13,12 +13,14 @@ genres:
   - blues-rock
 occasions:
   - headphones
-era: mixed-era
+  - deep-listen
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A study in what "heavy" means across genres — Eric Clapton and Jeff Beck's blues-rock guitar heroics, Deep Purple's proto-metal riffing, Blind Guardian and Amorphis' more modern metal takes on the same guitar-forward instinct. The title is literal: every track here earns its weight through the instrument, not the production.
+Eric Clapton and Jeff Beck sit alongside Deep Purple, Blind Guardian and Amorphis. The selection moves from blues-rock phrasing to heavier riffs, keeping guitar tone and playing at the centre.
 
-Headphones recommended for the tone alone.
+Listen for how the instrument changes character across the mix.

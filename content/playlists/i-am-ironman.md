@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: i-am-ironman
 spotifyPlaylistId: 1f3mz6XlkemiVwERbTS9v7
 title: "I Am IRONMAN"
-summary: "Iron Man-adjacent rock — Black Sabbath's original riff, AC/DC and Audioslave among eleven tracks."
+summary: "Heavy riffs with an Iron Man theme, bringing together Black Sabbath, AC/DC and Audioslave."
 moods:
   - energetic
   - raw
@@ -12,12 +12,13 @@ genres:
   - metal
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A small, on-the-nose concept: Black Sabbath's original "Iron Man" riff as the anchor, with AC/DC (who scored Iron Man 2) and Audioslave supplying the same heavy-riff energy. Eleven tracks, no filler, built entirely around one very specific joke that happens to also be a genuinely good playlist.
+Black Sabbath's Iron Man gives this mix a recognisable starting point. AC/DC and Audioslave keep the emphasis on heavy riffs and direct, driving arrangements.
 
-Short, loud, and exactly what it says on the tin.
+A compact dose of guitar-led rock.

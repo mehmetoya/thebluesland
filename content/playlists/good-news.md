@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: good-news
 spotifyPlaylistId: 6GFl7t7twP6dNqXDf5bu2J
 title: "Good News"
-summary: "Eleven hundred tracks of 2000s indie-pop optimism — Arcade Fire, Alabama Shakes and Air among them."
+summary: "Indie-pop and lighter guitar sounds, with Arcade Fire, Alabama Shakes, Air and Acid House Kings."
 moods:
   - warm
   - energetic
@@ -12,12 +12,13 @@ genres:
   - pop
 occasions:
   - road-trip
-era: 2000s-present
+eras:
+  - 2000s-present
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-One of the largest playlists in the catalogue, and one of the sunnier ones — 2000s indie-pop and twee-adjacent acts like Acid House Kings and Alaska in Winter sit alongside better-known names like Arcade Fire and Alabama Shakes. The scale makes it closer to a genre archive than a curated mood, but the throughline is consistently upbeat.
+Acid House Kings and Alaska in Winter share space with Arcade Fire and Alabama Shakes. Bright melodies and rhythmic arrangements give the mix a lift, with quieter turns along the way.
 
-A reliable pick when the mood needs lifting rather than matching.
+A place to start when you feel like something lighter.

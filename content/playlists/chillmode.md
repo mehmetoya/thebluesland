@@ -13,12 +13,13 @@ genres:
   - folk
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A low-key set built around a specific texture: warm, unhurried guitar music — Hermanos Gutiérrez's cinematic instrumentals, José González's fingerpicked folk, John Mayer and Devendra Banhart's laid-back songwriting. Everything here is designed to lower a pulse rather than raise one.
+Hermanos Gutiérrez's instrumental guitars sit comfortably beside José González's fingerpicking and the songwriting of John Mayer and Devendra Banhart. Warm textures and an easy pace connect the selections.
 
-The playlist equivalent of taking your shoes off.
+Put it on when the day starts to slow down.

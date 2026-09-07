@@ -19,7 +19,7 @@ public sealed class PlaylistValidationFrontMatter
     public string[]? Moods { get; set; }
     public string[]? Genres { get; set; }
     public string[]? Occasions { get; set; }
-    public string? Era { get; set; }
+    public string[]? Eras { get; set; }
     public string? PublishedAt { get; set; }
     public bool? Featured { get; set; }
     public string? Status { get; set; }

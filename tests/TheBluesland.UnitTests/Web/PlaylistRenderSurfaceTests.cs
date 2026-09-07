@@ -28,7 +28,7 @@ public sealed class PlaylistRenderSurfaceTests
         Moods: ["energetic"],
         Genres: ["rock"],
         Occasions: ["night-drive"],
-        Era: "1970s",
+        Eras: ["1970s"],
         CuratorNote: "Curator note body used only for rendering tests.",
         IsPublished: true,
         Featured: false,
@@ -73,7 +73,7 @@ public sealed class PlaylistRenderSurfaceTests
             [nameof(PlaylistDetailView.CacheSnapshot)] = PlaylistCacheSnapshot.Unavailable,
         });
 
-        html.ShouldContain("currently unavailable");
+        html.ShouldContain("temporarily unavailable");
         html.ShouldNotContain("<iframe");
     }
 
@@ -89,7 +89,7 @@ public sealed class PlaylistRenderSurfaceTests
         });
 
         html.ShouldContain("34 tracks");
-        html.ShouldNotContain("currently unavailable");
+        html.ShouldNotContain("temporarily unavailable");
     }
 
     /// <summary>US-010 AC1: the cache-sourced cover image renders when present and playable.</summary>

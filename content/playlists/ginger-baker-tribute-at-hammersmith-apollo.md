@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: ginger-baker-tribute-at-hammersmith-apollo
 spotifyPlaylistId: 7qh6OuVDY4yuqnwiAjICQB
 title: "Ginger Baker Tribute at Hammersmith Apollo"
-summary: "Cream and Blind Faith's catalogue, gathered for a specific Hammersmith Apollo tribute night."
+summary: "Cream and Blind Faith selections in tribute to Ginger Baker, with Hammersmith Apollo as the setting."
 moods:
   - energetic
   - nostalgic
@@ -11,12 +11,13 @@ genres:
   - blues-rock
 occasions:
   - headphones
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-The companion playlist to the Hammersmith Apollo tribute itself — Cream and Blind Faith's essential tracks, the ones most likely to appear on a night built around celebrating Ginger Baker's legacy. Shorter and more focused than the "prepare for" playlist, this is the actual set rather than the homework.
+Cream and Blind Faith provide the focus for this tribute to Ginger Baker. Listen to how the drums respond to the guitar and bass, helping shape the music's movement.
 
-A tight, purposeful listen rather than a sprawling one.
+Prepare for Ginger Baker Tribute offers a broader companion selection.

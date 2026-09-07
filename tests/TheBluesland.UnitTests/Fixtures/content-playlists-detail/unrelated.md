@@ -10,7 +10,8 @@ genres:
   - jazz
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-01-01
 ---

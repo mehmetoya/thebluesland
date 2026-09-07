@@ -11,12 +11,13 @@ genres:
   - rock
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-No subtlety intended: this is a hard-rock and proto-metal set built for volume, running through Black Sabbath, Deep Purple, Aerosmith and Boston's biggest riffs, with Gary Moore and Dire Straits' heavier moments thrown in. The title is the whole review — it does exactly what it says.
+Black Sabbath, Deep Purple and Aerosmith bring the riffs, with Boston and Gary Moore adding their own guitar-heavy turns. It is a straightforward hard-rock selection with plenty of momentum.
 
-Windows down, volume up.
+For when you want the guitars up front.

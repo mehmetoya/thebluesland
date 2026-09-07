@@ -10,12 +10,13 @@ genres:
   - classical
 occasions:
   - late-night
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Twelve tracks, all instrumental, all drawn from film and television scoring — Hans Zimmer, Nicholas Britell, Nick Cave & Warren Ellis, Gustavo Santaolalla. The title borrows Fantine's "I Dreamed a Dream" lyric from Les Misérables without including the song itself, using it instead as an emotional epigraph for everything that follows.
+Hans Zimmer, Nicholas Britell, Nick Cave & Warren Ellis and Gustavo Santaolalla bring distinct approaches to cinematic music. Piano, strings and atmospheric arrangements hold the reflective mood together.
 
-A short, deliberate listen — twelve tracks meant to be taken as a whole.
+Let the pieces run in sequence and hear how the atmosphere changes.

@@ -11,12 +11,14 @@ genres:
   - blues-rock
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
+  - 2000s-present
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A blues-rock set that doesn't sort itself strictly by decade — the Allman Brothers Band's extended jams sit next to Beth Hart's more contemporary belt, united by a shared commitment to guitar-led arrangements and real vocal power. It's blues with a full band behind it rather than blues stripped down.
+The Allman Brothers Band's expansive arrangements meet Beth Hart's vocal force in a blues-rock mix that moves freely between generations. Albert Collins and Buddy Guy keep guitar tone and phrasing in the foreground.
 
-Works as well on a drive as it does at home.
+Good company for a drive or an evening at home.

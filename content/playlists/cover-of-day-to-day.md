@@ -12,12 +12,13 @@ genres:
   - indie
 occasions:
   - headphones
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Every track here is somebody else's song filtered through another artist's voice — Eddie Vedder, Elliott Smith, Chris Cornell and Florence + The Machine all reinterpreting rather than originating. It's a study in what a cover can reveal about both the singer and the song underneath.
+Eddie Vedder, Elliott Smith, Chris Cornell and Florence + The Machine bring their own phrasing and arrangements to familiar songs. A different voice can change where you hear the emphasis, even when the words stay the same.
 
-Best for anyone who enjoys spotting the original.
+Listen for what each interpretation brings forward.

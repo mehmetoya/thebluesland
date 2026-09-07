@@ -12,12 +12,13 @@ genres:
   - folk
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A seasonal companion to "Pumpkin Spice," leaning slightly more melancholic — Fleet Foxes' harmony-rich folk, Bon Iver's hushed intensity, Damien Rice's raw confessionals, Dire Straits' understated guitar work fitting the mood unexpectedly well. Thirty-seven tracks built entirely around one season's emotional weather.
+Fleet Foxes' harmonies, Bon Iver's layered vocals and Damien Rice's intimate songs give this selection a reflective mood. Dire Straits adds an understated guitar sound.
 
-Best heard as the light actually starts to change.
+A companion to Pumpkin Spice as the days start to cool.

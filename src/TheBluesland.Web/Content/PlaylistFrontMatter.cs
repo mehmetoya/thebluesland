@@ -22,7 +22,7 @@ public sealed class PlaylistFrontMatter
     public string[]? Moods { get; set; }
     public string[]? Genres { get; set; }
     public string[]? Occasions { get; set; }
-    public string? Era { get; set; }
+    public string[]? Eras { get; set; }
     public string? PublishedAt { get; set; }
     public bool? Featured { get; set; }
     public int? DisplayOrder { get; set; }

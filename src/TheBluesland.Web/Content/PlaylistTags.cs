@@ -1,19 +1,17 @@
 namespace TheBluesland.Web.Content;
 
 /// <summary>
-/// The manually-assigned editorial "tags" for a playlist: moods, genres, occasions and era
+/// The manually-assigned editorial "tags" for a playlist: moods, genres, occasions and eras
 /// combined (US-010 AC1 groups all four as one visible tag list, unlike the pre-US-010 view which
-/// omitted era). A blank <see cref="PlaylistContent.Era"/> - <see cref="PlaylistContentReader"/>
-/// defaults it to <see cref="string.Empty"/> when front matter omits the field - is excluded, so
-/// two playlists that both simply have no era never appear to "share" that blank value. Shared by
-/// <see cref="RelatedPlaylistRanking"/> and the playlist detail view so the tag definition and the
-/// blank-era exclusion live in exactly one place.
+/// omitted era). Shared by <see cref="RelatedPlaylistRanking"/> and the playlist detail view so the
+/// tag definition lives in exactly one place.
+///
+/// Before 2026-09-06 this had to special-case a blank single-valued era so two playlists with no
+/// era never appeared to "share" that empty string. <see cref="PlaylistContent.Eras"/> is a list
+/// now, so "no era" is simply an empty list that contributes nothing - the special case is gone.
 /// </summary>
 public static class PlaylistTags
 {
     public static IReadOnlyList<string> All(PlaylistContent playlist) =>
-        [.. playlist.Moods, .. playlist.Genres, .. playlist.Occasions, .. EraOrEmpty(playlist.Era)];
-
-    private static IEnumerable<string> EraOrEmpty(string era) =>
-        era is { Length: > 0 } ? [era] : [];
+        [.. playlist.Moods, .. playlist.Genres, .. playlist.Occasions, .. playlist.Eras];
 }

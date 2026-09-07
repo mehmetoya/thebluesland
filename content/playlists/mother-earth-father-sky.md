@@ -11,12 +11,13 @@ genres:
   - jazz
 occasions:
   - slow-evening
-era: pre-1970
+eras:
+  - pre-1970
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A vintage vocal-jazz and swing set anchored by Louis Armstrong's orchestra and Ella Fitzgerald, with close-harmony vocal groups — The Ink Spots, The Mills Brothers, The Delta Rhythm Boys — filling out an era of American popular song built on group blend as much as solo star power.
+Louis Armstrong and Ella Fitzgerald share space with The Ink Spots, The Mills Brothers and The Delta Rhythm Boys. Swing and close vocal harmonies give the selection a warm, rounded sound.
 
-A warm, old-fashioned evening listen.
+An evening with room for both the solo voice and the ensemble.

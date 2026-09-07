@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: pumpkin-spice
 spotifyPlaylistId: 1jsooy7kKJUebQ2HjKOzJJ
 title: "pumpkin spice 🎃"
-summary: "Autumn-toned indie-folk — Bon Iver, Angus & Julia Stone, Caamp and Adrianne Lenker."
+summary: "Autumn folk and indie warmth, with Bon Iver, Angus & Julia Stone, Caamp and Adrianne Lenker."
 moods:
   - warm
   - nostalgic
@@ -12,12 +12,13 @@ genres:
   - indie
 occasions:
   - slow-evening
-era: 2000s-present
+eras:
+  - 2000s-present
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A seasonal mood playlist built for a specific time of year — Bon Iver and Adrianne Lenker's hushed intimacy, Angus & Julia Stone's warm harmonies, Caamp's rustic folk-pop. A hundred tracks that all share the same amber-toned, sweater-weather register the title jokes about but the music takes seriously.
+Bon Iver and Adrianne Lenker bring intimate voices, Angus & Julia Stone adds warm harmonies, and Caamp keeps an acoustic pulse. The mix suits a change in light and a slower afternoon.
 
-Best heard with the windows cracked and the temperature dropping.
+Try The Arrival of Autumn for a related seasonal selection.

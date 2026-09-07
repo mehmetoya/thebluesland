@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: echo-of-john-henry
 spotifyPlaylistId: 3M1RTTjqRYtafTL0qjZLmy
 title: "Echo of John Henry"
-summary: "Three hundred forty tracks of blues and blues-rock lineage, named for the steel-driving folk legend John Henry."
+summary: "Blues, folk and blues-rock connections, with Albert Collins, Albert King, Allen Toussaint and Arlo Guthrie."
 moods:
   - raw
   - warm
@@ -12,12 +12,13 @@ genres:
   - blues-rock
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-John Henry is one of American folklore's foundational figures — the steel-driving man who raced a machine and won, then died from the effort — and this collection follows the blues tradition that grew out of the same soil: Albert Collins and Albert King's electric blues, Allen Toussaint's New Orleans sound, Arlo Guthrie's folk inheritance, and newer blues-rock players like Joe Bonamassa carrying it forward.
+Albert Collins and Albert King bring electric blues, Allen Toussaint adds a New Orleans flavour, and Arlo Guthrie takes the mix towards folk. Joe Bonamassa offers another guitar-led route through the selection.
 
-A long, patient listen — history as much as music.
+Listen for the connections between the different voices and arrangements.

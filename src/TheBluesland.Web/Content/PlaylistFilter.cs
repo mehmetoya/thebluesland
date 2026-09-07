@@ -20,7 +20,7 @@ public static class PlaylistFilter
         MatchesDimension(playlist.Moods, criteria.Moods) &&
         MatchesDimension(playlist.Genres, criteria.Genres) &&
         MatchesDimension(playlist.Occasions, criteria.Occasions) &&
-        MatchesDimension([playlist.Era], criteria.Eras);
+        MatchesDimension(playlist.Eras, criteria.Eras);
 
     private static bool MatchesDimension(
         IReadOnlyList<string> playlistValues,

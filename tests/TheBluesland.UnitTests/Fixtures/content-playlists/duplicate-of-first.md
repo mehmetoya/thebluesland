@@ -10,7 +10,8 @@ genres:
   - rock
 occasions:
   - night-drive
-era: 1970s
+eras:
+  - 1970s
 status: draft
 ---
 

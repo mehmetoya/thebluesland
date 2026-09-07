@@ -12,12 +12,13 @@ genres:
   - jazz
 occasions:
   - late-night
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A sultry, late-night set that bridges soul (Amy Winehouse, Etta James), rockabilly-tinged pop (Chris Isaak), and French chanson (Charles Aznavour, Carla Bruni) — all sharing a smoky, torch-song register regardless of language. Count Basie's big band adds a jazz backbone underneath.
+Amy Winehouse and Etta James bring soul, Chris Isaak adds a rock-and-roll warmth, and Charles Aznavour and Carla Bruni take the selection towards chanson. Expressive singing holds these different sounds together.
 
-For the hours when a room needs atmosphere more than energy.
+For a late evening with the voices close.

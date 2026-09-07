@@ -78,7 +78,7 @@ public sealed class PlaylistCataloguePageTests
             Moods: ["warm"],
             Genres: ["rock"],
             Occasions: ["road-trip"],
-            Era: "mixed-era",
+            Eras: ["mixed-era"],
             CuratorNote: "Fixture curator note.",
             IsPublished: true,
             Featured: false,

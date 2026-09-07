@@ -229,7 +229,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldNotContain("<iframe");
         body.ShouldNotContain(InvalidSpotifyId);
-        body.ShouldContain("currently unavailable");
+        body.ShouldContain("temporarily unavailable");
     }
 
     /// <summary>US-011: visible breadcrumb navigation on the detail page (spec 14).</summary>

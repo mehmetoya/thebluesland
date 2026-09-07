@@ -11,12 +11,13 @@ genres:
   - jazz
 occasions:
   - slow-evening
-era: pre-1970
+eras:
+  - pre-1970
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A small, tightly curated set of the vocal jazz canon — Ella Fitzgerald's phrasing, Billie Holiday's ache, Sarah Vaughan's range — with Miles Davis and Chet Baker's instrumental voices filling the space between singers. "Ms Marveille" gives the whole thing a cocktail-lounge frame, but the songs underneath are the genuine standards.
+Ella Fitzgerald, Billie Holiday and Sarah Vaughan put the voice at the centre of this evening jazz selection. Miles Davis and Chet Baker bring instrumental colour between the singers.
 
-A short, elegant evening listen rather than a deep catalogue dig.
+Settle in for an easy pace and room to hear the phrasing.

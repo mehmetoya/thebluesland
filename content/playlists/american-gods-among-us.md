@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: american-gods-among-us
 spotifyPlaylistId: 5WC6j4xf9EerqCvcT6V6WS
 title: "American Gods Among Us"
-summary: "A gospel-and-Americana mixtape built in the spirit of American Gods, scored by that show's own composer Brian Reitzell."
+summary: "Gospel, Americana and soundtrack atmosphere, with Brian Reitzell, Bob Dylan and Creedence Clearwater Revival."
 moods:
   - raw
   - melancholic
@@ -12,12 +12,14 @@ genres:
   - blues
 occasions:
   - night-drive
-era: mixed-era
+eras:
+  - mixed-era
+  - pre-1970
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Brian Reitzell scored the American Gods TV series, and his presence here alongside Bob Dylan, Creedence Clearwater Revival and a run of deep-cut gospel and doo-wop acts (Shep, The Dixie Cups, The Limelights) suggests this playlist is built in that show's specific register — old American myth, half-forgotten regional music, roadside-motel atmosphere.
+Brian Reitzell, Bob Dylan and Creedence Clearwater Revival share space with gospel and doo-wop in a mix with a cinematic feel. The American Gods reference gives it a frame of roadside encounters and unfamiliar places.
 
-A night-drive record for anyone who's seen the show and wanted more of its soundtrack.
+A good companion for a night drive.

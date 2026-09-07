@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: indie-wave
 spotifyPlaylistId: 3wS6sD1MRILOhNezyHoXmQ
 title: "Indie Wave"
-summary: "Six hundred sixteen tracks of dream-pop and indie deep cuts — Alex G, Active Child and dozens of lesser-known names."
+summary: "Dream-pop, lo-fi songwriting and electronic touches, with Alex G, Active Child and more."
 moods:
   - melancholic
   - energetic
@@ -11,12 +11,13 @@ genres:
   - indie
 occasions:
   - headphones
-era: 2000s-present
+eras:
+  - 2000s-present
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-One of the largest indie collections here, leaning toward the genre's dream-pop and bedroom-production corners rather than its more famous names — Active Child's falsetto electronics, Alex G's lo-fi songwriting, and hundreds of similarly under-the-radar acts. A crate-digger's playlist more than a greatest-hits one.
+Active Child's electronic textures and Alex G's intimate songwriting point to different sides of this indie collection. Hazy production, unusual voices and quieter guitar sounds leave plenty to explore.
 
-Best explored slowly; there's a lot here that won't show up on any algorithm's radar.
+Take it a few songs at a time and follow the sounds that stay with you.

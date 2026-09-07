@@ -21,7 +21,7 @@ public sealed class StructuredDataBuilderTests
         Moods: ["warm"],
         Genres: ["blues"],
         Occasions: ["late-night"],
-        Era: "1970s",
+        Eras: ["1970s"],
         CuratorNote: "Curator note body.",
         IsPublished: true,
         Featured: false,

@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: funkers
 spotifyPlaylistId: 1geBn1JHNCHI6Yt5TCV43b
 title: "Funkers"
-summary: "Deep funk across generations — CHIC, Anderson .Paak, Ana Popovic and nearly three hundred tracks of groove."
+summary: "Funk and disco across generations, with CHIC, Anderson .Paak, Barrabas and Alemayehu Eshete."
 moods:
   - energetic
   - warm
@@ -12,12 +12,15 @@ genres:
 occasions:
   - road-trip
   - dancing
-era: mixed-era
+eras:
+  - mixed-era
+  - 1970s
+  - 2000s-present
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A large, groove-first funk collection spanning disco-era CHIC and Barrabas through to modern revivalists like Anderson .Paak and All Good Funk Alliance. Ethiopian funk pioneer Alemayehu Eshete sits comfortably alongside the more familiar American names, widening the genre's usual borders.
+CHIC and Barrabas bring disco-era grooves, while Anderson .Paak and All Good Funk Alliance add newer production styles. Alemayehu Eshete offers another route into the mix.
 
-Impossible to sit still through, which is the whole point.
+Bass lines, percussion and rhythmic vocals keep things moving.

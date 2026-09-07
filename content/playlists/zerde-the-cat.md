@@ -11,12 +11,13 @@ genres:
   - indie
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A gentle, dream-pop-leaning indie set named, apparently, for a cat — Cat Power's understated presence feels almost too on-the-nose here, alongside DIIV's shoegaze haze and Cassandra Jenkins' spoken-word intimacy. Fifty-five tracks of quiet company, fittingly.
+Cat Power, DIIV, Cassandra Jenkins and Devendra Banhart bring soft vocals, hazy guitars and a gentle pace. The sound stays easygoing as the arrangements shift.
 
-As unhurried and self-possessed as its namesake.
+Quiet company for an afternoon at home.
