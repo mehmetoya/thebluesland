@@ -43,3 +43,12 @@ değildir. İstisnaları düzeltmek için Markdown'a belirli dönemleri yazmak y
 
 Kod testleri sahte Spotify yanıtları ve geçici PostgreSQL kullanır. Gerçek 85 playlist'in
 sonuçları ilk production sync tamamlanmadan doğrulanmış sayılmaz.
+
+## Uzayan Spotify işleri
+
+`report-eras.yml` ve `sync-spotify.yml` aynı `spotify-api` concurrency grubunu kullanır;
+aynı anda Spotify çağrısı yapmazlar. Her job en fazla 30 dakika çalışır.
+İstemci en fazla 5 deneme yapar. Tek bir `Retry-After` iki dakikayı aşıyorsa beklemek veya
+Spotify'ın süresinden önce tekrar denemek yerine 429 hatasıyla durur. Logdaki cooldown
+geçmeden yeni çalışma başlatmayın. Daha kısa beklemeler ve playlist ilerlemesi stderr'e yazılır.
+Bu sınırlar rate limit'i kaldırmaz; saatlerce sessiz beklemeyi önler.

@@ -30,11 +30,13 @@ public sealed class PlaylistCacheSyncService
         var created = 0;
         var updated = 0;
         var unavailable = 0;
+        var processed = 0;
 
         foreach (var spotifyPlaylistId in spotifyPlaylistIds)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            Console.Error.WriteLine($"Sync [{++processed}/{spotifyPlaylistIds.Count}]: {spotifyPlaylistId}");
             var fetchResult = await _playlistClient.FetchAsync(spotifyPlaylistId, accessToken, cancellationToken);
             var existingEntry = await _dbContext.SpotifyPlaylistCache.FindAsync([spotifyPlaylistId], cancellationToken);
             var syncedAt = DateTimeOffset.UtcNow;
