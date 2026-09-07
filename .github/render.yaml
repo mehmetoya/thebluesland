@@ -21,7 +21,8 @@
 # 3. In the Render Dashboard, set `ConnectionStrings__SpotifyPlaylistCache` to the Neon **read-only**
 #    role's connection string (`spotify_cache_readonly`, see
 #    `src/TheBluesland.Data/Scripts/create-spotify-cache-roles.sql`) - never the read/write string
-#    used by `sync-spotify.yml` (SEC-001).
+#    used by `sync-spotify.yml` (SEC-001). Also set `Diagnostics__CacheHealthKey` to any random
+#    string (e.g. `openssl rand -hex 32`) - see its own envVars comment below for what it gates.
 # 4. Copy the Render service's Deploy Hook URL (Settings > Deploy Hook) into this repo's GitHub
 #    Actions secret `RENDER_DEPLOY_HOOK_URL` (see `.github/workflows/deploy.yml`).
 # 5. Confirm the exact `PORT` value Render expects a Docker service to listen on for this account/
@@ -54,12 +55,19 @@ services:
     # deploy.yml just triggered for this exact commit.
     autoDeploy: false
     envVars:
-      # SEC-001: the ONLY runtime secret this service holds. Read-only Neon role, entered by hand
-      # in the Render Dashboard - never committed, never the sync tool's read/write connection
-      # string. No SPOTIFY_* or ANTHROPIC_API_KEY variable is declared here or anywhere else in this
-      # service - those exist only as GitHub Actions secrets scoped to sync-spotify.yml (and, when
-      # it exists, suggest-curator-note.yml), never in Render (spec SEC-001).
+      # SEC-001: the only runtime *database* credential this service holds. Read-only Neon role,
+      # entered by hand in the Render Dashboard - never committed, never the sync tool's read/write
+      # connection string. No SPOTIFY_* or ANTHROPIC_API_KEY variable is declared here or anywhere
+      # else in this service - those exist only as GitHub Actions secrets scoped to sync-spotify.yml
+      # (and suggest-curator-note.yml), never in Render (spec SEC-001).
       - key: ConnectionStrings__SpotifyPlaylistCache
+        sync: false
+      # Gates the /health/cache diagnostic endpoint (WebHostFactory) after a 2026-09-06 security
+      # review removed its original, fully public version. Any value works - it grants no database
+      # access on its own, only visibility into whether the one credential above is working. Set by
+      # hand in the Render Dashboard, e.g. `openssl rand -hex 32`; rotating it costs nothing since
+      # nothing else depends on its value.
+      - key: Diagnostics__CacheHealthKey
         sync: false
       # Matches the aspnet:10.0 base image's ASPNETCORE_HTTP_PORTS default (8080) that
       # src/TheBluesland.Web/Dockerfile already relies on without further change; tells Render
