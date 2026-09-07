@@ -70,6 +70,77 @@ public sealed class SpotifyPlaylistClientTests
     }
 
     [Fact]
+    public async Task FetchAsync_honors_retry_after_and_retries_a_rate_limited_request()
+    {
+        var attempts = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+        {
+            if (request.RequestUri!.AbsolutePath == $"/v1/playlists/{PlaylistId}")
+            {
+                attempts++;
+                if (attempts == 1)
+                {
+                    var rateLimitedResponse = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+                    rateLimitedResponse.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(
+                        TimeSpan.Zero);
+                    return rateLimitedResponse;
+                }
+            }
+
+            return BuildTwoPageFoundResponder()(request);
+        }));
+        var client = new SpotifyPlaylistClient(httpClient);
+
+        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+
+        result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
+        attempts.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task FetchAsync_uses_a_fallback_delay_when_rate_limit_response_omits_retry_after()
+    {
+        var attempts = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+        {
+            if (request.RequestUri!.AbsolutePath == $"/v1/playlists/{PlaylistId}")
+            {
+                attempts++;
+                if (attempts == 1)
+                {
+                    return new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+                }
+            }
+
+            return BuildTwoPageFoundResponder()(request);
+        }));
+        var client = new SpotifyPlaylistClient(httpClient, rateLimitRetryDelay: TimeSpan.Zero);
+
+        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+
+        result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
+        attempts.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task FetchAsync_throws_after_exhausting_rate_limit_retries()
+    {
+        var attempts = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ =>
+        {
+            attempts++;
+            return new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+        }));
+        var client = new SpotifyPlaylistClient(httpClient, rateLimitRetryDelay: TimeSpan.Zero);
+
+        var exception = await Should.ThrowAsync<HttpRequestException>(() =>
+            client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None));
+
+        exception.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        attempts.ShouldBe(5);
+    }
+
+    [Fact]
     public async Task FetchAsync_never_surfaces_a_track_level_field_even_though_the_raw_response_carries_one()
     {
         // Regression test for spec section 9.4/11.2: the raw Spotify "item" payload below carries
