@@ -27,6 +27,16 @@ on:
   push:
     branches: [main]
 
+# Without this, a second push to the same PR while its previous run is still in flight lets both
+# runs execute in parallel. gitleaks-action (dependency-secret-scan below) resolves the PR's *live*
+# head via the GitHub API rather than trusting the triggering event's own SHA, so the stale run
+# ends up trying to diff against a commit its own (already-materialized) checkout never fetched -
+# "fatal: Invalid revision range" - a confusing, unrelated-looking failure with no actual secret
+# leak behind it. Cancelling the superseded run removes the race instead of explaining it away.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
