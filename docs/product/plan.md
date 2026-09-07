@@ -17,6 +17,14 @@ adımlar:
   otomatik kullanıyor. Kalan: migration, deploy ve ilk gerçek sync sonrası kontrol.
   Devreye alma: `docs/automatic-eras.md`.
 
+- **Spotify kotası — bir sonraki gerçek çalıştırmayla doğrulanacak.** 2026-09-07'de art arda
+  tetiklenen `sync-spotify` ve `report-eras`, hesabı ~19,5 saatlik rate-limit cooldown'una
+  soktu. İki düzeltme de kodda hazır ama henüz canlı veriyle koşmadı: rapor yolunda 3 sayfalık
+  örnekleme + 250 ms gecikme (US-023), sync yolunda değişmemiş `snapshot_id`'de sayfalı track
+  okumasının tamamen atlanması (US-024). Cooldown bittikten sonraki ilk çalıştırmada job
+  özetinde "N skipped (unchanged snapshot)" satırı beklenir; çıkmıyorsa atlama devreye girmiyor
+  demektir.
+
 - Bilinen küçük doküman/hijyen açıkları (2026-09-05 denetiminde bulundu, kod değil): ADR
   numaralandırmasında 0004 boşluğu (atlanmış mı belli değil); `displayOrder`/`publishedAt`in 120
   playlist'in çoğunda ayrım yapmaması (ana sayfa sıralaması şu an dosya-adı sırasına yakın) —
@@ -28,6 +36,17 @@ adımlar:
   seferlik adım — US-004/US-007 ile aynı desen.
 
 ## Tamamlanan
+
+- **US-024 — Değişmemiş playlist'lerde track sync'ini atla (2026-09-07).** Sync aracı her
+  çalıştırmada her playlist'in tüm track sayfalarını yeniden okuyordu; sadece artist ve dönem
+  toplamları için, 1601 track'lık Bluesland'de 17, 10.000 track'lık `psychedelia`'da 101 istek.
+  Spotify zaten `snapshot_id` veriyordu ve tek sayfasız özet çağrısında dönüyordu, ama hiçbir
+  yerde kullanılmıyordu. Artık cache satırı fetch'ten önce okunuyor; snapshot eşleşirse sayfalı
+  geçiş hiç başlamıyor ve satırın `Artists`/`ComputedEras` değerleri olduğu gibi korunuyor,
+  ücretsiz özet alanları (isim, açıklama, kapak, track sayısı) yine tazeleniyor. Bir satır ancak
+  `IsAvailable` ve `ComputedEras is not null` ise atlanabiliyor — eras kolonundan önce yazılmış
+  satırlar aksi hâlde hiç dönem etiketi kazanamazdı; bu kural ayrı bir testle korunuyor.
+  `SyncSummary.Skipped` sayacı job özetinde görünüyor. 275/275 test yeşil (+3).
 
 - **US-023 aracı — Spotify release-date'ten dönem raporu (2026-09-07).** Era zenginleştirmesini
   tahmine değil ölçüme dayandıran salt-okunur `report-eras` modu. Yalnız `album(release_date)`

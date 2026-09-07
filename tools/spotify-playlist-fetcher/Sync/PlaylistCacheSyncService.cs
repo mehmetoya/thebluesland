@@ -29,6 +29,7 @@ public sealed class PlaylistCacheSyncService
     {
         var created = 0;
         var updated = 0;
+        var skipped = 0;
         var unavailable = 0;
         var processed = 0;
 
@@ -37,8 +38,12 @@ public sealed class PlaylistCacheSyncService
             cancellationToken.ThrowIfCancellationRequested();
 
             Console.Error.WriteLine($"Sync [{++processed}/{spotifyPlaylistIds.Count}]: {spotifyPlaylistId}");
-            var fetchResult = await _playlistClient.FetchAsync(spotifyPlaylistId, accessToken, cancellationToken);
+
+            // Read the row first: its snapshot id is what lets the client skip the paginated track
+            // pass for a playlist nobody has touched since the last run (US-024).
             var existingEntry = await _dbContext.SpotifyPlaylistCache.FindAsync([spotifyPlaylistId], cancellationToken);
+            var fetchResult = await _playlistClient.FetchAsync(
+                spotifyPlaylistId, accessToken, ReusableSnapshotId(existingEntry), cancellationToken);
             var syncedAt = DateTimeOffset.UtcNow;
 
             if (fetchResult is SpotifyPlaylistFetchResult.Found found)
@@ -47,6 +52,14 @@ public sealed class PlaylistCacheSyncService
                 {
                     _dbContext.SpotifyPlaylistCache.Add(CreateEntry(spotifyPlaylistId, found.Summary, syncedAt));
                     created++;
+                }
+                else if (found.TrackAggregatesSkipped)
+                {
+                    // Name, description and cover can change without touching a single track, so the
+                    // free summary fields are still written; artists and eras are left exactly as
+                    // they are, because a skipped fetch never read the tracks they come from.
+                    ApplyPlaylistMetadata(existingEntry, found.Summary, syncedAt);
+                    skipped++;
                 }
                 else
                 {
@@ -77,8 +90,17 @@ public sealed class PlaylistCacheSyncService
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        return new SyncSummary(created, updated, unavailable);
+        return new SyncSummary(created, updated, skipped, unavailable);
     }
+
+    /// <summary>
+    /// The snapshot id worth trusting for a skip, or null to force a full read. Only a row that is
+    /// available <i>and</i> already carries computed eras qualifies: rows written before the eras
+    /// column existed have a valid snapshot id but no eras, and skipping those would leave them
+    /// without eras forever, since nothing else recomputes them.
+    /// </summary>
+    private static string? ReusableSnapshotId(SpotifyPlaylistCacheEntry? entry) =>
+        entry is { IsAvailable: true, ComputedEras: not null } ? entry.SpotifySnapshotId : null;
 
     private static SpotifyPlaylistCacheEntry CreateEntry(
         string spotifyPlaylistId,
@@ -100,12 +122,21 @@ public sealed class PlaylistCacheSyncService
 
     private static void ApplySummary(SpotifyPlaylistCacheEntry entry, SpotifyPlaylistSummary summary, DateTimeOffset syncedAt)
     {
+        ApplyPlaylistMetadata(entry, summary, syncedAt);
+        entry.Artists = summary.Artists;
+        entry.ComputedEras = summary.ComputedEras;
+    }
+
+    /// <summary>Everything the single playlist request returns - no track-derived field.</summary>
+    private static void ApplyPlaylistMetadata(
+        SpotifyPlaylistCacheEntry entry,
+        SpotifyPlaylistSummary summary,
+        DateTimeOffset syncedAt)
+    {
         entry.Name = summary.Name;
         entry.Description = summary.Description;
         entry.CoverImageUrl = summary.CoverImageUrl;
         entry.TrackCount = summary.TrackCount;
-        entry.Artists = summary.Artists;
-        entry.ComputedEras = summary.ComputedEras;
         entry.SpotifySnapshotId = summary.SnapshotId;
         entry.SyncedAt = syncedAt;
         entry.IsAvailable = true;

@@ -22,7 +22,7 @@ public sealed class SpotifyPlaylistClientTests
         using var httpClient = new HttpClient(new FakeHttpMessageHandler(BuildTwoPageFoundResponder()));
         var client = new SpotifyPlaylistClient(httpClient);
 
-        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
 
         var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
         found.Summary.Name.ShouldBe("Dear Mr. Fantasy");
@@ -39,7 +39,7 @@ public sealed class SpotifyPlaylistClientTests
         using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)));
         var client = new SpotifyPlaylistClient(httpClient);
 
-        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
 
         result.ShouldBeOfType<SpotifyPlaylistFetchResult.NotFound>();
     }
@@ -53,7 +53,7 @@ public sealed class SpotifyPlaylistClientTests
         var client = new SpotifyPlaylistClient(httpClient);
 
         await Should.ThrowAsync<HttpRequestException>(() =>
-            client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None));
+            client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None));
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public sealed class SpotifyPlaylistClientTests
         var client = new SpotifyPlaylistClient(httpClient);
 
         await Should.ThrowAsync<HttpRequestException>(() =>
-            client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None));
+            client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None));
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public sealed class SpotifyPlaylistClientTests
         }));
         var client = new SpotifyPlaylistClient(httpClient);
 
-        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
 
         result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
         attempts.ShouldBe(2);
@@ -116,7 +116,7 @@ public sealed class SpotifyPlaylistClientTests
         }));
         var client = new SpotifyPlaylistClient(httpClient, rateLimitRetryDelay: TimeSpan.Zero);
 
-        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
 
         result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
         attempts.ShouldBe(2);
@@ -140,7 +140,7 @@ public sealed class SpotifyPlaylistClientTests
         var client = new SpotifyPlaylistClient(httpClient);
 
         var exception = await Should.ThrowAsync<HttpRequestException>(() =>
-            client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None));
+            client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None));
 
         exception.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
         exception.Message.ShouldContain("cooldown");
@@ -159,7 +159,7 @@ public sealed class SpotifyPlaylistClientTests
         var client = new SpotifyPlaylistClient(httpClient, rateLimitRetryDelay: TimeSpan.Zero);
 
         var exception = await Should.ThrowAsync<HttpRequestException>(() =>
-            client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None));
+            client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None));
 
         exception.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
         attempts.ShouldBe(5);
@@ -174,7 +174,7 @@ public sealed class SpotifyPlaylistClientTests
         using var httpClient = new HttpClient(new FakeHttpMessageHandler(BuildTwoPageFoundResponder()));
         var client = new SpotifyPlaylistClient(httpClient);
 
-        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
 
         var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
         found.Summary.Artists.ShouldBe(["Eric Clapton", "Traffic"], ignoreOrder: true);
@@ -194,7 +194,7 @@ public sealed class SpotifyPlaylistClientTests
         using var httpClient = new HttpClient(new FakeHttpMessageHandler(BuildTwoPageFoundResponder()));
         var client = new SpotifyPlaylistClient(httpClient);
 
-        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
 
         var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
         found.Summary.Artists.ShouldBe(["Eric Clapton", "Traffic"], ignoreOrder: true);
@@ -208,9 +208,10 @@ public sealed class SpotifyPlaylistClientTests
         using var httpClient = new HttpClient(new FakeHttpMessageHandler(BuildReleaseYearResponder()));
         var client = new SpotifyPlaylistClient(httpClient);
 
-        var releaseYears = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var sample = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
 
-        releaseYears.ShouldBe([1971, 1978, 1985, 2010], ignoreOrder: true);
+        sample.ReleaseYears.ShouldBe([1971, 1978, 1985, 2010], ignoreOrder: true);
+        sample.WasSampled.ShouldBeFalse();
     }
 
     [Fact]
@@ -242,9 +243,9 @@ public sealed class SpotifyPlaylistClientTests
         }));
         var client = new SpotifyPlaylistClient(httpClient);
 
-        var releaseYears = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var sample = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
 
-        releaseYears.ShouldBe([1992]);
+        sample.ReleaseYears.ShouldBe([1992]);
     }
 
     [Fact]
@@ -282,13 +283,47 @@ public sealed class SpotifyPlaylistClientTests
         }));
         var client = new SpotifyPlaylistClient(httpClient, rateLimitRetryDelay: TimeSpan.Zero);
 
-        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
 
         var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
         found.Summary.Artists.ShouldBe(["Traffic"]);
         found.Summary.ComputedEras.ShouldBe(["1970s", "1980s-1990s", "mixed-era"]);
         firstPageCalls.ShouldBe(1);
         secondPageCalls.ShouldBe(2);
+    }
+
+    /// <summary>
+    /// US-023 quota guard: the first real run followed "next" to exhaustion and got the Spotify
+    /// account rate-limited for ~19.5 hours (`psychedelia` alone is 10,000 tracks / 100 pages).
+    /// A playlist that never stops paging must therefore stop at the client's own page cap and
+    /// report itself as sampled - if this test ever fails, the crawl is unbounded again.
+    /// </summary>
+    [Fact]
+    public async Task GetTrackReleaseYearsAsync_stops_at_the_page_cap_and_reports_the_result_as_sampled()
+    {
+        var pagesServed = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ =>
+        {
+            pagesServed++;
+
+            // Always advertises another page, exactly like a playlist far longer than the cap.
+            return JsonResponse(
+                $$"""
+                {
+                  "items": [
+                    { "item": { "album": { "release_date": "1973" } } }
+                  ],
+                  "next": "https://api.spotify.com/v1/playlists/{{PlaylistId}}/items?offset={{pagesServed * 100}}&limit=100"
+                }
+                """);
+        }));
+        var client = new SpotifyPlaylistClient(httpClient);
+
+        var sample = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
+
+        sample.WasSampled.ShouldBeTrue();
+        pagesServed.ShouldBe(3);
+        sample.ReleaseYears.ShouldBe([1973, 1973, 1973]);
     }
 
     private static Func<HttpRequestMessage, HttpResponseMessage> BuildReleaseYearResponder() => request =>

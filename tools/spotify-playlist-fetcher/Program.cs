@@ -96,7 +96,8 @@ var syncService = new PlaylistCacheSyncService(playlistClient, dbContext);
 var summary = await syncService.SyncAsync(spotifyPlaylistIds, accessToken, cancellationToken);
 
 Console.WriteLine(
-    $"Sync complete: {summary.Created} created, {summary.Updated} updated, {summary.Unavailable} marked unavailable.");
+    $"Sync complete: {summary.Created} created, {summary.Updated} updated, " +
+    $"{summary.Skipped} skipped (unchanged snapshot), {summary.Unavailable} marked unavailable.");
 
 return 0;
 

@@ -107,7 +107,10 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
         var secondRunSummary = await service.SyncAsync(playlistIds, AccessToken, CancellationToken.None);
 
         secondRunSummary.Created.ShouldBe(0);
-        secondRunSummary.Updated.ShouldBe(1);
+        // US-024: the fixture's snapshot id is unchanged between the two runs, so the second one
+        // reaches the same single row without re-reading a single track page.
+        secondRunSummary.Updated.ShouldBe(0);
+        secondRunSummary.Skipped.ShouldBe(1);
 
         var rowCount = await dbContext.SpotifyPlaylistCache.AsNoTracking()
             .CountAsync(e => e.SpotifyPlaylistId == AvailablePlaylistId);
@@ -171,7 +174,7 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
 
         var summary = await service.SyncAsync([], AccessToken, CancellationToken.None);
 
-        summary.ShouldBe(new SyncSummary(0, 0, 0));
+        summary.ShouldBe(new SyncSummary(0, 0, 0, 0));
         var rowCount = await dbContext.SpotifyPlaylistCache.AsNoTracking().CountAsync();
         rowCount.ShouldBe(0);
     }
@@ -210,6 +213,104 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
         await service.SyncAsync([AvailablePlaylistId], AccessToken, CancellationToken.None);
         entry = await dbContext.SpotifyPlaylistCache.AsNoTracking().SingleAsync();
         entry.ComputedEras.ShouldNotBeNull().ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task SyncAsync_skips_the_paginated_track_read_when_the_snapshot_id_is_unchanged()
+    {
+        await SeedSyncedRowAsync(
+            snapshotId: "snapshot-available", artists: ["Erkin Koray"], computedEras: ["1970s"]);
+
+        var itemsRequests = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+        {
+            var absolutePath = request.RequestUri!.AbsolutePath;
+            if (absolutePath == $"/v1/playlists/{AvailablePlaylistId}/items")
+            {
+                itemsRequests++;
+            }
+
+            // A renamed playlist with the same snapshot id: tracks unchanged, metadata changed.
+            return JsonResponse(
+                """
+                {
+                  "name": "Erkin Koray, renamed",
+                  "items": { "total": 1 },
+                  "snapshot_id": "snapshot-available"
+                }
+                """);
+        }));
+        await using var dbContext = await CreateMigratedDbContextAsync();
+        var service = new PlaylistCacheSyncService(new SpotifyPlaylistClient(httpClient), dbContext);
+
+        var summary = await service.SyncAsync([AvailablePlaylistId], AccessToken, CancellationToken.None);
+
+        itemsRequests.ShouldBe(0); // the whole point: no per-100-track request goes out at all
+        summary.ShouldBe(new SyncSummary(Created: 0, Updated: 0, Skipped: 1, Unavailable: 0));
+
+        var entry = await dbContext.SpotifyPlaylistCache.AsNoTracking()
+            .SingleAsync(e => e.SpotifyPlaylistId == AvailablePlaylistId);
+        entry.Artists.ShouldBe(["Erkin Koray"]);      // kept, not overwritten with the skipped read's empty
+        entry.ComputedEras.ShouldBe(["1970s"]);
+        entry.Name.ShouldBe("Erkin Koray, renamed");  // the free summary fields still refresh
+        entry.SyncedAt.ShouldBeGreaterThan(DateTimeOffset.UtcNow.AddMinutes(-1));
+    }
+
+    [Fact]
+    public async Task SyncAsync_still_reads_tracks_in_full_when_the_snapshot_id_differs()
+    {
+        await SeedSyncedRowAsync(
+            snapshotId: "snapshot-stale", artists: ["Stale Artist"], computedEras: ["1980s-1990s"]);
+
+        await using var dbContext = await CreateMigratedDbContextAsync();
+        var service = new PlaylistCacheSyncService(CreateAvailablePlaylistClient(), dbContext);
+
+        var summary = await service.SyncAsync([AvailablePlaylistId], AccessToken, CancellationToken.None);
+
+        summary.ShouldBe(new SyncSummary(Created: 0, Updated: 1, Skipped: 0, Unavailable: 0));
+
+        var entry = await dbContext.SpotifyPlaylistCache.AsNoTracking()
+            .SingleAsync(e => e.SpotifyPlaylistId == AvailablePlaylistId);
+        entry.Artists.ShouldBe(["Erkin Koray"]);
+        entry.SpotifySnapshotId.ShouldBe("snapshot-available");
+    }
+
+    [Fact]
+    public async Task SyncAsync_reads_tracks_in_full_when_a_matching_snapshot_row_has_no_computed_eras_yet()
+    {
+        // Rows written before the eras column existed carry a valid snapshot id and no eras.
+        // Skipping those on a snapshot match would leave them era-less permanently.
+        await SeedSyncedRowAsync(
+            snapshotId: "snapshot-available", artists: ["Erkin Koray"], computedEras: null);
+
+        await using var dbContext = await CreateMigratedDbContextAsync();
+        var service = new PlaylistCacheSyncService(CreateAvailablePlaylistClient(), dbContext);
+
+        var summary = await service.SyncAsync([AvailablePlaylistId], AccessToken, CancellationToken.None);
+
+        summary.Updated.ShouldBe(1);
+        summary.Skipped.ShouldBe(0);
+
+        var entry = await dbContext.SpotifyPlaylistCache.AsNoTracking()
+            .SingleAsync(e => e.SpotifyPlaylistId == AvailablePlaylistId);
+        entry.ComputedEras.ShouldNotBeNull();
+    }
+
+    private async Task SeedSyncedRowAsync(string snapshotId, string[] artists, string[]? computedEras)
+    {
+        await using var seedContext = await CreateMigratedDbContextAsync();
+        seedContext.SpotifyPlaylistCache.Add(new()
+        {
+            SpotifyPlaylistId = AvailablePlaylistId,
+            Name = "Masterpieces of Erkin the Father",
+            TrackCount = 1,
+            Artists = artists,
+            ComputedEras = computedEras,
+            SpotifySnapshotId = snapshotId,
+            SyncedAt = DateTimeOffset.UtcNow.AddDays(-30),
+            IsAvailable = true,
+        });
+        await seedContext.SaveChangesAsync();
     }
 
     private async Task<TheBlueslandDbContext> CreateMigratedDbContextAsync()
