@@ -578,10 +578,69 @@ Ziyaretçi olarak, dönem filtresinde yalnız `mixed-era` taşıyan playlist'ler
 
 Durum: Otomatik atama kodu tamamlandı; canlıya alma ve gerçek veriyle doğrulama bekliyor.
 `report-eras` salt-okunur inceleme aracı olarak kullanılmaya devam edebilir.
+
+2026-09-07 olayı ve düzeltmesi: `report-eras`'ın ilk gerçek çalışması (run 34132175684) tüm
+Spotify hesabını ~19,5 saatlik cooldown'a soktu — `next` sonuna kadar takip edildiği için tek
+başına `psychedelia` 100, `no-more-words` 87 istek demekti. `GetTrackReleaseYearsAsync` artık
+playlist başına en fazla 3 sayfa (300 track) okuyor ve sayfalar arasında 250 ms bekliyor; dönem
+*dağılımı* bir oran olduğu için birkaç yüz track onu yeterince temsil ediyor. Kesilen
+playlist'ler rapora "Sampled: yes" satırıyla açıkça yazılıyor, böylece okuyan kişi öneriyi
+buna göre tartabiliyor. Sayfa sınırının devreye girdiğini doğrulayan bir test eklendi.
 Devreye alma: `docs/automatic-eras.md`.
 Bağımlılık: US-022 (tamamlandı).
 Öncelik: Could
 Platform: sync + data + web
+
+---
+
+## US-024 — Değişmemiş playlist'lerde track sync'ini snapshot_id ile atla
+
+Kullanıcı olarak proje sahibi (Mehmet), sync aracının değişmemiş playlist'lerin track listesini
+her çalıştırmada yeniden çekmemesini istiyorum ki tekrarlanan sync'ler Spotify rate limit'ine
+bugünkü gibi sıklıkla takılmasın.
+
+**2026-09-07 bağlamı:** Aynı gün içinde `sync-spotify.yml` ve `report-eras.yml`, tekrarlanan
+manuel `workflow_dispatch` tetiklemeleri yüzünden Spotify'ın rate limit'ine takıldı (~20 saatlik
+cooldown, US-023'ün workflow reliability fix'i sayesinde sessizce saatlerce beklemek yerine açıkça
+hata verdi). `SpotifyPlaylistClient.FetchAsync`, `snapshot_id`'yi zaten tek ve sayfalanmayan bir
+çağrıyla (`GetPlaylistSummaryAsync`) döndürüyor, ama bunu hiçbir yerde kullanmadan her seferinde
+`GetTrackAggregatesAsync`'in sayfalı `/items` çağrılarını da çalıştırıyor - 1000+ track'lı
+playlist'lerde (ör. Bluesland, 1601 track) bu, tek bir playlist için bile onlarca istek demek.
+
+Kabul kriterleri:
+
+- [x] `GetPlaylistSummaryAsync`'in döndürdüğü güncel `snapshot_id`, var olan cache satırının
+      `SpotifySnapshotId` alanıyla eşleştiğinde `GetTrackAggregatesAsync`'in sayfalı çağrıları hiç
+      yapılmaz; satırın mevcut `Artists`/`ComputedEras` değerleri korunur, `Name`/`Description`/
+      `CoverImageUrl`/`TrackCount`/`SyncedAt` tek ücretsiz özet çağrısından güncellenir.
+- [x] Cache satırı hiç yoksa (ilk sync) veya `IsAvailable` false ise, snapshot karşılaştırması
+      yapılmadan her zaman tam fetch (track aggregation dahil) çalışır.
+- [x] `SyncSummary`'ye eklenen bir "skipped" sayacı, kaç playlist'in gerçekten Spotify'a gidip kaç
+      tanesinin snapshot eşleşmesiyle atlandığını job özetinde görünür kılar.
+- [x] Aynı `snapshot_id`'li bir playlist için test, `GetTrackAggregatesAsync`'in fake HTTP
+      handler'a hiç istek yapmadığını doğrular; farklı `snapshot_id`'de tam fetch'in değişmeden
+      çalıştığı ayrı bir regresyon testiyle korunur.
+- [x] Ek koruma: `ComputedEras`'ı henüz `null` olan satırlar (eras kolonundan önce yazılmış
+      satırlar) snapshot eşleşse bile tam fetch'e düşer — aksi hâlde bu satırlar hiçbir zaman
+      dönem etiketi kazanamazdı.
+
+**Durum: Kod tamamlandı (2026-09-07); gerçek sync ile doğrulama bekliyor.** Karar noktası
+`PlaylistCacheSyncService.ReusableSnapshotId` — cache satırı önce okunuyor, uygun snapshot id
+`SpotifyPlaylistClient.FetchAsync`'e veriliyor, eşleşirse sayfalı `/items` geçişi hiç başlamıyor
+(`SpotifyPlaylistFetchResult.Found.TrackAggregatesSkipped`). İlk gerçek çalıştırmada beklenen
+etki: değişmemiş playlist'ler için playlist başına ~1 istek (Bluesland'de 17, `psychedelia`'da
+101 yerine). Üç yeni test (atlama, farklı snapshot'ta tam fetch, `ComputedEras: null` korunması)
++ güncellenen idempotency testi; 275/275 yeşil. Ayrıca sync'in sayfalı track okuması da artık
+sayfalar arasında 250 ms bekliyor (rapor yolundaki `TrackPageDelay` ile aynı sabit): limiter'ı
+en çok zorlayan şey toplam istek değil, aralıksız istek serisiydi; snapshot atlaması sayesinde
+bu gecikmeyi ayda yalnızca gerçekten değişmiş birkaç playlist ödüyor. Doğrulama: bir sonraki
+`sync-spotify` çalışması job özetinde "N skipped (unchanged snapshot)" göstermeli.
+
+Kapsam dışı: `report-eras.yml`'in kendi komut yolu (kendi sayfa sınırı ve gecikmesi US-023'te
+eklendi); Spotify rate limit eşiğinin/retry stratejisinin kendisi (US-023'te zaten ele alındı).
+Bağımlılık: US-023 (`spotify_snapshot_id`, `computed_eras` alanları zaten mevcut).
+Öncelik: Should
+Platform: sync
 
 ---
 

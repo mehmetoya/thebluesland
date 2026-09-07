@@ -41,11 +41,11 @@ public sealed class PlaylistEraReportService
             cancellationToken.ThrowIfCancellationRequested();
 
             Console.Error.WriteLine($"Era report [{++processed}/{playlists.Count}]: {playlist.Slug}");
-            var releaseYears = await _playlistClient.GetTrackReleaseYearsAsync(
+            var sample = await _playlistClient.GetTrackReleaseYearsAsync(
                 playlist.SpotifyPlaylistId, accessToken, cancellationToken);
-            var distribution = _calculator.Calculate(releaseYears);
+            var distribution = _calculator.Calculate(sample.ReleaseYears);
 
-            AppendSection(report, playlist, distribution);
+            AppendSection(report, playlist, distribution, sample.WasSampled);
         }
 
         return report.ToString();
@@ -54,11 +54,21 @@ public sealed class PlaylistEraReportService
     private static void AppendSection(
         StringBuilder report,
         PlaylistFrontMatterEntry playlist,
-        PlaylistEraDistributionResult distribution)
+        PlaylistEraDistributionResult distribution,
+        bool wasSampled)
     {
         report.AppendLine($"## {playlist.Slug}");
         report.AppendLine();
         report.AppendLine($"- Dated tracks read: {distribution.DatedTrackCount}");
+
+        if (wasSampled)
+        {
+            // Says outright that this playlist is longer than the read - a proportion from a few
+            // hundred tracks is sound, but the reader should know it is an estimate, not a census.
+            report.AppendLine(
+                "- Sampled: yes - the playlist is longer than the page cap, so these percentages " +
+                "estimate the distribution from the tracks read above.");
+        }
         report.AppendLine(
             $"- Current eras: {(playlist.Eras.Count > 0 ? string.Join(", ", playlist.Eras) : "(none)")}");
 

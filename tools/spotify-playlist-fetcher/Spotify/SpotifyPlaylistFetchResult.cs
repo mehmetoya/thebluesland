@@ -12,7 +12,15 @@ public abstract record SpotifyPlaylistFetchResult
     {
     }
 
-    public sealed record Found(SpotifyPlaylistSummary Summary) : SpotifyPlaylistFetchResult;
+    /// <param name="Summary">Playlist-level facts read from Spotify.</param>
+    /// <param name="TrackAggregatesSkipped">
+    /// True when the playlist's <c>snapshot_id</c> matched the caller's known one, so the paginated
+    /// track pass was not made at all (US-024). <see cref="SpotifyPlaylistSummary.Artists"/> and
+    /// <see cref="SpotifyPlaylistSummary.ComputedEras"/> are then empty/null placeholders that carry
+    /// no information: the caller must keep the values it already has rather than write these.
+    /// </param>
+    public sealed record Found(SpotifyPlaylistSummary Summary, bool TrackAggregatesSkipped = false)
+        : SpotifyPlaylistFetchResult;
 
     public sealed record NotFound : SpotifyPlaylistFetchResult;
 }
