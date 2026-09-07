@@ -29,39 +29,52 @@ public sealed class PlaylistFrontMatterReader
         string contentDirectory,
         CancellationToken cancellationToken)
     {
+        var entries = await ReadAllAsync(contentDirectory, cancellationToken);
+        return entries.Select(entry => entry.SpotifyPlaylistId).Distinct(StringComparer.Ordinal).ToArray();
+    }
+
+    /// <summary>
+    /// US-023: like <see cref="ReadDistinctSpotifyPlaylistIdsAsync"/>, but also returns each
+    /// file's <c>slug</c> and current <c>eras</c> so the era report can label its output and show
+    /// a current-vs-suggested comparison. Still read-only - never writes to
+    /// <paramref name="contentDirectory"/>.
+    /// </summary>
+    public async Task<IReadOnlyList<PlaylistFrontMatterEntry>> ReadAllAsync(
+        string contentDirectory,
+        CancellationToken cancellationToken)
+    {
         if (!Directory.Exists(contentDirectory))
         {
             return [];
         }
 
-        var playlistIds = new List<string>();
+        var entries = new List<PlaylistFrontMatterEntry>();
         foreach (var filePath in Directory
                      .EnumerateFiles(contentDirectory, "*.md", SearchOption.TopDirectoryOnly)
                      .OrderBy(path => path, StringComparer.Ordinal))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var spotifyPlaylistId = await ReadSpotifyPlaylistIdAsync(filePath, cancellationToken);
-            if (spotifyPlaylistId is { Length: > 0 })
+            var frontMatter = await ReadFrontMatterAsync(filePath, cancellationToken);
+            if (frontMatter?.SpotifyPlaylistId is not { Length: > 0 } spotifyPlaylistId)
             {
-                playlistIds.Add(spotifyPlaylistId);
+                continue;
             }
+
+            entries.Add(new PlaylistFrontMatterEntry(
+                spotifyPlaylistId,
+                frontMatter.Slug is { Length: > 0 } slug ? slug : Path.GetFileNameWithoutExtension(filePath),
+                frontMatter.Eras ?? []));
         }
 
-        return playlistIds.Distinct(StringComparer.Ordinal).ToArray();
+        return entries;
     }
 
-    private async Task<string?> ReadSpotifyPlaylistIdAsync(string filePath, CancellationToken cancellationToken)
+    private async Task<PlaylistFrontMatter?> ReadFrontMatterAsync(string filePath, CancellationToken cancellationToken)
     {
         var content = await File.ReadAllTextAsync(filePath, cancellationToken);
         var yaml = ExtractFrontMatterYaml(content);
-        if (yaml is null)
-        {
-            return null;
-        }
-
-        var frontMatter = _deserializer.Deserialize<PlaylistFrontMatter?>(yaml);
-        return frontMatter?.SpotifyPlaylistId;
+        return yaml is null ? null : _deserializer.Deserialize<PlaylistFrontMatter?>(yaml);
     }
 
     private static string? ExtractFrontMatterYaml(string content)

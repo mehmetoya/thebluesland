@@ -1,0 +1,56 @@
+name: Report playlist eras
+
+# US-023 (spec section 9.4/11.2, 8.6 taxonomy governance): a manually-triggered, read-only era
+# distribution report - never part of sync-spotify.yml's monthly job. This is the ONLY workflow
+# besides sync-spotify.yml that may reference SPOTIFY_CLIENT_ID/SPOTIFY_REFRESH_TOKEN; ci.yml,
+# deploy.yml and suggest-curator-note.yml must never declare them. Mehmet must additionally
+# restrict these two secrets to this workflow (and sync-spotify.yml) in the GitHub repo settings
+# (Settings > Secrets and variables > Actions) - that scoping is a one-time, code-external step
+# and cannot be enforced from the YAML alone (same note as sync-spotify.yml/US-004 and
+# suggest-curator-note.yml/US-016).
+#
+# The tool reads each content/playlists/*.md file's spotifyPlaylistId/slug/eras and every track's
+# album.release_date from Spotify, aggregates a per-playlist era distribution in memory, and
+# discards the raw release years - only the resulting percentages/suggestion are written out, and
+# only to this run's job summary and a build artifact (never to spotify_playlist_cache, never to
+# content/playlists/*.md). Mehmet reviews the suggestions and, if he agrees, updates the relevant
+# files himself through the normal pull-request flow.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    env:
+      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj
+
+      - name: Build
+        run: dotnet build tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-restore
+
+      - name: Report eras
+        run: |
+          set -euo pipefail
+          dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build -- report-eras | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload era report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: era-report
+          path: era-report.md
+          retention-days: 14

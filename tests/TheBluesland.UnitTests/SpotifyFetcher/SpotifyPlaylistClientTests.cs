@@ -104,6 +104,89 @@ public sealed class SpotifyPlaylistClientTests
         found.Summary.Artists.ShouldBe(["Eric Clapton", "Traffic"], ignoreOrder: true);
     }
 
+    [Fact]
+    public async Task GetTrackReleaseYearsAsync_reduces_release_dates_to_year_and_merges_multiple_pages()
+    {
+        // US-023: exercises year-only, year+month and year+month+day precision on page one, and a
+        // second page reached only via "next", proving pagination is followed to completion.
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(BuildReleaseYearResponder()));
+        var client = new SpotifyPlaylistClient(httpClient);
+
+        var releaseYears = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
+
+        releaseYears.ShouldBe([1971, 1978, 1985, 2010], ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task GetTrackReleaseYearsAsync_skips_tracks_with_a_missing_empty_or_absent_release_date()
+    {
+        // US-023: a missing "album", a missing "release_date" and an empty "release_date" (all
+        // real Spotify shapes - podcast episodes/local files have no album at all) must not be
+        // counted as a dated track, and must never surface as year 0.
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+        {
+            var absolutePath = request.RequestUri!.AbsolutePath;
+            if (absolutePath == $"/v1/playlists/{PlaylistId}/items")
+            {
+                return JsonResponse(
+                    """
+                    {
+                      "items": [
+                        { "item": { "artists": [] } },
+                        { "item": { "album": {} } },
+                        { "item": { "album": { "release_date": "" } } },
+                        { "item": { "album": { "release_date": "1992" } } }
+                      ],
+                      "next": null
+                    }
+                    """);
+            }
+
+            throw new InvalidOperationException($"Unexpected request path '{absolutePath}'.");
+        }));
+        var client = new SpotifyPlaylistClient(httpClient);
+
+        var releaseYears = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
+
+        releaseYears.ShouldBe([1992]);
+    }
+
+    private static Func<HttpRequestMessage, HttpResponseMessage> BuildReleaseYearResponder() => request =>
+    {
+        var absolutePath = request.RequestUri!.AbsolutePath;
+        var query = request.RequestUri.Query;
+
+        if (absolutePath == $"/v1/playlists/{PlaylistId}/items" && query.Contains("offset=100"))
+        {
+            return JsonResponse(
+                """
+                {
+                  "items": [
+                    { "item": { "album": { "release_date": "2010-06" } } }
+                  ],
+                  "next": null
+                }
+                """);
+        }
+
+        if (absolutePath == $"/v1/playlists/{PlaylistId}/items")
+        {
+            return JsonResponse(
+                """
+                {
+                  "items": [
+                    { "item": { "album": { "release_date": "1971" } } },
+                    { "item": { "album": { "release_date": "1978-05" } } },
+                    { "item": { "album": { "release_date": "1985-11-02" } } }
+                  ],
+                  "next": "https://api.spotify.com/v1/playlists/2m8X8fsMWor8A5AnmOHwzy/items?offset=100&limit=100&fields=items(item(album(release_date))),next"
+                }
+                """);
+        }
+
+        throw new InvalidOperationException($"Unexpected request path '{absolutePath}{query}'.");
+    };
+
     private static Func<HttpRequestMessage, HttpResponseMessage> BuildTwoPageFoundResponder() => request =>
     {
         var absolutePath = request.RequestUri!.AbsolutePath;

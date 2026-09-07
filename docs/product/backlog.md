@@ -567,20 +567,43 @@ istiyorum; şu an 85 playlist yalnızca `mixed-era` taşıdığı için dönem f
 
 Kabul kriterleri:
 
+- [x] Kaynak, tahmin değil ölçülebilir bir sinyal olur: Spotify track `album.release_date`
+      verisinden playlist başına dönem dağılımı hesaplanır.
+- [x] Araç bir **öneri** üretir; `content/playlists/*.md` dosyalarına asla otomatik yazmaz
+      (spec 8.6 taksonomi governance — nihai karar Mehmet'in, normal PR akışıyla).
+- [x] Track-seviyesi veri hiçbir yere kalıcı yazılmaz; yalnızca toplulaştırılmış yüzdeler ve
+      öneri çıktı olur (ADR-0002 / spec 9.4).
 - [ ] 85 `mixed-era` playlist'in her biri için, kapsadığı dönem(ler) belirlenip `eras` listesine
       eklenir; `mixed-era` gerçekten karışık olanlarda kalır.
-- [ ] Kaynak, tahmin değil ölçülebilir bir sinyal olur (aşağıdaki iki seçenekten biri).
 
-İki olası yaklaşım, ikisi de Mehmet'in kararına bağlı:
+**Durum: Araç tamamlandı (2026-09-07), içerik ataması bekliyor.** Yaklaşım 1 (Spotify release-date)
+uygulandı; yaklaşım 2 (elle geçiş) gereksiz kaldı.
 
-1. **Spotify track release-year verisi (önerilen).** Senkron aracı (US-003) zaten Spotify Web
-   API'sine bağlanıyor. Track'lerin `album.release_date` alanından playlist başına dönem dağılımı
-   hesaplanıp (ör. "track'lerin %60'ı 1970-1979 ise `1970s` etiketi") objektif biçimde önerilebilir.
-   Bu, taksonomiyi tahmine değil gerçek veriye dayandırır. Track-seviyesi veri kalıcı saklanmaz —
-   yalnızca hesaplanan dönem dağılımı çıktı olur, ADR-0002/spec 9.4 sınırı korunur.
-2. **Mehmet'in elle geçişi.** 85 dosya için dönem etiketleri doğrudan Mehmet tarafından atanır.
+Eklenenler: `report-eras` modu (`Program.cs`, mevcut `list-playlists`/`dump-cache`/
+`suggest-curator-note` salt-okunur mod deseninin aynısı), `SpotifyPlaylistClient.
+GetTrackReleaseYearsAsync` (yalnız `fields=items(item(album(release_date))),next`, sayfalı),
+`EraReport/` altında `EraBucketMapper` + `PlaylistEraDistributionCalculator` +
+`PlaylistEraReportService`, ve `.github/workflows/report-eras.yml` (yalnız `workflow_dispatch`,
+`permissions: contents: read`, çıktı job summary + artifact).
 
-Kapsam dışı: yeni era değeri eklemek (mevcut 5 değer yeterli, sorun atama granülerliğiydi).
+Öneri kuralı (tek yerde sabit, ayarlanabilir): tarihi okunabilen track sayısı 10'un altındaysa
+öneri üretilmez; payı %20+ olan her kova önerilir; hiçbir kova %60'a ulaşmıyorsa `mixed-era` de
+önerilir, ulaşıyorsa önerilmez.
+
+ADR-0002 sınırı tip düzeyinde korunuyor: `GetTrackReleaseYearsAsync` `IReadOnlyList<int>` döndürür,
+yani ham tarih dizesi bile client'ın dışına çıkmaz. Bir regresyon testi, mock'lanan yanıta bilerek
+konmuş track id/başlık/ISRC/tam tarihin rapor metnine sızmadığını doğruluyor.
+
+Doğrulama: `dotnet build` + `dotnet format --verify-no-changes` temiz, 255/255 test yeşil (+20),
+`content/playlists` dokunulmadı, kimlik bilgisiz çalıştırmada net hata + non-zero exit.
+
+**Kalan tek adım Mehmet'te:** `SPOTIFY_CLIENT_ID`/`SPOTIFY_REFRESH_TOKEN` secret'larını GitHub repo
+ayarlarından bu workflow'a da scope etmek (US-004/US-016 ile aynı tek seferlik adım), sonra
+workflow'u elle tetikleyip çıkan öneri raporunu gözden geçirmek ve kabul ettiklerini bir içerik
+PR'ıyla uygulamak. Araç gerçek Spotify verisine karşı hiç çalıştırılmadı (tüm testler mock'lu).
+
+Kapsam dışı: yeni era değeri eklemek (mevcut 5 değer yeterli, sorun atama granülerliğiydi);
+önerinin otomatik olarak PR'a dönüşmesi.
 Bağımlılık: US-022 (çoklu-değer şeması — tamamlandı).
 Öncelik: Could
 Platform: content

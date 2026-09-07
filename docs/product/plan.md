@@ -12,10 +12,10 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 Backlog'daki US-001..US-022'nin kod gerektiren kriterleri tamamlandı. Kalanlar içerik/manuel
 adımlar:
 
-- **US-023 — kalan 85 `mixed-era` playlist'in dönem zenginleştirmesi (Could).** US-022 şemayı
-  hazırladı; içerik tarafı Mehmet'in kararına bağlı. Önerilen yol: senkron aracının Spotify'dan
-  çektiği track `release_date` verisinden playlist başına dönem dağılımı hesaplamak — tahmin
-  yerine ölçülebilir sinyal. Alternatif: 85 dosyayı elle etiketlemek.
+- **US-023 — kalan 85 `mixed-era` playlist'in dönem zenginleştirmesi (Could).** Araç tarafı bitti
+  (`report-eras` modu + `report-eras.yml`, 2026-09-07). Kalan adımlar Mehmet'te: (1) Spotify
+  secret'larını bu workflow'a da scope etmek, (2) workflow'u elle tetikleyip öneri raporunu
+  incelemek, (3) kabul ettiği önerileri bir içerik PR'ıyla uygulamak.
 
 - Bilinen küçük doküman/hijyen açıkları (2026-09-05 denetiminde bulundu, kod değil): ADR
   numaralandırmasında 0004 boşluğu (atlanmış mı belli değil); `displayOrder`/`publishedAt`in 120
@@ -29,6 +29,14 @@ adımlar:
 
 ## Tamamlanan
 
+- **US-023 aracı — Spotify release-date'ten dönem raporu (2026-09-07).** Era zenginleştirmesini
+  tahmine değil ölçüme dayandıran salt-okunur `report-eras` modu. Yalnız `album(release_date)`
+  alanı çekiliyor ve `GetTrackReleaseYearsAsync` `IReadOnlyList<int>` döndürüyor — ham tarih bile
+  client'ın dışına çıkmadığı için ADR-0002 sınırı tip düzeyinde korunuyor; bir regresyon testi
+  mock'lanan yanıttaki track id/başlık/ISRC/tarihin rapora sızmadığını doğruluyor. Rapor mevcut ve
+  önerilen `eras`'ı yan yana verip kopyalanabilir YAML bloğu üretiyor, hiçbir içerik dosyasına
+  yazmıyor (spec 8.6). `report-eras.yml` yalnız `workflow_dispatch` + `contents: read`. 255/255
+  test yeşil (+20). Gerçek Spotify verisine karşı henüz çalıştırılmadı.
 - **US-022 — Era çoklu-değer + `deep-listen` occasion (2026-09-06).** Era'nın sorunu değer sayısı
   değil, tek-değerli olmasıydı: 120 playlist'in 94'ü `mixed-era` kutusunda sıkışıp filtreyi
   işlevsiz bırakıyordu. `PlaylistContent.Era` → `Eras` listesi; front matter `era: X` → `eras:`

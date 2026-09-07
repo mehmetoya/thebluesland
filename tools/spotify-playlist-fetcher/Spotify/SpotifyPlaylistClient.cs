@@ -143,6 +143,83 @@ public sealed class SpotifyPlaylistClient
         return [.. artistNames];
     }
 
+    /// <summary>
+    /// US-023: reads only the <c>album.release_date</c> field for every track/episode in the
+    /// playlist, for the sole purpose of computing an era distribution in memory (see
+    /// <c>EraReport.PlaylistEraDistributionCalculator</c>). The <c>fields</c> parameter narrows
+    /// the response to exactly that one nested field - no track title/id/duration/ISRC is ever
+    /// requested here, matching spec section 9.4/11.2's "no track-level data is persisted" limit;
+    /// the returned years are the only thing a caller may retain, and even those must never be
+    /// written anywhere except an aggregated percentage. Release dates with month or day
+    /// precision (<c>"1978-05"</c>, <c>"1978-05-12"</c>) are reduced to their leading year;
+    /// episodes/local files with no album, and tracks with a missing or empty
+    /// <c>release_date</c>, are skipped rather than counted as year zero.
+    /// </summary>
+    public async Task<IReadOnlyList<int>> GetTrackReleaseYearsAsync(
+        string spotifyPlaylistId,
+        string accessToken,
+        CancellationToken cancellationToken)
+    {
+        var releaseYears = new List<int>();
+        string? nextUrl = $"{BaseUrl}/playlists/{Uri.EscapeDataString(spotifyPlaylistId)}/items" +
+                           "?fields=items(item(album(release_date))),next&limit=100";
+
+        while (nextUrl is not null)
+        {
+            using var response = await SendAsync(HttpMethod.Get, nextUrl, accessToken, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
+            var root = document.RootElement;
+
+            if (root.TryGetProperty("items", out var itemsElement) && itemsElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var pageItem in itemsElement.EnumerateArray())
+                {
+                    if (TryReadReleaseYear(pageItem, out var year))
+                    {
+                        releaseYears.Add(year);
+                    }
+                }
+            }
+
+            nextUrl = root.TryGetProperty("next", out var nextElement) && nextElement.ValueKind != JsonValueKind.Null
+                ? nextElement.GetString()
+                : null;
+        }
+
+        return releaseYears;
+    }
+
+    private static bool TryReadReleaseYear(JsonElement pageItem, out int year)
+    {
+        year = 0;
+
+        // Same February 2026 shape as CollectArtistNames: the real payload is under "item", not
+        // the deprecated always-empty "track".
+        if (!pageItem.TryGetProperty("item", out var itemDetailElement)
+            || itemDetailElement.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        if (!itemDetailElement.TryGetProperty("album", out var albumElement)
+            || albumElement.ValueKind != JsonValueKind.Object)
+        {
+            return false; // podcast episodes and some local files have no album at all
+        }
+
+        if (!albumElement.TryGetProperty("release_date", out var releaseDateElement)
+            || releaseDateElement.GetString() is not { Length: >= 4 } releaseDate)
+        {
+            return false; // missing/empty release_date - do not count it as a dated track
+        }
+
+        var yearText = releaseDate.Split('-')[0];
+        return int.TryParse(yearText, out year) && year > 0;
+    }
+
     private static void CollectArtistNames(JsonElement pageItem, SortedSet<string> artistNames)
     {
         // Since the February 2026 API migration, "track" is present on every page item but is
