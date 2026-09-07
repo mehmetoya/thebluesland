@@ -177,6 +177,37 @@ public static class WebHostFactory
                 return Results.NotFound();
             }
 
+            // Optional `id`: mirrors PlaylistCacheLookup.GetSnapshotAsync's exact unprojected
+            // SingleOrDefaultAsync for one row, to see why a specific playlist degrades when the
+            // aggregate counts below look fine (2026-09-07: this caught a real per-row failure that
+            // COUNT(*) couldn't). ex.Message is included here (unlike the aggregate branch below) -
+            // still fine since this whole endpoint is already key-gated, and a row-level query
+            // failure is far less likely to echo connection details than a connection-level one.
+            var diagnosticId = context.Request.Query["id"].ToString();
+            if (!string.IsNullOrEmpty(diagnosticId))
+            {
+                try
+                {
+                    await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+                    var entry = await dbContext.SpotifyPlaylistCache
+                        .AsNoTracking()
+                        .SingleOrDefaultAsync(row => row.SpotifyPlaylistId == diagnosticId, cancellationToken);
+                    return Results.Json(new
+                    {
+                        reachable = true,
+                        found = entry is not null,
+                        isAvailable = entry?.IsAvailable,
+                        coverImageUrl = entry?.CoverImageUrl,
+                        trackCount = entry?.TrackCount,
+                        computedEras = entry?.ComputedEras,
+                    });
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    return Results.Json(new { reachable = false, errorType = ex.GetType().Name, errorMessage = ex.Message });
+                }
+            }
+
             try
             {
                 await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);

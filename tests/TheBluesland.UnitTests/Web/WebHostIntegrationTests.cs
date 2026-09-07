@@ -94,6 +94,16 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task HealthCache_with_an_id_also_reports_unreachable_when_the_database_cannot_be_reached()
+    {
+        using var response = await _httpClient.GetAsync($"/health/cache?key={CacheHealthKey}&id=someId");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("\"reachable\":false");
+    }
+
+    [Fact]
     public async Task PlaylistDetailPage_returns_200_with_editorial_content_when_the_database_is_unreachable()
     {
         var response = await _httpClient.GetAsync("/playlists/masterpieces-of-erkin-the-father");
