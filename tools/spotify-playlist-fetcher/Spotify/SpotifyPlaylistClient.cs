@@ -25,6 +25,7 @@ public sealed class SpotifyPlaylistClient
 {
     private const string BaseUrl = "https://api.spotify.com/v1";
     private const int MaxRateLimitAttempts = 5;
+    private static readonly TimeSpan MaximumRateLimitWait = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan DefaultRateLimitRetryDelay = TimeSpan.FromSeconds(1);
 
     private readonly HttpClient _httpClient;
@@ -281,6 +282,18 @@ public sealed class SpotifyPlaylistClient
 
             var retryDelay = GetRateLimitRetryDelay(response, attempt);
             response.Dispose();
+            if (retryDelay > MaximumRateLimitWait)
+            {
+                throw new HttpRequestException(
+                    $"Spotify rate limit requires waiting {retryDelay.TotalSeconds:F0} seconds, " +
+                    $"above the {MaximumRateLimitWait.TotalSeconds:F0}-second retry limit. " +
+                    "Run again after that cooldown; no early retry was sent.",
+                    null,
+                    HttpStatusCode.TooManyRequests);
+            }
+
+            Console.Error.WriteLine(
+                $"Spotify 429: waiting {retryDelay.TotalSeconds:F0}s before attempt {attempt + 1}/{MaxRateLimitAttempts}.");
             await Task.Delay(retryDelay, cancellationToken);
         }
 

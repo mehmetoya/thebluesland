@@ -35,10 +35,12 @@ public sealed class PlaylistEraReportService
             "Suggestions only - Mehmet decides which, if any, to apply through a normal content pull request.");
         report.AppendLine();
 
+        var processed = 0;
         foreach (var playlist in playlists.OrderBy(playlist => playlist.Slug, StringComparer.Ordinal))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            Console.Error.WriteLine($"Era report [{++processed}/{playlists.Count}]: {playlist.Slug}");
             var releaseYears = await _playlistClient.GetTrackReleaseYearsAsync(
                 playlist.SpotifyPlaylistId, accessToken, cancellationToken);
             var distribution = _calculator.Calculate(releaseYears);

@@ -122,6 +122,31 @@ public sealed class SpotifyPlaylistClientTests
         attempts.ShouldBe(2);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FetchAsync_stops_without_retrying_when_spotify_requests_an_excessive_cooldown(bool useDate)
+    {
+        var attempts = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ =>
+        {
+            attempts++;
+            var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+            response.Headers.RetryAfter = useDate
+                ? new System.Net.Http.Headers.RetryConditionHeaderValue(DateTimeOffset.UtcNow.AddHours(3))
+                : new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromHours(3));
+            return response;
+        }));
+        var client = new SpotifyPlaylistClient(httpClient);
+
+        var exception = await Should.ThrowAsync<HttpRequestException>(() =>
+            client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None));
+
+        exception.StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+        exception.Message.ShouldContain("cooldown");
+        attempts.ShouldBe(1);
+    }
+
     [Fact]
     public async Task FetchAsync_throws_after_exhausting_rate_limit_retries()
     {

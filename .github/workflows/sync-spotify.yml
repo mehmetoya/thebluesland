@@ -33,9 +33,15 @@ on:
           - list-playlists
           - dump-cache
 
+# Share the Spotify API quota across report and sync runs, including different branches.
+concurrency:
+  group: spotify-api
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
