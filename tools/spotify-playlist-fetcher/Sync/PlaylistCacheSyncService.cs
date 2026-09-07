@@ -90,6 +90,7 @@ public sealed class PlaylistCacheSyncService
             CoverImageUrl = summary.CoverImageUrl,
             TrackCount = summary.TrackCount,
             Artists = summary.Artists,
+            ComputedEras = summary.ComputedEras,
             SpotifySnapshotId = summary.SnapshotId,
             SyncedAt = syncedAt,
             IsAvailable = true,
@@ -102,6 +103,7 @@ public sealed class PlaylistCacheSyncService
         entry.CoverImageUrl = summary.CoverImageUrl;
         entry.TrackCount = summary.TrackCount;
         entry.Artists = summary.Artists;
+        entry.ComputedEras = summary.ComputedEras;
         entry.SpotifySnapshotId = summary.SnapshotId;
         entry.SyncedAt = syncedAt;
         entry.IsAvailable = true;

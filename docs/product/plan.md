@@ -12,10 +12,10 @@ Kaynak: `docs/product/backlog.md`, `docs/business-technical-specification.md` (v
 Backlog'daki US-001..US-022'nin kod gerektiren kriterleri tamamlandı. Kalanlar içerik/manuel
 adımlar:
 
-- **US-023 — kalan 85 `mixed-era` playlist'in dönem zenginleştirmesi (Could).** Araç tarafı bitti
-  (`report-eras` modu + `report-eras.yml`, 2026-09-07). Kalan adımlar Mehmet'te: (1) Spotify
-  secret'larını bu workflow'a da scope etmek, (2) workflow'u elle tetikleyip öneri raporunu
-  incelemek, (3) kabul ettiği önerileri bir içerik PR'ıyla uygulamak.
+- **US-023 — otomatik dönem ataması.** Mehmet'in 2026-09-07 kararıyla tek tek editoryal onay
+  kaldırıldı. Sync hesaplanan etiketleri cache'e yazıyor; web yalnız `mixed-era` listelerde
+  otomatik kullanıyor. Kalan: migration, deploy ve ilk gerçek sync sonrası kontrol.
+  Devreye alma: `docs/automatic-eras.md`.
 
 - Bilinen küçük doküman/hijyen açıkları (2026-09-05 denetiminde bulundu, kod değil): ADR
   numaralandırmasında 0004 boşluğu (atlanmış mı belli değil); `displayOrder`/`publishedAt`in 120

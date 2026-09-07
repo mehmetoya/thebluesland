@@ -1,14 +1,15 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using TheBluesland.SpotifyFetcher.EraReport;
 
 namespace TheBluesland.SpotifyFetcher.Spotify;
 
 /// <summary>
 /// Reads playlist-level facts from the Spotify Web API. Track-level data (title, id, duration,
-/// ISRC) is read only transiently, one page at a time, while paginating the items endpoint solely
-/// to compute the distinct artist list, and is discarded as soon as that page's artist names have
-/// been extracted - see spec section 9.4 and 11.2. The <c>fields</c> query parameter narrows both
+/// ISRC) is read only transiently, one page at a time, while paginating the items endpoint
+/// to compute distinct artists and era tags. Release years are kept only until the playlist's
+/// aggregate has been calculated - see spec section 9.4 and 11.2. The <c>fields</c> query parameter narrows both
 /// requests so Spotify itself never sends fields this tool has no use for.
 ///
 /// Spotify's February 2026 Web API migration removed <c>GET /playlists/{id}/tracks</c> in favour
@@ -46,8 +47,8 @@ public sealed class SpotifyPlaylistClient
             return new SpotifyPlaylistFetchResult.NotFound();
         }
 
-        var artists = await GetDistinctArtistNamesAsync(spotifyPlaylistId, accessToken, cancellationToken);
-        return new SpotifyPlaylistFetchResult.Found(summary with { Artists = artists });
+        var (artists, eras) = await GetTrackAggregatesAsync(spotifyPlaylistId, accessToken, cancellationToken);
+        return new SpotifyPlaylistFetchResult.Found(summary with { Artists = artists, ComputedEras = eras });
     }
 
     private async Task<SpotifyPlaylistSummary?> GetPlaylistSummaryAsync(
@@ -113,14 +114,15 @@ public sealed class SpotifyPlaylistClient
         };
     }
 
-    private async Task<string[]> GetDistinctArtistNamesAsync(
+    private async Task<(string[] Artists, string[] Eras)> GetTrackAggregatesAsync(
         string spotifyPlaylistId,
         string accessToken,
         CancellationToken cancellationToken)
     {
         var artistNames = new SortedSet<string>(StringComparer.Ordinal);
+        var releaseYears = new List<int>();
         string? nextUrl = $"{BaseUrl}/playlists/{Uri.EscapeDataString(spotifyPlaylistId)}/items" +
-                           "?fields=items(item(artists(name))),next&limit=100";
+                           "?fields=items(item(artists(name),album(release_date))),next&limit=100";
 
         while (nextUrl is not null)
         {
@@ -136,6 +138,10 @@ public sealed class SpotifyPlaylistClient
                 foreach (var pageItem in itemsElement.EnumerateArray())
                 {
                     CollectArtistNames(pageItem, artistNames);
+                    if (TryReadReleaseYear(pageItem, out var year))
+                    {
+                        releaseYears.Add(year);
+                    }
                 }
             }
 
@@ -144,7 +150,8 @@ public sealed class SpotifyPlaylistClient
                 : null;
         }
 
-        return [.. artistNames];
+        var distribution = new PlaylistEraDistributionCalculator().Calculate(releaseYears);
+        return ([.. artistNames], [.. distribution.SuggestedEras]);
     }
 
     /// <summary>

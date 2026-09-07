@@ -155,7 +155,7 @@ public sealed class SpotifyPlaylistClientTests
         found.Summary.Artists.ShouldBe(["Eric Clapton", "Traffic"], ignoreOrder: true);
         found.Summary.TrackCount.ShouldBe(2); // the aggregate from the playlist endpoint, not a track array length
         typeof(SpotifyPlaylistSummary).GetProperties().Select(p => p.Name).ShouldBe(
-            ["Name", "Description", "CoverImageUrl", "TrackCount", "Artists", "SnapshotId"],
+            ["Name", "Description", "CoverImageUrl", "TrackCount", "Artists", "ComputedEras", "SnapshotId"],
             ignoreOrder: true);
     }
 
@@ -220,6 +220,50 @@ public sealed class SpotifyPlaylistClientTests
         var releaseYears = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
 
         releaseYears.ShouldBe([1992]);
+    }
+
+    [Fact]
+    public async Task FetchAsync_computes_eras_with_artists_in_one_paginated_pass_even_after_rate_limiting()
+    {
+        var firstPageCalls = 0;
+        var secondPageCalls = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+        {
+            if (request.RequestUri!.AbsolutePath == $"/v1/playlists/{PlaylistId}")
+            {
+                return JsonResponse(PlaylistResponseJson);
+            }
+
+            var secondPage = request.RequestUri.Query.Contains("offset=100");
+            if (secondPage && ++secondPageCalls == 1)
+            {
+                return new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+            }
+
+            if (!secondPage)
+            {
+                firstPageCalls++;
+                Uri.UnescapeDataString(request.RequestUri.Query)
+                    .ShouldContain("artists(name),album(release_date)");
+            }
+
+            var date = secondPage ? "1985-01-01" : "1971-02-03";
+            var items = Enumerable.Range(0, 6).Select(_ => new
+            {
+                item = new { artists = new[] { new { name = "Traffic" } }, album = new { release_date = date } },
+            });
+            var next = secondPage ? null : $"https://api.spotify.com/v1/playlists/{PlaylistId}/items?offset=100";
+            return JsonResponse(System.Text.Json.JsonSerializer.Serialize(new { items, next }));
+        }));
+        var client = new SpotifyPlaylistClient(httpClient, rateLimitRetryDelay: TimeSpan.Zero);
+
+        var result = await client.FetchAsync(PlaylistId, AccessToken, CancellationToken.None);
+
+        var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
+        found.Summary.Artists.ShouldBe(["Traffic"]);
+        found.Summary.ComputedEras.ShouldBe(["1970s", "1980s-1990s", "mixed-era"]);
+        firstPageCalls.ShouldBe(1);
+        secondPageCalls.ShouldBe(2);
     }
 
     private static Func<HttpRequestMessage, HttpResponseMessage> BuildReleaseYearResponder() => request =>

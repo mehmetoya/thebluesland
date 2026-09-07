@@ -21,6 +21,7 @@ public sealed class SpotifyPlaylistCacheEntrySchemaTests
         nameof(SpotifyPlaylistCacheEntry.CoverImageUrl),
         nameof(SpotifyPlaylistCacheEntry.TrackCount),
         nameof(SpotifyPlaylistCacheEntry.Artists),
+        nameof(SpotifyPlaylistCacheEntry.ComputedEras),
         nameof(SpotifyPlaylistCacheEntry.SpotifySnapshotId),
         nameof(SpotifyPlaylistCacheEntry.SyncedAt),
         nameof(SpotifyPlaylistCacheEntry.IsAvailable),

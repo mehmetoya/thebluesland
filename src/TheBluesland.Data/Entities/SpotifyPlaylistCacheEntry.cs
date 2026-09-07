@@ -6,8 +6,8 @@ namespace TheBluesland.Data.Entities;
 /// editorial Markdown content by <see cref="SpotifyPlaylistId"/>.
 ///
 /// This entity intentionally excludes every track-level field (title, track id, duration, ISRC,
-/// audio-feature data): those are read transiently in memory during sync solely to compute
-/// <see cref="TrackCount"/> and <see cref="Artists"/>, and are never persisted. See spec section
+/// audio-feature data): those are read transiently in memory during sync to compute
+/// <see cref="TrackCount"/>, <see cref="Artists"/> and <see cref="ComputedEras"/>, and are never persisted. See spec section
 /// 9.4, section 11.2 and Spotify Developer Policy §14.
 /// </summary>
 public sealed class SpotifyPlaylistCacheEntry
@@ -29,6 +29,9 @@ public sealed class SpotifyPlaylistCacheEntry
 
     /// <summary>Distinct contributing artist display names; order not significant.</summary>
     public required string[] Artists { get; set; }
+
+    /// <summary>Automatically calculated playlist-level era tags; null before the first era sync, empty when data is insufficient.</summary>
+    public string[]? ComputedEras { get; set; }
 
     /// <summary>Spotify's own change-detection token, stored for future incremental sync.</summary>
     public string? SpotifySnapshotId { get; set; }

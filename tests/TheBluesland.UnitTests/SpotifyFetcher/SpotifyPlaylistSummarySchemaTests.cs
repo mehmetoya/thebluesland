@@ -20,6 +20,7 @@ public sealed class SpotifyPlaylistSummarySchemaTests
         nameof(SpotifyPlaylistSummary.CoverImageUrl),
         nameof(SpotifyPlaylistSummary.TrackCount),
         nameof(SpotifyPlaylistSummary.Artists),
+        nameof(SpotifyPlaylistSummary.ComputedEras),
         nameof(SpotifyPlaylistSummary.SnapshotId),
     ];
 
