@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TheBluesland.Data;
 using TheBluesland.SpotifyFetcher.Content;
 using TheBluesland.SpotifyFetcher.CuratorNote;
+using TheBluesland.SpotifyFetcher.EraReport;
 using TheBluesland.SpotifyFetcher.Spotify;
 using TheBluesland.SpotifyFetcher.Sync;
 
@@ -45,6 +46,22 @@ if (args.Length > 0 && string.Equals(args[0], "suggest-curator-note", StringComp
     }
 
     return await SuggestCuratorNoteAsync(args[1], cancellationToken);
+}
+
+// US-023 (spec 9.4/11.2, 8.6 taxonomy governance): read-only era-distribution report computed
+// from Spotify's per-track album.release_date field, so Mehmet can decide which of the 85
+// mixed-era-only playlists actually have a dominant period. Release years are aggregated in
+// memory one playlist at a time and discarded as soon as that playlist's distribution is
+// computed - only PlaylistEraDistributionResult's percentages/suggestion ever reach the report.
+// Mirrors suggest-curator-note's output pattern: stdout (piped to the job summary) plus a build
+// artifact - never spotify_playlist_cache, never content/playlists/*.md.
+if (args.Length > 0 && string.Equals(args[0], "report-eras", StringComparison.Ordinal))
+{
+    var reportContentDirectory = args.Length > 1 && args[1].Length > 0
+        ? args[1]
+        : Path.Combine(Directory.GetCurrentDirectory(), "content", "playlists");
+
+    return await ReportErasAsync(reportContentDirectory, cancellationToken);
 }
 
 var contentDirectory = args.Length > 0
@@ -140,6 +157,40 @@ static async Task<int> DumpCacheAsync(CancellationToken cancellationToken)
             Console.WriteLine($"  {entry.Description}");
         }
     }
+
+    return 0;
+}
+
+static async Task<int> ReportErasAsync(string contentDirectory, CancellationToken cancellationToken)
+{
+    var frontMatterReader = new PlaylistFrontMatterReader();
+    var playlists = await frontMatterReader.ReadAllAsync(contentDirectory, cancellationToken);
+
+    Console.WriteLine($"Found {playlists.Count} playlist(s) in '{contentDirectory}'.");
+    if (playlists.Count == 0)
+    {
+        Console.WriteLine("Nothing to report.");
+        return 0;
+    }
+
+    var clientId = RequireEnvironmentVariable("SPOTIFY_CLIENT_ID");
+    var refreshToken = RequireEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
+
+    using var httpClient = new HttpClient();
+    var authClient = new SpotifyAuthClient(httpClient);
+    var playlistClient = new SpotifyPlaylistClient(httpClient);
+    var accessToken = await authClient.GetAccessTokenAsync(clientId, refreshToken, cancellationToken);
+
+    var reportService = new PlaylistEraReportService(playlistClient);
+    var report = await reportService.BuildReportAsync(playlists, accessToken, cancellationToken);
+
+    Console.WriteLine();
+    Console.WriteLine(report);
+
+    // ADR-0005-style output boundary (madde 5 applied here by analogy): the report is written
+    // only to stdout (piped to $GITHUB_STEP_SUMMARY by the workflow) and this artifact file -
+    // never to a database or to content/playlists/*.md.
+    await File.WriteAllTextAsync("era-report.md", report, cancellationToken);
 
     return 0;
 }

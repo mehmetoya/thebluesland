@@ -23,3 +23,7 @@ obj/
 # Node/Tailwind build output (src/TheBluesland.Web, once it exists).
 node_modules/
 npm-debug.log*
+
+# US-023: local output of the report-eras tool run - a throwaway suggestion report,
+# uploaded as a CI artifact rather than committed.
+era-report.md

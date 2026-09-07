@@ -67,4 +67,32 @@ public sealed class PlaylistFrontMatterReaderTests
 
         playlistIds.ShouldBeEmpty();
     }
+
+    [Fact]
+    public async Task ReadAllAsync_returns_slug_and_eras_alongside_the_spotify_playlist_id()
+    {
+        // US-023: valid-with-id.md carries slug "masterpieces-of-erkin-the-father" and eras:
+        // [1970s] - the era report needs both to label its output and compare current vs.
+        // suggested eras.
+        var contentDirectory = Path.Combine(FixturesRoot, "content-playlists");
+
+        var entries = await _reader.ReadAllAsync(contentDirectory, CancellationToken.None);
+
+        // duplicate-of-first.md deliberately shares this same spotifyPlaylistId (see the
+        // dedup test above) under a different slug, so ReadAllAsync's un-deduplicated result
+        // must be filtered by slug, not by id, to pick out this one file.
+        var entry = entries.Single(e => e.Slug == "masterpieces-of-erkin-the-father");
+        entry.SpotifyPlaylistId.ShouldBe("0iJt9LMebhOY0KSHSJw3cS");
+        entry.Eras.ShouldBe(["1970s"]);
+    }
+
+    [Fact]
+    public async Task ReadAllAsync_returns_empty_when_directory_does_not_exist()
+    {
+        var contentDirectory = Path.Combine(FixturesRoot, "does-not-exist");
+
+        var entries = await _reader.ReadAllAsync(contentDirectory, CancellationToken.None);
+
+        entries.ShouldBeEmpty();
+    }
 }
