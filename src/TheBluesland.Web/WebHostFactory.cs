@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using TheBluesland.Data;
 using TheBluesland.Web.Cache;
 using TheBluesland.Web.Components;
@@ -136,7 +137,18 @@ public static class WebHostFactory
         // wwwroot/images/ (the grain texture asset). Placed after the security-headers middleware
         // above so static responses carry them too, and before UseAntiforgery/routing since static
         // files need no antiforgery/component-endpoint handling.
-        app.UseStaticFiles();
+        //
+        // A year-long immutable Cache-Control is safe specifically because every reference to
+        // css/app.css and the two js/ files already goes through StaticAssetVersion's content-hash
+        // `?v=` query string (App.razor) - any real content change produces a new URL, so a stale
+        // cached response under the old URL is simply never requested again after a deploy. Without
+        // this, browsers fall back to their own (often much shorter) heuristics despite the
+        // versioning already making long-lived caching safe.
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            OnPrepareResponse = context =>
+                context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable",
+        });
 
         app.UseOutputCache();
         app.UseAntiforgery();
@@ -180,9 +192,7 @@ public static class WebHostFactory
             // Optional `id`: mirrors PlaylistCacheLookup.GetSnapshotAsync's exact unprojected
             // SingleOrDefaultAsync for one row, to see why a specific playlist degrades when the
             // aggregate counts below look fine (2026-09-07: this caught a real per-row failure that
-            // COUNT(*) couldn't). ex.Message is included here (unlike the aggregate branch below) -
-            // still fine since this whole endpoint is already key-gated, and a row-level query
-            // failure is far less likely to echo connection details than a connection-level one.
+            // COUNT(*) couldn't).
             var diagnosticId = context.Request.Query["id"].ToString();
             if (!string.IsNullOrEmpty(diagnosticId))
             {
@@ -204,7 +214,15 @@ public static class WebHostFactory
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
-                    return Results.Json(new { reachable = false, errorType = ex.GetType().Name, errorMessage = ex.Message });
+                    // Same rule as the aggregate branch below: never echo a connection-level
+                    // Npgsql failure's message (some modes include host/credential fragments). EF
+                    // Core wraps a connection-level failure in its own InvalidOperationException
+                    // ("...likely due to a transient failure...") rather than surfacing the
+                    // NpgsqlException directly - confirmed via this exact code path's own test
+                    // fixture - so the whole InnerException chain must be checked, not just ex's
+                    // own type.
+                    var errorMessage = ContainsConnectionFailure(ex) ? null : ex.Message;
+                    return Results.Json(new { reachable = false, errorType = ex.GetType().Name, errorMessage });
                 }
             }
 
@@ -290,5 +308,18 @@ public static class WebHostFactory
 
         return configuredBytes.Length == providedBytes.Length &&
             CryptographicOperations.FixedTimeEquals(configuredBytes, providedBytes);
+    }
+
+    private static bool ContainsConnectionFailure(Exception ex)
+    {
+        for (var current = ex; current is not null; current = current.InnerException)
+        {
+            if (current is NpgsqlException)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -133,12 +133,14 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
 
     /// <summary>
     /// 2026-09-06: without a cache-busting query string, a browser that aggressively caches
-    /// "/css/app.css" (UseStaticFiles() sets no explicit Cache-Control) can keep serving stale CSS
-    /// after a deploy changes it - exactly the "new HTML, old CSS" mismatch a live screenshot
-    /// showed. StaticAssetVersion's hash must actually track the file's current bytes.
+    /// "/css/app.css" could keep serving stale CSS after a deploy changes it - exactly the "new
+    /// HTML, old CSS" mismatch a live screenshot showed. StaticAssetVersion's hash must actually
+    /// track the file's current bytes. Since 2026-09-07, UseStaticFiles() also sets an explicit
+    /// year-long immutable Cache-Control - safe only because this same "?v=" hash guarantees a
+    /// real content change always produces a new URL, so this test pins both halves together.
     /// </summary>
     [Fact]
-    public async Task HomePage_stylesheet_link_is_cache_busted_and_actually_served()
+    public async Task HomePage_stylesheet_link_is_cache_busted_and_served_with_a_long_lived_cache_header()
     {
         var pageResponse = await _httpClient.GetAsync("/");
         var pageBody = await pageResponse.Content.ReadAsStringAsync();
@@ -152,5 +154,6 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
 
         var cssResponse = await _httpClient.GetAsync(stylesheetHref);
         cssResponse.StatusCode.ShouldBe(HttpStatusCode.OK);
+        cssResponse.Headers.CacheControl?.ToString().ShouldBe("public, max-age=31536000, immutable");
     }
 }
