@@ -31,7 +31,9 @@ else if (_hasLoaded && !_redirected)
        entry (AC5): without it, ResponseStatusCode below would overwrite the 301 already set on
        HttpContext.Response with a 404, stepping on the redirect. *@
     <ResponseStatusCode Code="StatusCodes.Status404NotFound" />
-    <p>Playlist not found.</p>
+    <PageTitle>Playlist not found - TheBluesland</PageTitle>
+    <h1>Playlist not found</h1>
+    <p>We couldn't find this playlist. <a href="/">Browse all playlists</a> to find another.</p>
 }
 
 @code {

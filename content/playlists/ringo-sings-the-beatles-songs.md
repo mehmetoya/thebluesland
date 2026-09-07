@@ -11,12 +11,13 @@ genres:
   - rock
 occasions:
   - slow-evening
-era: pre-1970
+eras:
+  - pre-1970
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-The companion piece to "George Sings The Beatles Songs" — every track here is a Beatles song with Ringo Starr on lead vocals, from "Yellow Submarine" to the deeper cuts fans rarely single out. A small, affectionate way of noticing how much personality four different voices gave one band.
+Ringo Starr's lead vocals give this Beatles selection a familiar, warm character. Focusing on one voice offers a different way to hear the band's songs and arrangements.
 
-A short, warm-hearted listen.
+Pair it with George Sings The Beatles Songs for another view of the catalogue.

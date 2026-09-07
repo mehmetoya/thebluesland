@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: emdr-ptsd
 spotifyPlaylistId: 3ySms7MU12PmggzdNvaBJQ
 title: "EMDR ➰ PTSD"
-summary: "Heavy, cathartic rock — Nine Inch Nails, Audioslave, David Gilmour and Faith No More among nineteen tracks."
+summary: "Heavy, emotionally charged rock with Nine Inch Nails, Audioslave, David Gilmour and Faith No More."
 moods:
   - raw
   - melancholic
@@ -11,12 +11,13 @@ genres:
   - rock
 occasions:
   - headphones
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A short, deliberately intense set named after a trauma-processing therapy technique — these are songs built for working something out rather than background listening. Nine Inch Nails' industrial weight, Audioslave and Faith No More's controlled aggression, and David Gilmour's more textured guitar work all serve the same purpose here.
+Nine Inch Nails, Audioslave and Faith No More bring weight and tension, while David Gilmour adds more spacious guitar textures. The selection moves between forceful passages and moments of restraint.
 
-Headphones, not speakers — this one asks to be felt up close.
+An intense rock mix for a close listen.

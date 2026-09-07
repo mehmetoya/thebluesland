@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: crown-of-thorns
 spotifyPlaylistId: 1A6YApaMshQGwVndsEYQaP
 title: "Crown of Thorns 👑"
-summary: "NYC downtown no-wave and punk-funk — James Chance & The Contortions, Defunkt, Sonic Youth and Grandmaster Flash."
+summary: "No wave, punk-funk and jazz edges, with James Chance & The Contortions, Defunkt, Sonic Youth and Grandmaster Flash."
 moods:
   - raw
   - energetic
@@ -13,12 +13,13 @@ genres:
   - punk
 occasions:
   - headphones
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A short, sharp set built around a specific scene: late-1970s/early-80s New York, where no-wave (James Chance & The Contortions, Suicide), punk-funk (Defunkt, Afrika Bambaataa) and free jazz (Ornette Coleman, Max Roach) were all happening in the same clubs and influencing each other directly. David Bowie and Public Image Ltd. round out the picture.
+James Chance & The Contortions, Suicide and Defunkt bring abrasive rhythm and restless arrangements. Ornette Coleman and Max Roach widen the jazz connection, while David Bowie and Public Image Ltd. add other angles.
 
-Abrasive by design — not a background playlist.
+A sharp-edged mix with rhythm at its centre.

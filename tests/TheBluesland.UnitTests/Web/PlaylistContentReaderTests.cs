@@ -30,7 +30,7 @@ public sealed class PlaylistContentReaderTests
         playlist.Moods.ShouldBe(["energetic", "raw"]);
         playlist.Genres.ShouldBe(["anadolu-rock", "rock"]);
         playlist.Occasions.ShouldBe(["night-drive"]);
-        playlist.Era.ShouldBe("1970s");
+        playlist.Eras.ShouldBe(["1970s"]);
         playlist.CuratorNote.ShouldContain("Curator note body.");
         playlist.IsPublished.ShouldBeTrue();
         playlist.PublishedAt.ShouldBe(new DateOnly(2026, 1, 1));

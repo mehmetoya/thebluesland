@@ -56,7 +56,7 @@ public sealed class PlaylistCatalogueSortTests
             Moods: ["warm"],
             Genres: ["blues"],
             Occasions: ["late-night"],
-            Era: "1970s",
+            Eras: ["1970s"],
             CuratorNote: "Fixture curator note.",
             IsPublished: true,
             Featured: false,

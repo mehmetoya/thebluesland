@@ -10,7 +10,8 @@ genres:
   - soul
 occasions:
   - headphones
-era: 2000s-present
+eras:
+  - 2000s-present
 status: published
 publishedAt: 2026-02-15
 ---

@@ -12,12 +12,13 @@ genres:
   - folk
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A short, atmospheric set built around a specific sound: Hermanos Gutiérrez's reverb-heavy instrumental guitar and Gustavo Santaolalla's film-score work (Babel, The Motorcycle Diaries), both of which draw on Latin American folk tradition without ever needing lyrics to carry the mood.
+Hermanos Gutiérrez's spacious guitars and Gustavo Santaolalla's instrumental writing give this selection a cinematic feel. Repeating phrases and resonant strings leave room for the music to unfold.
 
-"The wind from below" — a fitting name for music this unhurried.
+For an unhurried stretch of listening.

@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: selen-bugras-love-story
 spotifyPlaylistId: 4Nk1Ogv2AimlTGUKML8lkr
 title: "Selen & Buğra’s Love Story"
-summary: "A pop mixtape built for two people — ABBA, Bee Gees, Bruno Mars and Bon Jovi among forty-eight tracks."
+summary: "A playlist dedicated to Selen and Buğra, with pop and rock from ABBA, the Bee Gees, Bruno Mars and Bon Jovi."
 moods:
   - warm
   - nostalgic
@@ -11,12 +11,13 @@ genres:
   - pop
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A personal, dedicated mixtape — pop's most reliably romantic names (ABBA, Bee Gees, Bruno Mars, Bon Jovi) built around a specific relationship rather than a genre argument. The title names the story directly; the tracklist is the soundtrack to it.
+ABBA, the Bee Gees, Bruno Mars and Bon Jovi give this dedication a bright pop-and-rock sound. Familiar melodies and expressive voices make it a warm selection to share.
 
-Sentimental by design, and better for it.
+A musical backdrop to the love story named in the title.

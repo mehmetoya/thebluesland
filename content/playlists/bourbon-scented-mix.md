@@ -11,12 +11,13 @@ genres:
   - blues
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Named for what it's meant to be paired with: a slow evening, something in a glass, and guitar tone that rewards close attention. Albert Collins' icy Telecaster sound and B.B. King's vibrato do a lot of the work here — this is blues as a sensory experience more than a genre exercise.
+Albert Collins' sharp guitar tone, Albert King's bends and B.B. King's vibrato give this blues selection its character. The pace leaves room for a phrase to land and linger.
 
-Pairs poorly with anything that needs your full attention elsewhere.
+For a slow evening with the music close at hand.

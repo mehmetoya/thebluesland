@@ -18,13 +18,13 @@ public sealed class RelatedPlaylistRankingTests
         moods: ["warm"],
         genres: ["blues"],
         occasions: ["late-night"],
-        era: "1970s");
+        eras: ["1970s"]);
 
     [Fact]
     public void Apply_ranks_candidates_by_descending_shared_tag_count()
     {
-        var strongMatch = Playlist("strong-match", moods: ["warm"], genres: ["blues"], occasions: ["headphones"], era: "1970s");
-        var weakMatch = Playlist("weak-match", moods: ["warm"], genres: ["soul"], occasions: ["headphones"], era: "mixed-era");
+        var strongMatch = Playlist("strong-match", moods: ["warm"], genres: ["blues"], occasions: ["headphones"], eras: ["1970s"]);
+        var weakMatch = Playlist("weak-match", moods: ["warm"], genres: ["soul"], occasions: ["headphones"], eras: ["mixed-era"]);
 
         var result = RelatedPlaylistRanking.Apply([strongMatch, weakMatch], Current);
 
@@ -42,7 +42,7 @@ public sealed class RelatedPlaylistRankingTests
     [Fact]
     public void Apply_excludes_candidates_that_share_zero_tags()
     {
-        var noOverlap = Playlist("no-overlap", moods: ["melancholic"], genres: ["jazz"], occasions: ["slow-evening"], era: "mixed-era");
+        var noOverlap = Playlist("no-overlap", moods: ["melancholic"], genres: ["jazz"], occasions: ["slow-evening"], eras: ["mixed-era"]);
 
         var result = RelatedPlaylistRanking.Apply([noOverlap], Current);
 
@@ -53,7 +53,7 @@ public sealed class RelatedPlaylistRankingTests
     public void Apply_caps_the_result_at_three_even_when_more_candidates_overlap()
     {
         var candidates = Enumerable.Range(0, 5)
-            .Select(index => Playlist($"candidate-{index}", moods: ["warm"], genres: ["blues"], occasions: ["headphones"], era: "1970s"))
+            .Select(index => Playlist($"candidate-{index}", moods: ["warm"], genres: ["blues"], occasions: ["headphones"], eras: ["1970s"]))
             .ToList();
 
         var result = RelatedPlaylistRanking.Apply(candidates, Current);
@@ -69,10 +69,10 @@ public sealed class RelatedPlaylistRankingTests
     public void Apply_breaks_a_shared_tag_count_tie_with_displayOrder_then_publishedAt_descending()
     {
         var earlierDisplayOrder = Playlist(
-            "earlier-display-order", moods: ["warm"], genres: [], occasions: [], era: "mixed-era",
+            "earlier-display-order", moods: ["warm"], genres: [], occasions: [], eras: ["mixed-era"],
             displayOrder: 0, publishedAt: new DateOnly(2026, 1, 1));
         var laterDisplayOrder = Playlist(
-            "later-display-order", moods: ["warm"], genres: [], occasions: [], era: "mixed-era",
+            "later-display-order", moods: ["warm"], genres: [], occasions: [], eras: ["mixed-era"],
             displayOrder: 1, publishedAt: new DateOnly(2026, 6, 1));
 
         var result = RelatedPlaylistRanking.Apply([laterDisplayOrder, earlierDisplayOrder], Current);
@@ -88,9 +88,9 @@ public sealed class RelatedPlaylistRankingTests
     public void Apply_does_not_treat_two_playlists_with_no_era_as_sharing_a_tag()
     {
         var noEraNoOtherOverlap = Playlist(
-            "no-era-no-overlap", moods: ["melancholic"], genres: ["jazz"], occasions: ["slow-evening"], era: "");
+            "no-era-no-overlap", moods: ["melancholic"], genres: ["jazz"], occasions: ["slow-evening"], eras: []);
         var currentWithNoEra = Playlist(
-            "current-no-era", moods: ["warm"], genres: ["blues"], occasions: ["late-night"], era: "");
+            "current-no-era", moods: ["warm"], genres: ["blues"], occasions: ["late-night"], eras: []);
 
         var result = RelatedPlaylistRanking.Apply([noEraNoOtherOverlap], currentWithNoEra);
 
@@ -102,7 +102,7 @@ public sealed class RelatedPlaylistRankingTests
         IReadOnlyList<string> moods,
         IReadOnlyList<string> genres,
         IReadOnlyList<string> occasions,
-        string era,
+        string[] eras,
         int displayOrder = 0,
         DateOnly? publishedAt = null) =>
         new(
@@ -113,7 +113,7 @@ public sealed class RelatedPlaylistRankingTests
             Moods: moods,
             Genres: genres,
             Occasions: occasions,
-            Era: era,
+            Eras: eras,
             CuratorNote: "Fixture curator note.",
             IsPublished: true,
             Featured: false,

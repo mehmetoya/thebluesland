@@ -11,12 +11,13 @@ genres:
   - folk
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Where the Anadolu rock playlists are about fusion, this one is about the source material: Turkish folk music largely untouched by rock instrumentation. Erkan Oğur's innovations on fretless guitar and Neşet Ertaş's saz playing anchor a collection built around the instrument's central role in Anatolian musical tradition.
+Erkan Oğur, Neşet Ertaş and Ruhi Su offer different ways into Turkish folk music. Saz, guitar and voice carry the melodies, with an emphasis on phrasing and the character of the performance.
 
-A quieter, more contemplative listen than the rock-adjacent playlists nearby.
+Pair it with Not Every Day Is Spring for more folk selections.

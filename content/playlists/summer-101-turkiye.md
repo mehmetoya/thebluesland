@@ -12,12 +12,13 @@ genres:
   - folk
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A summer-specific set built for movement — Bruce Springsteen's open-road anthems, Arcade Fire's festival-scale energy, Buckingham Nicks' pre-Fleetwood Mac harmonies, and Counting Crows' road-trip staples. "Türkiye" in the title likely marks where it was made rather than what it sounds like — this is warm-weather Americana more than regional music.
+Bruce Springsteen, Arcade Fire, Buckingham Nicks and Counting Crows bring a warm rock-and-Americana sound to this summer mix. Full arrangements and melodic vocals keep it moving.
 
-Built for a specific season and unafraid to say so.
+For a drive with daylight still ahead.

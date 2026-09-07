@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: heart-of-gold
 spotifyPlaylistId: 6pDjnAHLSROMvIHEGYxRFC
 title: "Heart of Gold"
-summary: "Sixty-seven tracks of gentle indie-folk named for Neil Young — Bon Iver, Cat Power and Belle and Sebastian."
+summary: "Gentle folk and indie songwriting, with Bon Iver, Cat Power, Belle and Sebastian and Chris Cornell."
 moods:
   - melancholic
   - warm
@@ -12,12 +12,13 @@ genres:
   - folk
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Taking its name from the Neil Young standard, this collects the quieter end of indie and folk songwriting — Bon Iver's falsetto intimacy, Cat Power's understated delivery, Belle and Sebastian's chamber-pop warmth — with Chris Cornell's more stripped-down solo work fitting the mood unexpectedly well.
+Bon Iver's layered vocals, Cat Power's restrained delivery and Belle and Sebastian's melodic warmth give this collection a gentle pace. Chris Cornell's quieter work adds another shade to the mood.
 
-A gentler listen than the title's rock-canon reference might suggest.
+For an evening with a little space around it.

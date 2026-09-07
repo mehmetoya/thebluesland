@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: axis
 spotifyPlaylistId: 5SVRePhASQBHVFt25FXZlI
 title: "Axis"
-summary: "A six-hundred-plus-track classic and alternative rock library spanning Led Zeppelin to Arctic Monkeys."
+summary: "Classic and alternative rock across generations, from Led Zeppelin and David Bowie to Blur and Arctic Monkeys."
 moods:
   - energetic
   - nostalgic
@@ -11,12 +11,13 @@ genres:
   - rock
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-One of the largest rock collections in the catalogue — a personal record collection more than a themed mix, running from Led Zeppelin, The Rolling Stones and David Bowie through Britpop-era Blur and Pulp to 2000s indie like Arctic Monkeys and Franz Ferdinand. If there's a thread, it's simply: guitar music that mattered to one listener across five decades.
+Led Zeppelin, The Rolling Stones and David Bowie sit alongside Blur, Pulp, Arctic Monkeys and Franz Ferdinand. Guitar music is the broad connection, with changes in scale, texture and attitude along the way.
 
-Shuffle it and let the decades collide.
+Try it on shuffle and follow whatever catches your ear.

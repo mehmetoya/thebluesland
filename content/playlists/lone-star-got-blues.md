@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: lone-star-got-blues
 spotifyPlaylistId: 7ux5RjbOSTNfxYsxye1ERB
 title: "Lone Star Got Blues"
-summary: "Texas blues, from Alexis Korner's British take on the form to two hundred tracks of guitar-forward Lone Star State players."
+summary: "A Texas blues-inspired guitar mix, with electric blues and blues-rock connections beyond the Lone Star State."
 moods:
   - raw
   - energetic
@@ -11,12 +11,13 @@ genres:
   - blues
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Texas has its own blues dialect — louder guitars, a rock and roll swagger that Chicago and Delta blues don't always share — and this collection follows that regional thread across two hundred tracks. It's a road-trip playlist almost by design: the tempo and the guitar tone both suit a highway better than a living room.
+Texas blues is the starting point for a guitar-led selection with a broad reach. Electric tone, rhythmic bite and blues-rock energy connect the music, including players from beyond Texas.
 
-Turn it up past what feels reasonable.
+For a drive with the guitar lines in focus.

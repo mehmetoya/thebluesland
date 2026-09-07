@@ -11,12 +11,13 @@ genres:
   - blues
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A whiskey-adjacent title for a whiskey-adjacent playlist: blues with enough grit to hold its own against a slow evening and a drink that isn't beer. B.B. King and Bo Diddley anchor a set that favors guitar-forward tracks over vocal ballads.
+B.B. King and Bo Diddley anchor a blues selection with rhythmic bite. Guitar lines stay in the foreground, from measured phrases to more insistent riffs.
 
-Best enjoyed exactly as advertised.
+For a slow evening with a little grit in the music.

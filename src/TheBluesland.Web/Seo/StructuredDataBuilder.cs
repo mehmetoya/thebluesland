@@ -27,7 +27,7 @@ public static class StructuredDataBuilder
             new WebSiteSchema("https://schema.org", "WebSite", "TheBluesland", siteUrl)
             {
                 Id = siteUrl + "#website",
-                Description = "Hand-curated Spotify playlists with original curator notes and mood, genre, occasion, and era tags.",
+                Description = "Mehmet's personal collection of Spotify playlists, rooted in blues and spanning rock, folk, jazz, soul and electronic music. Each playlist has a short listening note.",
             },
             Options);
 

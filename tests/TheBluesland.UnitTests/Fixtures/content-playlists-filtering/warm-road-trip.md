@@ -10,7 +10,8 @@ genres:
   - rock
 occasions:
   - road-trip
-era: 1970s
+eras:
+  - 1970s
 status: published
 publishedAt: 2026-02-01
 displayOrder: 2

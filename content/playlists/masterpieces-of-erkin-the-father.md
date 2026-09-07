@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: masterpieces-of-erkin-the-father
 spotifyPlaylistId: 0iJt9LMebhOY0KSHSJw3cS
 title: Masterpieces of Erkin the Father
-summary: Fuzz-drenched saz riffs and psychedelic Anatolian folk from the founding father of Turkish rock, Erkin Koray.
+summary: "Erkin Koray's electric guitars and Anatolian melodies, bringing folk textures into psychedelic rock."
 moods:
   - energetic
   - raw
@@ -12,19 +12,14 @@ genres:
   - rock
 occasions:
   - night-drive
-era: pre-1970
+eras:
+  - pre-1970
 status: published
 publishedAt: 2026-09-05
 featured: true
 displayOrder: 1
 ---
 
-Erkin Koray didn't just play rock and roll in Turkey — he invented a dialect for it. Starting in
-the late 1960s, he bent fuzz-heavy electric guitar around the modal scales and rhythms of Anatolian
-folk music, singing in Turkish over riffs that owed as much to the saz as to Hendrix. The results
-earned him the title "the father of Turkish rock," and decades later they still sound like nothing
-else: raw, hypnotic, and unmistakably his own.
+Erkin Koray brings electric guitar, Turkish vocals and Anatolian melodies together in a distinctive rock sound. Repeating riffs and shifting textures give the music both weight and movement.
 
-This is a collection for late drives when you want music that feels alive rather than polished —
-built on groove and texture more than studio sheen, from an artist who was inventing a new sound in
-real time.
+Start here for a focused listen, then explore Anatolian Domestic Products for more of the collection's Anadolu rock.

@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: i-am-the-highway
 spotifyPlaylistId: 3sIYbgvNuFp5msIapvXcdD
 title: "I am the highway"
-summary: "Five hundred tracks of driving rock, named for Audioslave's anthem of the same title."
+summary: "Rock for the open road, with Audioslave, Aerosmith, Alice Cooper and quieter turns from Amos Lee."
 moods:
   - energetic
   - raw
@@ -11,12 +11,13 @@ genres:
   - rock
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Taking its name from Audioslave's "I Am the Highway," this is a road-trip rock library at genuine scale — five hundred tracks running from Aerosmith and Alice Cooper through Amos Lee's quieter Americana, with Audioslave itself and its members' other bands well represented throughout.
+Audioslave, Aerosmith and Alice Cooper give the selection its driving rock sound. Amos Lee brings a gentler change of pace, making room for more than one kind of journey.
 
-Built for actual distance, not a single drive.
+Pick a direction and let the mix keep you company.

@@ -12,17 +12,14 @@ genres:
   - rock
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: true
 displayOrder: 2
 ---
 
-Take the title from Traffic's own "Dear Mr. Fantasy" — a hazy, organ-and-guitar blues jam built for
-stretching out — and you're pointed at the right neighborhood: the overlapping circles of Eric
-Clapton, Steve Winwood, and the band they shared. This is blues rock at its warmest, built less
-around hooks than around groove, feel, and musicians listening closely to each other.
+Traffic, Steve Winwood and Eric Clapton give this selection a warm blues-rock sound. Organ and guitar have room to stretch, with the band's interplay as much a part of the appeal as the melody.
 
-It rewards a slow evening more than a quick spin — the kind of record you put on and let run long
-after the sun's gone down.
+For a slow evening when you can let the music run.

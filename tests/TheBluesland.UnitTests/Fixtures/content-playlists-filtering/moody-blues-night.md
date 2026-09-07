@@ -10,7 +10,8 @@ genres:
   - blues
 occasions:
   - late-night
-era: pre-1970
+eras:
+  - pre-1970
 status: published
 publishedAt: 2026-01-01
 displayOrder: 1

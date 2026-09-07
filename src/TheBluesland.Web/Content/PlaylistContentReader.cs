@@ -71,7 +71,7 @@ public sealed class PlaylistContentReader
             frontMatter.Moods ?? [],
             frontMatter.Genres ?? [],
             frontMatter.Occasions ?? [],
-            frontMatter.Era ?? string.Empty,
+            frontMatter.Eras ?? [],
             body.Trim(),
             string.Equals(frontMatter.Status, PublishedStatus, StringComparison.OrdinalIgnoreCase),
             frontMatter.Featured ?? false,

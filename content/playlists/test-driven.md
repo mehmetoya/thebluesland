@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: test-driven
 spotifyPlaylistId: 4BZDWKZKoPOYaLQPiS9Lb6
 title: "Test Driven"
-summary: "A hundred seventy-eight tracks of classic AOR and radio rock — Bad Company, Black Sabbath, Bachman-Turner Overdrive and Allman Brothers Band."
+summary: "Classic rock for the road, with Bad Company, Black Sabbath, Bachman-Turner Overdrive and the Allman Brothers Band."
 moods:
   - nostalgic
   - energetic
@@ -11,12 +11,13 @@ genres:
   - rock
 occasions:
   - road-trip
-era: 1970s
+eras:
+  - 1970s
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A software-engineering pun for a title, but a genuinely well-built classic-rock and AOR collection underneath — Bad Company and Bachman-Turner Overdrive's radio-rock reliability, the Allman Brothers Band's extended jams, 10cc's studio cleverness. "Test driven" reads as both a joke and a promise: every track here has been vetted.
+Bad Company and Bachman-Turner Overdrive bring direct rock arrangements, while the Allman Brothers Band leaves more room for instrumental interplay. 10cc adds another melodic turn.
 
-Dependable, well-built, no surprises — and that's the appeal.
+A familiar guitar-led mix for getting on the road.

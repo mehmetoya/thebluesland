@@ -252,18 +252,10 @@ public sealed class PlaylistContentValidator
         ValidateTaxonomyArray(AddIssue, "moods", frontMatter.Moods, PlaylistTaxonomy.Moods, MoodsMaxCount, isPublished);
         ValidateTaxonomyArray(AddIssue, "genres", frontMatter.Genres, PlaylistTaxonomy.Genres, GenresMaxCount, isPublished);
         ValidateTaxonomyArray(AddIssue, "occasions", frontMatter.Occasions, PlaylistTaxonomy.Occasions, maxCount: null, isPublished);
-
-        if (frontMatter.Era is not { Length: > 0 } era)
-        {
-            if (isPublished)
-            {
-                AddIssue("era", "era is required for published content.");
-            }
-        }
-        else if (!PlaylistTaxonomy.Eras.Contains(era, StringComparer.Ordinal))
-        {
-            AddIssue("era", $"era '{era}' is not an approved value ({string.Join(", ", PlaylistTaxonomy.Eras)}).");
-        }
+        // 2026-09-06: `eras` used to be a single scalar with its own bespoke branch here. Now that
+        // a playlist can span several decades (see PlaylistContent.Eras), it validates through the
+        // identical shared array path as the other three dimensions.
+        ValidateTaxonomyArray(AddIssue, "eras", frontMatter.Eras, PlaylistTaxonomy.Eras, maxCount: null, isPublished);
 
         // publishedAt: the one field the acceptance criteria explicitly names as draft-exempt.
         // When present (on either a draft or published file), it must actually parse as a date -

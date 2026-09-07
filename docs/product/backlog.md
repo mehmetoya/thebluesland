@@ -513,10 +513,77 @@ Gerçek `content/playlists/` dizinine karşı `validate-content` temiz (120/120)
 Postgres'e karşı 206/206 test yeşil (davranış değişikliği yok, yalnızca içerik).
 
 Kapsam dışı: Mood/Era genişletmesi (US-020 bulgusuna göre gerekçe yok, ayrı bir ihtiyaç ortaya
-çıkarsa yeniden değerlendirilir).
+çıkarsa yeniden değerlendirilir — Era için bkz. US-022, mood için hâlâ gerekçe yok).
 Bağımlılık: US-020 (aday liste analizi — tamamlandı).
 Öncelik: Should
 Platform: web
+
+---
+
+## US-022 — Era'yı çoklu-değere çevir ve `deep-listen` occasion'ını ekle
+
+Kullanıcı olarak ziyaretçi, bir playlist birden fazla dönemi kapsıyorsa Era filtresinde
+gerçekten o dönemlerin altında da çıkmasını istiyorum ki filtre işe yarasın; proje sahibi olarak
+da dikkatli/derin dinleme gerektiren playlist'leri ayrı bir occasion'la filtrelemek istiyorum.
+
+Kabul kriterleri:
+
+- [x] `PlaylistContent.Era` (tek `string`) → `Eras` (`IReadOnlyList<string>`) olur; front matter
+      `era: X` yerine mood/genre/occasion ile aynı şekilde `eras:` listesi kullanır.
+- [x] Doğrulayıcı era'yı diğer üç boyutla aynı paylaşılan `ValidateTaxonomyArray` yolundan geçirir
+      (kendine özel tek-değer dalı kalkar); onaylanmamış bir era değeri hâlâ reddedilir.
+- [x] Filtre, bir playlist'in taşıdığı **herhangi bir** era ile eşleşir (dimension-içi OR), yani
+      hem `mixed-era` hem `1970s` taşıyan bir playlist `?era=1970s` sorgusunda görünür.
+- [x] Detay sayfasının etiket listesi playlist'in tüm era'larını gösterir; era'sı olmayan bir
+      playlist boş etiket üretmez (eski "blank era" özel durumu artık gereksiz, kaldırıldı).
+- [x] 120 gerçek içerik dosyası ve tüm test fixture'ları (toplam 402 dosya) yeni şemaya taşınır ve
+      `validate-content` temiz kalır.
+- [x] `deep-listen` occasion değeri taksonomiye eklenir ve küratör notunda açık kanıt bulunan
+      9 playlist'e mevcut occasion'ının **yanına** eklenir (değiştirme değil, ekleme).
+
+**Durum: Tamamlandı (2026-09-06).** Era'nın asıl sorunu değer sayısı değildi: 120 playlist'in
+94'ü `mixed-era` kutusundaydı, çünkü bu katalogdaki playlist'lerin çoğu gerçekten kasıtlı olarak
+çok-dönemli. Tek-değerli alan, "hem karışık hem ağırlıklı olarak 70'ler" bilgisini kaybediyordu.
+Çoklu-değere geçince `?era=1970s` sorgusu 4 yerine 6 playlist döndürür oldu (gerçek tarayıcıda
+doğrulandı). Şema dönüşümü tamamlandı; ancak **içerik zenginleştirmesi bilinçli olarak eksik
+bırakıldı**: küratör notlarında açıkça dönem geçen yalnızca 9 playlist var (`30-day-song-challenge`,
+`american-gods-among-us`, `blue-for-day`, `funkers`, `mark-knopfler-a-night-in-london-1996`,
+`meteorite`, `no-more-words`, `old-school`, `otherside-wave`) ve yalnızca onlar etiketlendi.
+Kalan 85 `mixed-era` playlist için metinde kanıt yok; sanatçı bilgisinden dönem çıkarmak spec 8.6
+taksonomi governance ilkesine göre Mehmet'in editoryal kararı (bkz. US-023).
+
+Kapsam dışı: kalan 85 `mixed-era` playlist'in dönem zenginleştirmesi (US-023); mood genişletmesi
+(hâlâ gerekçe yok, US-020/bu hikayenin ikinci taraması da aynı sonucu verdi).
+Bağımlılık: US-017/US-020 (taksonomi governance deseni).
+Öncelik: Should
+Platform: web
+
+---
+
+## US-023 — Kalan `mixed-era` playlist'lerin dönem zenginleştirmesi
+
+Kullanıcı olarak ziyaretçi, Era filtresinin 120 playlist'in tamamında anlamlı sonuç vermesini
+istiyorum; şu an 85 playlist yalnızca `mixed-era` taşıdığı için dönem filtresinde görünmüyor.
+
+Kabul kriterleri:
+
+- [ ] 85 `mixed-era` playlist'in her biri için, kapsadığı dönem(ler) belirlenip `eras` listesine
+      eklenir; `mixed-era` gerçekten karışık olanlarda kalır.
+- [ ] Kaynak, tahmin değil ölçülebilir bir sinyal olur (aşağıdaki iki seçenekten biri).
+
+İki olası yaklaşım, ikisi de Mehmet'in kararına bağlı:
+
+1. **Spotify track release-year verisi (önerilen).** Senkron aracı (US-003) zaten Spotify Web
+   API'sine bağlanıyor. Track'lerin `album.release_date` alanından playlist başına dönem dağılımı
+   hesaplanıp (ör. "track'lerin %60'ı 1970-1979 ise `1970s` etiketi") objektif biçimde önerilebilir.
+   Bu, taksonomiyi tahmine değil gerçek veriye dayandırır. Track-seviyesi veri kalıcı saklanmaz —
+   yalnızca hesaplanan dönem dağılımı çıktı olur, ADR-0002/spec 9.4 sınırı korunur.
+2. **Mehmet'in elle geçişi.** 85 dosya için dönem etiketleri doğrudan Mehmet tarafından atanır.
+
+Kapsam dışı: yeni era değeri eklemek (mevcut 5 değer yeterli, sorun atama granülerliğiydi).
+Bağımlılık: US-022 (çoklu-değer şeması — tamamlandı).
+Öncelik: Could
+Platform: content
 
 ---
 

@@ -175,7 +175,7 @@ public static class WebHostFactory
         // US-011 AC3/FR-031: site-wide default social card for pages with no dedicated playlist
         // (home/about/privacy/terms) - a real generated image, never Spotify cover art.
         app.MapGet("/og-image.png", (SocialCardGenerator generator) => Results.File(
-            generator.Generate("TheBluesland", "Curated Spotify playlists, one curator note at a time."),
+            generator.Generate("TheBluesland", "Rooted in blues. Open to wherever the music leads."),
             "image/png"))
             .CacheOutput(policy => policy.Expire(SocialCardCacheDuration).SetVaryByQuery([]));
 

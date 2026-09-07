@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: hirayama-s-songs-listened-to-on-the-way-work
 spotifyPlaylistId: 09z9wQRqU11FMH6VE2Nl1U
 title: "Hirayama's songs listened to on the way work"
-summary: "A commute soundtrack in the spirit of Perfect Days' cassette-loving protagonist — Aretha Franklin, Bob Dylan and Otis-era soul."
+summary: "A Perfect Days-inspired commute mix, with classic soul and songwriting from Aretha Franklin, Bob Dylan and Bill Withers."
 moods:
   - warm
   - nostalgic
@@ -13,12 +13,13 @@ genres:
   - rock
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Hirayama is the quiet, cassette-tape-loving protagonist of Wim Wenders' film Perfect Days, and this playlist is built in his image: classic soul and rock that rewards being played on repeat during an ordinary commute — Aretha Franklin, Bill Withers, Bob Marley, Ella Fitzgerald. Nothing flashy, all of it durable.
+The title nods to Hirayama and his cassette-filled journeys in Perfect Days. Aretha Franklin, Bill Withers, Bob Marley and Ella Fitzgerald provide music worth returning to during an ordinary day.
 
-A tribute to finding meaning in a routine rather than escaping it.
+A companion for the familiar route to work.

@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: my-shazam-tracks
 spotifyPlaylistId: 46ZyMuOkFZ0A4WkLwnMNh9
 title: "My Shazam Tracks"
-summary: "Six hundred fifty-one songs identified on the go — a real-world discovery log spanning AC/DC to Andrea Bocelli."
+summary: "A collection of musical discoveries across genres, from AC/DC and Alabama Shakes to Andrea Bocelli."
 moods:
   - energetic
   - nostalgic
@@ -12,12 +12,13 @@ genres:
   - pop
 occasions:
   - road-trip
-era: 2000s-present
+eras:
+  - 2000s-present
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Not a themed playlist at all, but a literal record: six hundred fifty-one songs Shazamed in the moment, wherever they were heard, from AC/DC and Alabama Shakes to Andrea Bocelli. The genre-agnostic sprawl is the point — this is curiosity captured in real time rather than planned in advance.
+AC/DC, Alabama Shakes and Andrea Bocelli give a sense of how widely this collection travels. The Shazam title suits a mix connected by discovery, with room for sudden changes of genre and mood.
 
-The most honest snapshot of broad taste in the whole catalogue.
+Explore it when you want the next song to be a surprise.

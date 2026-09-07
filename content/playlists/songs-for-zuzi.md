@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: songs-for-zuzi
 spotifyPlaylistId: 1KPc8NySIcoX8kfnsWNhWC
 title: "Songs for Zuzi"
-summary: "A thousand-track dedicated mixtape spanning decades of rock and pop, built for one person."
+summary: "A playlist dedicated to Zuzi, spanning rock and pop with 10cc, ABBA, AC/DC and more."
 moods:
   - warm
   - nostalgic
@@ -12,12 +12,13 @@ genres:
   - pop
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-One of the largest personal mixtapes in the catalogue — over a thousand tracks spanning 10cc's art-pop, ABBA's disco-pop, AC/DC's hard rock, and everything between, built for one named listener rather than a theme. The sheer range says more about the relationship than any single genre could.
+10cc, ABBA and AC/DC give a sense of the range in this dedication. Pop melodies and heavier guitars share space, with changes of mood across the mix.
 
-A gift disguised as a playlist.
+A personal selection with plenty of directions to explore.

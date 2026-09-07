@@ -82,7 +82,7 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldContain("Masterpieces of Erkin the Father");
-        body.ShouldContain("currently unavailable");
+        body.ShouldContain("temporarily unavailable");
     }
 
     /// <summary>

@@ -16,21 +16,21 @@ public sealed class PlaylistFilterTests
         moods: ["melancholic"],
         genres: ["blues"],
         occasions: ["late-night"],
-        era: "pre-1970");
+        eras: ["pre-1970"]);
 
     private static readonly PlaylistContent WarmRoadTrip = Playlist(
         slug: "warm-road-trip",
         moods: ["warm"],
         genres: ["rock"],
         occasions: ["road-trip"],
-        era: "1970s");
+        eras: ["1970s"]);
 
     private static readonly PlaylistContent EnergeticWarmHeadphones = Playlist(
         slug: "energetic-warm-headphones",
         moods: ["energetic", "warm"],
         genres: ["soul"],
         occasions: ["headphones"],
-        era: "2000s-present");
+        eras: ["2000s-present"]);
 
     private static readonly IReadOnlyList<PlaylistContent> AllPlaylists =
         [MelancholicLateNight, WarmRoadTrip, EnergeticWarmHeadphones];
@@ -90,7 +90,7 @@ public sealed class PlaylistFilterTests
         IReadOnlyList<string> moods,
         IReadOnlyList<string> genres,
         IReadOnlyList<string> occasions,
-        string era) =>
+        string[] eras) =>
         new(
             Slug: slug,
             SpotifyPlaylistId: "0iJt9LMebhOY0KSHSJw3cS",
@@ -99,7 +99,7 @@ public sealed class PlaylistFilterTests
             Moods: moods,
             Genres: genres,
             Occasions: occasions,
-            Era: era,
+            Eras: eras,
             CuratorNote: "Fixture curator note.",
             IsPublished: true,
             Featured: false,

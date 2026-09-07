@@ -12,7 +12,8 @@ genres:
   - rock
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: draft
 ---
 

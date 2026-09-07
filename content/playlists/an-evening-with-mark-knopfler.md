@@ -12,12 +12,13 @@ genres:
   - rock
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Mark Knopfler's guitar style is instantly recognizable — fingerpicked rather than pick-driven, warm rather than aggressive — and this playlist is a showcase for exactly that, moving between Dire Straits' catalogue and his solo records without much distinction, since the tone carries through both.
+Dire Straits and Mark Knopfler's solo work meet in a selection centred on his guitar playing and storytelling. His clear, fingerpicked tone holds the music together through changes of pace and arrangement.
 
-Understated by design; good company rather than a centerpiece.
+For an evening with time to hear the details.

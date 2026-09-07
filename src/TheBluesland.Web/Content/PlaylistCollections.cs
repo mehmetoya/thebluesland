@@ -6,16 +6,16 @@ public static class PlaylistCollections
     public static readonly IReadOnlyList<PlaylistCollection> All =
     [
         new("anadolu-rock", "Anadolu Rock Playlists",
-            "Explore Mehmet's Anadolu rock Spotify playlists, with original curator notes and links to listen.",
-            "Start with the Anadolu rock corner of TheBluesland. This collection brings together playlists tagged with the genre, so you can explore this part of Mehmet's library without searching through the full catalogue. Open a playlist to read its curator note and find the Spotify link.",
+            "Anatolian folk melodies meet electric guitars. Explore Anadolu rock through Mehmet's Spotify playlists.",
+            "Fuzz guitar, folk melodies, and Turkish voices. Explore the Anadolu rock collection, from playlists devoted to a single artist to mixes that bring different sides of the sound together.",
             new PlaylistFilterCriteria([], ["anadolu-rock"], [], [])),
         new("blues", "Blues Playlists",
-            "Discover hand-curated blues and blues-rock Spotify playlists, each introduced by a personal curator note.",
-            "Blues is one of the starting points of TheBluesland. Here you can browse the library's blues and blues-rock playlists together, then follow the individual curator notes to choose a direction. The selections remain separate playlists: read their descriptions to find the listening experience you want.",
+            "Acoustic blues, electric guitar and soulful voices. Explore the blues and blues-rock playlists at the heart of TheBluesland.",
+            "Start at the heart of TheBluesland: blues in its many forms. Follow an acoustic guitar, settle into a soulful vocal, or turn to a full electric band. These playlists offer different ways into the music.",
             new PlaylistFilterCriteria([], ["blues", "blues-rock"], [], [])),
         new("late-night", "Late-Night Playlists",
-            "Find Spotify playlists for late-night listening across genres, with curator notes explaining each selection.",
-            "Choose a listening occasion before choosing a genre. These playlists share the library's late-night tag, bringing different parts of the collection into one place. Their summaries and curator notes explain what makes each selection distinct; open one to read more and continue listening on Spotify.",
+            "Music for the hours after dark. Find late-night Spotify playlists across blues, jazz, folk and more.",
+            "For a quiet room, a late drive, or a little more time with your headphones. These playlists take different routes through the night, from gentle and reflective to darker, more restless sounds.",
             new PlaylistFilterCriteria([], [], ["late-night"], [])),
     ];
 

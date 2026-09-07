@@ -11,12 +11,14 @@ genres:
   - blues-rock
 occasions:
   - headphones
-era: mixed-era
+  - deep-listen
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-Less a mood playlist than a syllabus: a chronological-ish tour of the guitar riffs that built blues-rock, from Big Bill Broonzy's foundational phrasing through Eric Clapton and Gary Moore's more muscular electric interpretations. "With all respect The Band" reads like a dedication — this is a fan's history lesson, not an algorithm's.
+Big Bill Broonzy, Albert King, Eric Clapton and Gary Moore offer different approaches to blues guitar. The selection puts riffs and phrasing in focus, moving between acoustic detail and more forceful electric playing.
 
-Best with headphones, so the guitar tone gets the attention it's asking for.
+Listen for how a bend, a pause, or a change of tone shapes a phrase.

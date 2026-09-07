@@ -115,7 +115,7 @@ public sealed class PlaylistContentValidatorTests
     {
         var result = await ValidateFixtureAsync("unapproved-era");
 
-        result.Issues.ShouldContain(issue => issue.Field == "era" && issue.Message.Contains("bogus-era"));
+        result.Issues.ShouldContain(issue => issue.Field == "eras" && issue.Message.Contains("bogus-era"));
     }
 
     [Fact]

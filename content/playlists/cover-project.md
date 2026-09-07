@@ -12,12 +12,13 @@ genres:
   - rock
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A shorter, more focused companion to "Cover of Day to Day" — soul-inflected reinterpretations from Alabama Shakes and Donny Hathaway alongside rock covers from Chris Isaak and John Mayer. The common thread is craft: these are covers that justify their own existence rather than just repeating the original.
+Donny Hathaway, Alabama Shakes, Chris Isaak and John Mayer bring soul and rock perspectives to the cover version. The appeal is in hearing familiar writing through a different voice or arrangement.
 
-A small, well-chosen set rather than a sprawling one.
+Continue with Cover of Day to Day for more interpretations.

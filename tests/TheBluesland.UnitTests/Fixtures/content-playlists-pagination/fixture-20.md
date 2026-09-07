@@ -10,7 +10,8 @@ genres:
   - rock
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-03-01
 displayOrder: 19

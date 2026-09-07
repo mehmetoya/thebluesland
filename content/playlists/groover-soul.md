@@ -12,12 +12,13 @@ genres:
   - soul
 occasions:
   - road-trip
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A groove-focused soul and funk set that reaches past the usual American canon into Brazilian funk (Banda Black Rio) and disco-adjacent names like CHIC and Barrabas, with Bobby "Blue" Bland and Eric Burdon's soul-blues filling in the middle. Seventy tracks, all built for rhythm first.
+Banda Black Rio, CHIC and Barrabas bring funk and disco rhythms, with Bobby "Blue" Bland and Eric Burdon adding soulful vocals. The bass and drums stay close to the centre of the mix.
 
-A close cousin to "Funkers" elsewhere in this catalogue, with a slightly deeper crate-dig.
+Try Funkers next for another set of grooves.

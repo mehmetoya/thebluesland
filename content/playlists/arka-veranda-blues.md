@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: arka-veranda-blues
 spotifyPlaylistId: 4GPEwINFgRTB5R9SQIor0C
 title: "Arka Veranda Blues"
-summary: "American Primitive fingerstyle guitar — John Fahey, Leo Kottke, Kaki King and Robbie Basho's solo acoustic tradition."
+summary: "Acoustic fingerstyle guitar, from John Fahey and Robbie Basho to Leo Kottke and Kaki King."
 moods:
   - warm
   - melancholic
@@ -12,12 +12,13 @@ genres:
   - folk
 occasions:
   - slow-evening
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-"Arka Veranda" means "back porch," and that's exactly the register: solo acoustic guitar in the American Primitive tradition John Fahey invented and Leo Kottke, Robbie Basho and Kaki King carried forward. No band, no vocals most of the time — just fingerstyle playing that treats the guitar as a whole orchestra.
+Arka Veranda means back porch, a fitting setting for this acoustic guitar collection. John Fahey, Robbie Basho, Leo Kottke and Kaki King offer different approaches to fingerstyle playing, from repeating patterns to more exploratory passages.
 
-The quietest blues-adjacent playlist in the catalogue; built for sitting still.
+Give the quieter details a little space.

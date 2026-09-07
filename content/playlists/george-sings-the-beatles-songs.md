@@ -11,12 +11,13 @@ genres:
   - rock
 occasions:
   - slow-evening
-era: pre-1970
+eras:
+  - pre-1970
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A focused concept: every Beatles track here is one George Harrison wrote or sang lead on — the quieter, more spiritually inclined corner of the catalogue that often got overshadowed by Lennon and McCartney. Twenty-eight tracks is a reminder of how much ground Harrison actually covered within the band.
+A closer look at George Harrison's place in The Beatles through his writing and lead vocals. Hear how his voice and melodic choices add another character to the band's sound.
 
-A companion piece to "Ringo Sings The Beatles Songs" elsewhere in this catalogue.
+Pair it with Ringo Sings The Beatles Songs for a different perspective.

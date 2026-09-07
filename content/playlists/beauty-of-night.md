@@ -12,12 +12,13 @@ genres:
   - folk
 occasions:
   - late-night
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A short, carefully chosen set of quiet, late-night indie and folk — Elliott Smith's hushed vocals, Nick Drake's fingerpicking, Sufjan Stevens' intimacy — with slowcore names like Galaxie 500 and Low setting the tempo. Nothing here is loud; the whole point is the opposite.
+Elliott Smith, Nick Drake and Sufjan Stevens bring close, intimate songwriting to this late-night selection. Galaxie 500 and Low stretch the pace, leaving space around the voices and guitars.
 
-For the hour when a house goes quiet and a record still needs to be on.
+For the hour when the house goes quiet and you still want a record on.

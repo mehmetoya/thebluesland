@@ -3,7 +3,7 @@ schemaVersion: 1
 slug: weekly-intricate
 spotifyPlaylistId: 4xIFb2OXWjq69kvX3xxeCZ
 title: "Weekly Intricate"
-summary: "Seven hundred seventeen tracks of deep-catalogue rock and folk — 13th Floor Elevators, Ali Farka Touré and All Them Witches."
+summary: "An eclectic rock and folk mix, with 13th Floor Elevators, Ali Farka Touré, All Them Witches and Alabama 3."
 moods:
   - raw
   - melancholic
@@ -13,12 +13,14 @@ genres:
   - blues
 occasions:
   - headphones
-era: mixed-era
+  - deep-listen
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A large, deliberately eclectic weekly rotation — 13th Floor Elevators' garage-psych beginnings, Malian guitarist Ali Farka Touré's desert blues, All Them Witches' modern stoner rock, Alabama 3's genre-blending. "Intricate" is the right word: nothing here is simple or obvious, and the collection rewards close listening over background play.
+13th Floor Elevators brings psychedelic rock, Ali Farka Touré a distinctive guitar voice, and All Them Witches a heavier sound. Alabama 3 adds another change of direction.
 
-A genuine deep-cuts library, revisited on purpose rather than by accident.
+A mix to revisit when you want a little variety.

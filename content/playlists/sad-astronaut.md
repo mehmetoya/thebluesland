@@ -12,12 +12,13 @@ genres:
   - electronic
 occasions:
   - late-night
-era: mixed-era
+eras:
+  - mixed-era
 status: published
 publishedAt: 2026-09-05
 featured: false
 ---
 
-A concept collection built around cosmic and space imagery — David Bowie's Major Tom mythology, Pink Floyd's expansive soundscapes, Electric Light Orchestra's sci-fi flourishes, Muse's more theatrical takes on the same territory. Twenty-five tracks, all looking upward.
+David Bowie, Pink Floyd, Electric Light Orchestra and Muse give this space-themed selection its range. Expansive guitars, electronic colours and theatrical vocals create a sense of distance.
 
-A late-night listen for staring at a ceiling, or a sky.
+For staring at the ceiling, or the sky.

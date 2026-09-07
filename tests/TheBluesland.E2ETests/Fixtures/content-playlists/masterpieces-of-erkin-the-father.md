@@ -12,7 +12,8 @@ genres:
   - rock
 occasions:
   - night-drive
-era: 1970s
+eras:
+  - 1970s
 status: published
 publishedAt: 2026-01-01
 ---
