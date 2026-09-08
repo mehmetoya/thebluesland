@@ -17,6 +17,12 @@ adımlar:
   otomatik kullanıyor. Kalan: migration, deploy ve ilk gerçek sync sonrası kontrol.
   Devreye alma: `docs/automatic-eras.md`.
 
+- **`AddEraBucketCounts` migration'ı + tek dolum sync'i.** US-026 sonrası devreye alma:
+  migration'ı uygula, deploy et, sonra tek bir sync çalıştır. O sync her satırı bilerek tam okur
+  (yeni kolon null olduğu sürece atlama devre dışı) ve `era_bucket_counts`'u doldurur; o günün
+  tek ağır Spotify işi olmalı. Ardından `report-eras` kotaya dokunmadan, tam sayımdan gelen
+  yüzdeleri verir ve eşik kararını veriyle veririz.
+
 - **Spotify kotası — bir sonraki gerçek çalıştırmayla doğrulanacak.** 2026-09-07'de art arda
   tetiklenen `sync-spotify` ve `report-eras`, hesabı ~19,5 saatlik rate-limit cooldown'una
   soktu. İki düzeltme de kodda hazır ama henüz canlı veriyle koşmadı: rapor yolunda 3 sayfalık
@@ -31,11 +37,24 @@ adımlar:
   Mehmet'in kararına bırakıldı, "burası kalsın" (2026-09-05).
 - Render'ın native rollback özelliği hâlâ gerçek bir olayla denenmedi (US-014'ün bilerek açık
   bırakılan tek maddesi).
-- `suggest-curator-note.yml`'ın `GEMINI_API_KEY`/`NEON_READONLY_CONNECTION_STRING`
-  secret'larını bu workflow'a scope etmek (GitHub repo ayarları) Mehmet'in elle yapacağı tek
-  seferlik adım — US-004/US-007 ile aynı desen.
+- `GEMINI_API_KEY`/`NEON_READONLY_CONNECTION_STRING` secret'larını scope etmek (GitHub repo
+  ayarları) Mehmet'in elle yapacağı tek seferlik adım — US-004/US-007 ile aynı desen.
+  **Dikkat:** US-026'dan sonra `NEON_READONLY_CONNECTION_STRING`'i `suggest-curator-note.yml`
+  *ve* `report-eras.yml` kullanıyor; yalnız birine scope edilirse diğeri çalışmaz.
 
 ## Tamamlanan
+
+- **US-026 — Dönem ölçümünü sakla, raporu veritabanından üret (2026-09-08).** `report-eras`,
+  sync'in saatler önce okuyup attığı release date'leri almak için katalogu ikinci kez tarıyordu;
+  o gün bu tekrar tarama hesabı ~23,8 saat kilitledi. Sync zaten tam dağılımı hesaplıyor ve yalnız
+  `SuggestedEras`'ı saklayıp sayıları çöpe atıyordu — artık kova başına tarihli parça sayıları
+  `era_bucket_counts` olarak saklanıyor. Rapor tek bir veritabanı sorgusu oldu: Spotify çağrısı
+  sıfır, workflow'da Spotify secret'i yok (salt-okunur Neon bağlantısı kullanıyor), istendiği
+  kadar çalıştırılabiliyor. Yan kazanç: yüzdeler artık 300 track'lık örneklemden değil sync'in tam
+  okumasından geliyor. Ham sayı sakladığımız için eşik değişiklikleri de Spotify'sız yeniden
+  hesaplanabiliyor (US-025'in kapsamı buna göre daraldı). Yalnız eski rapor taraması için var olan
+  `GetTrackReleaseYearsAsync`, `TrackReleaseYearSample` ve sayfa sınırı silindi; release date
+  parse davranışını koruyan testler `FetchAsync` üzerinden devam ediyor. 276/276 test yeşil.
 
 - **US-024 — Değişmemiş playlist'lerde track sync'ini atla (2026-09-07).** Sync aracı her
   çalıştırmada her playlist'in tüm track sayfalarını yeniden okuyordu; sadece artist ve dönem

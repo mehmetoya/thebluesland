@@ -94,13 +94,17 @@ public sealed class PlaylistCacheSyncService
     }
 
     /// <summary>
-    /// The snapshot id worth trusting for a skip, or null to force a full read. Only a row that is
-    /// available <i>and</i> already carries computed eras qualifies: rows written before the eras
-    /// column existed have a valid snapshot id but no eras, and skipping those would leave them
-    /// without eras forever, since nothing else recomputes them.
+    /// The snapshot id worth trusting for a skip, or null to force a full read. A row qualifies
+    /// only when it is available and already carries every track-derived aggregate: rows written
+    /// before one of those columns existed have a valid snapshot id but a gap, and skipping those
+    /// would leave the gap forever, since nothing else recomputes it. Adding a new track-derived
+    /// column means adding it here too - that is what makes the first sync after its migration
+    /// backfill every row and then go back to skipping.
     /// </summary>
     private static string? ReusableSnapshotId(SpotifyPlaylistCacheEntry? entry) =>
-        entry is { IsAvailable: true, ComputedEras: not null } ? entry.SpotifySnapshotId : null;
+        entry is { IsAvailable: true, ComputedEras: not null, EraBucketCounts: not null }
+            ? entry.SpotifySnapshotId
+            : null;
 
     private static SpotifyPlaylistCacheEntry CreateEntry(
         string spotifyPlaylistId,
@@ -115,6 +119,7 @@ public sealed class PlaylistCacheSyncService
             TrackCount = summary.TrackCount,
             Artists = summary.Artists,
             ComputedEras = summary.ComputedEras,
+            EraBucketCounts = summary.EraBucketCounts,
             SpotifySnapshotId = summary.SnapshotId,
             SyncedAt = syncedAt,
             IsAvailable = true,
@@ -125,6 +130,7 @@ public sealed class PlaylistCacheSyncService
         ApplyPlaylistMetadata(entry, summary, syncedAt);
         entry.Artists = summary.Artists;
         entry.ComputedEras = summary.ComputedEras;
+        entry.EraBucketCounts = summary.EraBucketCounts;
     }
 
     /// <summary>Everything the single playlist request returns - no track-derived field.</summary>

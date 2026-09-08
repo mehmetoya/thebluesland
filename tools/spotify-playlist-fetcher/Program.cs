@@ -174,16 +174,16 @@ static async Task<int> ReportErasAsync(string contentDirectory, CancellationToke
         return 0;
     }
 
-    var clientId = RequireEnvironmentVariable("SPOTIFY_CLIENT_ID");
-    var refreshToken = RequireEnvironmentVariable("SPOTIFY_REFRESH_TOKEN");
+    // Read-only role, and deliberately no Spotify credential: the numbers this report needs were
+    // already measured by the monthly sync, so re-crawling Spotify for them is what got the account
+    // rate-limited for ~23.8 hours on 2026-09-08 (US-026).
+    var connectionString = RequireEnvironmentVariable("NEON_READONLY_CONNECTION_STRING");
 
-    using var httpClient = new HttpClient();
-    var authClient = new SpotifyAuthClient(httpClient);
-    var playlistClient = new SpotifyPlaylistClient(httpClient);
-    var accessToken = await authClient.GetAccessTokenAsync(clientId, refreshToken, cancellationToken);
+    var optionsBuilder = new DbContextOptionsBuilder<TheBlueslandDbContext>().UseNpgsql(connectionString);
+    await using var dbContext = new TheBlueslandDbContext(optionsBuilder.Options);
 
-    var reportService = new PlaylistEraReportService(playlistClient);
-    var report = await reportService.BuildReportAsync(playlists, accessToken, cancellationToken);
+    var reportService = new PlaylistEraReportService(dbContext);
+    var report = await reportService.BuildReportAsync(playlists, cancellationToken);
 
     Console.WriteLine();
     Console.WriteLine(report);

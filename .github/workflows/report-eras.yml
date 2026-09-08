@@ -1,20 +1,25 @@
 name: Report playlist eras
 
-# US-023 (spec section 9.4/11.2, 8.6 taxonomy governance): a manually-triggered, read-only era
-# distribution report - never part of sync-spotify.yml's monthly job. This is the ONLY workflow
-# besides sync-spotify.yml that may reference SPOTIFY_CLIENT_ID/SPOTIFY_REFRESH_TOKEN; ci.yml,
-# deploy.yml and suggest-curator-note.yml must never declare them. Mehmet must additionally
-# restrict these two secrets to this workflow (and sync-spotify.yml) in the GitHub repo settings
-# (Settings > Secrets and variables > Actions) - that scoping is a one-time, code-external step
-# and cannot be enforced from the YAML alone (same note as sync-spotify.yml/US-004 and
-# suggest-curator-note.yml/US-016).
+# US-023/US-026 (spec section 9.4/11.2, 8.6 taxonomy governance): a manually-triggered, read-only
+# era distribution report.
 #
-# The tool reads each content/playlists/*.md file's spotifyPlaylistId/slug/eras and every track's
-# album.release_date from Spotify, aggregates a per-playlist era distribution in memory, and
-# discards the raw release years - only the resulting percentages/suggestion are written out, and
-# only to this run's job summary and a build artifact (never to spotify_playlist_cache, never to
-# content/playlists/*.md). Mehmet reviews the suggestions and, if he agrees, updates the relevant
-# files himself through the normal pull-request flow.
+# This workflow holds NO Spotify credential. It used to crawl every playlist's tracks a second
+# time to recompute what the monthly sync had already measured, and on 2026-09-08 that duplicate
+# crawl locked the whole Spotify account out for ~23.8 hours. The sync now stores the per-bucket
+# counts it derives, so the report is a plain database read: it can be re-run as often as needed,
+# it cannot affect the Spotify quota, and its numbers come from the sync's complete read rather
+# than from a sample.
+#
+# NEON_READONLY_CONNECTION_STRING must be the spotify_cache_readonly role's connection string -
+# the same read-only secret suggest-curator-note.yml uses, never the sync tool's write-scoped
+# NEON_SYNC_CONNECTION_STRING. Mehmet must additionally restrict that secret to the workflows that
+# need it in the GitHub repo settings (Settings > Secrets and variables > Actions) - a one-time,
+# code-external step that cannot be enforced from the YAML alone (same note as US-004/US-016).
+#
+# The tool reads each content/playlists/*.md file's spotifyPlaylistId/slug/eras, joins the stored
+# counts, and writes the resulting percentages/suggestions only to this run's job summary and a
+# build artifact - never to spotify_playlist_cache, never to content/playlists/*.md. Mehmet reviews
+# the suggestions and, if he agrees, updates the relevant files through the normal pull-request flow.
 
 on:
   workflow_dispatch: {}
@@ -22,18 +27,15 @@ on:
 permissions:
   contents: read
 
-# Share the Spotify API quota across report and sync runs, including different branches.
-concurrency:
-  group: spotify-api
-  cancel-in-progress: false
+# No longer joins sync-spotify.yml's `spotify-api` concurrency group: this job makes no Spotify
+# request, so serialising it against the monthly sync would delay it for no reason.
 
 jobs:
   report:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     env:
-      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-      SPOTIFY_REFRESH_TOKEN: ${{ secrets.SPOTIFY_REFRESH_TOKEN }}
+      NEON_READONLY_CONNECTION_STRING: ${{ secrets.NEON_READONLY_CONNECTION_STRING }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
