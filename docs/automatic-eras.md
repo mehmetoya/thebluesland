@@ -52,3 +52,11 @@ aynı anda Spotify çağrısı yapmazlar. Her job en fazla 30 dakika çalışır
 Spotify'ın süresinden önce tekrar denemek yerine 429 hatasıyla durur. Logdaki cooldown
 geçmeden yeni çalışma başlatmayın. Daha kısa beklemeler ve playlist ilerlemesi stderr'e yazılır.
 Bu sınırlar rate limit'i kaldırmaz; saatlerce sessiz beklemeyi önler.
+
+**Günde tek ağır Spotify koşusu.** 2026-09-08'de tam sync (120 playlist, ~600 istek) tek bir 429
+almadan 5 dk 51 sn'de bitti; hemen ardından çalıştırılan `report-eras` 77. playlist'te ~23,8
+saatlik cooldown'a takıldı. Buradan çıkan kural: bağlayıcı kısıt burst hızı değil, günlük toplam
+hacim ve tam bir katalog taraması tek başına günlük bütçenin büyük kısmını harcıyor. Sync'in
+"temiz geçmesi" kotada yer kaldığı anlamına gelmez. Aynı gün içinde ikinci bir ağır koşu
+başlatma; `dump-cache` ve `list-playlists` gibi salt-okunur modlar bu kurala dahil değildir
+(`dump-cache` Spotify'a hiç gitmez).

@@ -644,6 +644,38 @@ Platform: sync
 
 ---
 
+## US-025 — Dönem algoritması değiştiğinde yeniden hesaplama yolu
+
+Kullanıcı olarak proje sahibi (Mehmet), dönem hesaplama kurallarını değiştirdiğimde bunun mevcut
+120 playlist'e uygulanmasını istiyorum; aksi hâlde yeni kural yalnız gelecekte değişen
+playlist'lere işler.
+
+**2026-09-08 bağlamı:** US-024'ün snapshot atlaması istenen etkiyi yapıyor ama bir yan etkisi var:
+`snapshot_id` değişmediği sürece track'ler yeniden okunmuyor, dolayısıyla `computed_eras` yeniden
+hesaplanmıyor. Algoritma (eşikler, kova tanımları) değiştiğinde normal sync hiçbir satırı
+güncellemez. Bugünkü ilk gerçek sync sonrası ölçülen dağılım bu değişikliği gerektirir görünüyor:
+120 playlist'in 91'i `2000s-present` aldı, 43'ü yalnız onu; sanatçı listesine göre bunların
+yaklaşık yarısı (Bluesland, Blues Will Save Us, Psychedelia, Songs with Blues in Their Names,
+Saint Patrick's Day, Tombik Efes ve Leş Metal gibi klasik katalogları) reissue tarihi yüzünden
+yanlış etiketlenmiş.
+
+Kabul kriterleri:
+
+- [ ] `sync-spotify.yml`'a, snapshot karşılaştırmasını atlayıp her playlist'i tam okuyan bir mod
+      eklenir (ör. `mode: resync-eras`); normal `sync` davranışı değişmez.
+- [ ] Mod, US-024'ün atlama mantığını yalnız o koşu için devre dışı bırakır; kalıcı bir bayrak
+      veya veri değişikliği bırakmaz.
+- [ ] Job özeti bu modda kaç playlist'in tam okunduğunu ayrıca belirtir.
+- [ ] Bir test, bu modda eşleşen `snapshot_id`'ye rağmen sayfalı `/items` çağrılarının yapıldığını
+      doğrular.
+
+Kapsam dışı: eşiklerin kendisi (ayrı karar, `report-eras` ölçümü sonrası).
+Bağımlılık: US-024 (tamamlandı).
+Öncelik: Should
+Platform: sync
+
+---
+
 ## US-018 — Filtreleri navbar'a taşı (dropdown deseni)
 
 Kullanıcı olarak ziyaretçi, filtreleri sayfanın üstünü kaplayan büyük bir inline form yerine kompakt
