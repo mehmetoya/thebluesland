@@ -180,7 +180,7 @@ public sealed class SpotifyPlaylistClientTests
         found.Summary.Artists.ShouldBe(["Eric Clapton", "Traffic"], ignoreOrder: true);
         found.Summary.TrackCount.ShouldBe(2); // the aggregate from the playlist endpoint, not a track array length
         typeof(SpotifyPlaylistSummary).GetProperties().Select(p => p.Name).ShouldBe(
-            ["Name", "Description", "CoverImageUrl", "TrackCount", "Artists", "ComputedEras", "SnapshotId"],
+            ["Name", "Description", "CoverImageUrl", "TrackCount", "Artists", "ComputedEras", "EraBucketCounts", "SnapshotId"],
             ignoreOrder: true);
     }
 
@@ -201,21 +201,24 @@ public sealed class SpotifyPlaylistClientTests
     }
 
     [Fact]
-    public async Task GetTrackReleaseYearsAsync_reduces_release_dates_to_year_and_merges_multiple_pages()
+    public async Task FetchAsync_reduces_release_dates_to_year_and_merges_multiple_pages()
     {
         // US-023: exercises year-only, year+month and year+month+day precision on page one, and a
-        // second page reached only via "next", proving pagination is followed to completion.
+        // second page reached only via "next", proving pagination is followed to completion. The
+        // years themselves never leave the client (spec 9.4/11.2), so the bucket counts it stores
+        // are what proves each date was read and placed correctly: 1971 and 1978 into the 1970s,
+        // 1985 into 1980s-1990s, 2010 into 2000s-present.
         using var httpClient = new HttpClient(new FakeHttpMessageHandler(BuildReleaseYearResponder()));
         var client = new SpotifyPlaylistClient(httpClient);
 
-        var sample = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
 
-        sample.ReleaseYears.ShouldBe([1971, 1978, 1985, 2010], ignoreOrder: true);
-        sample.WasSampled.ShouldBeFalse();
+        var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
+        found.Summary.EraBucketCounts.ShouldBe([0, 2, 1, 1]);
     }
 
     [Fact]
-    public async Task GetTrackReleaseYearsAsync_skips_tracks_with_a_missing_empty_or_absent_release_date()
+    public async Task FetchAsync_skips_tracks_with_a_missing_empty_or_absent_release_date()
     {
         // US-023: a missing "album", a missing "release_date" and an empty "release_date" (all
         // real Spotify shapes - podcast episodes/local files have no album at all) must not be
@@ -239,13 +242,19 @@ public sealed class SpotifyPlaylistClientTests
                     """);
             }
 
+            if (absolutePath == $"/v1/playlists/{PlaylistId}")
+            {
+                return JsonResponse(PlaylistResponseJson);
+            }
+
             throw new InvalidOperationException($"Unexpected request path '{absolutePath}'.");
         }));
         var client = new SpotifyPlaylistClient(httpClient);
 
-        var sample = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
 
-        sample.ReleaseYears.ShouldBe([1992]);
+        var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
+        found.Summary.EraBucketCounts.ShouldBe([0, 0, 1, 0]); // only 1992 counted, no year-zero entries
     }
 
     [Fact]
@@ -292,44 +301,15 @@ public sealed class SpotifyPlaylistClientTests
         secondPageCalls.ShouldBe(2);
     }
 
-    /// <summary>
-    /// US-023 quota guard: the first real run followed "next" to exhaustion and got the Spotify
-    /// account rate-limited for ~19.5 hours (`psychedelia` alone is 10,000 tracks / 100 pages).
-    /// A playlist that never stops paging must therefore stop at the client's own page cap and
-    /// report itself as sampled - if this test ever fails, the crawl is unbounded again.
-    /// </summary>
-    [Fact]
-    public async Task GetTrackReleaseYearsAsync_stops_at_the_page_cap_and_reports_the_result_as_sampled()
-    {
-        var pagesServed = 0;
-        using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ =>
-        {
-            pagesServed++;
-
-            // Always advertises another page, exactly like a playlist far longer than the cap.
-            return JsonResponse(
-                $$"""
-                {
-                  "items": [
-                    { "item": { "album": { "release_date": "1973" } } }
-                  ],
-                  "next": "https://api.spotify.com/v1/playlists/{{PlaylistId}}/items?offset={{pagesServed * 100}}&limit=100"
-                }
-                """);
-        }));
-        var client = new SpotifyPlaylistClient(httpClient);
-
-        var sample = await client.GetTrackReleaseYearsAsync(PlaylistId, AccessToken, CancellationToken.None);
-
-        sample.WasSampled.ShouldBeTrue();
-        pagesServed.ShouldBe(3);
-        sample.ReleaseYears.ShouldBe([1973, 1973, 1973]);
-    }
-
     private static Func<HttpRequestMessage, HttpResponseMessage> BuildReleaseYearResponder() => request =>
     {
         var absolutePath = request.RequestUri!.AbsolutePath;
         var query = request.RequestUri.Query;
+
+        if (absolutePath == $"/v1/playlists/{PlaylistId}")
+        {
+            return JsonResponse(PlaylistResponseJson);
+        }
 
         if (absolutePath == $"/v1/playlists/{PlaylistId}/items" && query.Contains("offset=100"))
         {

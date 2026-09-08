@@ -21,6 +21,7 @@ public sealed class SpotifyPlaylistSummarySchemaTests
         nameof(SpotifyPlaylistSummary.TrackCount),
         nameof(SpotifyPlaylistSummary.Artists),
         nameof(SpotifyPlaylistSummary.ComputedEras),
+        nameof(SpotifyPlaylistSummary.EraBucketCounts),
         nameof(SpotifyPlaylistSummary.SnapshotId),
     ];
 

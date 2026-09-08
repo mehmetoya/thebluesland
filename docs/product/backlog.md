@@ -674,6 +674,44 @@ Bağımlılık: US-024 (tamamlandı).
 Öncelik: Should
 Platform: sync
 
+**2026-09-08 notu:** US-026 bu hikâyenin kapsamını büyük ölçüde daralttı. Kova sayıları artık
+saklandığı için *eşik* değişiklikleri Spotify'a hiç gitmeden yeniden hesaplanabiliyor; tam
+yeniden okuma yalnız kova *sınırları* değişirse (ör. yeni bir on yıl ayrımı) gerekiyor.
+
+---
+
+## US-026 — Dönem ölçümünü sakla, raporu veritabanından üret
+
+Kullanıcı olarak proje sahibi (Mehmet), dönem raporunu istediğim an çalıştırabilmek istiyorum;
+her çalıştırmanın Spotify kotasını yakması ve beni saatlerce kilitlemesi kabul edilemez.
+
+**2026-09-08 bağlamı:** `report-eras`, sync'in birkaç saat önce okuyup attığı release date'leri
+almak için tüm katalogu ikinci kez tarıyordu. O gün bu tekrar tarama 120 playlist'in 77.'sinde
+hesabı ~23,8 saat kilitledi. Oysa `GetTrackAggregatesAsync` dağılımı zaten hesaplıyor ve yalnız
+`SuggestedEras`'ı saklayıp `DatedTrackCount` ile `BucketPercentages`'ı çöpe atıyordu.
+
+Kabul kriterleri:
+
+- [x] Sync, kova başına tarihli parça sayılarını `era_bucket_counts` olarak cache'e yazar; ek bir
+      Spotify çağrısı gerekmez (dağılım zaten hesaplanıyordu).
+- [x] `PlaylistEraDistributionCalculator`, saklanan sayılardan yeniden hesaplama yapabilen bir
+      giriş noktası sunar; eşik değişiklikleri böylece Spotify'sız yeniden hesaplanabilir.
+- [x] `report-eras` hiçbir Spotify çağrısı yapmaz; raporu tek bir veritabanı sorgusundan üretir ve
+      workflow salt-okunur `NEON_READONLY_CONNECTION_STRING` kullanır, hiçbir Spotify secret'i
+      taşımaz.
+- [x] Ölçülmemiş playlist'ler (satır yok veya sayılar null) raporda açıkça "Not measured yet"
+      olarak görünür; sessizce atlanmaz.
+- [x] Yeni kolonun `null` olması atlamayı devre dışı bırakır, böylece migration sonrası ilk sync
+      tüm satırları doldurur ve sonrasında atlamaya döner (US-024 koruma kalıbının aynısı).
+- [x] Yalnız rapor taraması için var olan `GetTrackReleaseYearsAsync` ve sayfa sınırı silinir;
+      release date parse davranışını koruyan testler `FetchAsync` üzerinden devam eder.
+
+Durum: Tamamlandı. Devreye alma: migration + deploy, ardından tek bir sync (kolonu doldurur ve
+raporu tam sayımdan besler). Rapor artık örneklem değil tam sayım okuyor.
+Bağımlılık: US-023, US-024 (tamamlandı).
+Öncelik: Should
+Platform: sync + data
+
 ---
 
 ## US-018 — Filtreleri navbar'a taşı (dropdown deseni)

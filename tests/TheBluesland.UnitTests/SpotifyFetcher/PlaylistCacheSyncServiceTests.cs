@@ -219,7 +219,10 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
     public async Task SyncAsync_skips_the_paginated_track_read_when_the_snapshot_id_is_unchanged()
     {
         await SeedSyncedRowAsync(
-            snapshotId: "snapshot-available", artists: ["Erkin Koray"], computedEras: ["1970s"]);
+            snapshotId: "snapshot-available",
+            artists: ["Erkin Koray"],
+            computedEras: ["1970s"],
+            eraBucketCounts: [0, 12, 0, 0]);
 
         var itemsRequests = 0;
         using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
@@ -296,7 +299,11 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
         entry.ComputedEras.ShouldNotBeNull();
     }
 
-    private async Task SeedSyncedRowAsync(string snapshotId, string[] artists, string[]? computedEras)
+    private async Task SeedSyncedRowAsync(
+        string snapshotId,
+        string[] artists,
+        string[]? computedEras,
+        int[]? eraBucketCounts = null)
     {
         await using var seedContext = await CreateMigratedDbContextAsync();
         seedContext.SpotifyPlaylistCache.Add(new()
@@ -306,6 +313,9 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
             TrackCount = 1,
             Artists = artists,
             ComputedEras = computedEras,
+            // Defaults to null so a caller that says nothing gets a row that still needs a full
+            // read - the same shape as a row written before the counts column existed.
+            EraBucketCounts = eraBucketCounts,
             SpotifySnapshotId = snapshotId,
             SyncedAt = DateTimeOffset.UtcNow.AddDays(-30),
             IsAvailable = true,

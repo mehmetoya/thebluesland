@@ -33,6 +33,19 @@ public sealed class SpotifyPlaylistCacheEntry
     /// <summary>Automatically calculated playlist-level era tags; null before the first era sync, empty when data is insufficient.</summary>
     public string[]? ComputedEras { get; set; }
 
+    /// <summary>
+    /// Dated tracks per era bucket, in the sync tool's fixed bucket order (pre-1970, 1970s,
+    /// 1980s-1990s, 2000s-present); null before the first sync that measured them. Still an
+    /// aggregate, in the same class as <see cref="TrackCount"/> - four totals, no release date,
+    /// title or id for any individual track (spec 9.4/11.2).
+    ///
+    /// Kept so the measurement outlives the crawl that produced it: reading a playlist's tracks is
+    /// the most quota-expensive thing this project does, and with these counts stored, both the era
+    /// report and any later change to the assignment thresholds are answered from the database
+    /// instead of from Spotify.
+    /// </summary>
+    public int[]? EraBucketCounts { get; set; }
+
     /// <summary>Spotify's own change-detection token, stored for future incremental sync.</summary>
     public string? SpotifySnapshotId { get; set; }
 

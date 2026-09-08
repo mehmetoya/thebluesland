@@ -17,11 +17,14 @@ veritabanına yalnız playlist seviyesinde `computed_eras` etiket dizisi yazıl�
 
 Spotify albüm tarihi yeniden basım tarihini gösterebilir; bu, özgün kayıt dönemi garantisi
 değildir. İstisnaları düzeltmek için Markdown'a belirli dönemleri yazmak yeterlidir.
-`report-eras` karşılaştırmalı salt-okunur rapor üretmeye devam eder.
+`report-eras` karşılaştırmalı salt-okunur rapor üretmeye devam eder; artık Spotify'a hiç
+gitmeden, sync'in sakladığı kova sayılarından okuyarak (US-026). Bu yüzden istediğiniz sıklıkta
+çalıştırılabilir ve kotayı etkilemez.
 
 ## İlk devreye alma
 
-1. `AddComputedPlaylistEras` migration'ını **tablo sahibi/migration yetkili bağlantıyla** uygulayın:
+1. `AddComputedPlaylistEras` ve `AddEraBucketCounts` migration'larını **tablo sahibi/migration
+   yetkili bağlantıyla** uygulayın:
    `dotnet ef database update --project src/TheBluesland.Data/TheBluesland.Data.csproj`
    için bağlantı override'ını güvenli yerel ortamınızdan sağlayın. Design-time factory'nin
    varsayılan bağlantısı yalnız localhost içindir. Production şifresini komut geçmişine yazmayın.
@@ -37,7 +40,12 @@ değildir. İstisnaları düzeltmek için Markdown'a belirli dönemleri yazmak y
 3. GitHub Actions → **Sync Spotify playlist cache** → güncel dal → `mode: sync` çalıştırın.
    Mevcut Spotify ve Neon sync secret'ları kullanılır. Başarılı playlist'ler tek tek kaydedilir;
    kesinti olursa normal sync yeniden çalıştırılabilir.
-4. Tamamlandıktan sonra beş dakika içinde dönem filtrelerini kontrol edin. Her playlist'in
+4. `AddEraBucketCounts` sonrası ilk sync her satırı bilerek tam okur (yeni kolon `null` olduğu
+   sürece US-024 atlaması devre dışı kalır) ve `era_bucket_counts`'u doldurur; sonraki sync'ler
+   atlamaya geri döner. Bu dolum koşusu o günün tek ağır Spotify işi olmalıdır.
+5. Dolum bitince `report-eras`'ı çalıştırın: artık veritabanından okuduğu için kota harcamaz ve
+   yüzdeleri örneklem yerine tam sayımdan verir.
+6. Tamamlandıktan sonra beş dakika içinde dönem filtrelerini kontrol edin. Her playlist'in
    belirli bir döneme dönüşmesi beklenmez: dağılım karışıksa `mixed-era` kalır, veri yetersizse
    editoryal etiket korunur.
 

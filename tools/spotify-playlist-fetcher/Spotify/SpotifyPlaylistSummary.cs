@@ -22,5 +22,11 @@ public sealed record SpotifyPlaylistSummary
     /// <summary>Automatically calculated playlist-level era tags; null before the first era sync, empty when data is insufficient.</summary>
     public string[]? ComputedEras { get; init; }
 
+    /// <summary>
+    /// Dated tracks per era bucket in <c>EraBucketMapper.ConcreteBuckets</c> order - the aggregate
+    /// the era tags were derived from, kept so the measurement survives the crawl (US-026).
+    /// </summary>
+    public int[]? EraBucketCounts { get; init; }
+
     public string? SnapshotId { get; init; }
 }

@@ -25,13 +25,11 @@ public sealed class SpotifyPlaylistClient
 {
     private const string BaseUrl = "https://api.spotify.com/v1";
 
-    // US-023/US-024 quota guards - see GetTrackReleaseYearsAsync's "Sampled, not exhaustive" note
-    // for why these exist (a full crawl locked the account out for ~19.5 hours). Three pages is
-    // 300 tracks, ample to estimate a four-bucket distribution; raise it only alongside a real
-    // check of how many requests the whole 120-playlist run would then make. The delay applies to
-    // every paginated track read, the sync's included: it is the unbroken burst of back-to-back
-    // requests, not the total, that Spotify's limiter reacts to hardest.
-    private const int MaxReleaseYearPages = 3;
+    // US-024 quota guard. Reading a playlist's tracks is the most expensive thing this project
+    // does - one request per 100 tracks, and `psychedelia` alone is 10,000 - so pages are spaced
+    // out: it is the unbroken burst of back-to-back requests, not the total, that Spotify's
+    // limiter reacts to hardest. The far bigger saving is not making the read at all, which is
+    // what the snapshot comparison in FetchAsync is for.
     private static readonly TimeSpan TrackPageDelay = TimeSpan.FromMilliseconds(250);
     private const int MaxRateLimitAttempts = 5;
     private static readonly TimeSpan MaximumRateLimitWait = TimeSpan.FromMinutes(2);
@@ -80,8 +78,13 @@ public sealed class SpotifyPlaylistClient
             return new SpotifyPlaylistFetchResult.Found(summary, TrackAggregatesSkipped: true);
         }
 
-        var (artists, eras) = await GetTrackAggregatesAsync(spotifyPlaylistId, accessToken, cancellationToken);
-        return new SpotifyPlaylistFetchResult.Found(summary with { Artists = artists, ComputedEras = eras });
+        var aggregates = await GetTrackAggregatesAsync(spotifyPlaylistId, accessToken, cancellationToken);
+        return new SpotifyPlaylistFetchResult.Found(summary with
+        {
+            Artists = aggregates.Artists,
+            ComputedEras = aggregates.Eras,
+            EraBucketCounts = aggregates.BucketCounts,
+        });
     }
 
     private async Task<SpotifyPlaylistSummary?> GetPlaylistSummaryAsync(
@@ -147,7 +150,7 @@ public sealed class SpotifyPlaylistClient
         };
     }
 
-    private async Task<(string[] Artists, string[] Eras)> GetTrackAggregatesAsync(
+    private async Task<(string[] Artists, string[] Eras, int[] BucketCounts)> GetTrackAggregatesAsync(
         string spotifyPlaylistId,
         string accessToken,
         CancellationToken cancellationToken)
@@ -191,82 +194,15 @@ public sealed class SpotifyPlaylistClient
         }
 
         var distribution = new PlaylistEraDistributionCalculator().Calculate(releaseYears);
-        return ([.. artistNames], [.. distribution.SuggestedEras]);
-    }
 
-    /// <summary>
-    /// US-023: reads only the <c>album.release_date</c> field for every track/episode in the
-    /// playlist, for the sole purpose of computing an era distribution in memory (see
-    /// <c>EraReport.PlaylistEraDistributionCalculator</c>). The <c>fields</c> parameter narrows
-    /// the response to exactly that one nested field - no track title/id/duration/ISRC is ever
-    /// requested here, matching spec section 9.4/11.2's "no track-level data is persisted" limit;
-    /// the returned years are the only thing a caller may retain, and even those must never be
-    /// written anywhere except an aggregated percentage. Release dates with month or day
-    /// precision (<c>"1978-05"</c>, <c>"1978-05-12"</c>) are reduced to their leading year;
-    /// episodes/local files with no album, and tracks with a missing or empty
-    /// <c>release_date</c>, are skipped rather than counted as year zero.
-    ///
-    /// <para><b>Sampled, not exhaustive.</b> Reading at most <see cref="MaxReleaseYearPages"/>
-    /// pages is a deliberate quota decision, not an oversight. The first real run against this
-    /// catalogue (2026-09-07) followed <c>next</c> to exhaustion and got the entire Spotify
-    /// account rate-limited for ~19.5 hours: `psychedelia` alone is 10,000 tracks (100 requests)
-    /// and `no-more-words` 8,656, several hundred requests across the 120 playlists. An era
-    /// *distribution* is a proportion, so a few hundred tracks estimate it perfectly well; the
-    /// returned <see cref="TrackReleaseYearSample.WasSampled"/> tells the report which playlists
-    /// were cut short so a reader can weigh the suggestion accordingly. Playlists shorter than the
-    /// cap are still read in full.</para>
-    /// </summary>
-    public async Task<TrackReleaseYearSample> GetTrackReleaseYearsAsync(
-        string spotifyPlaylistId,
-        string accessToken,
-        CancellationToken cancellationToken)
-    {
-        var releaseYears = new List<int>();
-        string? nextUrl = $"{BaseUrl}/playlists/{Uri.EscapeDataString(spotifyPlaylistId)}/items" +
-                           "?fields=items(item(album(release_date))),next&limit=100";
+        // The per-bucket counts are persisted alongside the tags. They cost nothing extra to
+        // produce - the distribution was already computed here - and they are what lets the era
+        // report and any later threshold change read the database instead of crawling again.
+        var bucketCounts = EraBucketMapper.ConcreteBuckets
+            .Select(bucket => distribution.BucketCounts.GetValueOrDefault(bucket))
+            .ToArray();
 
-        var pagesRead = 0;
-        while (nextUrl is not null)
-        {
-            if (pagesRead == MaxReleaseYearPages)
-            {
-                // More pages exist but the cap stops here - report it as a sample.
-                return new TrackReleaseYearSample(releaseYears, WasSampled: true);
-            }
-
-            using var response = await SendAsync(HttpMethod.Get, nextUrl, accessToken, cancellationToken);
-            response.EnsureSuccessStatusCode();
-            pagesRead++;
-
-            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-            var root = document.RootElement;
-
-            if (root.TryGetProperty("items", out var itemsElement) && itemsElement.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var pageItem in itemsElement.EnumerateArray())
-                {
-                    if (TryReadReleaseYear(pageItem, out var year))
-                    {
-                        releaseYears.Add(year);
-                    }
-                }
-            }
-
-            nextUrl = root.TryGetProperty("next", out var nextElement) && nextElement.ValueKind != JsonValueKind.Null
-                ? nextElement.GetString()
-                : null;
-
-            // Spread the burst. The report walks 120 playlists back to back, and it was exactly
-            // that unbroken stream of requests that tripped Spotify's limiter hard enough to lock
-            // the account out for the best part of a day.
-            if (nextUrl is not null)
-            {
-                await Task.Delay(TrackPageDelay, cancellationToken);
-            }
-        }
-
-        return new TrackReleaseYearSample(releaseYears, WasSampled: false);
+        return ([.. artistNames], [.. distribution.SuggestedEras], bucketCounts);
     }
 
     private static bool TryReadReleaseYear(JsonElement pageItem, out int year)
