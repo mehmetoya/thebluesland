@@ -32,6 +32,11 @@
 #    provision a real Render service to verify it end-to-end.
 # 6. `region`/`plan` below are reasonable free-tier defaults (spec 19, "$0/month") - change them in
 #    the Render Dashboard or here if Mehmet prefers a different region.
+# 7. 2026-09-09 domain migration (SPEC-custom-domain-migration.md): in the Render Dashboard, add
+#    both `thebluesland.com` and `www.thebluesland.com` as Custom Domains and add the DNS records
+#    Render's UI shows for each at the domain registrar. Once both resolve and Render's
+#    auto-provisioned TLS certificate is issued, set `Site__PublicOrigin` below (see its own
+#    envVars comment for the ordering this depends on).
 
 services:
   - type: web
@@ -74,3 +79,12 @@ services:
       # which port to route traffic and health checks to on this container (see step 5 above).
       - key: PORT
         value: "8080"
+      # 2026-09-09 domain migration (SPEC-custom-domain-migration.md): unset, every canonical URL
+      # this service generates (sitemap, robots.txt, JSON-LD, OG images) defaults to
+      # https://thebluesland.onrender.com (SiteUrl.DefaultPublicOrigin). Set this by hand only once
+      # both thebluesland.com and www.thebluesland.com are added as Custom Domains above and their
+      # DNS/TLS is verified working - WebHostFactory redirects the two onrender.com/www hostnames to
+      # whatever this value says, so flipping it before the new domain actually resolves would make
+      # the live site unreachable under either name for the gap in between.
+      - key: Site__PublicOrigin
+        sync: false
