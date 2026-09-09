@@ -1,10 +1,14 @@
 # TheBluesland
 
+[![CI](https://github.com/mehmetoya/thebluesland/actions/workflows/ci.yml/badge.svg)](https://github.com/mehmetoya/thebluesland/actions/workflows/ci.yml)
+[![Deploy](https://github.com/mehmetoya/thebluesland/actions/workflows/deploy.yml/badge.svg)](https://github.com/mehmetoya/thebluesland/actions/workflows/deploy.yml)
+
 A public, editorial playlist showcase for Spotify playlists curated by Mehmet Oya — blues, rock,
 and the records that connect them, each introduced with a short curator note rather than left to
 speak for itself. Visitors filter the catalogue by mood, genre, occasion, and era; every playlist
 page embeds the real Spotify player (click-to-load) alongside editorial context Spotify itself
-doesn't provide.
+doesn't provide. Playlists whose era is genuinely mixed get an era tag computed automatically from
+Spotify's own release-date data, rather than staying untagged or guessed by hand.
 
 **Live:** <https://thebluesland.onrender.com>
 
@@ -20,12 +24,16 @@ live in a database cache, and the two are joined by `spotifyPlaylistId`.
 | --- | --- | --- |
 | Title, summary, mood/genre/occasion/era tags, curator note, slug | Version-controlled Markdown + YAML front matter (`content/playlists/*.md`) | Hand-authored, reviewed like code |
 | Playlist name, description, cover image, track count, artist list | PostgreSQL cache (`spotify_playlist_cache` table) | A monthly GitHub Actions sync job, from the real Spotify Web API |
+| Automatic era tag, only for playlists whose editorial era is `mixed-era` | Same cache row (`computed_eras`, derived from `era_bucket_counts`) | Same sync job — reads each track's release year, buckets it, and stores only the aggregate counts, never a single release date |
 
-Track-level data is **never** persisted anywhere. The production web app never holds a Spotify or
-AI credential — only a read-only database connection string. See
+Explicit editorial era tags always win; the computed tag only fills in where the editor
+deliberately left it ambiguous. Track-level data is **never** persisted anywhere — not even
+transiently for the era computation above. The production web app never holds a Spotify or AI
+credential — only a read-only database connection string. See
 [`docs/adr/0002-spotify-veri-mimarisi.md`](docs/adr/0002-spotify-veri-mimarisi.md) for the full
-rationale, and [`docs/business-technical-specification.md`](docs/business-technical-specification.md)
-for the complete spec.
+rationale, [`docs/automatic-eras.md`](docs/automatic-eras.md) for how the era computation works,
+and [`docs/business-technical-specification.md`](docs/business-technical-specification.md) for the
+complete spec.
 
 The web app degrades gracefully: if the database is unreachable or a playlist's cache row is
 missing/stale, editorial content still renders with a 200 response rather than an error page.
@@ -48,16 +56,34 @@ No MediatR, no AutoMapper, no second client (API/mobile) — see
 [`docs/adr/0003-mimari-kapsam.md`](docs/adr/0003-mimari-kapsam.md) for why the architecture stays
 deliberately small.
 
+## Search & AI discoverability
+
+Beyond standard SEO (unique title/description/canonical per page, `sitemap.xml`, server-generated
+Open Graph images), the site is deliberately set up to be read correctly by generative answer
+engines, not just crawled by classic search bots:
+
+- `robots.txt` explicitly allows GPTBot, ChatGPT-User, OAI-SearchBot, ClaudeBot, Claude-SearchBot,
+  Claude-User, PerplexityBot and Google-Extended, alongside a plain-text `llms.txt` summarising the
+  site and every published playlist — the emerging convention AI crawlers look for.
+- JSON-LD structured data (`WebSite`, `CollectionPage`, `MusicPlaylist`, `BreadcrumbList`,
+  `FAQPage`, `AboutPage`/`Person`) is built from typed records
+  (`src/TheBluesland.Web/Seo/StructuredDataBuilder.cs`), never string concatenation, and a
+  regression test pins down that it can never carry a track-level field.
+- The About page's FAQ section and its `FAQPage` JSON-LD are generated from the same array, so the
+  visible text and the structured data can never drift apart — a requirement of Google's own
+  FAQPage guidance.
+
 ## Repository layout
 
 ```text
 src/TheBluesland.Web/       Blazor Web App - content reading, validation, and web presentation
 src/TheBluesland.Data/      EF Core / PostgreSQL schema and migrations
 tools/spotify-playlist-fetcher/   Spotify sync tool, run monthly by GitHub Actions
+tools/playlist-taxonomy-report/   Local-only tool: reports mood/genre/occasion/era tag distribution
 content/playlists/          Version-controlled editorial playlist content
 tests/TheBluesland.UnitTests/     Unit, schema, and web integration tests (Testcontainers Postgres)
 tests/TheBluesland.E2ETests/      Playwright smoke tests against the real app, in-process
-.github/workflows/           CI, monthly Spotify sync, and deploy automation
+.github/workflows/           CI, deploy, monthly Spotify sync, and manual AI-assisted tooling
 .github/render.yaml          Render Blueprint (service definition, no secret values)
 docs/                        Spec, ADRs, and product backlog/plan
 ```
@@ -79,7 +105,7 @@ editorial Markdown alone. To exercise the cache-backed code paths locally, set t
 `ConnectionStrings__SpotifyPlaylistCache`) to a Postgres instance where
 `create-spotify-cache-roles.sql`'s migrations have been applied.
 
-## CI/CD
+## CI/CD & automation
 
 Every pull request runs six independent checks (`.github/workflows/ci.yml`): content validation,
 build + test + format, a Playwright smoke test, the Tailwind production build, a dependency and
@@ -89,6 +115,20 @@ On every push to `main`, `.github/workflows/deploy.yml` builds the same Dockerfi
 immutable, commit-SHA-tagged image to GHCR, then triggers a Render deploy. Render gates traffic on
 the app's own `/health/ready` endpoint before routing to the new instance, and rollback is Render's
 native, immutable-image-based rollback (see `.github/render.yaml`).
+
+Everything that talks to Spotify or an AI provider runs out-of-process, on its own schedule, never
+inside the web app or the PR/deploy pipelines:
+
+| Workflow | Trigger | What it does |
+| --- | --- | --- |
+| `sync-spotify.yml` | Monthly cron, or manual | Refreshes `spotify_playlist_cache` for every playlist. `mode: sync` (default) skips playlists whose Spotify `snapshot_id` hasn't changed since the last run; `resync-eras` forces a full re-read (only needed after the era-bucket rules themselves change); `list-playlists`/`dump-cache` are read-only discovery modes. |
+| `report-eras.yml` | Manual | Prints a per-playlist era-distribution report from the cache's stored bucket counts — a plain database read, no Spotify call, safe to re-run any time. |
+| `suggest-curator-note.yml` | Manual | Drafts a curator-note suggestion for one playlist via Gemini, from the cache's public fields only; never writes to `content/playlists/*.md` — Mehmet applies it through a normal PR if he agrees. |
+
+Each of these three is the *only* workflow allowed to hold its particular external credential (see
+[Spotify cache database access](#spotify-cache-database-access-sec-001) below) — `ci.yml` and
+`deploy.yml` can reach neither Spotify nor any AI provider, enforced by regression tests, not just
+convention.
 
 ## Spotify cache database access (SEC-001)
 
@@ -128,6 +168,8 @@ Host=<neon-host>;Database=<db>;Username=<role>;Password=<password>;SSL Mode=Requ
 - [`docs/business-technical-specification.md`](docs/business-technical-specification.md) — full
   product and technical spec (v0.2)
 - [`docs/adr/`](docs/adr/) — architecture decision records
+- [`docs/automatic-eras.md`](docs/automatic-eras.md) — how automatic era tagging works, and its
+  one-time rollout steps
 - [`docs/product/backlog.md`](docs/product/backlog.md) — implementation-ordered user stories
 - [`docs/product/plan.md`](docs/product/plan.md) — current phase and progress
 
