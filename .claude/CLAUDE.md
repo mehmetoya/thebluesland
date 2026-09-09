@@ -47,6 +47,9 @@ ADR-0002 ve ADR-0003'e bak.
 - `architect` yalnız kullanıcı mimari seçenek/ADR istediğinde; `code-reviewer` yalnız açık review
   veya PR öncesi talebinde; `test-engineer` yalnız test altyapısı, kırık suite ya da kapsamlı
   integration testi istendiğinde kullanılır.
+- `security-auditor` yalnız kullanıcı açıkça güvenlik denetimi/OWASP taraması istediğinde;
+  `web-performance-auditor` yalnız kullanıcı açıkça Core Web Vitals/performans denetimi
+  istediğinde kullanılır (addyosmani/agent-skills'ten alındı, 2026-09-09).
 - Ürün netleştirme ve iş planlama ayrı context açmaz: kullanıcı istediğinde ana konuşmada
   `refine-story` ve `plan-work` skill'leri kullanılır.
 - Specialist çıktısı en fazla 8 satırlık `Durum / Kanıt / Kalan risk / Önerilen devir /
