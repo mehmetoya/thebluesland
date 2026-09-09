@@ -2,6 +2,10 @@
 
 [![CI](https://github.com/mehmetoya/thebluesland/actions/workflows/ci.yml/badge.svg)](https://github.com/mehmetoya/thebluesland/actions/workflows/ci.yml)
 [![Deploy](https://github.com/mehmetoya/thebluesland/actions/workflows/deploy.yml/badge.svg)](https://github.com/mehmetoya/thebluesland/actions/workflows/deploy.yml)
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)
+![Blazor](https://img.shields.io/badge/Blazor-Web%20App-512BD4?logo=blazor&logoColor=white)
+![Tailwind CSS 4](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
 
 A public, editorial playlist showcase for Spotify playlists curated by Mehmet Oya — blues, rock,
 and the records that connect them, each introduced with a short curator note rather than left to
@@ -15,10 +19,34 @@ Spotify's own release-date data, rather than staying untagged or guessed by hand
 This is not a Spotify clone or a new music catalogue — it has no accounts, no playback outside the
 embedded Spotify player, and never stores track-level data.
 
-## Architecture
+## ✨ At a glance
+
+- 🎧 120 curated playlists, each with a hand-written curator note — never left to speak for itself
+- 🏷️ Filter by mood, genre, occasion, and era, or browse dedicated pages per taxonomy value
+- 🕰️ Automatic era tagging for genuinely mixed-era playlists, computed from Spotify's own release dates
+- 🌓 A calm, dark-first "late-night record room" visual identity — see [Design system](#-design-system)
+- 🤖 Built for AI answer engines, not just search bots — `llms.txt`, JSON-LD, `FAQPage` schema
+- 🔒 Zero Spotify/AI credentials in production — only a read-only database connection
+
+## 🏗️ Architecture
 
 TheBluesland is a **hybrid content model**: editorial judgment lives in git, Spotify-sourced facts
 live in a database cache, and the two are joined by `spotifyPlaylistId`.
+
+```mermaid
+flowchart LR
+    MD["content/playlists/*.md<br/>title, tags, curator note"]
+    API["Spotify Web API<br/>name, cover, track count, artists"]
+    Sync["Monthly sync job<br/>(GitHub Actions)"]
+    Cache[("PostgreSQL cache<br/>spotify_playlist_cache")]
+    Web["TheBluesland.Web<br/>static SSR"]
+    Visitor(["Visitor"])
+
+    API --> Sync --> Cache
+    MD --> Web
+    Cache -- read-only --> Web
+    Web --> Visitor
+```
 
 | What | Where | Who writes it |
 | --- | --- | --- |
@@ -38,7 +66,7 @@ complete spec.
 The web app degrades gracefully: if the database is unreachable or a playlist's cache row is
 missing/stale, editorial content still renders with a 200 response rather than an error page.
 
-## Tech stack
+## 🛠️ Tech stack
 
 | Layer | Choice |
 | --- | --- |
@@ -47,7 +75,7 @@ missing/stale, editorial content still renders with a 200 response rather than a
 | Database | PostgreSQL (Neon, free tier) via EF Core — Spotify-sourced fields only |
 | Editorial content | Markdown + YAML front matter, git-versioned |
 | Spotify integration | Authorization Code + PKCE, monthly sync via GitHub Actions (never in the production app) |
-| Styling | Tailwind CSS 4 |
+| Styling | Tailwind CSS 4, a hand-rolled design-token scale (see [Design system](#-design-system)) |
 | Testing | xUnit + Shouldly, Testcontainers (real Postgres in tests), Playwright (.NET) for e2e smoke |
 | CI/CD | GitHub Actions — PR pipeline (build/test/format/content-validation/dependency+secret scan/Docker build) and a deploy pipeline to Render |
 | Hosting | Render (web, Docker image) + Neon (Postgres) — $0/month |
@@ -56,7 +84,32 @@ No MediatR, no AutoMapper, no second client (API/mobile) — see
 [`docs/adr/0003-mimari-kapsam.md`](docs/adr/0003-mimari-kapsam.md) for why the architecture stays
 deliberately small.
 
-## Search & AI discoverability
+## 🎨 Design system
+
+TheBluesland is built to feel like **a late-night record room, not a Spotify clone** — intimate,
+editorial and calm rather than another generic streaming-app UI
+(`docs/business-technical-specification.md` section 10).
+
+- 🌑 **Palette** — dark-first by design: a deep navy/charcoal background (`#12141b`), warm
+  off-white text (`#ece5d8`), and exactly one warm accent, amber (`#d99a4e`). No Spotify-green
+  anywhere.
+- **Type** — serif headings (`ui-serif`) carry the editorial voice; body text uses a system-font
+  sans stack aligned with Apple's own (`-apple-system, BlinkMacSystemFont, …`) for familiar, fast,
+  zero-webfont legibility.
+- **A real token scale, not one-off numbers.** `--space-1` … `--space-8` (an 8px grid) and
+  `--font-size-xs` … `--font-size-display` drive every touched selector in
+  `src/TheBluesland.Web/Styles/app.css`. The two largest heading sizes are fluid (`clamp()`), so a
+  single-word title never overflows a narrow phone screen.
+- **Motion is restrained and optional.** Hover states use short (150ms) transitions; anything that
+  actually moves (`transform`) only runs inside `@media (prefers-reduced-motion: no-preference)` —
+  respecting a visitor's OS-level motion preference is a hard rule, not a nice-to-have.
+- Rolled out in three reviewed passes rather than one sweeping rewrite — a token scale, then a
+  single-page pilot, then full rollout plus a typography/motion pass — each shipped and checked
+  before the next began. See `docs/specs/design-tokens-and-home-pilot.md`,
+  `docs/specs/design-tokens-rollout-remaining-pages.md` and
+  `docs/specs/apple-hubx-motion-and-type-polish.md`.
+
+## 🔍 Search & AI discoverability
 
 Beyond standard SEO (unique title/description/canonical per page, `sitemap.xml`, server-generated
 Open Graph images), the site is deliberately set up to be read correctly by generative answer
@@ -73,7 +126,7 @@ engines, not just crawled by classic search bots:
   visible text and the structured data can never drift apart — a requirement of Google's own
   FAQPage guidance.
 
-## Repository layout
+## 📁 Repository layout
 
 ```text
 src/TheBluesland.Web/       Blazor Web App - content reading, validation, and web presentation
@@ -88,7 +141,7 @@ tests/TheBluesland.E2ETests/      Playwright smoke tests against the real app, i
 docs/                        Spec, ADRs, and product backlog/plan
 ```
 
-## Local development
+## 💻 Local development
 
 **Prerequisites:** .NET 10 SDK, Docker (for Testcontainers-backed tests and local image builds),
 Node.js 22 (for the Tailwind build).
@@ -105,7 +158,7 @@ editorial Markdown alone. To exercise the cache-backed code paths locally, set t
 `ConnectionStrings__SpotifyPlaylistCache`) to a Postgres instance where
 `create-spotify-cache-roles.sql`'s migrations have been applied.
 
-## CI/CD & automation
+## 🔄 CI/CD & automation
 
 Every pull request runs six independent checks (`.github/workflows/ci.yml`): content validation,
 build + test + format, a Playwright smoke test, the Tailwind production build, a dependency and
@@ -121,16 +174,16 @@ inside the web app or the PR/deploy pipelines:
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
-| `sync-spotify.yml` | Monthly cron, or manual | Refreshes `spotify_playlist_cache` for every playlist. `mode: sync` (default) skips playlists whose Spotify `snapshot_id` hasn't changed since the last run; `resync-eras` forces a full re-read (only needed after the era-bucket rules themselves change); `list-playlists`/`dump-cache` are read-only discovery modes. |
+| `sync-spotify.yml` | Monthly cron, or manual | Refreshes `spotify_playlist_cache` for every playlist and auto-unpublishes any playlist Spotify now reports as private (`docs/specs/auto-unpublish-private-playlists.md`) via a bot-opened, auto-merged pull request — the only workflow with write access to the repository, scoped to this one job. `mode: sync` (default) skips playlists whose Spotify `snapshot_id` hasn't changed since the last run; `resync-eras` forces a full re-read (only needed after the era-bucket rules themselves change); `list-playlists`/`dump-cache` are read-only discovery modes. |
 | `report-eras.yml` | Manual | Prints a per-playlist era-distribution report from the cache's stored bucket counts — a plain database read, no Spotify call, safe to re-run any time. |
 | `suggest-curator-note.yml` | Manual | Drafts a curator-note suggestion for one playlist via Gemini, from the cache's public fields only; never writes to `content/playlists/*.md` — Mehmet applies it through a normal PR if he agrees. |
 
 Each of these three is the *only* workflow allowed to hold its particular external credential (see
-[Spotify cache database access](#spotify-cache-database-access-sec-001) below) — `ci.yml` and
+[Spotify cache database access](#-spotify-cache-database-access-sec-001) below) — `ci.yml` and
 `deploy.yml` can reach neither Spotify nor any AI provider, enforced by regression tests, not just
 convention.
 
-## Spotify cache database access (SEC-001)
+## 🔐 Spotify cache database access (SEC-001)
 
 `spotify_playlist_cache` is accessed through two separate Postgres roles, created by
 [`src/TheBluesland.Data/Scripts/create-spotify-cache-roles.sql`](src/TheBluesland.Data/Scripts/create-spotify-cache-roles.sql)
@@ -163,17 +216,22 @@ by default, which Npgsql also accepts directly. If you hit a
 Host=<neon-host>;Database=<db>;Username=<role>;Password=<password>;SSL Mode=Require
 ```
 
-## Documentation
+## 📚 Documentation
 
 - [`docs/business-technical-specification.md`](docs/business-technical-specification.md) — full
-  product and technical spec (v0.2)
+  product and technical spec (v0.2), including the design system (section 10) and taxonomy
+  (section 8)
 - [`docs/adr/`](docs/adr/) — architecture decision records
+- [`docs/specs/`](docs/specs/) — feature-level specs written before implementation (design system
+  rollout, auto-unpublish, era-threshold tuning, custom domain migration, and more)
 - [`docs/automatic-eras.md`](docs/automatic-eras.md) — how automatic era tagging works, and its
   one-time rollout steps
-- [`docs/product/backlog.md`](docs/product/backlog.md) — implementation-ordered user stories
-- [`docs/product/plan.md`](docs/product/plan.md) — current phase and progress
+- [`docs/product/backlog.md`](docs/product/backlog.md) — historical record of implementation-ordered
+  user stories (frozen 2026-09-09; new work is tracked via `docs/specs/` instead)
+- [`docs/product/plan.md`](docs/product/plan.md) — historical phase/progress record (frozen alongside
+  the backlog)
 
-### Runtime content and security
+### ⚙️ Runtime content and security
 
 The application loads a catalogue snapshot once per process. Restart after editing Markdown;
 production content changes take effect with the next deployment. `/health/ready` requires a
@@ -185,10 +243,10 @@ Canonical URLs use `Site__PublicOrigin` (default `https://thebluesland.onrender.
 an HTTPS origin when introducing a custom domain. Only that host, local development hosts, and two
 hardcoded legacy hosts (`thebluesland.onrender.com`, `www.thebluesland.com` — permanently 301'd to
 whatever `Site__PublicOrigin` is currently set to, see `SiteUrl.LegacyRedirectHosts` and
-[`SPEC-custom-domain-migration.md`](SPEC-custom-domain-migration.md)) are accepted. Request and
-forwarded headers never determine canonical URLs; no untrusted proxy headers are enabled. Social
-card responses are cached server-side for 24 hours within a 16 MiB cache; a new deployment clears
-the cache.
+[`docs/specs/custom-domain-migration.md`](docs/specs/custom-domain-migration.md)) are accepted.
+Request and forwarded headers never determine canonical URLs; no untrusted proxy headers are
+enabled. Social card responses are cached server-side for 24 hours within a 16 MiB cache; a new
+deployment clears the cache.
 
 The taxonomy report is an explicit local tool, not a test. From the repository root:
 
