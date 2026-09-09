@@ -64,9 +64,21 @@ if (args.Length > 0 && string.Equals(args[0], "report-eras", StringComparison.Or
     return await ReportErasAsync(reportContentDirectory, cancellationToken);
 }
 
-var contentDirectory = args.Length > 0
-    ? args[0]
-    : Path.Combine(Directory.GetCurrentDirectory(), "content", "playlists");
+// US-025: forces every playlist through the paginated track read this run, bypassing US-024's
+// snapshot-id short-circuit, without leaving any persisted flag - the next normal sync goes right
+// back to skipping unchanged playlists. Exists for the one case the skip cannot handle on its own:
+// an era-bucket-mapping rule change (e.g. a new decade boundary), which a snapshot comparison alone
+// would never surface to already-synced rows. Threshold-only changes don't need this (US-026 lets
+// report-eras recompute those from the stored bucket counts without touching Spotify at all).
+var forceFullRead = args.Length > 0 && string.Equals(args[0], "resync-eras", StringComparison.Ordinal);
+
+var contentDirectory = forceFullRead
+    ? args.Length > 1 && args[1].Length > 0
+        ? args[1]
+        : Path.Combine(Directory.GetCurrentDirectory(), "content", "playlists")
+    : args.Length > 0
+        ? args[0]
+        : Path.Combine(Directory.GetCurrentDirectory(), "content", "playlists");
 
 var frontMatterReader = new PlaylistFrontMatterReader();
 var spotifyPlaylistIds = await frontMatterReader.ReadDistinctSpotifyPlaylistIdsAsync(contentDirectory, cancellationToken);
@@ -93,11 +105,18 @@ var optionsBuilder = new DbContextOptionsBuilder<TheBlueslandDbContext>().UseNpg
 await using var dbContext = new TheBlueslandDbContext(optionsBuilder.Options);
 
 var syncService = new PlaylistCacheSyncService(playlistClient, dbContext);
-var summary = await syncService.SyncAsync(spotifyPlaylistIds, accessToken, cancellationToken);
+var summary = await syncService.SyncAsync(spotifyPlaylistIds, accessToken, cancellationToken, forceFullRead);
 
 Console.WriteLine(
     $"Sync complete: {summary.Created} created, {summary.Updated} updated, " +
     $"{summary.Skipped} skipped (unchanged snapshot), {summary.Unavailable} marked unavailable.");
+
+if (forceFullRead)
+{
+    // AC3 (US-025): with forceFullRead on, nothing is ever skipped for an unchanged snapshot, so
+    // every found playlist (created or updated) got the full paginated track read this run.
+    Console.WriteLine($"resync-eras: {summary.Created + summary.Updated} playlist(s) fully read.");
+}
 
 return 0;
 

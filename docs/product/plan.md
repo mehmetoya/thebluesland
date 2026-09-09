@@ -44,6 +44,14 @@ adımlar:
 
 ## Tamamlanan
 
+- **US-025 — Dönem algoritması için zorunlu yeniden okuma modu (2026-09-09, backend-dev).**
+  US-024'ün snapshot atlaması bir kova *sınırı* değişikliğini (ör. yeni bir on yıl ayrımı) hiçbir
+  zaman değişmemiş playlist'lere ulaştıramıyordu. `SyncAsync`'e geriye dönük uyumlu bir
+  `forceFullRead` parametresi eklendi — kalıcı bayrak yok, yalnız o çağrı için atlamayı devre dışı
+  bırakıyor. `sync-spotify.yml`'a `resync-eras` modu eklendi (`report-eras`'ın kendi içerik dizini
+  override deseniyle aynı), job özeti kaç playlist'in tam okunduğunu ayrıca yazıyor. Kapsamı
+  US-026 sayesinde daralmıştı: yalnız eşiklerin değişmesi zaten Spotify'sız yeniden hesaplanabiliyor,
+  bu mod yalnız kova sınırı değişince gerekiyor. 280/280 test yeşil (+1).
 - **US-027 — FAQ, zenginleştirilmiş MusicPlaylist şeması, About sayfası kimliği (2026-09-09).**
   US-011'in SEO temeli üstüne AEO/GEO'ya özgü üç eksik kapatıldı. About sayfasına, görünür metin
   ile `FAQPage` JSON-LD'sinin tek bir diziden (`FaqItems`) üretildiği (yapı gereği asla birbirinden

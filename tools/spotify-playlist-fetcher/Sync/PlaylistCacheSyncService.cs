@@ -22,10 +22,18 @@ public sealed class PlaylistCacheSyncService
         _dbContext = dbContext;
     }
 
+    /// <param name="forceFullRead">
+    /// US-025: when true, every playlist gets the paginated track read regardless of whether its
+    /// <c>snapshot_id</c> matches the cached one - the exact opposite of US-024's short-circuit,
+    /// for the one case that skip cannot handle: an era-bucket-mapping rule change (new decade
+    /// boundary) needs every playlist re-evaluated even though nothing changed on Spotify. Applies
+    /// only to this call; nothing is persisted, so the very next normal sync goes back to skipping.
+    /// </param>
     public async Task<SyncSummary> SyncAsync(
         IReadOnlyCollection<string> spotifyPlaylistIds,
         string accessToken,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool forceFullRead = false)
     {
         var created = 0;
         var updated = 0;
@@ -42,8 +50,9 @@ public sealed class PlaylistCacheSyncService
             // Read the row first: its snapshot id is what lets the client skip the paginated track
             // pass for a playlist nobody has touched since the last run (US-024).
             var existingEntry = await _dbContext.SpotifyPlaylistCache.FindAsync([spotifyPlaylistId], cancellationToken);
+            var knownSnapshotId = forceFullRead ? null : ReusableSnapshotId(existingEntry);
             var fetchResult = await _playlistClient.FetchAsync(
-                spotifyPlaylistId, accessToken, ReusableSnapshotId(existingEntry), cancellationToken);
+                spotifyPlaylistId, accessToken, knownSnapshotId, cancellationToken);
             var syncedAt = DateTimeOffset.UtcNow;
 
             if (fetchResult is SpotifyPlaylistFetchResult.Found found)
