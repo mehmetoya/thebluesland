@@ -8,4 +8,13 @@ namespace TheBluesland.SpotifyFetcher.Sync;
 /// is visible in the job summary before it turns into another rate-limit lockout.
 /// </param>
 /// <param name="Unavailable">Playlists Spotify no longer returns.</param>
-public sealed record SyncSummary(int Created, int Updated, int Skipped, int Unavailable);
+public sealed record SyncSummary(int Created, int Updated, int Skipped, int Unavailable)
+{
+    /// <summary>
+    /// Slugs of content files this run flipped from <c>status: published</c> to
+    /// <c>status: draft</c> because Spotify now reports the playlist as private
+    /// (auto-unpublish-private-playlists spec). One-directional only - never populated for the
+    /// reverse (draft to published) direction. Empty when nothing changed.
+    /// </summary>
+    public IReadOnlyList<string> NewlyUnpublishedSlugs { get; init; } = [];
+}

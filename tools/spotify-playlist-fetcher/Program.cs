@@ -81,7 +81,11 @@ var contentDirectory = forceFullRead
         : Path.Combine(Directory.GetCurrentDirectory(), "content", "playlists");
 
 var frontMatterReader = new PlaylistFrontMatterReader();
-var spotifyPlaylistIds = await frontMatterReader.ReadDistinctSpotifyPlaylistIdsAsync(contentDirectory, cancellationToken);
+var contentEntries = await frontMatterReader.ReadAllAsync(contentDirectory, cancellationToken);
+IReadOnlyList<string> spotifyPlaylistIds = contentEntries
+    .Select(entry => entry.SpotifyPlaylistId)
+    .Distinct(StringComparer.Ordinal)
+    .ToArray();
 
 Console.WriteLine($"Found {spotifyPlaylistIds.Count} spotifyPlaylistId value(s) in '{contentDirectory}'.");
 
@@ -104,12 +108,27 @@ var accessToken = await authClient.GetAccessTokenAsync(clientId, refreshToken, c
 var optionsBuilder = new DbContextOptionsBuilder<TheBlueslandDbContext>().UseNpgsql(connectionString);
 await using var dbContext = new TheBlueslandDbContext(optionsBuilder.Options);
 
+// resync-eras must stay read-only (spec: auto-unpublish-private-playlists.md) - only the plain
+// sync path may rewrite a content file's front matter.
 var syncService = new PlaylistCacheSyncService(playlistClient, dbContext);
-var summary = await syncService.SyncAsync(spotifyPlaylistIds, accessToken, cancellationToken, forceFullRead);
+var summary = await syncService.SyncAsync(
+    spotifyPlaylistIds,
+    accessToken,
+    cancellationToken,
+    forceFullRead,
+    contentEntries: forceFullRead ? null : contentEntries);
 
 Console.WriteLine(
     $"Sync complete: {summary.Created} created, {summary.Updated} updated, " +
     $"{summary.Skipped} skipped (unchanged snapshot), {summary.Unavailable} marked unavailable.");
+
+if (summary.NewlyUnpublishedSlugs.Count > 0)
+{
+    // The only place a human sees this happened - the workflow's follow-up PR does not require
+    // anyone to open it (auto-unpublish-private-playlists spec).
+    Console.WriteLine(
+        $"Auto-unpublished (now private on Spotify): {string.Join(", ", summary.NewlyUnpublishedSlugs)}");
+}
 
 if (forceFullRead)
 {
