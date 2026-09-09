@@ -88,7 +88,7 @@ else if (_hasLoaded && !_redirected)
     }
 
     private string CollectionPageJsonLd =>
-        StructuredDataBuilder.BuildCollectionPage(_content!, BuildAbsoluteUrl($"/playlists/{_content!.Slug}"));
+        StructuredDataBuilder.BuildCollectionPage(_content!, _cacheSnapshot, BuildAbsoluteUrl($"/playlists/{_content!.Slug}"));
 
     private string BreadcrumbJsonLd =>
         StructuredDataBuilder.BuildBreadcrumbList(

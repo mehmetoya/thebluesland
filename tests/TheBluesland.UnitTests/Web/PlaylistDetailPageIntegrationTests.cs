@@ -187,11 +187,13 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
 
     /// <summary>US-011 AC4/FR-032: CollectionPage + BreadcrumbList JSON-LD is present and rendered
     /// with no track-title-shaped content, since PlaylistContent has no track data to copy from.
-    /// Only the JSON-LD script bodies are checked for "track" (not the whole page), since this
-    /// fixture's seeded cache row does have a legitimate track *count* rendered elsewhere on the
-    /// page (US-010 AC1) - it is specifically structured data that must never carry a track list.</summary>
+    /// Only the JSON-LD script bodies are checked (not the whole page), since this fixture's
+    /// seeded cache row does have a legitimate track *count* rendered elsewhere on the page
+    /// (US-010 AC1) - and, since US-026, that same count/cover image is deliberately restated in
+    /// the CollectionPage's MusicPlaylist entry for answer engines (numTracks/image - an aggregate,
+    /// not track-level data). What must never appear is anything shaped like a single track.</summary>
     [Fact]
-    public async Task PlaylistDetailPage_includes_structured_data_with_no_track_shaped_content()
+    public async Task PlaylistDetailPage_includes_structured_data_with_no_track_level_content()
     {
         var response = await _httpClient.GetAsync("/playlists/primary-playlist");
         var body = await response.Content.ReadAsStringAsync();
@@ -208,9 +210,14 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
             .ToList();
 
         scriptBodies.Count.ShouldBe(2);
+        scriptBodies.ShouldContain(json => json.Contains("\"numTracks\""));
         foreach (var json in scriptBodies)
         {
-            json.ShouldNotContain("track", Case.Insensitive);
+            json.ShouldNotContain("trackTitle", Case.Insensitive);
+            json.ShouldNotContain("trackId", Case.Insensitive);
+            json.ShouldNotContain("tracklist", Case.Insensitive);
+            json.ShouldNotContain("isrc", Case.Insensitive);
+            json.ShouldNotContain("duration", Case.Insensitive);
         }
     }
 

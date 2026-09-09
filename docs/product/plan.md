@@ -44,6 +44,19 @@ adımlar:
 
 ## Tamamlanan
 
+- **US-027 — FAQ, zenginleştirilmiş MusicPlaylist şeması, About sayfası kimliği (2026-09-09).**
+  US-011'in SEO temeli üstüne AEO/GEO'ya özgü üç eksik kapatıldı. About sayfasına, görünür metin
+  ile `FAQPage` JSON-LD'sinin tek bir diziden (`FaqItems`) üretildiği (yapı gereği asla birbirinden
+  kayamaz) 4 soruluk bir SSS eklendi; ayrıca sayfanın kendi metniyle birebir aynı bir `AboutPage`/
+  `Person` şeması ("Mehmet") eklendi — bilinçli olarak `sameAs` linki yok, bu ayrı bir karar.
+  Playlist detay sayfasının `MusicPlaylist` şeması `numTracks`/`image` kazandı; ikisi de cache'ten
+  geliyor ve sayfada zaten görünen "N tracks" metni/kapak görseliyle aynı, track seviyesinde yeni
+  veri değil (spec 9.4/11.2); cache kullanılamazsa ikisi de atlanıyor. İki yerdeki "structured
+  data'da 'track' geçmez" testi artık meşru `numTracks`'ı kabul edip gerçek track seviyesi alanları
+  (`trackTitle`/`trackId`/`isrc`/`duration`) arayan bir kontrole geçirildi. 279/279 test yeşil.
+  Kapsam dışı bırakıldı: `dateModified` (front-matter'a yeni alan veya git metadata gerektiriyor —
+  dosya mtime bu repoda zaten güvenilmez, bkz. `StaticAssetVersion`), `Person.sameAs` (Mehmet'in
+  kararı), off-page sinyaller (kod dışı).
 - **US-026 — Dönem ölçümünü sakla, raporu veritabanından üret (2026-09-08).** `report-eras`,
   sync'in saatler önce okuyup attığı release date'leri almak için katalogu ikinci kez tarıyordu;
   o gün bu tekrar tarama hesabı ~23,8 saat kilitledi. Sync zaten tam dağılımı hesaplıyor ve yalnız
