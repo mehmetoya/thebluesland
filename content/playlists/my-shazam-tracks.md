@@ -14,8 +14,7 @@ occasions:
   - road-trip
 eras:
   - 2000s-present
-status: published
-publishedAt: 2026-09-05
+status: draft
 featured: false
 ---
 
