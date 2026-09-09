@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 jq empty .claude/settings.json .claude/settings.local.json
 
-EXPECTED_AGENTS="architect backend-dev code-reviewer test-engineer"
+EXPECTED_AGENTS="architect backend-dev code-reviewer test-engineer security-auditor web-performance-auditor"
 for name in $EXPECTED_AGENTS; do
   file=".claude/agents/$name.md"
   [ -f "$file" ] || { echo "Eksik agent: $file" >&2; exit 1; }
@@ -19,8 +19,8 @@ done
 
 [ ! -e .claude/agents/product-owner.md ] || { echo "product-owner agent olarak kalmış." >&2; exit 1; }
 [ ! -e .claude/agents/project-manager.md ] || { echo "project-manager agent olarak kalmış." >&2; exit 1; }
-[ -f .claude/skills/refine-story/SKILL.md ] || { echo "refine-story skill eksik." >&2; exit 1; }
-[ -f .claude/skills/plan-work/SKILL.md ] || { echo "plan-work skill eksik." >&2; exit 1; }
+[ -f .claude/skills/spec-driven-development/SKILL.md ] || { echo "spec-driven-development skill eksik." >&2; exit 1; }
+[ -f .claude/skills/planning-and-task-breakdown/SKILL.md ] || { echo "planning-and-task-breakdown skill eksik." >&2; exit 1; }
 
 if command -v claude >/dev/null 2>&1; then
   claude plugin validate .claude/agents
