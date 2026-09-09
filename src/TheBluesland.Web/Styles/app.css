@@ -55,8 +55,14 @@
   --font-size-md: 1.0625rem;   /* 17px - lead paragraph, matches existing .brand-intro p */
   --font-size-lg: 1.375rem;    /* 22px - card/subsection titles */
   --font-size-xl: 2rem;        /* 32px - section headings */
-  --font-size-2xl: 3rem;       /* 48px - page headings */
-  --font-size-display: 4.5rem; /* 72px - hero/display size, nothing this large exists today */
+  /* --font-size-2xl and --font-size-display are fluid (clamp), not fixed: both sit on headings
+     that must render as a single unbroken word ("TheBluesland", a playlist title) with no wrap
+     opportunity, so a fixed large rem value overflows narrow viewports instead of shrinking - a
+     real bug found on iPhone Safari against production (2026-09-09) before this fix. The min bound
+     matches this scale's pre-existing .brand-intro h1 / .playlist-detail h1 sizes (2rem/2.5rem),
+     so nothing regresses below what already rendered correctly on mobile. */
+  --font-size-2xl: clamp(1.75rem, 4vw + 1rem, 3rem);       /* 28px-48px - page headings */
+  --font-size-display: clamp(2rem, 6vw + 1rem, 4.5rem);    /* 32px-72px - hero/display size */
 }
 
 @layer base {
@@ -124,13 +130,12 @@
 .site-header {
   position: relative;
   z-index: 1;
-  border-bottom: 1px solid var(--color-border);
 }
 
 .site-header-inner {
   max-width: 72rem;
   margin: 0 auto;
-  padding: 1.25rem 1.5rem;
+  padding: var(--space-4) var(--space-4);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -140,6 +145,10 @@
 
 .site-wordmark {
   font-family: var(--font-serif);
+  /* Intentionally not a token: 1.25rem doesn't match any scale step, and the point of this
+     rollout was consistency where a value actually changes - not shrinking the wordmark to fit
+     the nearest token (see docs/specs/design-tokens-rollout-remaining-pages.md's "don't force a
+     mismatch" rule, which the first pass here missed). */
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--color-text);
@@ -154,6 +163,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
+  /* Intentionally not a token - same reasoning as .site-wordmark above. */
   font-size: 0.9375rem;
 }
 
@@ -178,13 +188,13 @@
   position: relative;
   z-index: 1;
   border-top: 1px solid var(--color-border);
-  margin-top: 3rem;
+  margin-top: var(--space-7);
 }
 
 .site-footer-inner {
   max-width: 72rem;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: var(--space-5) var(--space-4);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -622,7 +632,7 @@ body:has(.filter-mobile-toggle:checked) {
 .breadcrumb {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-3);
 }
 
 .breadcrumb a {
@@ -639,13 +649,13 @@ body:has(.filter-mobile-toggle:checked) {
 }
 
 .playlist-detail h1 {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-4);
 }
 
 .playlist-detail .summary {
   color: var(--color-text-muted);
-  font-size: 1.0625rem;
+  font-size: var(--font-size-md);
   max-width: 42rem;
 }
 
@@ -655,7 +665,7 @@ body:has(.filter-mobile-toggle:checked) {
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0;
-  margin: 1rem 0 1.5rem;
+  margin: var(--space-3) 0 var(--space-4);
 }
 
 .tags li {
@@ -671,7 +681,7 @@ body:has(.filter-mobile-toggle:checked) {
 
 .curator-note {
   max-width: 42rem;
-  font-size: 1.0625rem;
+  font-size: var(--font-size-md);
   color: var(--color-text);
 }
 
@@ -779,23 +789,23 @@ body:has(.filter-mobile-toggle:checked) {
 /* Permanent collection entry points share the catalogue's visual language, grouped by dimension
    (genre/occasion/mood/era) on the /collections index. */
 .collection-group {
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-6);
 }
 
 .collection-group h2 {
-  font-size: 1.375rem;
-  margin-bottom: 1rem;
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-4);
 }
 
 .collection-links {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .collection-link {
   display: block;
-  padding: 1.25rem;
+  padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: 0.875rem;
 }
