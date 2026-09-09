@@ -7,7 +7,8 @@
     <PageTitle>@(_collection.Title + " - TheBluesland")</PageTitle>
     <PageMetadata Title="@(_collection.Title + " - TheBluesland")"
                   Description="@_collection.Description"
-                  CanonicalPath="@($"/collections/{_collection.Slug}")" ImagePath="/og-image.png" />
+                  CanonicalPath="@($"/collections/{_collection.Slug}")" ImagePath="/og-image.png"
+                  StructuredDataJson="@(new[] { CollectionPageJsonLd })" />
     <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="/">Home</a> / <a href="/collections">Collections</a> / <span aria-current="page">@_collection.Title</span>
     </nav>
@@ -58,4 +59,14 @@ else
         _snapshots = await CacheLookup.GetSnapshotsAsync(
             _playlists.Select(playlist => playlist.SpotifyPlaylistId).ToList(), cancellationToken);
     }
+
+    private string CollectionPageJsonLd =>
+        StructuredDataBuilder.BuildCollectionPageForPlaylists(
+            _collection!,
+            _playlists,
+            BuildAbsoluteUrl($"/collections/{_collection!.Slug}"),
+            BuildAbsoluteUrl(string.Empty));
+
+    private string BuildAbsoluteUrl(string path) =>
+        HttpContext is null ? path : SiteUrl.BuildAbsolute(HttpContext, path);
 }

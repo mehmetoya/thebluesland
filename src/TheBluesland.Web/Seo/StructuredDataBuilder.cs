@@ -59,6 +59,31 @@ public static class StructuredDataBuilder
             },
             Options);
 
+    /// <summary>
+    /// Distinct from <see cref="BuildCollectionPage(PlaylistContent, PlaylistCacheSnapshot, string)"/>:
+    /// that method describes a single playlist detail page; this one describes a
+    /// <c>/collections/{slug}</c> page listing several playlists, as a <c>CollectionPage</c> +
+    /// nested <c>ItemList</c> whose entries point at each playlist's own canonical URL - no
+    /// track-level data here either (spec 9.4/11.2), just titles and URLs already visible on the page.
+    /// </summary>
+    public static string BuildCollectionPageForPlaylists(
+        PlaylistCollection collection,
+        IReadOnlyList<PlaylistContent> playlists,
+        string canonicalUrl,
+        string siteUrl) =>
+        JsonSerializer.Serialize(
+            new CollectionListPageSchema("https://schema.org", "CollectionPage", collection.Title, collection.Description, canonicalUrl)
+            {
+                Id = canonicalUrl + "#webpage",
+                MainEntity = new ItemListSchema(
+                    "ItemList",
+                    [.. playlists.Select((playlist, index) => new ListItemSchema(
+                        "ListItem",
+                        index + 1,
+                        new PlaylistListItemSchema("MusicPlaylist", playlist.Title, siteUrl + $"/playlists/{playlist.Slug}")))]),
+            },
+            Options);
+
     private static string? GetSpotifyUrl(PlaylistContent content) =>
         SpotifyPlaylistIdFormat.IsValid(content.SpotifyPlaylistId)
             ? $"https://open.spotify.com/playlist/{content.SpotifyPlaylistId}"
@@ -130,6 +155,32 @@ public static class StructuredDataBuilder
         public string? Image { get; init; }
         public MusicPlaylistSchema? MainEntity { get; init; }
     }
+
+    private sealed record CollectionListPageSchema(
+        [property: JsonPropertyName("@context")] string Context,
+        [property: JsonPropertyName("@type")] string Type,
+        string Name,
+        string Description,
+        string Url)
+    {
+        [JsonPropertyName("@id")]
+        public string? Id { get; init; }
+        public ItemListSchema? MainEntity { get; init; }
+    }
+
+    private sealed record ItemListSchema(
+        [property: JsonPropertyName("@type")] string Type,
+        IReadOnlyList<ListItemSchema> ItemListElement);
+
+    private sealed record ListItemSchema(
+        [property: JsonPropertyName("@type")] string Type,
+        int Position,
+        PlaylistListItemSchema Item);
+
+    private sealed record PlaylistListItemSchema(
+        [property: JsonPropertyName("@type")] string Type,
+        string Name,
+        string Url);
 
     private sealed record MusicPlaylistSchema(
         [property: JsonPropertyName("@type")] string Type,
