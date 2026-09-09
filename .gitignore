@@ -8,6 +8,9 @@ obj/
 # Personal/local permission overrides — not shared team config.
 .claude/settings.local.json
 
+# source-driven-development's cross-session doc-fetch cache (addyosmani/agent-skills).
+.claude/sdd-cache/
+
 # .NET local tool restore cache.
 .dotnet/
 
