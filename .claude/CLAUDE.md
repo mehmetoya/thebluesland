@@ -52,7 +52,8 @@ ADR-0002 ve ADR-0003'e bak.
   `web-performance-auditor` yalnız kullanıcı açıkça Core Web Vitals/performans denetimi
   istediğinde kullanılır (addyosmani/agent-skills'ten alındı, 2026-09-09).
 - Ürün netleştirme ve iş planlama artık addyosmani/agent-skills'in yaşam döngüsüyle yapılır:
-  `idea-refine` → `spec-driven-development` (spec `SPEC-<modül>.md` olarak proje köküne yazılır) →
+  `idea-refine` → `spec-driven-development` (spec `docs/specs/<modül>.md` olarak yazılır - proje
+  köküne değil, bu projenin `docs/adr/` ve `docs/product/` deseniyle tutarlı olsun diye) →
   `planning-and-task-breakdown` (`tasks/plan.md`, `tasks/todo.md`) → `incremental-implementation` +
   `test-driven-development` (`/build`, `/build auto`) → `code-review-and-quality` (`/review`) →
   `shipping-and-launch` (`/ship`). Ayrı context açmaz; ana konuşmada veya ilgili slash komutuyla
