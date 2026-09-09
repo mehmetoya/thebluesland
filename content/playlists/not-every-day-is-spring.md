@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Cengiz Özkan, Erkan Oğur and Ezginin Günlüğü bring a reflective mood to this folk selection. Voices and acoustic textures carry the music at an unhurried pace.

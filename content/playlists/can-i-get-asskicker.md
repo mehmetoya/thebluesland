@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Black Sabbath, Deep Purple and Aerosmith bring the riffs, with Boston and Gary Moore adding their own guitar-heavy turns. It is a straightforward hard-rock selection with plenty of momentum.

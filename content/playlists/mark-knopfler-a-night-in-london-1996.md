@@ -17,7 +17,6 @@ eras:
   - 1980s-1990s
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 The A Night in London reference gives this Knopfler selection its focus. Guitar phrasing and storytelling connect the songs, making it a natural companion to An Evening With Mark Knopfler.

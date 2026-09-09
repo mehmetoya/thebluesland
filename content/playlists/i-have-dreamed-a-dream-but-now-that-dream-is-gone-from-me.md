@@ -14,7 +14,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Hans Zimmer, Nicholas Britell, Nick Cave & Warren Ellis and Gustavo Santaolalla bring distinct approaches to cinematic music. Piano, strings and atmospheric arrangements hold the reflective mood together.

@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Blues is the word to follow here, including songs that take it beyond the genre itself. Hard rock, blues and Anadolu rock sit together under a shared title theme.

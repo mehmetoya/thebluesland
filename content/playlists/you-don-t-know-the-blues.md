@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Albert Cummings, Ash Grunwald, Ben Harper and Beth Hart bring different approaches to blues playing and singing. Rhythmic guitar and expressive vocals provide a connection across the selection.

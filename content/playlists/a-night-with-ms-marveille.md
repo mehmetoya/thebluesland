@@ -15,7 +15,6 @@ eras:
   - pre-1970
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Ella Fitzgerald, Billie Holiday and Sarah Vaughan put the voice at the centre of this evening jazz selection. Miles Davis and Chet Baker bring instrumental colour between the singers.

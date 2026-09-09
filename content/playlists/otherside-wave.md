@@ -16,7 +16,6 @@ eras:
   - 1980s-1990s
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 A Flock of Seagulls and Alphaville bring new wave colours, Allah-Las adds garage-rock texture, and AC/DC and Arcade Fire give the mix a larger scale. The selection moves freely between these different sounds.

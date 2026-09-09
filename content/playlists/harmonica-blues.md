@@ -16,7 +16,6 @@ eras:
   - pre-1970
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Big Walter Horton, Billy Boy Arnold and Charlie Musselwhite put the harmonica at the centre of this blues selection. Listen for the bends, breath and changes of tone that make the instrument such an expressive lead voice.

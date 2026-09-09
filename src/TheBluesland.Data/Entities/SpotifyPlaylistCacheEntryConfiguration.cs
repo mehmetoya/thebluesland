@@ -46,6 +46,10 @@ public sealed class SpotifyPlaylistCacheEntryConfiguration : IEntityTypeConfigur
             .HasColumnName("era_bucket_counts")
             .HasColumnType("integer[]");
 
+        builder.Property(e => e.FollowerCount)
+            .HasColumnName("follower_count")
+            .HasColumnType("integer");
+
         builder.Property(e => e.SpotifySnapshotId)
             .HasColumnName("spotify_snapshot_id")
             .HasColumnType("text");

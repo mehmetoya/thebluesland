@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 B.B. King and Bo Diddley anchor a blues selection with rhythmic bite. Guitar lines stay in the foreground, from measured phrases to more insistent riffs.

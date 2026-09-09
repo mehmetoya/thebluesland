@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Alison Krauss brings bluegrass harmonies, Aldous Harding a distinctive vocal style, and Anaïs Mitchell a strong storytelling voice. Adia Victoria adds a blues-inflected sound to the selection.

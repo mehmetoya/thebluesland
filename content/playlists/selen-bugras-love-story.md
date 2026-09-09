@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 ABBA, the Bee Gees, Bruno Mars and Bon Jovi give this dedication a bright pop-and-rock sound. Familiar melodies and expressive voices make it a warm selection to share.

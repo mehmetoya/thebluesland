@@ -16,7 +16,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 The Allman Brothers Band's expansive arrangements meet Beth Hart's vocal force in a blues-rock mix that moves freely between generations. Albert Collins and Buddy Guy keep guitar tone and phrasing in the foreground.

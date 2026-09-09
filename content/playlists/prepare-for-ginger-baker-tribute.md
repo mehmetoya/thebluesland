@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Cream, Blind Faith, Ginger Baker's Air Force and his Trio projects offer a range of settings for his drumming. Listen to how the rhythm changes the feel of each group.

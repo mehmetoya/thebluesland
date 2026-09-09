@@ -17,7 +17,6 @@ eras:
   - 1970s
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Al Green and Curtis Mayfield bring soul, while Creedence Clearwater Revival and David Bowie take the mix towards rock. Blue Swede and Del Shannon add familiar pop melodies.

@@ -15,7 +15,7 @@ eras:
   - 1970s
 status: published
 publishedAt: 2026-09-05
-featured: true
+featuredOrder: 3
 ---
 
 Anatolian folk melodies meet fuzz guitar and psychedelic arrangements. Erkin Koray, Barış Manço and Cem Karaca provide familiar starting points in a collection with plenty of room to explore.

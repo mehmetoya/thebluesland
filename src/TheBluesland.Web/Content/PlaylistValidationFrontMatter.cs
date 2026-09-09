@@ -6,8 +6,7 @@ namespace TheBluesland.Web.Content;
 /// <see cref="PlaylistFrontMatter"/> (US-005/US-009's render reader), which intentionally omits
 /// schemaVersion because the render path never needs it - see that type's own doc comment. Kept
 /// as a separate model rather than widening the render DTO, so the render path and the validation
-/// path stay decoupled. <see cref="Featured"/> (US-009 AC5) feeds
-/// <see cref="PlaylistContentValidator"/>'s at-most-4-featured cross-file cap.
+/// path stay decoupled.
 /// </summary>
 public sealed class PlaylistValidationFrontMatter
 {
@@ -21,6 +20,5 @@ public sealed class PlaylistValidationFrontMatter
     public string[]? Occasions { get; set; }
     public string[]? Eras { get; set; }
     public string? PublishedAt { get; set; }
-    public bool? Featured { get; set; }
     public string? Status { get; set; }
 }

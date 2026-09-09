@@ -25,7 +25,7 @@ public sealed class StructuredDataBuilderTests
         Eras: ["1970s"],
         CuratorNote: "Curator note body.",
         IsPublished: true,
-        Featured: false,
+        FeaturedOrder: null,
         DisplayOrder: 0,
         PublishedAt: new DateOnly(2026, 1, 1),
         PreviousSlugs: []);

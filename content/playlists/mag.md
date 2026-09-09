@@ -17,7 +17,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Agnes Obel, Adrianne Lenker and Anaïs Mitchell bring distinctive voices and intimate arrangements. Amon Tobin and Air Formation add electronic and atmospheric turns to the mix.

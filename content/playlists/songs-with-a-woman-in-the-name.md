@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 A woman's name in the title is the link between these songs. Cream, Bob Dylan, Neil Diamond and J.J. Cale bring different styles to a playful collecting idea.

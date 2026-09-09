@@ -74,7 +74,7 @@ public sealed class PlaylistContentReader
             frontMatter.Eras ?? [],
             body.Trim(),
             string.Equals(frontMatter.Status, PublishedStatus, StringComparison.OrdinalIgnoreCase),
-            frontMatter.Featured ?? false,
+            frontMatter.FeaturedOrder,
             frontMatter.DisplayOrder ?? 0,
             ParsePublishedAt(frontMatter.PublishedAt),
             frontMatter.PreviousSlugs ?? []);

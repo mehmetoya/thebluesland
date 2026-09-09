@@ -18,7 +18,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 CHIC and Barrabas bring disco-era grooves, while Anderson .Paak and All Good Funk Alliance add newer production styles. Alemayehu Eshete offers another route into the mix.

@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Arcade Fire and Björk sit alongside Alter Bridge and Anthrax, with Arthur Russell bringing another change of texture. The appeal is in the range and the abrupt turns between sounds.

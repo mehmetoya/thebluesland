@@ -15,7 +15,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Active Child's electronic textures and Alex G's intimate songwriting point to different sides of this indie collection. Hazy production, unusual voices and quieter guitar sounds leave plenty to explore.

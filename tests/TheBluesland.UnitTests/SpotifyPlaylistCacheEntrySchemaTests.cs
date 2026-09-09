@@ -23,6 +23,7 @@ public sealed class SpotifyPlaylistCacheEntrySchemaTests
         nameof(SpotifyPlaylistCacheEntry.Artists),
         nameof(SpotifyPlaylistCacheEntry.ComputedEras),
         nameof(SpotifyPlaylistCacheEntry.EraBucketCounts),
+        nameof(SpotifyPlaylistCacheEntry.FollowerCount),
         nameof(SpotifyPlaylistCacheEntry.SpotifySnapshotId),
         nameof(SpotifyPlaylistCacheEntry.SyncedAt),
         nameof(SpotifyPlaylistCacheEntry.IsAvailable),

@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Beach House and Bat For Lashes bring hazy textures, while Antony and the Johnsons and Balance and Composure add more exposed vocals and heavier moments. The atmosphere stays suited to the hours after dark.

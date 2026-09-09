@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Johnny Cash, Kris Kristofferson, Merle Haggard and The Highwaymen bring plainspoken stories and weathered voices. Neil Young and Crazy Horse add a rougher rock edge without losing that sense of directness.

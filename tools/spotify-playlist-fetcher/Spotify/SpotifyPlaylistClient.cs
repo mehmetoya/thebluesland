@@ -93,7 +93,7 @@ public sealed class SpotifyPlaylistClient
         CancellationToken cancellationToken)
     {
         var url = $"{BaseUrl}/playlists/{Uri.EscapeDataString(spotifyPlaylistId)}" +
-                  "?fields=name,description,images,items.total,snapshot_id";
+                  "?fields=name,description,images,items.total,snapshot_id,followers.total";
 
         using var response = await SendAsync(HttpMethod.Get, url, accessToken, cancellationToken);
         if (IsPlaylistUnavailableStatus(response.StatusCode))
@@ -139,6 +139,13 @@ public sealed class SpotifyPlaylistClient
                 ? snapshotElement.GetString()
                 : null;
 
+        int? followerCount = root.TryGetProperty("followers", out var followersElement)
+            && followersElement.ValueKind == JsonValueKind.Object
+            && followersElement.TryGetProperty("total", out var followerTotalElement)
+            && followerTotalElement.ValueKind == JsonValueKind.Number
+                ? followerTotalElement.GetInt32()
+                : null;
+
         return new SpotifyPlaylistSummary
         {
             Name = name,
@@ -146,6 +153,7 @@ public sealed class SpotifyPlaylistClient
             CoverImageUrl = coverImageUrl,
             TrackCount = trackCount,
             SnapshotId = snapshotId,
+            FollowerCount = followerCount,
             Artists = [],
         };
     }

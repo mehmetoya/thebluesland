@@ -2,7 +2,7 @@ namespace TheBluesland.Web.Content;
 
 /// <summary>
 /// The editorial fields the render surface needs (title, summary, mood/genre/occasion/era tags,
-/// curator note, catalogue ordering and featured status). Full schema/taxonomy validation is
+/// curator note, catalogue ordering and featured priority). Full schema/taxonomy validation is
 /// US-006's job; this type trusts whatever <see cref="PlaylistContentReader"/> found in the front
 /// matter. <see cref="Eras"/>, <see cref="PublishedAt"/> and <see cref="DisplayOrder"/> were added
 /// for US-009's home-page sort/filter; <see cref="PublishedAt"/> stays nullable because draft
@@ -16,6 +16,11 @@ namespace TheBluesland.Web.Content;
 /// fix was never more era *values* but letting one playlist carry the specific decades it actually
 /// spans alongside <c>mixed-era</c>. Now shaped exactly like Moods/Genres/Occasions, which also let
 /// the validator drop its bespoke single-value era branch for the shared array path.
+///
+/// <see cref="FeaturedOrder"/> replaced a plain <c>bool Featured</c> on 2026-09-10
+/// (docs/specs/catalogue-priority-and-follower-sort.md): the bool was parsed and validated but
+/// never actually consumed by any sort or render code, and Mehmet wanted an explicit, hand-picked
+/// priority order for the home page rather than an unordered flag. Null means not featured.
 /// </summary>
 public sealed record PlaylistContent(
     string Slug,
@@ -28,7 +33,7 @@ public sealed record PlaylistContent(
     IReadOnlyList<string> Eras,
     string CuratorNote,
     bool IsPublished,
-    bool Featured,
+    int? FeaturedOrder,
     int DisplayOrder,
     DateOnly? PublishedAt,
     IReadOnlyList<string> PreviousSlugs);

@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Albert Collins and Albert King bring electric blues, Allen Toussaint adds a New Orleans flavour, and Arlo Guthrie takes the mix towards folk. Joe Bonamassa offers another guitar-led route through the selection.

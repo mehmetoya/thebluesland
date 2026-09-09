@@ -14,7 +14,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Philip Glass's repeating patterns, Chilly Gonzales' piano and Cello Octet Amsterdam's strings give this selection a measured pace. Small changes in a phrase or arrangement become part of the listening.

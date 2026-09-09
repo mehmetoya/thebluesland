@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Fleet Foxes' harmonies, Bon Iver's layered vocals and Damien Rice's intimate songs give this selection a reflective mood. Dire Straits adds an understated guitar sound.

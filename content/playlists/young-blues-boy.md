@@ -15,7 +15,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Joe Bonamassa and Beth Hart bring forceful guitar and vocals to this blues selection. The mix puts the emphasis on how players and singers make a familiar musical language their own.

@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Chuck Berry is the starting point for a selection that reaches into Aerosmith, AC/DC, Alice Cooper and Amy Winehouse. Rhythmic guitar, strong hooks and expressive vocals provide connections across the mix.

@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 The title pairs Tony Soprano with Frank Tagliano from Lilyhammer, played by Steven Van Zandt. Alabama 3, AC/DC and Al Martino give the mix a range of rock, blues and cinematic vocal colours.

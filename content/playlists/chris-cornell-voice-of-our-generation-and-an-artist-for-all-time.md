@@ -15,7 +15,6 @@ eras:
   - 1980s-1990s
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Soundgarden, Temple of the Dog and Audioslave offer different settings for Chris Cornell's voice. The selection moves between weight, restraint and the moments when his singing opens out fully.

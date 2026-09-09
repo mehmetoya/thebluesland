@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TheBluesland.Data;
@@ -11,9 +12,11 @@ using TheBluesland.Data;
 namespace TheBluesland.Data.Migrations
 {
     [DbContext(typeof(TheBlueslandDbContext))]
-    partial class TheBlueslandDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260909132156_AddFollowerCount")]
+    partial class AddFollowerCount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

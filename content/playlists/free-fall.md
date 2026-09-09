@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Leonard Cohen, Nick Cave & The Bad Seeds and Damien Rice give this selection its darker tone. Alice In Chains and Eddie Vedder add a heavier edge, with expressive voices tying the different arrangements together.

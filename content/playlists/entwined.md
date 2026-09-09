@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Bon Iver's layered vocals, Black Pumas' soul, Arooj Aftab's spacious singing and Ani DiFranco's direct songwriting share an intimate mood. The arrangements change, but the voices remain the focus.

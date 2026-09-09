@@ -16,7 +16,6 @@ eras:
   - pre-1970
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Albert Ammons, Alberta Hunter and field recordings collected by Alan Lomax offer different perspectives on early blues and related music. Piano, voice and acoustic instruments each have space in the collection.

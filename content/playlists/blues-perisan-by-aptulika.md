@@ -16,7 +16,6 @@ eras:
   - 1970s
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Amon Düül II and Asia Minor share space with Barış Manço and Buffalo Springfield. The mix follows the connections between blues, folk and psychedelic rock, with fuzz guitar providing a recurring sound.

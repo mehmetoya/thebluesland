@@ -15,7 +15,6 @@ eras:
   - 1970s
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Bad Company and Bachman-Turner Overdrive bring direct rock arrangements, while the Allman Brothers Band leaves more room for instrumental interplay. 10cc adds another melodic turn.

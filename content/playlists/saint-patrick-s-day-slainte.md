@@ -17,7 +17,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Ash and An Emotional Fish bring Irish rock to a mix that also reaches into folk and bluegrass. Alison Krauss adds close harmonies and another acoustic colour.

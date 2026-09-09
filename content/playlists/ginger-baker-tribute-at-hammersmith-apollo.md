@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Cream and Blind Faith provide the focus for this tribute to Ginger Baker. Listen to how the drums respond to the guitar and bass, helping shape the music's movement.

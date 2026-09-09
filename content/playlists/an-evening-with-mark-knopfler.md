@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Dire Straits and Mark Knopfler's solo work meet in a selection centred on his guitar playing and storytelling. His clear, fingerpicked tone holds the music together through changes of pace and arrangement.

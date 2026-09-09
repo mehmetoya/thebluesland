@@ -15,7 +15,6 @@ eras:
   - pre-1970
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Louis Armstrong and Ella Fitzgerald share space with The Ink Spots, The Mills Brothers and The Delta Rhythm Boys. Swing and close vocal harmonies give the selection a warm, rounded sound.

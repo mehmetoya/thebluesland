@@ -15,7 +15,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 The 2023 Blues Music Awards provide the frame for this selection. Buddy Guy and Billy F Gibbons are among the names to explore in a mix of blues voices and electric guitar sounds.

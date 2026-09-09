@@ -16,7 +16,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Ludovico Einaudi's piano is a starting point for music with a similarly spacious feel. Daniel Hope's violin, Ballaké Sissoko's kora and the Amsterdam Sinfonietta bring different colours to the selection.

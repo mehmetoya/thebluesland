@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Bill Monroe and Buck Owens provide starting points for a selection that also takes in Alison Krauss and Chris Stapleton. Close harmonies, direct storytelling and distinctive voices carry the music across generations.

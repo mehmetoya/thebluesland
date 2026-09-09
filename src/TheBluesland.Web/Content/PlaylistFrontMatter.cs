@@ -4,7 +4,7 @@ namespace TheBluesland.Web.Content;
 /// The Markdown front-matter fields <see cref="PlaylistContentReader"/> maps. This is a wider
 /// subset than <c>tools/spotify-playlist-fetcher</c>'s own PlaylistFrontMatter (which only needs
 /// spotifyPlaylistId), because the web render surface additionally needs title/summary/tags/
-/// curator note/era/publishedAt/displayOrder/featured (US-009 widened this beyond US-005's
+/// curator note/era/publishedAt/displayOrder/featuredOrder (US-009 widened this beyond US-005's
 /// original render-only set: sorting and filtering on the home page need them). <c>previousSlugs</c>
 /// was added for US-010 AC5/FR-020 (permanent redirects from an old slug). The two are not
 /// shared: per docs/adr/0003-mimari-kapsam.md there is no real dependency boundary to justify
@@ -24,7 +24,7 @@ public sealed class PlaylistFrontMatter
     public string[]? Occasions { get; set; }
     public string[]? Eras { get; set; }
     public string? PublishedAt { get; set; }
-    public bool? Featured { get; set; }
+    public int? FeaturedOrder { get; set; }
     public int? DisplayOrder { get; set; }
     public string? Status { get; set; }
     public string[]? PreviousSlugs { get; set; }

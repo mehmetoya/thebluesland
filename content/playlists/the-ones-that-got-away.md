@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Fleet Foxes and First Aid Kit bring close harmonies, Grizzly Bear adds intricate arrangements, and Belle and Sebastian keeps the storytelling understated. The mix has a wistful mood without losing its melodic warmth.

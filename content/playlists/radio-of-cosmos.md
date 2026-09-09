@@ -17,7 +17,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 A Tribe Called Quest, A.R. Rahman, !!! and A.C. Newman give a sense of the distance this mix covers. Rhythms, languages and production styles change as the selection moves between genres.

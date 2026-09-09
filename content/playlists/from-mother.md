@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Barış Manço and Cem Karaca share space with ABBA and the Bee Gees. Turkish rock, pop hooks and familiar harmonies give the selection a warm, nostalgic feel.

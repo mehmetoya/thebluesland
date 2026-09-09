@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Leonard Cohen's writing and singing are the focus. Listen to the words alongside the arrangements, from spare acoustic textures to fuller, more layered sounds.

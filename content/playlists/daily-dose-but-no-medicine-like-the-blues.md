@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Cream and Derek and the Dominos sit alongside Dire Straits in a selection focused on electric blues-rock. Guitar lines, band interplay and a steady groove make it an easy collection to revisit.

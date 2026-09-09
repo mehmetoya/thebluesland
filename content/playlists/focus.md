@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Dustin O'Halloran and Chad Lawson bring measured piano phrases to a selection of restrained instrumental music. Repetition and space keep the pace gentle.

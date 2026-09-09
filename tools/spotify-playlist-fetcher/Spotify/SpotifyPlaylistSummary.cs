@@ -28,5 +28,12 @@ public sealed record SpotifyPlaylistSummary
     /// </summary>
     public int[]? EraBucketCounts { get; init; }
 
+    /// <summary>
+    /// Spotify's own follower count, from the same single, unpaginated summary request as
+    /// <see cref="Name"/>/<see cref="CoverImageUrl"/> - no extra request (US-... catalogue
+    /// priority + follower sort, 2026-09-10). An aggregate, not track-level data (spec 9.4/11.2).
+    /// </summary>
+    public int? FollowerCount { get; init; }
+
     public string? SnapshotId { get; init; }
 }

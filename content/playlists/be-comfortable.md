@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Max Richter and Ólafur Arnalds bring piano and strings; Hans Zimmer and Alexandre Desplat add cinematic scale. Jon Hopkins and Boards of Canada take the selection into more electronic territory.

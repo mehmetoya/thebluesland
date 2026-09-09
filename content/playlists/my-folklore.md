@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Erkan Oğur, Neşet Ertaş and Ruhi Su offer different ways into Turkish folk music. Saz, guitar and voice carry the melodies, with an emphasis on phrasing and the character of the performance.

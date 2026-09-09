@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Belle and Sebastian's melodies, Arcade Fire's full arrangements and Mitski's directness sit alongside Nick Drake's acoustic songs. It is an accessible starting point for the collection's indie and folk side.

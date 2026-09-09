@@ -15,7 +15,6 @@ eras:
   - 1970s
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 The Eagles' harmonies and Elton John's piano sit alongside Jethro Tull, the Allman Brothers Band and Derek and the Dominos. The mix follows the warm arrangements and guitar sounds associated with seventies rock.

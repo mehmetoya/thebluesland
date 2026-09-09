@@ -15,7 +15,7 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: true
+featuredOrder: 1
 ---
 
 Blues is the centre of this collection, with A.C. Reed and Albert Collins among the voices and players to follow. It moves across eras and styles, making room for quiet phrasing as well as a full electric band.

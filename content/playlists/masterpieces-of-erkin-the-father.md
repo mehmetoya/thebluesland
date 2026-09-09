@@ -16,7 +16,7 @@ eras:
   - pre-1970
 status: published
 publishedAt: 2026-09-05
-featured: true
+featuredOrder: 5
 displayOrder: 1
 ---
 

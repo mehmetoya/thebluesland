@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 David Bowie's rock, the Bee Gees' pop, Donny Hathaway's soul and Cream's blues-rock make unlikely but enjoyable neighbours. The shifts in voice and arrangement are part of the pleasure.
