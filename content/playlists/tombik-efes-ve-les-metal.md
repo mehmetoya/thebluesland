@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Black Sabbath's heavy riffs, Anthrax's speed, Behemoth's dense arrangements and Amon Amarth's melodic guitar lines bring different shades of metal together. The selection makes room for both familiar foundations and more extreme sounds.

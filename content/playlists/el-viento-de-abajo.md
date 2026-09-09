@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Hermanos Gutiérrez's spacious guitars and Gustavo Santaolalla's instrumental writing give this selection a cinematic feel. Repeating phrases and resonant strings leave room for the music to unfold.

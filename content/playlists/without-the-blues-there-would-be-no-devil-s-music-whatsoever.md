@@ -14,7 +14,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 This selection follows the rougher textures of blues, from spare arrangements to electric playing. Gospel connections add another thread to a mix interested in the overlap between musical traditions.

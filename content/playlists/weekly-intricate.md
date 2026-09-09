@@ -18,7 +18,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 13th Floor Elevators brings psychedelic rock, Ali Farka Touré a distinctive guitar voice, and All Them Witches a heavier sound. Alabama 3 adds another change of direction.

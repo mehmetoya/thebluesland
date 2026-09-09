@@ -1,21 +1,38 @@
+using TheBluesland.Web.Cache;
+
 namespace TheBluesland.Web.Content;
 
 /// <summary>
-/// Sorts the published catalogue for the home page (US-009 AC1, spec FR-001: "ordered by
-/// displayOrder, then by publishedAt descending"). Spec section 9.2 leaves displayOrder's
-/// direction unstated ("integer, defaults to 0" - no direction given), so this resolves the
-/// ambiguity as ascending: lower values are the conventional meaning of a manually curated
-/// "position" field (position 0 shown first), matching how displayOrder is used elsewhere as an
-/// editorial ordering knob rather than a ranking score. publishedAt descending is then the
-/// tiebreaker for playlists that share a displayOrder (e.g. everything left at the default 0) -
-/// newest first - rather than the primary key. A pure function (no I/O) so it is directly
-/// unit-testable independent of <see cref="PlaylistContentRepository"/>.
+/// Sorts the published catalogue for the home page. Rewritten 2026-09-10
+/// (docs/specs/catalogue-priority-and-follower-sort.md): the previous displayOrder/publishedAt
+/// rule differentiated almost nothing in practice - 118 of 120 playlists had no displayOrder, and
+/// all 120 shared the identical publishedAt (a batch-import artifact) - and Mehmet wanted a
+/// hand-picked priority list instead, plus Spotify's real follower count for everything else
+/// (verified: neither publishedAt, SyncedAt, nor git history for content/playlists/*.md carries
+/// any real per-playlist recency signal to sort by).
+///
+/// Featured playlists (<see cref="PlaylistContent.FeaturedOrder"/> set) sort first, by that number
+/// ascending - an explicit, editorially-controlled priority, not a ranking score. Everything else
+/// follows, by Spotify follower count descending; a playlist with no follower data (cache
+/// unavailable, never synced) sorts after every playlist that has one, falling back to <see
+/// cref="PlaylistContentReader"/>'s read order (stable sort) rather than being placed arbitrarily.
+///
+/// A pure function (no I/O) so it stays directly unit-testable; the follower counts it needs are
+/// supplied by the caller (<see cref="PlaylistContentRepository"/>, from the same 5-minute
+/// <see cref="PlaylistCacheSignalsCache"/> read that already refreshes computed eras).
 /// </summary>
 public static class PlaylistCatalogueSort
 {
-    public static IReadOnlyList<PlaylistContent> Apply(IReadOnlyList<PlaylistContent> playlists) =>
+    public static IReadOnlyList<PlaylistContent> Apply(
+        IReadOnlyList<PlaylistContent> playlists,
+        IReadOnlyDictionary<string, PlaylistCacheSignals> cacheSignals) =>
         playlists
-            .OrderBy(playlist => playlist.DisplayOrder)
-            .ThenByDescending(playlist => playlist.PublishedAt)
+            .OrderBy(playlist => playlist.FeaturedOrder is { } order ? order : int.MaxValue)
+            .ThenByDescending(playlist => FollowerCount(playlist, cacheSignals) ?? -1)
             .ToList();
+
+    private static int? FollowerCount(
+        PlaylistContent playlist,
+        IReadOnlyDictionary<string, PlaylistCacheSignals> cacheSignals) =>
+        cacheSignals.TryGetValue(playlist.SpotifyPlaylistId, out var signals) ? signals.FollowerCount : null;
 }

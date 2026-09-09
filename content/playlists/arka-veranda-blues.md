@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Arka Veranda means back porch, a fitting setting for this acoustic guitar collection. John Fahey, Robbie Basho, Leo Kottke and Kaki King offer different approaches to fingerstyle playing, from repeating patterns to more exploratory passages.

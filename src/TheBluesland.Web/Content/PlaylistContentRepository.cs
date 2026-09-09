@@ -12,7 +12,7 @@ public sealed class PlaylistContentRepository
 {
     public const string ContentDirectoryConfigKey = "PlaylistContent:Directory";
 
-    private readonly PlaylistEraCache? _eraCache;
+    private readonly PlaylistCacheSignalsCache? _cacheSignals;
     private readonly string _contentDirectory;
     private readonly PlaylistContentReader _reader;
     private readonly Lazy<Task<Catalogue>> _catalogue;
@@ -21,12 +21,12 @@ public sealed class PlaylistContentRepository
     public PlaylistContentRepository(
         IConfiguration configuration,
         PlaylistContentReader reader,
-        PlaylistEraCache? eraCache = null)
+        PlaylistCacheSignalsCache? cacheSignals = null)
     {
         _contentDirectory = configuration[ContentDirectoryConfigKey]
             ?? Path.Combine(Directory.GetCurrentDirectory(), "content", "playlists");
         _reader = reader;
-        _eraCache = eraCache;
+        _cacheSignals = cacheSignals;
         _catalogue = new Lazy<Task<Catalogue>>(LoadCatalogueAsync);
         _validation = new Lazy<Task<PlaylistContentValidationResult>>(() =>
             new PlaylistContentValidator().ValidateAllAsync(_contentDirectory, CancellationToken.None));
@@ -51,8 +51,25 @@ public sealed class PlaylistContentRepository
         return await ApplyErasAsync(playlist, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<PlaylistContent>> FindAllPublishedAsync(CancellationToken cancellationToken) =>
-        await ApplyErasAsync((await _catalogue.Value.WaitAsync(cancellationToken)).Published, cancellationToken);
+    /// <summary>
+    /// Featured-then-follower-count order (<see cref="PlaylistCatalogueSort"/>), computed fresh on
+    /// every call from the same 5-minute cache signals read that also overlays computed eras
+    /// (<see cref="PlaylistEraAssignment"/>) - one signal fetch feeds both, since neither can be
+    /// baked into <see cref="LoadCatalogueAsync"/>'s once-per-process snapshot without going stale
+    /// for the life of the process (docs/specs/catalogue-priority-and-follower-sort.md).
+    /// </summary>
+    public async Task<IReadOnlyList<PlaylistContent>> FindAllPublishedAsync(CancellationToken cancellationToken)
+    {
+        var published = (await _catalogue.Value.WaitAsync(cancellationToken)).Published;
+        if (_cacheSignals is null)
+        {
+            return published;
+        }
+
+        var signals = await _cacheSignals.GetAsync(cancellationToken);
+        var withEras = published.Select(playlist => PlaylistEraAssignment.Apply(playlist, signals)).ToArray();
+        return PlaylistCatalogueSort.Apply(withEras, signals);
+    }
 
     public async Task<bool> IsReadyAsync(CancellationToken cancellationToken)
     {
@@ -63,25 +80,25 @@ public sealed class PlaylistContentRepository
 
     private async Task<PlaylistContent?> ApplyErasAsync(PlaylistContent? playlist, CancellationToken cancellationToken)
     {
-        if (_eraCache is null || playlist is null)
+        if (_cacheSignals is null || playlist is null)
         {
             return playlist;
         }
 
-        return PlaylistEraAssignment.Apply(playlist, await _eraCache.GetAsync(cancellationToken));
+        return PlaylistEraAssignment.Apply(playlist, await _cacheSignals.GetAsync(cancellationToken));
     }
 
     private async Task<IReadOnlyList<PlaylistContent>> ApplyErasAsync(
         IReadOnlyList<PlaylistContent> playlists,
         CancellationToken cancellationToken)
     {
-        if (_eraCache is null)
+        if (_cacheSignals is null)
         {
             return playlists;
         }
 
-        var eras = await _eraCache.GetAsync(cancellationToken);
-        return playlists.Select(playlist => PlaylistEraAssignment.Apply(playlist, eras)).ToArray();
+        var signals = await _cacheSignals.GetAsync(cancellationToken);
+        return playlists.Select(playlist => PlaylistEraAssignment.Apply(playlist, signals)).ToArray();
     }
 
     private async Task<Catalogue> LoadCatalogueAsync()
@@ -92,7 +109,10 @@ public sealed class PlaylistContentRepository
         }
 
         var all = await _reader.ReadAllAsync(_contentDirectory, CancellationToken.None);
-        var published = PlaylistCatalogueSort.Apply(all.Where(playlist => playlist.IsPublished).ToList());
+        // Not sorted here: featured/follower-count order depends on spotify_playlist_cache data
+        // that can change more often than this once-per-process catalogue load - see
+        // FindAllPublishedAsync, which applies PlaylistCatalogueSort fresh on every call instead.
+        var published = all.Where(playlist => playlist.IsPublished).ToList();
         return new Catalogue(
             all,
             published,

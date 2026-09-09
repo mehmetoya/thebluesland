@@ -15,7 +15,6 @@ eras:
   - pre-1970
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Zeki Müren, Müzeyyen Senar and Münir Nurettin Selçuk bring expressive voices to this Turkish classical music selection. Udi Hrant's oud adds an instrumental voice of its own.

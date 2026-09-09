@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Black Sabbath's Iron Man gives this mix a recognisable starting point. AC/DC and Audioslave keep the emphasis on heavy riffs and direct, driving arrangements.

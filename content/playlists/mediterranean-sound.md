@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Ana Belén, Ana Moura and Ageliki Konitopoulou bring different vocal traditions to the mix, while Angélique Kidjo takes it beyond the Mediterranean. Warmth and melody connect a selection with loose geographical boundaries.

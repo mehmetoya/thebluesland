@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Agnostic Front and Adolescents bring hardcore energy, with AFI, Alkaline Trio and A Day To Remember offering different melodic and heavier turns. Garage-rock selections broaden the mix.

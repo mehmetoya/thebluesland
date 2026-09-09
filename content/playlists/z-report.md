@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Art Blakey & The Jazz Messengers and Ahmad Jamal sit alongside Ambrose Akinmusire and ARTEMIS. Piano, trumpet and ensemble interplay provide different points of focus as the collection moves between styles.

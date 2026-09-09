@@ -17,7 +17,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 James Chance & The Contortions, Suicide and Defunkt bring abrasive rhythm and restless arrangements. Ornette Coleman and Max Roach widen the jazz connection, while David Bowie and Public Image Ltd. add other angles.

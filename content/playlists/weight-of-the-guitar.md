@@ -18,7 +18,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Eric Clapton and Jeff Beck sit alongside Deep Purple, Blind Guardian and Amorphis. The selection moves from blues-rock phrasing to heavier riffs, keeping guitar tone and playing at the centre.

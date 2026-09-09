@@ -34,7 +34,7 @@ public sealed class PlaylistContentReaderTests
         playlist.CuratorNote.ShouldContain("Curator note body.");
         playlist.IsPublished.ShouldBeTrue();
         playlist.PublishedAt.ShouldBe(new DateOnly(2026, 1, 1));
-        playlist.Featured.ShouldBeFalse();
+        playlist.FeaturedOrder.ShouldBeNull();
         playlist.DisplayOrder.ShouldBe(0);
     }
 
@@ -58,6 +58,17 @@ public sealed class PlaylistContentReaderTests
 
         var playlist = playlists.Single(p => p.Slug == "dear-mr-fantasy");
         playlist.IsPublished.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task ReadAllAsync_maps_featuredOrder_when_present()
+    {
+        var contentDirectory = Path.Combine(FixturesRoot, "content-playlists");
+
+        var playlists = await _reader.ReadAllAsync(contentDirectory, CancellationToken.None);
+
+        var playlist = playlists.Single(p => p.Slug == "dear-mr-fantasy");
+        playlist.FeaturedOrder.ShouldBe(7);
     }
 
     [Fact]

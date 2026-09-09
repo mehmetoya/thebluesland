@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Big Bill Broonzy, Albert King, Eric Clapton and Gary Moore offer different approaches to blues guitar. The selection puts riffs and phrasing in focus, moving between acoustic detail and more forceful electric playing.

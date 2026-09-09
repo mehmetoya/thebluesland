@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Debussy's music sits alongside performances by Alexandre Tharaud, Bruce Brubaker and the Amsterdam Sinfonietta. Piano and chamber textures give this selection an intimate scale.

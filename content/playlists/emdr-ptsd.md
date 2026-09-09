@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Nine Inch Nails, Audioslave and Faith No More bring weight and tension, while David Gilmour adds more spacious guitar textures. The selection moves between forceful passages and moments of restraint.

@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Cream, Blind Faith and Derek and the Dominos give Eric Clapton's guitar different settings. Listen for the phrasing, the held notes and the way each band responds around a solo.

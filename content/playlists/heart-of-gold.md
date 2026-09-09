@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Bon Iver's layered vocals, Cat Power's restrained delivery and Belle and Sebastian's melodic warmth give this collection a gentle pace. Chris Cornell's quieter work adds another shade to the mood.

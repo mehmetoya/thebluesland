@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Amy Winehouse and Etta James bring soul, Chris Isaak adds a rock-and-roll warmth, and Charles Aznavour and Carla Bruni take the selection towards chanson. Expressive singing holds these different sounds together.

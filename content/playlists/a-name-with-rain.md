@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Rain is the thread here, running through the words and the atmosphere. Bob Dylan and Bonnie Raitt bring a reflective warmth; Led Zeppelin gives the weather a heavier turn.

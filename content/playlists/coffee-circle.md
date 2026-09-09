@@ -17,7 +17,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Aldous Harding and Aoife O'Donovan bring distinctive voices to an unhurried folk and singer-songwriter mix. Acoustic arrangements and a gentle pace make room for a conversation as well as a closer listen.

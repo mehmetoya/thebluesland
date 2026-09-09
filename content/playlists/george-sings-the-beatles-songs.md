@@ -15,7 +15,6 @@ eras:
   - pre-1970
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 A closer look at George Harrison's place in The Beatles through his writing and lead vocals. Hear how his voice and melodic choices add another character to the band's sound.

@@ -17,7 +17,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 The title nods to Hirayama and his cassette-filled journeys in Perfect Days. Aretha Franklin, Bill Withers, Bob Marley and Ella Fitzgerald provide music worth returning to during an ordinary day.

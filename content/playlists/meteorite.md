@@ -16,7 +16,6 @@ eras:
   - 1980s-1990s
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Cream, Jefferson Airplane and David Bowie share space with Depeche Mode, Joy Division and Echo & The Bunnymen. The mix moves from psychedelic guitars to darker post-punk and electronic textures.

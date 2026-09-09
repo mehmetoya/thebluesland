@@ -17,7 +17,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Garage-rock energy, repeating riffs and more expansive arrangements run through this psychedelic collection. 13th Floor Elevators, ? & The Mysterians and 3 Hürel offer different places to begin.

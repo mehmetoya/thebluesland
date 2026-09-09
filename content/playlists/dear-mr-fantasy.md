@@ -16,7 +16,7 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: true
+featuredOrder: 4
 displayOrder: 2
 ---
 

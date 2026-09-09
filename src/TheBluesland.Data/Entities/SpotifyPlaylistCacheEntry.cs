@@ -46,6 +46,15 @@ public sealed class SpotifyPlaylistCacheEntry
     /// </summary>
     public int[]? EraBucketCounts { get; set; }
 
+    /// <summary>
+    /// Spotify's own follower count for the playlist, from the same single, unpaginated summary
+    /// request that already returns name/description/cover - no extra Spotify request. An
+    /// aggregate, same class as <see cref="TrackCount"/> (spec 9.4/11.2). Refreshed on every sync,
+    /// including a snapshot-matched skip (US-024): it comes from <c>GetPlaylistSummaryAsync</c>,
+    /// which every sync run makes regardless of whether the paginated track read is skipped.
+    /// </summary>
+    public int? FollowerCount { get; set; }
+
     /// <summary>Spotify's own change-detection token, stored for future incremental sync.</summary>
     public string? SpotifySnapshotId { get; set; }
 

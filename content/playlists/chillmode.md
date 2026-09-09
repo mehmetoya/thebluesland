@@ -17,7 +17,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Hermanos Gutiérrez's instrumental guitars sit comfortably beside José González's fingerpicking and the songwriting of John Mayer and Devendra Banhart. Warm textures and an easy pace connect the selections.

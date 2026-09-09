@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Donny Hathaway, Alabama Shakes, Chris Isaak and John Mayer bring soul and rock perspectives to the cover version. The appeal is in hearing familiar writing through a different voice or arrangement.

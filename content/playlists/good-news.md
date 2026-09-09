@@ -16,7 +16,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Acid House Kings and Alaska in Winter share space with Arcade Fire and Alabama Shakes. Bright melodies and rhythmic arrangements give the mix a lift, with quieter turns along the way.

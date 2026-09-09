@@ -15,7 +15,6 @@ occasions:
 eras:
   - 2000s-present
 status: draft
-featured: false
 ---
 
 AC/DC, Alabama Shakes and Andrea Bocelli give a sense of how widely this collection travels. The Shazam title suits a mix connected by discovery, with room for sudden changes of genre and mood.

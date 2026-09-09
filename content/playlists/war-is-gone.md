@@ -17,7 +17,6 @@ eras:
   - pre-1970
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Buffalo Springfield, Crosby, Stills, Nash & Young, Bob Dylan and Jimi Hendrix give this selection a countercultural feel. Acoustic writing and electric guitars sit together in music suited to reflection on conflict and change.

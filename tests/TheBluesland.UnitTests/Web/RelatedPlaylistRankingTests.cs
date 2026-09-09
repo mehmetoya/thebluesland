@@ -116,7 +116,7 @@ public sealed class RelatedPlaylistRankingTests
             Eras: eras,
             CuratorNote: "Fixture curator note.",
             IsPublished: true,
-            Featured: false,
+            FeaturedOrder: null,
             DisplayOrder: displayOrder,
             PublishedAt: publishedAt ?? new DateOnly(2026, 1, 1),
             PreviousSlugs: []);

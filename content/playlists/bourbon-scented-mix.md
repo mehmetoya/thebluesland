@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Albert Collins' sharp guitar tone, Albert King's bends and B.B. King's vibrato give this blues selection its character. The pace leaves room for a phrase to land and linger.

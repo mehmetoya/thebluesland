@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Eddie Vedder, Elliott Smith, Chris Cornell and Florence + The Machine bring their own phrasing and arrangements to familiar songs. A different voice can change where you hear the emphasis, even when the words stay the same.

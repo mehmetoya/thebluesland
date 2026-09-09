@@ -17,7 +17,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 B.B. King, Chuck Berry, Bruce Springsteen and Dire Straits give different answers to the title's question: where's the band? The selection follows rhythm, guitar lines and arrangements that feel like musicians working together.

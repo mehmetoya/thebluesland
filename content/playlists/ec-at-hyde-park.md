@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Eric Clapton and Joe Cocker give this selection its blues-rock character. Guitar phrasing and expressive vocals are the focus, with the Hyde Park title setting the scene.

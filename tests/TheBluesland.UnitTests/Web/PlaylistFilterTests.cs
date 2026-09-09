@@ -102,7 +102,7 @@ public sealed class PlaylistFilterTests
             Eras: eras,
             CuratorNote: "Fixture curator note.",
             IsPublished: true,
-            Featured: false,
+            FeaturedOrder: null,
             DisplayOrder: 0,
             PublishedAt: new DateOnly(2026, 1, 1),
             PreviousSlugs: []);

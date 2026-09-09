@@ -16,7 +16,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Bon Iver and Adrianne Lenker bring intimate voices, Angus & Julia Stone adds warm harmonies, and Caamp keeps an acoustic pulse. The mix suits a change in light and a slower afternoon.

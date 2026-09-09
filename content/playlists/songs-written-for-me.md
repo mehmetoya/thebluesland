@@ -14,7 +14,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Bruce Springsteen, David Bowie, Chris Cornell and Father John Misty bring distinctive voices and writing styles. The title gives this selection a personal frame while leaving each listener room for their own connection.

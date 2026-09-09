@@ -14,7 +14,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Ludovico Einaudi is the sole focus here. Repeating piano phrases and gradual changes in intensity invite a patient listen.

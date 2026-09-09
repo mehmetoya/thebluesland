@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Antônio Carlos Jobim and Astrud Gilberto bring bossa nova warmth, alongside Duke Ellington, Dizzy Gillespie and Diana Krall. Swing, soft vocals and an easy flow make this a welcoming jazz selection.

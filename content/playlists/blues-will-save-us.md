@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Al Green's warmth sits alongside Albert King's sharp guitar lines and B.B. King's patient phrasing. The mood is steady and soulful, with room for both weariness and a little lift.

@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Repeating bass lines, cool vocals and synth textures connect this coldwave and darkwave collection. Melancholy runs through the sound, while the rhythm keeps moving.

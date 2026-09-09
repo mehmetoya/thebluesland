@@ -30,6 +30,7 @@ public sealed class SpotifyPlaylistClientTests
         found.Summary.CoverImageUrl.ShouldBe("https://i.scdn.co/image/cover.jpg");
         found.Summary.TrackCount.ShouldBe(2);
         found.Summary.SnapshotId.ShouldBe("snapshot-abc");
+        found.Summary.FollowerCount.ShouldBe(12345);
         found.Summary.IsPublic.ShouldBeTrue();
         found.Summary.Artists.ShouldBe(["Eric Clapton", "Traffic"], ignoreOrder: true);
     }
@@ -84,6 +85,30 @@ public sealed class SpotifyPlaylistClientTests
 
         var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
         found.Summary.IsPublic.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task FetchAsync_maps_a_missing_followers_object_to_null_rather_than_zero()
+    {
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+        {
+            var absolutePath = request.RequestUri!.AbsolutePath;
+            if (absolutePath == $"/v1/playlists/{PlaylistId}")
+            {
+                return JsonResponse(
+                    """
+                    { "name": "No Followers Field", "items": { "total": 0 } }
+                    """);
+            }
+
+            return JsonResponse("""{ "items": [], "next": null }""");
+        }));
+        var client = new SpotifyPlaylistClient(httpClient);
+
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
+
+        var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
+        found.Summary.FollowerCount.ShouldBeNull();
     }
 
     [Fact]
@@ -233,7 +258,7 @@ public sealed class SpotifyPlaylistClientTests
         found.Summary.Artists.ShouldBe(["Eric Clapton", "Traffic"], ignoreOrder: true);
         found.Summary.TrackCount.ShouldBe(2); // the aggregate from the playlist endpoint, not a track array length
         typeof(SpotifyPlaylistSummary).GetProperties().Select(p => p.Name).ShouldBe(
-            ["Name", "Description", "CoverImageUrl", "TrackCount", "Artists", "ComputedEras", "EraBucketCounts", "SnapshotId", "IsPublic"],
+            ["Name", "Description", "CoverImageUrl", "TrackCount", "Artists", "ComputedEras", "EraBucketCounts", "FollowerCount", "SnapshotId", "IsPublic"],
             ignoreOrder: true);
     }
 
@@ -431,6 +456,7 @@ public sealed class SpotifyPlaylistClientTests
           "images": [{ "url": "https://i.scdn.co/image/cover.jpg", "height": 640, "width": 640 }],
           "items": { "total": 2 },
           "snapshot_id": "snapshot-abc",
+          "followers": { "href": null, "total": 12345 },
           "public": true
         }
         """;

@@ -1,3 +1,5 @@
+using TheBluesland.Web.Cache;
+
 namespace TheBluesland.Web.Content;
 
 public static class PlaylistEraAssignment
@@ -6,11 +8,12 @@ public static class PlaylistEraAssignment
 
     public static PlaylistContent Apply(
         PlaylistContent playlist,
-        IReadOnlyDictionary<string, string[]> computedEras)
+        IReadOnlyDictionary<string, PlaylistCacheSignals> cacheSignals)
     {
         if (playlist.Eras.Count != 1 || playlist.Eras[0] != MixedEra
-            || !computedEras.TryGetValue(playlist.SpotifyPlaylistId, out var eras)
-            || eras.Length == 0 || eras.Any(era => !PlaylistTaxonomy.Eras.Contains(era)))
+            || !cacheSignals.TryGetValue(playlist.SpotifyPlaylistId, out var signals)
+            || signals.ComputedEras is not { Length: > 0 } eras
+            || eras.Any(era => !PlaylistTaxonomy.Eras.Contains(era)))
         {
             return playlist;
         }

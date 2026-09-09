@@ -16,7 +16,7 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
+featuredOrder: 2
 ---
 
 Ahmad Jamal's trio, Art Blakey & The Jazz Messengers, Benny Goodman and Alice Coltrane bring contrasting approaches to jazz. Listen for the movement between spare piano phrases, ensemble rhythm and more expansive textures.

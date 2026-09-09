@@ -15,7 +15,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Arctic Monkeys and The Black Keys bring direct guitar arrangements, with Queens of the Stone Age adding weight and Pearl Jam a different vocal character. Riffs keep the selection connected.

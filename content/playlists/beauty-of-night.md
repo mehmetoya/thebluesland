@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Elliott Smith, Nick Drake and Sufjan Stevens bring close, intimate songwriting to this late-night selection. Galaxie 500 and Low stretch the pace, leaving space around the voices and guitars.

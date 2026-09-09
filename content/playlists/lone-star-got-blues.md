@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Texas blues is the starting point for a guitar-led selection with a broad reach. Electric tone, rhythmic bite and blues-rock energy connect the music, including players from beyond Texas.

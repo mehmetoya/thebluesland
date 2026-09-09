@@ -15,7 +15,6 @@ eras:
   - pre-1970
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Bessie Smith's vocal presence and Blind Willie Johnson's gospel-blues offer distinct paths into early recorded music. Listen for the phrasing and the interplay between the voice and its accompaniment.

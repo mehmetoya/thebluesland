@@ -159,6 +159,7 @@ public sealed class PlaylistCacheSyncService
             Artists = summary.Artists,
             ComputedEras = summary.ComputedEras,
             EraBucketCounts = summary.EraBucketCounts,
+            FollowerCount = summary.FollowerCount,
             SpotifySnapshotId = summary.SnapshotId,
             SyncedAt = syncedAt,
             IsAvailable = true,
@@ -182,6 +183,7 @@ public sealed class PlaylistCacheSyncService
         entry.Description = summary.Description;
         entry.CoverImageUrl = summary.CoverImageUrl;
         entry.TrackCount = summary.TrackCount;
+        entry.FollowerCount = summary.FollowerCount;
         entry.SpotifySnapshotId = summary.SnapshotId;
         entry.SyncedAt = syncedAt;
         entry.IsAvailable = true;

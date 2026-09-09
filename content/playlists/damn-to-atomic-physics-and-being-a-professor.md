@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Howlin' Wolf, John Lee Hooker and Elmore James meet the rougher guitar sounds of Black Rebel Motorcycle Club and KALEO. The connection is in the riffs and the groove, with room for grit in the vocals and arrangements.

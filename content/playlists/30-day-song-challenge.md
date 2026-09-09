@@ -17,7 +17,6 @@ eras:
   - 2000s-present
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 A daily song prompt can lead in unexpected directions. Cream, Eric Clapton and Jimi Hendrix give this selection a blues-rock centre, while Father John Misty brings a quieter songwriting voice.

@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 David Bowie, Pink Floyd, Electric Light Orchestra and Muse give this space-themed selection its range. Expansive guitars, electronic colours and theatrical vocals create a sense of distance.

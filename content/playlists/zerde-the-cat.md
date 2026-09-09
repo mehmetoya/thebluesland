@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Cat Power, DIIV, Cassandra Jenkins and Devendra Banhart bring soft vocals, hazy guitars and a gentle pace. The sound stays easygoing as the arrangements shift.

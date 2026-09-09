@@ -15,7 +15,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Audioslave, Aerosmith and Alice Cooper give the selection its driving rock sound. Amos Lee brings a gentler change of pace, making room for more than one kind of journey.

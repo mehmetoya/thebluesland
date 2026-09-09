@@ -16,7 +16,6 @@ eras:
   - mixed-era
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Crossroads provides the common thread, with Cream and Eric Clapton among the artists returning to the song. The interest is in the differences: tempo, phrasing, guitar tone and how much space each version leaves.

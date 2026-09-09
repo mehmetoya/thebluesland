@@ -15,7 +15,6 @@ eras:
   - pre-1970
 status: published
 publishedAt: 2026-09-05
-featured: false
 ---
 
 Ringo Starr's lead vocals give this Beatles selection a familiar, warm character. Focusing on one voice offers a different way to hear the band's songs and arrangements.
