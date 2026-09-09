@@ -169,6 +169,24 @@ immutable, commit-SHA-tagged image to GHCR, then triggers a Render deploy. Rende
 the app's own `/health/ready` endpoint before routing to the new instance, and rollback is Render's
 native, immutable-image-based rollback (see `.github/render.yaml`).
 
+**Keeping the free-tier instance awake:** Render's free plan sleeps a web service after 15 minutes
+without inbound traffic, and the resulting cold start is slow enough to be noticeable to a first
+visitor. Any inbound HTTP request resets that 15-minute clock, so a low-frequency external ping
+prevents the sleep entirely without touching the app itself. `/health/live` (`WebHostFactory.cs`)
+is the right target for that ping: unlike `/health/ready`, it runs no health checks at all (no
+content load, no database, no Spotify/AI calls) and always returns a plain 200 — process liveness
+only, matching spec 16.2's DB-independence rule and needing no new endpoint. To wire this up:
+
+1. In [UptimeRobot](https://uptimerobot.com) (free plan, no card required), add an HTTP(s) monitor
+   for `https://thebluesland.com/health/live` (or the `onrender.com` origin, pre-custom-domain) on
+   its shortest free interval (5 minutes) — comfortably inside Render's 15-minute sleep window.
+2. This is an external dashboard setup step with no repository-side configuration: no code, secret,
+   or workflow change is required, and Render's own `healthCheckPath` (`.github/render.yaml`) stays
+   on `/health/ready` unchanged — that setting governs traffic routing to a new deploy, not sleep.
+3. Free-tier instance-hours (750/month per workspace) are still spent while the service stays awake
+   around the clock; for a single service this fits within a 31-day month, but it's shared across
+   every free service in the same Render workspace.
+
 Everything that talks to Spotify or an AI provider runs out-of-process, on its own schedule, never
 inside the web app or the PR/deploy pipelines:
 
