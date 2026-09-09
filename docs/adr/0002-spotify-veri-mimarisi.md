@@ -121,3 +121,22 @@ geçerlidir; ADR-0005 madde 4'ün desenini AI sağlayıcı key'i için tekrar ed
 (`GEMINI_API_KEY` yalnızca `suggest-curator-note.yml` workflow'una scope edilir). AI önerisi
 `spotify_playlist_cache` tablosuna yazılmaz — bu tablo hâlâ yalnızca senkron aracı tarafından
 yazılan bir cache'tir.
+
+## Sonraki karar notu (2026-09-09) — sync-spotify.yml artık repo'ya yazabiliyor
+
+`sync-spotify.yml`, bu projedeki **ilk** `contents: write`/`pull-requests: write` iznine sahip
+workflow oldu (`docs/specs/auto-unpublish-private-playlists.md`). Gerekçe: bir playlist Spotify'da
+private yapıldığında, editoryal `content/playlists/*.md` dosyasının `status: published` alanı
+otomatik `draft`'a çevriliyor — çünkü yayın durumu daha önce yalnızca elle değiştirilebiliyordu ve
+Spotify'ın kendi görünürlük bayrağını hiç takip etmiyordu (gerçek bir olayla keşfedildi:
+`my-shazam-tracks`).
+
+Bu, ADR-0005'in "otomasyon içeriğe asla sessizce karar vermez" ilkesini **çiğnemiyor**: ADR-0005
+üretken (AI tarafından yazılan) içerik hakkındaydı, bu ise deterministik bir gerçek kontrolü
+(Spotify `public` alanı false ise dosyayı draft yap) — yargı gerektirmiyor, tek yönlü (yalnızca
+published→draft, asla tersi), ve `main`'e doğrudan push yerine PR açıp CI geçince otomatik merge
+ediyor (branch protection bypass edilmiyor). `ci.yml` ve `deploy.yml` hâlâ `contents: read`.
+
+Kabul edilen yeni operasyonel bağımlılık: bu workflow'un `gh pr merge --auto` adımının çalışması
+için repo ayarlarında "Allow auto-merge" (Settings > General) açık olmalı — kod dışı, tek seferlik
+bir adım, SEC-001/varolan secret-scoping notlarıyla aynı sınıfta.
