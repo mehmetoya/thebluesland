@@ -182,10 +182,13 @@ Draft detail pages, draft aliases and draft social cards return 404. The tempora
 diagnostic endpoint has been removed; use operational logs for database diagnostics.
 
 Canonical URLs use `Site__PublicOrigin` (default `https://thebluesland.onrender.com`). Set it to
-an HTTPS origin when introducing a custom domain. Only that host and local development hosts are
-accepted. Request and forwarded headers never determine canonical URLs; no untrusted proxy headers
-are enabled. Social card responses are cached server-side for 24 hours within a 16 MiB cache;
-a new deployment clears the cache.
+an HTTPS origin when introducing a custom domain. Only that host, local development hosts, and two
+hardcoded legacy hosts (`thebluesland.onrender.com`, `www.thebluesland.com` — permanently 301'd to
+whatever `Site__PublicOrigin` is currently set to, see `SiteUrl.LegacyRedirectHosts` and
+[`SPEC-custom-domain-migration.md`](SPEC-custom-domain-migration.md)) are accepted. Request and
+forwarded headers never determine canonical URLs; no untrusted proxy headers are enabled. Social
+card responses are cached server-side for 24 hours within a 16 MiB cache; a new deployment clears
+the cache.
 
 The taxonomy report is an explicit local tool, not a test. From the repository root:
 

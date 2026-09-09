@@ -54,10 +54,16 @@ public static class WebHostFactory
         // configured" branch to forget.
         var cacheHealthKey = builder.Configuration["Diagnostics:CacheHealthKey"];
 
-        // Local hostnames permit local development; public traffic must use the configured host.
-        builder.Configuration["AllowedHosts"] = $"{publicUri.Host};localhost;127.0.0.1;[::1]";
-        builder.Services.AddHostFiltering(options =>
-            options.AllowedHosts = [publicUri.Host, "localhost", "127.0.0.1", "[::1]"]);
+        // Local hostnames permit local development; public traffic must use the configured host or
+        // one of the legacy hosts that get redirected to it below (2026-09-09 domain migration -
+        // SPEC-custom-domain-migration.md). Without these here, HostFilteringMiddleware would
+        // reject them with 400 before the redirect below ever ran.
+        var allowedHosts = new[] { publicUri.Host, "localhost", "127.0.0.1", "[::1]" }
+            .Concat(SiteUrl.LegacyRedirectHosts)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        builder.Configuration["AllowedHosts"] = string.Join(';', allowedHosts);
+        builder.Services.AddHostFiltering(options => options.AllowedHosts = allowedHosts);
         builder.Services.AddOutputCache(options =>
         {
             options.SizeLimit = SocialCardCacheSizeBytes;
@@ -87,6 +93,27 @@ public static class WebHostFactory
 
         var app = builder.Build();
         app.UseHostFiltering();
+
+        // 2026-09-09 domain migration (SPEC-custom-domain-migration.md): a request that reaches
+        // this host filter under a legacy hostname - already indexed, already shared, already
+        // referenced from a past llms.txt/JSON-LD generation - is permanently redirected to the
+        // canonical origin rather than served, path and query string intact. The `publicUri.Host`
+        // check guards the default/local/test configuration, where the "canonical" host and
+        // SiteUrl.DefaultPublicOrigin's host are the same onrender.com value: without it, that
+        // configuration would redirect to itself forever instead of serving normally.
+        app.Use(async (context, next) =>
+        {
+            var requestHost = context.Request.Host.Host;
+            if (!string.Equals(requestHost, publicUri.Host, StringComparison.OrdinalIgnoreCase)
+                && SiteUrl.LegacyRedirectHosts.Contains(requestHost, StringComparer.OrdinalIgnoreCase))
+            {
+                var target = publicOrigin.TrimEnd('/') + context.Request.Path + context.Request.QueryString;
+                context.Response.Redirect(target, permanent: true);
+                return;
+            }
+
+            await next();
+        });
 
         if (app.Environment.IsDevelopment())
         {
