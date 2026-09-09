@@ -31,7 +31,8 @@
   --color-secondary: #6f93b8;
 
   --font-serif: ui-serif, Georgia, "Times New Roman", serif;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
 
   /* Design tokens (spec: docs/specs/design-tokens-and-home-pilot.md) - a shared type/spacing
      scale so every touched selector references a token instead of its own one-off number. Values
@@ -105,6 +106,7 @@
     color: var(--color-accent);
     text-decoration-color: rgb(217 154 78 / 45%);
     text-underline-offset: 0.15em;
+    transition: color 0.15s ease;
   }
 
   a:hover {
@@ -153,6 +155,7 @@
   font-weight: 700;
   color: var(--color-text);
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 .site-wordmark:hover {
@@ -170,6 +173,7 @@
 .site-nav a {
   color: var(--color-text-muted);
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 .site-nav a:hover {
@@ -209,6 +213,7 @@
 .site-footer-nav a {
   color: var(--color-text-muted);
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 .site-footer-nav a:hover {
@@ -229,6 +234,8 @@
 
 .brand-intro h1 {
   font-size: var(--font-size-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   margin-bottom: var(--space-4);
 }
 
@@ -275,6 +282,7 @@
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   color: var(--color-text);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .filter-dropdown > summary::-webkit-details-marker {
@@ -346,6 +354,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 
 .filter-apply:hover {
@@ -362,6 +371,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 
 .filter-clear:hover {
@@ -546,6 +556,7 @@ body:has(.filter-mobile-toggle:checked) {
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .load-more:hover {
@@ -638,6 +649,7 @@ body:has(.filter-mobile-toggle:checked) {
 .breadcrumb a {
   color: var(--color-text-muted);
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 .breadcrumb a:hover {
@@ -650,6 +662,8 @@ body:has(.filter-mobile-toggle:checked) {
 
 .playlist-detail h1 {
   font-size: var(--font-size-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   margin-bottom: var(--space-4);
 }
 
@@ -733,6 +747,7 @@ body:has(.filter-mobile-toggle:checked) {
   font-weight: 600;
   text-decoration: none;
   margin-bottom: 2rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .open-in-spotify:hover {
@@ -808,6 +823,17 @@ body:has(.filter-mobile-toggle:checked) {
   padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: 0.875rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .collection-link:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.collection-link:hover {
+  border-color: var(--color-border-strong);
 }
 
 .collection-link h3 {
