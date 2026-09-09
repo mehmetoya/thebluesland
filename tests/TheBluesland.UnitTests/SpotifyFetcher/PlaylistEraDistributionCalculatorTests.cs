@@ -6,8 +6,12 @@ namespace TheBluesland.UnitTests.SpotifyFetcher;
 
 /// <summary>
 /// US-023: pins the suggestion thresholds Mehmet chose (fewer than 10 dated tracks -> no
-/// suggestion; >=20% -> suggest that bucket; no bucket reaching 60% -> also suggest mixed-era;
-/// one bucket reaching 60% -> do not suggest mixed-era).
+/// suggestion; >=20% -> suggest that bucket; no bucket reaching its majority threshold -> also
+/// suggest mixed-era; one bucket reaching it -> do not suggest mixed-era).
+///
+/// 2026-09-09: <c>2000s-present</c> carries its own, higher (75%) majority threshold than the other
+/// three buckets (60%) - see <see cref="PlaylistEraDistributionCalculator"/>'s class doc comment
+/// for why. The 20% suggestion floor is unaffected and identical for every bucket.
 /// </summary>
 public sealed class PlaylistEraDistributionCalculatorTests
 {
@@ -67,6 +71,51 @@ public sealed class PlaylistEraDistributionCalculatorTests
         result.SuggestedEras.ShouldBe([EraBucketMapper.Seventies]); // the 10% bucket is excluded
         result.SuggestedEras.ShouldNotContain(EraBucketMapper.TwoThousandsPresent);
         result.SuggestedEras.ShouldNotContain(EraBucketMapper.MixedEra); // 90% >= 60% majority
+    }
+
+    [Fact]
+    public void Calculate_adds_mixed_era_when_2000s_present_clears_sixty_percent_but_not_its_own_75_percent_bar()
+    {
+        // 63% 2000s-present (like Bluesland's real 2026-09-09 measurement) - clears the OTHER
+        // buckets' 60% majority bar but not 2000s-present's own 75% one, and no other bucket
+        // reaches even the 20% suggestion floor. Regression guard for the exact case this raised
+        // threshold exists for: a large classic-catalogue playlist whose Spotify release-date
+        // metadata skews toward reissue/compilation dates.
+        var releaseYears = Enumerable.Repeat(2010, 63)
+            .Concat(Enumerable.Repeat(1960, 13))
+            .Concat(Enumerable.Repeat(1975, 12))
+            .Concat(Enumerable.Repeat(1990, 12))
+            .ToArray();
+
+        var result = _calculator.Calculate(releaseYears);
+
+        result.SuggestedEras.ShouldBe([EraBucketMapper.TwoThousandsPresent, EraBucketMapper.MixedEra], ignoreOrder: true);
+    }
+
+    [Fact]
+    public void Calculate_excludes_mixed_era_when_2000s_present_reaches_exactly_its_75_percent_bar()
+    {
+        var releaseYears = Enumerable.Repeat(2010, 75)
+            .Concat(Enumerable.Repeat(1960, 9))
+            .Concat(Enumerable.Repeat(1975, 8))
+            .Concat(Enumerable.Repeat(1990, 8))
+            .ToArray();
+
+        var result = _calculator.Calculate(releaseYears);
+
+        result.SuggestedEras.ShouldBe([EraBucketMapper.TwoThousandsPresent]);
+    }
+
+    [Fact]
+    public void Calculate_still_suppresses_mixed_era_when_a_non_2000s_present_bucket_reaches_sixty_percent()
+    {
+        // The other three buckets keep their original 60% bar - only 2000s-present's is raised.
+        var releaseYears = Enumerable.Repeat(1975, 65).Concat(Enumerable.Repeat(2010, 35)).ToArray();
+
+        var result = _calculator.Calculate(releaseYears);
+
+        result.SuggestedEras.ShouldBe([EraBucketMapper.Seventies, EraBucketMapper.TwoThousandsPresent], ignoreOrder: true);
+        result.SuggestedEras.ShouldNotContain(EraBucketMapper.MixedEra);
     }
 
     [Fact]
