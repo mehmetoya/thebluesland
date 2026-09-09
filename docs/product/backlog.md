@@ -661,15 +661,27 @@ yanlış etiketlenmiş.
 
 Kabul kriterleri:
 
-- [ ] `sync-spotify.yml`'a, snapshot karşılaştırmasını atlayıp her playlist'i tam okuyan bir mod
-      eklenir (ör. `mode: resync-eras`); normal `sync` davranışı değişmez.
-- [ ] Mod, US-024'ün atlama mantığını yalnız o koşu için devre dışı bırakır; kalıcı bir bayrak
+- [x] `sync-spotify.yml`'a, snapshot karşılaştırmasını atlayıp her playlist'i tam okuyan bir mod
+      eklenir (`mode: resync-eras`); normal `sync` davranışı değişmez.
+- [x] Mod, US-024'ün atlama mantığını yalnız o koşu için devre dışı bırakır; kalıcı bir bayrak
       veya veri değişikliği bırakmaz.
-- [ ] Job özeti bu modda kaç playlist'in tam okunduğunu ayrıca belirtir.
-- [ ] Bir test, bu modda eşleşen `snapshot_id`'ye rağmen sayfalı `/items` çağrılarının yapıldığını
+- [x] Job özeti bu modda kaç playlist'in tam okunduğunu ayrıca belirtir.
+- [x] Bir test, bu modda eşleşen `snapshot_id`'ye rağmen sayfalı `/items` çağrılarının yapıldığını
       doğrular.
 
-Kapsam dışı: eşiklerin kendisi (ayrı karar, `report-eras` ölçümü sonrası).
+**Durum: Tamamlandı (2026-09-09).** `PlaylistCacheSyncService.SyncAsync`'e geriye dönük uyumlu
+bir `forceFullRead = false` parametresi eklendi; `true` olduğunda `ReusableSnapshotId` hiç
+çağrılmadan `knownSnapshotId` her zaman `null` geçiliyor — kalıcı bir bayrak veya şema değişikliği
+yok, yalnız o çağrının çalışma zamanı davranışı. `Program.cs`, `report-eras`'ın kendi `args[1]`
+içerik dizini override desenini birebir izleyerek `resync-eras` modunu dispatch ediyor; job özeti
+"resync-eras: N playlist(s) fully read." satırıyla AC3'ü karşılıyor. `sync-spotify.yml`'ın
+`workflow_dispatch.inputs.mode` seçeneklerine `resync-eras` eklendi, kotanın normal `sync` kadar
+pahalı olduğu ve bilerek çalıştırılması gerektiği açıklamada belirtildi. Yeni bir test
+(`SyncAsync_with_forceFullRead_reads_tracks_despite_a_matching_snapshot_id`) eşleşen snapshot'a
+rağmen tek bir `/items` çağrısının yapıldığını doğruluyor; 280/280 test yeşil.
+
+Kapsam dışı: eşiklerin kendisi (US-026 sayesinde artık ayrı bir hikâye bile gerektirmiyor —
+`report-eras` bunu Spotify'a gitmeden `CalculateFromBucketCounts`'la yeniden hesaplıyor).
 Bağımlılık: US-024 (tamamlandı).
 Öncelik: Should
 Platform: sync

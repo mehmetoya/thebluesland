@@ -260,6 +260,55 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task SyncAsync_with_forceFullRead_reads_tracks_despite_a_matching_snapshot_id()
+    {
+        // US-025: an era-bucket-boundary change needs every playlist re-read even though nothing
+        // changed on Spotify - forceFullRead is the runtime-only escape hatch from US-024's skip.
+        await SeedSyncedRowAsync(
+            snapshotId: "snapshot-available",
+            artists: ["Erkin Koray"],
+            computedEras: ["1970s"],
+            eraBucketCounts: [0, 12, 0, 0]);
+
+        var itemsRequests = 0;
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+        {
+            var absolutePath = request.RequestUri!.AbsolutePath;
+            if (absolutePath == $"/v1/playlists/{AvailablePlaylistId}/items")
+            {
+                itemsRequests++;
+                return JsonResponse(
+                    """
+                    {
+                      "items": [
+                        { "item": { "artists": [{ "name": "Erkin Koray" }] }, "track": {} }
+                      ],
+                      "next": null
+                    }
+                    """);
+            }
+
+            // Same unchanged snapshot id as the seeded row - a plain sync would skip this playlist.
+            return JsonResponse(
+                """
+                {
+                  "name": "Masterpieces of Erkin the Father",
+                  "items": { "total": 1 },
+                  "snapshot_id": "snapshot-available"
+                }
+                """);
+        }));
+        await using var dbContext = await CreateMigratedDbContextAsync();
+        var service = new PlaylistCacheSyncService(new SpotifyPlaylistClient(httpClient), dbContext);
+
+        var summary = await service.SyncAsync(
+            [AvailablePlaylistId], AccessToken, CancellationToken.None, forceFullRead: true);
+
+        itemsRequests.ShouldBe(1); // the whole point: the paginated read runs despite the match
+        summary.ShouldBe(new SyncSummary(Created: 0, Updated: 1, Skipped: 0, Unavailable: 0));
+    }
+
+    [Fact]
     public async Task SyncAsync_still_reads_tracks_in_full_when_the_snapshot_id_differs()
     {
         await SeedSyncedRowAsync(
