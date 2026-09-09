@@ -64,7 +64,9 @@ public sealed class PlaylistFrontMatterReader
             entries.Add(new PlaylistFrontMatterEntry(
                 spotifyPlaylistId,
                 frontMatter.Slug is { Length: > 0 } slug ? slug : Path.GetFileNameWithoutExtension(filePath),
-                frontMatter.Eras ?? []));
+                frontMatter.Eras ?? [],
+                frontMatter.Status,
+                filePath));
         }
 
         return entries;

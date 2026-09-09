@@ -24,6 +24,7 @@ public sealed class SpotifyPlaylistSummarySchemaTests
         nameof(SpotifyPlaylistSummary.EraBucketCounts),
         nameof(SpotifyPlaylistSummary.FollowerCount),
         nameof(SpotifyPlaylistSummary.SnapshotId),
+        nameof(SpotifyPlaylistSummary.IsPublic),
     ];
 
     private static readonly string[] ForbiddenPropertyNameFragments =

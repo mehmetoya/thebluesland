@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TheBluesland.Data;
 using TheBluesland.Data.Entities;
+using TheBluesland.SpotifyFetcher.Content;
 using TheBluesland.SpotifyFetcher.Spotify;
 
 namespace TheBluesland.SpotifyFetcher.Sync;
@@ -15,6 +16,7 @@ public sealed class PlaylistCacheSyncService
 {
     private readonly SpotifyPlaylistClient _playlistClient;
     private readonly TheBlueslandDbContext _dbContext;
+    private readonly PlaylistFrontMatterWriter _frontMatterWriter = new();
 
     public PlaylistCacheSyncService(SpotifyPlaylistClient playlistClient, TheBlueslandDbContext dbContext)
     {
@@ -29,17 +31,32 @@ public sealed class PlaylistCacheSyncService
     /// boundary) needs every playlist re-evaluated even though nothing changed on Spotify. Applies
     /// only to this call; nothing is persisted, so the very next normal sync goes back to skipping.
     /// </param>
+    /// <param name="contentEntries">
+    /// Optional per-file status/slug/path lookup (auto-unpublish-private-playlists spec) - when a
+    /// found playlist's <c>IsPublic</c> is false and the matching entry's <c>Status</c> is
+    /// currently <c>published</c>, that file is rewritten to <c>draft</c> and its slug recorded in
+    /// <see cref="SyncSummary.NewlyUnpublishedSlugs"/>. Omitted (or an id with no matching entry)
+    /// means no rewrite is attempted for that playlist - this is additive, never required.
+    /// </param>
     public async Task<SyncSummary> SyncAsync(
         IReadOnlyCollection<string> spotifyPlaylistIds,
         string accessToken,
         CancellationToken cancellationToken,
-        bool forceFullRead = false)
+        bool forceFullRead = false,
+        IReadOnlyCollection<PlaylistFrontMatterEntry>? contentEntries = null)
     {
         var created = 0;
         var updated = 0;
         var skipped = 0;
         var unavailable = 0;
         var processed = 0;
+        var newlyUnpublishedSlugs = new List<string>();
+
+        var contentByPlaylistId = new Dictionary<string, PlaylistFrontMatterEntry>(StringComparer.Ordinal);
+        foreach (var entry in contentEntries ?? [])
+        {
+            contentByPlaylistId.TryAdd(entry.SpotifyPlaylistId, entry);
+        }
 
         foreach (var spotifyPlaylistId in spotifyPlaylistIds)
         {
@@ -75,6 +92,16 @@ public sealed class PlaylistCacheSyncService
                     ApplySummary(existingEntry, found.Summary, syncedAt);
                     updated++;
                 }
+
+                // Auto-unpublish-private-playlists spec: one-directional only - a playlist already
+                // draft, or one with no matching content entry, is left untouched either way.
+                if (!found.Summary.IsPublic
+                    && contentByPlaylistId.TryGetValue(spotifyPlaylistId, out var contentEntry)
+                    && string.Equals(contentEntry.Status, "published", StringComparison.Ordinal))
+                {
+                    await _frontMatterWriter.UnpublishAsync(contentEntry.FilePath, cancellationToken);
+                    newlyUnpublishedSlugs.Add(contentEntry.Slug);
+                }
             }
             else
             {
@@ -99,7 +126,10 @@ public sealed class PlaylistCacheSyncService
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        return new SyncSummary(created, updated, skipped, unavailable);
+        var summary = new SyncSummary(created, updated, skipped, unavailable);
+        return newlyUnpublishedSlugs.Count == 0
+            ? summary
+            : summary with { NewlyUnpublishedSlugs = newlyUnpublishedSlugs };
     }
 
     /// <summary>

@@ -93,7 +93,7 @@ public sealed class SpotifyPlaylistClient
         CancellationToken cancellationToken)
     {
         var url = $"{BaseUrl}/playlists/{Uri.EscapeDataString(spotifyPlaylistId)}" +
-                  "?fields=name,description,images,items.total,snapshot_id,followers.total";
+                  "?fields=name,description,images,items.total,snapshot_id,followers.total,public";
 
         using var response = await SendAsync(HttpMethod.Get, url, accessToken, cancellationToken);
         if (IsPlaylistUnavailableStatus(response.StatusCode))
@@ -139,6 +139,9 @@ public sealed class SpotifyPlaylistClient
                 ? snapshotElement.GetString()
                 : null;
 
+        var isPublic = root.TryGetProperty("public", out var publicElement)
+            && publicElement.ValueKind == JsonValueKind.True;
+
         int? followerCount = root.TryGetProperty("followers", out var followersElement)
             && followersElement.ValueKind == JsonValueKind.Object
             && followersElement.TryGetProperty("total", out var followerTotalElement)
@@ -154,6 +157,7 @@ public sealed class SpotifyPlaylistClient
             TrackCount = trackCount,
             SnapshotId = snapshotId,
             FollowerCount = followerCount,
+            IsPublic = isPublic,
             Artists = [],
         };
     }
