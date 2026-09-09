@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using TheBluesland.Web.Cache;
 using TheBluesland.Web.Content;
 
 namespace TheBluesland.Web.Seo;
@@ -31,7 +32,16 @@ public static class StructuredDataBuilder
             },
             Options);
 
-    public static string BuildCollectionPage(PlaylistContent content, string canonicalUrl) =>
+    /// <param name="cacheSnapshot">
+    /// Supplies <c>numTracks</c> and the playlist's own cover image - both already rendered
+    /// visibly on the same page (the "N tracks" line and the cover <c>&lt;img&gt;</c>), so
+    /// reflecting them here is not new disclosure, just structured restatement. Neither is a
+    /// track-level field (spec 9.4/11.2): a count and a playlist-level image, the same class of
+    /// aggregate as <see cref="PlaylistCacheSnapshot.TrackCount"/> itself. Omitted entirely
+    /// (<see cref="JsonIgnoreCondition.WhenWritingNull"/>) when the cache is unavailable, matching
+    /// this page's own graceful-degradation rule (spec 16.1) - never a stale or zero placeholder.
+    /// </param>
+    public static string BuildCollectionPage(PlaylistContent content, PlaylistCacheSnapshot cacheSnapshot, string canonicalUrl) =>
         JsonSerializer.Serialize(
             new CollectionPageSchema("https://schema.org", "CollectionPage", content.Title, content.Summary, canonicalUrl)
             {
@@ -43,6 +53,8 @@ public static class StructuredDataBuilder
                 {
                     Genre = content.Genres,
                     Url = GetSpotifyUrl(content),
+                    NumTracks = cacheSnapshot.IsPlayable ? cacheSnapshot.TrackCount : null,
+                    Image = cacheSnapshot.IsPlayable ? cacheSnapshot.CoverImageUrl : null,
                 },
             },
             Options);
@@ -51,6 +63,38 @@ public static class StructuredDataBuilder
         SpotifyPlaylistIdFormat.IsValid(content.SpotifyPlaylistId)
             ? $"https://open.spotify.com/playlist/{content.SpotifyPlaylistId}"
             : null;
+
+    /// <summary>
+    /// AEO/GEO: a Markdown-question -&gt; short-answer FAQ, marked up so answer engines (ChatGPT,
+    /// Gemini, Perplexity) and Google's own rich results can lift a whole answer verbatim rather
+    /// than guessing at one from prose. Every question/answer pair must match the page's own
+    /// visible text exactly (Google's FAQPage guidance) - <see cref="AboutPage"/>'s markup and this
+    /// method's caller share one array literal for that reason, so the two cannot drift apart.
+    /// </summary>
+    public static string BuildFaqPage(IReadOnlyList<(string Question, string Answer)> items) =>
+        JsonSerializer.Serialize(
+            new FaqPageSchema("https://schema.org", "FAQPage",
+                [.. items.Select(item => new QuestionSchema(
+                    "Question",
+                    item.Question,
+                    new AnswerSchema("Answer", item.Answer)))]),
+            Options);
+
+    /// <summary>
+    /// GEO's "who is the source" signal (E-E-A-T by another name): names the collection's curator
+    /// as a distinct entity rather than leaving the site anonymous. <paramref name="personName"/>/
+    /// <paramref name="personDescription"/> restate exactly what <see cref="AboutPage"/> already
+    /// says in visible prose - no new personal disclosure, no <c>sameAs</c> profile links (that is
+    /// a separate, deliberate choice left to Mehmet).
+    /// </summary>
+    public static string BuildAboutPage(string personName, string personDescription, string canonicalUrl) =>
+        JsonSerializer.Serialize(
+            new AboutPageSchema("https://schema.org", "AboutPage", canonicalUrl)
+            {
+                Id = canonicalUrl + "#webpage",
+                MainEntity = new PersonSchema("Person", personName, personDescription),
+            },
+            Options);
 
     public static string BuildBreadcrumbList(string homeUrl, string playlistTitle, string canonicalUrl) =>
         JsonSerializer.Serialize(
@@ -95,7 +139,38 @@ public static class StructuredDataBuilder
     {
         public IReadOnlyList<string>? Genre { get; init; }
         public string? Url { get; init; }
+        public int? NumTracks { get; init; }
+        public string? Image { get; init; }
     }
+
+    private sealed record FaqPageSchema(
+        [property: JsonPropertyName("@context")] string Context,
+        [property: JsonPropertyName("@type")] string Type,
+        IReadOnlyList<QuestionSchema> MainEntity);
+
+    private sealed record QuestionSchema(
+        [property: JsonPropertyName("@type")] string Type,
+        string Name,
+        AnswerSchema AcceptedAnswer);
+
+    private sealed record AnswerSchema(
+        [property: JsonPropertyName("@type")] string Type,
+        string Text);
+
+    private sealed record AboutPageSchema(
+        [property: JsonPropertyName("@context")] string Context,
+        [property: JsonPropertyName("@type")] string Type,
+        string Url)
+    {
+        [JsonPropertyName("@id")]
+        public string? Id { get; init; }
+        public PersonSchema? MainEntity { get; init; }
+    }
+
+    private sealed record PersonSchema(
+        [property: JsonPropertyName("@type")] string Type,
+        string Name,
+        string Description);
 
     private sealed record BreadcrumbListSchema(
         [property: JsonPropertyName("@context")] string Context,

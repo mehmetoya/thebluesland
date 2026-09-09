@@ -5,7 +5,8 @@
     Title="About - TheBluesland"
     Description="Meet TheBluesland: Mehmet's personal collection of Spotify playlists, with roots in blues and room for jazz, folk, rock and electronic music."
     CanonicalPath="/about"
-    ImagePath="/og-image.png" />
+    ImagePath="/og-image.png"
+    StructuredDataJson="@(new[] { AboutPageJsonLd, FaqPageJsonLd })" />
 
 <article class="about">
     <h1>About TheBluesland</h1>
@@ -25,4 +26,47 @@
         or head straight to <a href="/">all playlists</a>. When something catches your ear,
         open it in Spotify and listen.
     </p>
+
+    @* Visible markup and FaqPageJsonLd below share this same array by construction (@code), so the
+       two can never drift apart - a requirement of Google's FAQPage guidance, not just tidiness. *@
+    <h2>Frequently asked questions</h2>
+    @foreach (var (question, answer) in FaqItems)
+    {
+        <h3>@question</h3>
+        <p>@answer</p>
+    }
 </article>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private static readonly (string Question, string Answer)[] FaqItems =
+    [
+        ("What is TheBluesland?",
+         "TheBluesland is Mehmet's personal collection of Spotify playlists, rooted in blues and " +
+         "spanning rock, folk, jazz, soul and electronic music. Each playlist comes with a short " +
+         "curator note."),
+        ("Is TheBluesland affiliated with Spotify?",
+         "No. TheBluesland is an independent, personal project. It links to playlists hosted on " +
+         "Spotify but isn't affiliated with, endorsed by, or operated by Spotify."),
+        ("How are the mood, genre, occasion and era tags chosen?",
+         "Mood, genre and occasion tags are chosen by hand for each playlist. Era tags are usually " +
+         "chosen by hand too; for playlists that mix many periods, an era estimate is calculated " +
+         "from Spotify's release-date data and kept up to date automatically."),
+        ("How often is the site updated?",
+         "New playlists and curator notes are added whenever there's more to share. Playlist " +
+         "details such as track counts sync from Spotify roughly once a month."),
+    ];
+
+    private string AboutPageJsonLd =>
+        StructuredDataBuilder.BuildAboutPage(
+            "Mehmet",
+            "Curator of TheBluesland, a personal collection of Spotify playlists rooted in blues.",
+            BuildAbsoluteUrl("/about"));
+
+    private string FaqPageJsonLd => StructuredDataBuilder.BuildFaqPage(FaqItems);
+
+    private string BuildAbsoluteUrl(string path) =>
+        HttpContext is null ? path : SiteUrl.BuildAbsolute(HttpContext, path);
+}

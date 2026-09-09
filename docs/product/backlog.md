@@ -714,6 +714,45 @@ Platform: sync + data
 
 ---
 
+## US-027 — FAQ, zenginleştirilmiş MusicPlaylist şeması ve About sayfası kimliği (AEO/GEO)
+
+Kullanıcı olarak proje sahibi (Mehmet), sitenin klasik arama motorlarının yanı sıra ChatGPT/
+Gemini/Perplexity gibi üretken cevap motorlarında da doğru alıntılanmasını istiyorum.
+
+**2026-09-09 bağlamı:** US-011 zaten sağlam bir SEO/AI-keşif temeli kurmuştu (title/description/
+canonical/OG, `sitemap.xml`, `robots.txt`'te AI bot izinleri, `llms.txt`, temel JSON-LD). Bu hikâye
+o temelin üstüne AEO (answer engine optimization) ve GEO (generative engine optimization)'ye özgü
+üç eksiği kapatıyor; hiçbiri yeni kişisel bilgi açıklamıyor, hepsi sayfada zaten görünen bilgiyi
+yapılandırılmış biçimde tekrar ediyor.
+
+Kabul kriterleri:
+
+- [x] About sayfasına 4 soruluk bir SSS bölümü eklendi (görünür `<h2>`/`<h3>`/`<p>`) ve aynı dizi
+      `StructuredDataBuilder.BuildFaqPage` ile `FAQPage` JSON-LD'sine dönüştürüldü — görünür metin
+      ile yapılandırılmış veri, tek bir kaynaktan (`AboutPage.razor`'daki `FaqItems` dizisi)
+      üretildiği için birbirinden asla kayamaz (Google'ın FAQPage kuralı).
+- [x] About sayfasına `AboutPage`/`Person` JSON-LD'si eklendi ("Mehmet", sayfanın kendi metniyle
+      birebir aynı açıklama). Bilinçli olarak `sameAs` (sosyal profil) linki eklenmedi — bu,
+      Mehmet'in ayrı bir kararı.
+- [x] Playlist detay sayfasının `MusicPlaylist` şeması `numTracks` ve `image` kazandı; ikisi de
+      cache'ten (`PlaylistCacheSnapshot`) geliyor ve sayfada zaten görünen "N tracks" metni ile
+      kapak görseliyle birebir aynı — track seviyesinde yeni bir veri değil (spec 9.4/11.2).
+      Cache kullanılamazsa (`IsPlayable: false`) ikisi de tamamen atlanıyor, sahte/eski değer
+      yazılmıyor.
+- [x] Var olan "structured data hiçbir track alanı içermez" regresyon testleri, artık meşru bir
+      `numTracks` alanı barındırdığı için kör "track" alt-dizesi kontrolünden, gerçek track seviyesi
+      alanları (`trackTitle`/`trackId`/`isrc`/`duration`/`tracklist`) arayan bir kontrole geçirildi.
+
+Kapsam dışı: `dateModified`/tazelik sinyali (front-matter'a yeni bir editoryal alan eklemeyi veya
+build-time git metadata okumayı gerektiriyor — dosya mtime'ı bu repoda zaten güvenilmez bulundu,
+bkz. `StaticAssetVersion`); `Person.sameAs` sosyal profil linkleri (Mehmet'in kararı); off-page
+sinyaller (backlink, dış platformlarda tutarlı isim kullanımı — kod dışı).
+Bağımlılık: US-011 (tamamlandı).
+Öncelik: Could
+Platform: web
+
+---
+
 ## US-018 — Filtreleri navbar'a taşı (dropdown deseni)
 
 Kullanıcı olarak ziyaretçi, filtreleri sayfanın üstünü kaplayan büyük bir inline form yerine kompakt
