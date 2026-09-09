@@ -91,11 +91,15 @@
       "Write(./.github/**)",
       "Edit(./.github/**)",
       "Write(./docs/**)",
-      "Edit(./docs/**)"
-    ],
-    "ask": [
+      "Edit(./docs/**)",
       "Bash(dotnet run)",
       "Bash(dotnet run:*)",
+      "Bash(curl http://localhost:*)",
+      "Bash(curl -s http://localhost:*)",
+      "Bash(curl http://127.0.0.1:*)",
+      "Bash(curl -s http://127.0.0.1:*)"
+    ],
+    "ask": [
       "Bash(dotnet watch)",
       "Bash(dotnet watch:*)",
       "Bash(dotnet add package:*)",
@@ -106,7 +110,8 @@
       "Bash(dotnet workload)",
       "Bash(dotnet workload:*)",
       "Bash(git checkout:*)",
-      "Bash(git switch:*)"
+      "Bash(git switch:*)",
+      "Bash(curl:*)"
     ],
     "deny": [
       "Agent(Explore)",
@@ -127,7 +132,6 @@
       "Bash(dotnet nuget push:*)",
       "Bash(rm -rf:*)",
       "Bash(sudo:*)",
-      "Bash(curl:*)",
       "Bash(wget:*)",
       "Write(./.claude/**)",
       "Edit(./.claude/**)",
