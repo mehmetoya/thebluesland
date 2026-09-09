@@ -44,13 +44,19 @@ ADR-0002 ve ADR-0003'e bak.
 - Her specialist kendi işini bitirir ve durur. Sonraki bir role ihtiyaç varsa o agentı çağırmaz;
   kullanıcıya `Önerilen devir: <rol> — <somut görev>` biçiminde bildirir. Devri kullanıcı başlatır.
 - Model seviyesi role göre seçilebilir; mimari karar kalitesi için `architect` Opus kullanır.
-- `architect` yalnız kullanıcı mimari seçenek/ADR istediğinde; `code-reviewer` yalnız açık review
-  veya PR öncesi talebinde; `test-engineer` yalnız test altyapısı, kırık suite ya da kapsamlı
-  integration testi istendiğinde kullanılır.
+- `architect` yalnız kullanıcı mimari seçenek/ADR istediğinde; `code-reviewer` (addyosmani beş-eksen
+  metodolojisi: correctness/readability/architecture/security/performance) yalnız açık review veya
+  PR öncesi talebinde; `test-engineer` (addyosmani QA metodolojisi, Prove-It pattern) yalnız test
+  altyapısı, kırık suite ya da kapsamlı integration testi istendiğinde kullanılır.
 - `security-auditor` yalnız kullanıcı açıkça güvenlik denetimi/OWASP taraması istediğinde;
   `web-performance-auditor` yalnız kullanıcı açıkça Core Web Vitals/performans denetimi
   istediğinde kullanılır (addyosmani/agent-skills'ten alındı, 2026-09-09).
-- Ürün netleştirme ve iş planlama ayrı context açmaz: kullanıcı istediğinde ana konuşmada
-  `refine-story` ve `plan-work` skill'leri kullanılır.
+- Ürün netleştirme ve iş planlama artık addyosmani/agent-skills'in yaşam döngüsüyle yapılır:
+  `idea-refine` → `spec-driven-development` (spec `SPEC-<modül>.md` olarak proje köküne yazılır) →
+  `planning-and-task-breakdown` (`tasks/plan.md`, `tasks/todo.md`) → `incremental-implementation` +
+  `test-driven-development` (`/build`, `/build auto`) → `code-review-and-quality` (`/review`) →
+  `shipping-and-launch` (`/ship`). Ayrı context açmaz; ana konuşmada veya ilgili slash komutuyla
+  çalışır. 2026-09-09 öncesi `docs/product/backlog.md` ve `docs/product/plan.md` dondurulmuş
+  geçmiş kayıt olarak kalır; yeni iş bu dosyalara yazılmaz.
 - Specialist çıktısı en fazla 8 satırlık `Durum / Kanıt / Kalan risk / Önerilen devir /
   Başlatma komutu` sözleşmesiyle kapanır; log veya diff devre taşınmaz.

@@ -8,13 +8,52 @@
       {
         "matcher": "Write|Edit|MultiEdit|NotebookEdit",
         "hooks": [
-          { "type": "command", "command": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; while [ \"$d\" != \"/\" ] && [ ! -e \"$d/.claude/scripts/guard-write-path.sh\" ]; do d=\"$(dirname \"$d\")\"; done; G=\"$d/.claude/scripts/guard-write-path.sh\"; [ -x \"$G\" ] || { echo \"Engellendi: guard bulunamadi veya calistirilabilir degil ($G).\" >&2; exit 2; }; exec \"$G\"" }
+          {
+            "type": "command",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; while [ \"$d\" != \"/\" ] && [ ! -e \"$d/.claude/scripts/guard-write-path.sh\" ]; do d=\"$(dirname \"$d\")\"; done; G=\"$d/.claude/scripts/guard-write-path.sh\"; [ -x \"$G\" ] || { echo \"Engellendi: guard bulunamadi veya calistirilabilir degil ($G).\" >&2; exit 2; }; exec \"$G\""
+          }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; while [ \"$d\" != \"/\" ] && [ ! -e \"$d/.claude/scripts/guard-shell.sh\" ]; do d=\"$(dirname \"$d\")\"; done; G=\"$d/.claude/scripts/guard-shell.sh\"; [ -x \"$G\" ] || { echo \"Engellendi: guard bulunamadi veya calistirilabilir degil ($G).\" >&2; exit 2; }; exec \"$G\"" }
+          {
+            "type": "command",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; while [ \"$d\" != \"/\" ] && [ ! -e \"$d/.claude/scripts/guard-shell.sh\" ]; do d=\"$(dirname \"$d\")\"; done; G=\"$d/.claude/scripts/guard-shell.sh\"; [ -x \"$G\" ] || { echo \"Engellendi: guard bulunamadi veya calistirilabilir degil ($G).\" >&2; exit 2; }; exec \"$G\""
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/sdd-cache-pre.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/sdd-cache-post.sh\"",
+            "async": true,
+            "timeout": 10
+          }
         ]
       }
     ]
