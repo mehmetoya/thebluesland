@@ -41,6 +41,9 @@ chk "backend-dev: ef remove engelli"   "$(run "$SH" '{"tool_name":"Bash","agent_
 chk "backend-dev: proje disi engelli"  "$(run "$SH" '{"tool_name":"Bash","agent_type":"backend-dev","tool_input":{"command":"dotnet test ../baska"}}')" 2
 chk "architect: Bash tamamen engelli"  "$(run "$SH" '{"tool_name":"Bash","agent_type":"architect","tool_input":{"command":"git status"}}')" 2
 chk "tanimsiz ajan: engelli"           "$(run "$SH" '{"tool_name":"Bash","agent_type":"hayali-ajan","tool_input":{"command":"git status"}}')" 2
+chk "security-auditor: git diff izinli" "$(run "$SH" '{"tool_name":"Bash","agent_type":"security-auditor","tool_input":{"command":"git diff main...HEAD"}}')" 0
+chk "security-auditor: dotnet format engelli" "$(run "$SH" '{"tool_name":"Bash","agent_type":"security-auditor","tool_input":{"command":"dotnet format"}}')" 2
+chk "web-performance-auditor: dotnet test izinli" "$(run "$SH" '{"tool_name":"Bash","agent_type":"web-performance-auditor","tool_input":{"command":"dotnet test"}}')" 0
 chk "ana oturum (agent_type yok): serbest" "$(run "$SH" '{"tool_name":"Bash","tool_input":{"command":"git status; ls"}}')" 0
 chk "bozuk json engellendi"            "$(run "$SH" 'bozuk{{{')" 2
 
@@ -53,6 +56,8 @@ chk "backend-dev: workflow izinli"     "$(run "$WP" '{"tool_name":"Write","agent
 chk "backend-dev: docs engelli"        "$(run "$WP" '{"tool_name":"Write","agent_type":"backend-dev","tool_input":{"file_path":"docs/x.md"}}')" 2
 chk "test-engineer: tests izinli"      "$(run "$WP" '{"tool_name":"Write","agent_type":"test-engineer","tool_input":{"file_path":"tests/A.cs"}}')" 0
 chk "code-reviewer: her yazma engelli" "$(run "$WP" '{"tool_name":"Write","agent_type":"code-reviewer","tool_input":{"file_path":"docs/x.md"}}')" 2
+chk "security-auditor: her yazma engelli" "$(run "$WP" '{"tool_name":"Write","agent_type":"security-auditor","tool_input":{"file_path":"docs/x.md"}}')" 2
+chk "web-performance-auditor: her yazma engelli" "$(run "$WP" '{"tool_name":"Write","agent_type":"web-performance-auditor","tool_input":{"file_path":"docs/x.md"}}')" 2
 chk "traversal engellendi"             "$(run "$WP" '{"tool_name":"Write","agent_type":"architect","tool_input":{"file_path":"docs/../src/a.cs"}}')" 2
 chk "bos girdi engellendi"             "$(run "$WP" '')" 2
 chk "ana oturum (agent_type yok): serbest" "$(run "$WP" '{"tool_name":"Write","tool_input":{"file_path":"src/x.cs"}}')" 0

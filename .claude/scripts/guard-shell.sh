@@ -25,7 +25,7 @@ if [ -z "$AGENT" ]; then
 fi
 
 case "$AGENT" in
-  code-reviewer)  set -- build test ;;
+  code-reviewer|security-auditor|web-performance-auditor)  set -- build test ;;
   test-engineer)  set -- build test restore ;;
   backend-dev)    set -- build test restore format ef ;;
   architect)

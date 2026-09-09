@@ -32,8 +32,8 @@ case "$AGENT" in
   architect)                               set -- docs ;;
   backend-dev)                             set -- src tests tools .github ;;
   test-engineer)                           set -- tests ;;
-  code-reviewer)
-    echo "Engellendi: code-reviewer hiçbir dosyaya yazamaz/düzenleyemez." >&2
+  code-reviewer|security-auditor|web-performance-auditor)
+    echo "Engellendi: '$AGENT' hiçbir dosyaya yazamaz/düzenleyemez." >&2
     exit 2 ;;
   *)
     echo "Engellendi: tanımsız ajan ($AGENT) için yazma kuralı yok (fail-closed)." >&2
