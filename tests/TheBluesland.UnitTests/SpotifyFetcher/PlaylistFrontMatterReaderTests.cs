@@ -87,6 +87,20 @@ public sealed class PlaylistFrontMatterReaderTests
     }
 
     [Fact]
+    public async Task ReadAllAsync_returns_status_and_file_path_alongside_the_spotify_playlist_id()
+    {
+        // Auto-unpublish-private-playlists spec: PlaylistCacheSyncService needs each file's current
+        // status and location to decide whether to rewrite it.
+        var contentDirectory = Path.Combine(FixturesRoot, "content-playlists");
+
+        var entries = await _reader.ReadAllAsync(contentDirectory, CancellationToken.None);
+
+        var entry = entries.Single(e => e.Slug == "masterpieces-of-erkin-the-father");
+        entry.Status.ShouldBe("published");
+        entry.FilePath.ShouldBe(Path.Combine(contentDirectory, "valid-with-id.md"));
+    }
+
+    [Fact]
     public async Task ReadAllAsync_returns_empty_when_directory_does_not_exist()
     {
         var contentDirectory = Path.Combine(FixturesRoot, "does-not-exist");

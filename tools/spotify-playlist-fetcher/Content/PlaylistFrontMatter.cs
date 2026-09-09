@@ -9,6 +9,10 @@ namespace TheBluesland.SpotifyFetcher.Content;
 /// <see cref="Slug"/> and <see cref="Eras"/> exist only for US-023's read-only era report (to
 /// label each playlist in the report and show the current vs. suggested <c>eras</c> side by
 /// side) - this tool never writes either field back to the file.
+///
+/// <see cref="Status"/> exists for the auto-unpublish-private-playlists sync check: it is read
+/// here, but any write-back goes through <see cref="PlaylistFrontMatterWriter"/>'s targeted line
+/// replace, never through re-serializing this type.
 /// </summary>
 public sealed class PlaylistFrontMatter
 {
@@ -17,4 +21,6 @@ public sealed class PlaylistFrontMatter
     public string? Slug { get; set; }
 
     public List<string>? Eras { get; set; }
+
+    public string? Status { get; set; }
 }

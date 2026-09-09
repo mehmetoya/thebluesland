@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Shouldly;
 using Testcontainers.PostgreSql;
 using TheBluesland.Data;
+using TheBluesland.SpotifyFetcher.Content;
 using TheBluesland.SpotifyFetcher.Spotify;
 using TheBluesland.SpotifyFetcher.Sync;
 using Xunit;
@@ -346,6 +347,112 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
         var entry = await dbContext.SpotifyPlaylistCache.AsNoTracking()
             .SingleAsync(e => e.SpotifyPlaylistId == AvailablePlaylistId);
         entry.ComputedEras.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task SyncAsync_unpublishes_a_published_file_when_spotify_reports_the_playlist_private()
+    {
+        // Auto-unpublish-private-playlists spec: CreateAvailablePlaylistClient's fixture response
+        // carries no "public" field at all, which SpotifyPlaylistClient maps to IsPublic: false -
+        // exactly the "playlist went private" case this behaviour reacts to.
+        var filePath = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(
+                filePath,
+                """
+                ---
+                slug: masterpieces-of-erkin-the-father
+                status: published
+                publishedAt: 2026-09-05
+                ---
+
+                Body text.
+                """);
+            var contentEntries = new[]
+            {
+                new PlaylistFrontMatterEntry(
+                    AvailablePlaylistId, "masterpieces-of-erkin-the-father", [], "published", filePath),
+            };
+            await using var dbContext = await CreateMigratedDbContextAsync();
+            var service = new PlaylistCacheSyncService(CreateAvailablePlaylistClient(), dbContext);
+
+            var summary = await service.SyncAsync(
+                [AvailablePlaylistId], AccessToken, CancellationToken.None, contentEntries: contentEntries);
+
+            summary.NewlyUnpublishedSlugs.ShouldBe(["masterpieces-of-erkin-the-father"]);
+            var rewritten = await File.ReadAllLinesAsync(filePath);
+            rewritten.ShouldContain("status: draft");
+            rewritten.ShouldNotContain(line => line.StartsWith("publishedAt:", StringComparison.Ordinal));
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
+    [Fact]
+    public async Task SyncAsync_does_not_touch_an_already_draft_file_even_when_the_playlist_is_private()
+    {
+        var filePath = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(filePath, "---\nslug: already-draft\nstatus: draft\n---\n\nBody.\n");
+            var contentEntries = new[]
+            {
+                new PlaylistFrontMatterEntry(AvailablePlaylistId, "already-draft", [], "draft", filePath),
+            };
+            await using var dbContext = await CreateMigratedDbContextAsync();
+            var service = new PlaylistCacheSyncService(CreateAvailablePlaylistClient(), dbContext);
+
+            var summary = await service.SyncAsync(
+                [AvailablePlaylistId], AccessToken, CancellationToken.None, contentEntries: contentEntries);
+
+            summary.NewlyUnpublishedSlugs.ShouldBeEmpty();
+            var untouched = await File.ReadAllTextAsync(filePath);
+            untouched.ShouldBe("---\nslug: already-draft\nstatus: draft\n---\n\nBody.\n");
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
+    [Fact]
+    public async Task SyncAsync_does_not_unpublish_a_published_file_when_the_playlist_is_still_public()
+    {
+        var filePath = Path.GetTempFileName();
+        try
+        {
+            await File.WriteAllTextAsync(filePath, "---\nslug: still-public\nstatus: published\n---\n\nBody.\n");
+            var contentEntries = new[]
+            {
+                new PlaylistFrontMatterEntry(AvailablePlaylistId, "still-public", [], "published", filePath),
+            };
+            using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+            {
+                var absolutePath = request.RequestUri!.AbsolutePath;
+                if (absolutePath == $"/v1/playlists/{AvailablePlaylistId}")
+                {
+                    return JsonResponse("""{ "name": "Still Public", "items": { "total": 0 }, "public": true }""");
+                }
+
+                return JsonResponse("""{ "items": [], "next": null }""");
+            }));
+            await using var dbContext = await CreateMigratedDbContextAsync();
+            var service = new PlaylistCacheSyncService(new SpotifyPlaylistClient(httpClient), dbContext);
+
+            var summary = await service.SyncAsync(
+                [AvailablePlaylistId], AccessToken, CancellationToken.None, contentEntries: contentEntries);
+
+            summary.NewlyUnpublishedSlugs.ShouldBeEmpty();
+            var untouched = await File.ReadAllTextAsync(filePath);
+            untouched.ShouldBe("---\nslug: still-public\nstatus: published\n---\n\nBody.\n");
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
     }
 
     private async Task SeedSyncedRowAsync(

@@ -11,6 +11,16 @@ name: Sync Spotify playlist cache
 # NEON_SYNC_CONNECTION_STRING must be the spotify_cache_readwrite role's connection string, created
 # by src/TheBluesland.Data/Scripts/create-spotify-cache-roles.sql (run once, by hand, against the
 # Neon project - see that script's header for details).
+#
+# This is the ONLY workflow with write access to the repository (contents: write /
+# pull-requests: write below) - ci.yml and deploy.yml must stay contents: read, unchanged. The
+# write path is narrow and one-directional: when the "sync" mode (never list-playlists/dump-cache/
+# resync-eras) finds a playlist Spotify now reports private, it flips that content file's
+# status: published to status: draft (never the reverse), then opens a pull request and enables
+# auto-merge rather than pushing to main directly - main stays branch-protected. Mehmet must
+# additionally enable this repo's auto-merge feature (Settings > General > Allow auto-merge) for
+# `gh pr merge --auto` to take effect - a one-time, code-external step, same class as the
+# secret-scoping note above.
 
 on:
   schedule:
@@ -43,6 +53,10 @@ on:
 concurrency:
   group: spotify-api
   cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   sync:
@@ -82,3 +96,29 @@ jobs:
           else
             dotnet run --project tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj --configuration Release --no-build
           fi
+
+      # Only the default "sync" mode ever rewrites content/playlists (see Program.cs's sync
+      # branch) - list-playlists/dump-cache/resync-eras stay read-only, so this step has nothing
+      # to do for them and exits without opening a PR.
+      - name: Open pull request for auto-unpublished playlists
+        if: ${{ (github.event.inputs.mode || 'sync') == 'sync' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- content/playlists)" ]; then
+            echo "No content/playlists changes - nothing made private this run."
+            exit 0
+          fi
+
+          branch="auto/unpublish-private-playlists-${{ github.run_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add content/playlists
+          git commit -m "Auto-unpublish playlist(s) made private on Spotify" -m "Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
+          git push origin "$branch"
+          pr_url="$(gh pr create --base main --head "$branch" \
+            --title "Auto-unpublish playlist(s) made private on Spotify" \
+            --body "Deterministic, sync-generated: one or more content/playlists/*.md files whose Spotify playlist is now private had status: published flipped to status: draft (publishedAt removed). One-directional only - never auto-publishes. See this run's job summary for which slug(s). Auto-merges once required checks pass.")"
+          gh pr merge --auto --squash "$pr_url"

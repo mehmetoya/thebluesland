@@ -29,4 +29,11 @@ public sealed record SpotifyPlaylistSummary
     public int[]? EraBucketCounts { get; init; }
 
     public string? SnapshotId { get; init; }
+
+    /// <summary>
+    /// Spotify's own <c>public</c> flag, from the same single summary request as
+    /// <see cref="Name"/>/<see cref="SnapshotId"/> - no extra request. Drives auto-unpublish
+    /// (spec: auto-unpublish-private-playlists.md); never used to auto-publish.
+    /// </summary>
+    public required bool IsPublic { get; init; }
 }

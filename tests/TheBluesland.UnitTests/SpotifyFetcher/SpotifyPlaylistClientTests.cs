@@ -30,7 +30,60 @@ public sealed class SpotifyPlaylistClientTests
         found.Summary.CoverImageUrl.ShouldBe("https://i.scdn.co/image/cover.jpg");
         found.Summary.TrackCount.ShouldBe(2);
         found.Summary.SnapshotId.ShouldBe("snapshot-abc");
+        found.Summary.IsPublic.ShouldBeTrue();
         found.Summary.Artists.ShouldBe(["Eric Clapton", "Traffic"], ignoreOrder: true);
+    }
+
+    [Fact]
+    public async Task FetchAsync_maps_a_false_public_field_to_IsPublic_false()
+    {
+        // Auto-unpublish-private-playlists spec: this is the fact the sync tool acts on, so a
+        // false "public" must survive the mapping distinctly from a missing one.
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+        {
+            var absolutePath = request.RequestUri!.AbsolutePath;
+            if (absolutePath == $"/v1/playlists/{PlaylistId}")
+            {
+                return JsonResponse(
+                    """
+                    { "name": "Now Private", "items": { "total": 0 }, "public": false }
+                    """);
+            }
+
+            return JsonResponse("""{ "items": [], "next": null }""");
+        }));
+        var client = new SpotifyPlaylistClient(httpClient);
+
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
+
+        var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
+        found.Summary.IsPublic.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task FetchAsync_maps_a_missing_public_field_to_IsPublic_false()
+    {
+        // Missing must never be misread as public: true - that would be the auto-publish direction
+        // this spec explicitly forbids.
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(request =>
+        {
+            var absolutePath = request.RequestUri!.AbsolutePath;
+            if (absolutePath == $"/v1/playlists/{PlaylistId}")
+            {
+                return JsonResponse(
+                    """
+                    { "name": "No Public Field", "items": { "total": 0 } }
+                    """);
+            }
+
+            return JsonResponse("""{ "items": [], "next": null }""");
+        }));
+        var client = new SpotifyPlaylistClient(httpClient);
+
+        var result = await client.FetchAsync(PlaylistId, AccessToken, knownSnapshotId: null, CancellationToken.None);
+
+        var found = result.ShouldBeOfType<SpotifyPlaylistFetchResult.Found>();
+        found.Summary.IsPublic.ShouldBeFalse();
     }
 
     [Fact]
@@ -180,7 +233,7 @@ public sealed class SpotifyPlaylistClientTests
         found.Summary.Artists.ShouldBe(["Eric Clapton", "Traffic"], ignoreOrder: true);
         found.Summary.TrackCount.ShouldBe(2); // the aggregate from the playlist endpoint, not a track array length
         typeof(SpotifyPlaylistSummary).GetProperties().Select(p => p.Name).ShouldBe(
-            ["Name", "Description", "CoverImageUrl", "TrackCount", "Artists", "ComputedEras", "EraBucketCounts", "SnapshotId"],
+            ["Name", "Description", "CoverImageUrl", "TrackCount", "Artists", "ComputedEras", "EraBucketCounts", "SnapshotId", "IsPublic"],
             ignoreOrder: true);
     }
 
@@ -377,7 +430,8 @@ public sealed class SpotifyPlaylistClientTests
           "description": "Blues rock for late nights.",
           "images": [{ "url": "https://i.scdn.co/image/cover.jpg", "height": 640, "width": 640 }],
           "items": { "total": 2 },
-          "snapshot_id": "snapshot-abc"
+          "snapshot_id": "snapshot-abc",
+          "public": true
         }
         """;
 

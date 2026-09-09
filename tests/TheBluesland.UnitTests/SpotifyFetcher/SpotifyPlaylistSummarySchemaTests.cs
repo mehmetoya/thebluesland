@@ -23,6 +23,7 @@ public sealed class SpotifyPlaylistSummarySchemaTests
         nameof(SpotifyPlaylistSummary.ComputedEras),
         nameof(SpotifyPlaylistSummary.EraBucketCounts),
         nameof(SpotifyPlaylistSummary.SnapshotId),
+        nameof(SpotifyPlaylistSummary.IsPublic),
     ];
 
     private static readonly string[] ForbiddenPropertyNameFragments =
