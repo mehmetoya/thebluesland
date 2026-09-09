@@ -89,6 +89,8 @@ public sealed class SearchReadinessIntegrationTests : IAsyncLifetime
         var urls = sitemap.Descendants(ns + "loc").Select(node => node.Value).ToList();
         urls.Count.ShouldBe(urls.Distinct().Count());
         urls.ShouldContain(Origin + "/collections");
+        urls.Count(url => url.StartsWith($"{Origin}/collections/", StringComparison.Ordinal))
+            .ShouldBe(PlaylistCollections.All.Count);
         foreach (var collection in PlaylistCollections.All)
         {
             hub.ShouldContain($"href=\"/collections/{collection.Slug}\"");

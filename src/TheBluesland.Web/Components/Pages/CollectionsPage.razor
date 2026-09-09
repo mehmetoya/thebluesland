@@ -9,13 +9,27 @@
     <h1>Playlist collections</h1>
     <p>A few places to start. Follow a sound you love or find something that suits the hour.</p>
 </section>
-<div class="collection-links">
-    @foreach (var collection in PlaylistCollections.All)
+@foreach (var dimension in DimensionOrder)
+{
+    var collections = PlaylistCollections.All.Where(collection => collection.Dimension == dimension).ToList();
+    if (collections.Count > 0)
     {
-        <a class="collection-link" href="@($"/collections/{collection.Slug}")">
-            <h2>@collection.Title</h2>
-            <p>@collection.Description</p>
-        </a>
+        <section class="collection-group" aria-label="@dimension.ToString()">
+            <h2>@dimension</h2>
+            <div class="collection-links">
+                @foreach (var collection in collections)
+                {
+                    <a class="collection-link" href="@($"/collections/{collection.Slug}")">
+                        <h3>@collection.Title</h3>
+                        <p>@collection.Description</p>
+                    </a>
+                }
+            </div>
+        </section>
     }
-</div>
+}
 <p><a href="/">Browse all playlists</a></p>
+
+@code {
+    private static readonly Dimension[] DimensionOrder = [Dimension.Genre, Dimension.Occasion, Dimension.Mood, Dimension.Era];
+}

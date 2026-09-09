@@ -749,12 +749,21 @@ body:has(.filter-mobile-toggle:checked) {
   font-size: 1.0625rem;
 }
 
-/* Permanent collection entry points share the catalogue's visual language. */
+/* Permanent collection entry points share the catalogue's visual language, grouped by dimension
+   (genre/occasion/mood/era) on the /collections index. */
+.collection-group {
+  margin-bottom: 2rem;
+}
+
+.collection-group h2 {
+  font-size: 1.375rem;
+  margin-bottom: 1rem;
+}
+
 .collection-links {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
   gap: 1rem;
-  margin-bottom: 2rem;
 }
 
 .collection-link {
@@ -764,7 +773,7 @@ body:has(.filter-mobile-toggle:checked) {
   border-radius: 0.875rem;
 }
 
-.collection-link h2 {
+.collection-link h3 {
   font-size: 1.125rem;
 }
 

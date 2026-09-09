@@ -72,7 +72,7 @@ public sealed class SmokeTests : IAsyncLifetime
             ViewportSize = new ViewportSize { Width = width, Height = 900 },
         });
         await page.GotoAsync(_baseAddress + "/collections");
-        (await page.Locator(".collection-link").CountAsync()).ShouldBe(3);
+        (await page.Locator(".collection-link").CountAsync()).ShouldBe(PlaylistCollections.All.Count);
         (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= window.innerWidth")).ShouldBeTrue();
         var screenshots = Path.Combine(AppContext.BaseDirectory, "Screenshots");
         Directory.CreateDirectory(screenshots);

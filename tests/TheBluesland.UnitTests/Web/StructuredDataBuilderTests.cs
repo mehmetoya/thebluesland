@@ -84,6 +84,35 @@ public sealed class StructuredDataBuilderTests
     }
 
     [Fact]
+    public void CollectionPageForPlaylists_lists_one_item_per_playlist_in_order()
+    {
+        var collection = PlaylistCollections.Find("blues")!;
+        var secondPlaylist = Content with { Slug = "second-playlist", Title = "Second Playlist Fixture" };
+
+        using var document = System.Text.Json.JsonDocument.Parse(StructuredDataBuilder.BuildCollectionPageForPlaylists(
+            collection,
+            [Content, secondPlaylist],
+            "https://example.com/collections/blues",
+            "https://example.com"));
+        var page = document.RootElement;
+
+        page.GetProperty("@type").GetString().ShouldBe("CollectionPage");
+        page.GetProperty("name").GetString().ShouldBe(collection.Title);
+        var itemList = page.GetProperty("mainEntity");
+        itemList.GetProperty("@type").GetString().ShouldBe("ItemList");
+        var items = itemList.GetProperty("itemListElement");
+        items.GetArrayLength().ShouldBe(2);
+
+        items[0].GetProperty("position").GetInt32().ShouldBe(1);
+        items[0].GetProperty("item").GetProperty("name").GetString().ShouldBe(Content.Title);
+        items[0].GetProperty("item").GetProperty("url").GetString().ShouldBe("https://example.com/playlists/primary-playlist");
+
+        items[1].GetProperty("position").GetInt32().ShouldBe(2);
+        items[1].GetProperty("item").GetProperty("name").GetString().ShouldBe(secondPlaylist.Title);
+        items[1].GetProperty("item").GetProperty("url").GetString().ShouldBe("https://example.com/playlists/second-playlist");
+    }
+
+    [Fact]
     public void BuildBreadcrumbList_contains_no_track_shaped_field()
     {
         var json = StructuredDataBuilder.BuildBreadcrumbList(
