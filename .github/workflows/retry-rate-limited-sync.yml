@@ -1,0 +1,71 @@
+name: Retry rate-limited Spotify sync
+
+# sync-spotify.yml can fail outright when Spotify's 429 response requires a cooldown longer than
+# SpotifyPlaylistClient's in-process retry budget (120s) - it throws rather than blocking the job
+# for hours (e.g. a real 2026-09-08 run needed an ~83000s / ~23h cooldown). This workflow checks,
+# on its own schedule, whether the most recent sync-spotify.yml run failed for exactly that reason,
+# and once Spotify's own suggested cooldown has elapsed, re-dispatches sync-spotify.yml automatically
+# - no manual re-run needed.
+#
+# Deliberately narrow: it only re-triggers when the failure log matches the known rate-limit
+# message. Any other failure reason (build break, bad credentials, GitHub API/permission issue,
+# etc.) is left alone so it surfaces to Mehmet instead of being silently retried forever.
+#
+# Reads run metadata/logs and dispatches an existing workflow only - never touches secrets,
+# content/playlists, or the database itself; all real sync work stays inside sync-spotify.yml.
+
+on:
+  schedule:
+    # Every 3 hours - frequent enough to pick up a same-day cooldown without spamming re-triggers
+    # or burning extra CI minutes on a tighter loop.
+    - cron: "0 */3 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  actions: write
+
+jobs:
+  retry-if-rate-limited:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check last sync run and retry once its rate-limit cooldown has passed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          repo="${{ github.repository }}"
+
+          last_run="$(gh run list --repo "$repo" --workflow=sync-spotify.yml --limit 1 \
+            --json databaseId,conclusion,status,createdAt)"
+          status="$(echo "$last_run" | jq -r '.[0].status // empty')"
+          conclusion="$(echo "$last_run" | jq -r '.[0].conclusion // empty')"
+          run_id="$(echo "$last_run" | jq -r '.[0].databaseId // empty')"
+          created_at="$(echo "$last_run" | jq -r '.[0].createdAt // empty')"
+
+          if [ "$status" != "completed" ] || [ "$conclusion" != "failure" ]; then
+            echo "Last sync run is not a completed failure ($status/$conclusion) - nothing to retry."
+            exit 0
+          fi
+
+          log="$(gh run view "$run_id" --repo "$repo" --log 2>&1 || true)"
+          wait_seconds="$(echo "$log" \
+            | grep -oE 'Spotify rate limit requires waiting [0-9]+ seconds' \
+            | grep -oE '[0-9]+' | head -1 || true)"
+
+          if [ -z "$wait_seconds" ]; then
+            echo "Last sync run (id $run_id) failed for a reason other than the known Spotify rate limit - not auto-retrying, needs a human look."
+            exit 0
+          fi
+
+          created_epoch="$(date -u -d "$created_at" +%s)"
+          ready_epoch="$((created_epoch + wait_seconds))"
+          now_epoch="$(date -u +%s)"
+
+          if [ "$now_epoch" -lt "$ready_epoch" ]; then
+            echo "Rate-limit cooldown not over yet - ready at $(date -u -d "@$ready_epoch" --iso-8601=seconds), now is $(date -u -d "@$now_epoch" --iso-8601=seconds)."
+            exit 0
+          fi
+
+          echo "Cooldown elapsed (failed run $run_id needed ${wait_seconds}s) - re-dispatching sync-spotify.yml."
+          gh workflow run sync-spotify.yml --repo "$repo"
