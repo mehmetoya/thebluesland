@@ -58,7 +58,9 @@ public sealed class PlaylistCacheSyncService
             contentByPlaylistId.TryAdd(entry.SpotifyPlaylistId, entry);
         }
 
-        foreach (var spotifyPlaylistId in spotifyPlaylistIds)
+        var orderedPlaylistIds = await OrderByStalenessAsync(spotifyPlaylistIds, cancellationToken);
+
+        foreach (var spotifyPlaylistId in orderedPlaylistIds)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -130,6 +132,32 @@ public sealed class PlaylistCacheSyncService
         return newlyUnpublishedSlugs.Count == 0
             ? summary
             : summary with { NewlyUnpublishedSlugs = newlyUnpublishedSlugs };
+    }
+
+    /// <summary>
+    /// Oldest-synced-first (never-synced sorts first, via <see cref="DateTimeOffset.MinValue"/>).
+    /// If a run gets interrupted partway through (e.g. a Spotify rate-limit cooldown longer than
+    /// this run's budget - <see cref="SpotifyPlaylistClient"/> throws rather than block for hours),
+    /// the next run reaches whichever playlists it didn't get to last time before re-touching ones
+    /// it just refreshed, instead of always restarting from the caller's fixed input order and
+    /// potentially starving the same tail-end playlists run after run.
+    /// </summary>
+    private async Task<IReadOnlyList<string>> OrderByStalenessAsync(
+        IReadOnlyCollection<string> spotifyPlaylistIds, CancellationToken cancellationToken)
+    {
+        if (spotifyPlaylistIds.Count == 0)
+        {
+            return [];
+        }
+
+        var syncedAtById = await _dbContext.SpotifyPlaylistCache
+            .Where(entry => spotifyPlaylistIds.Contains(entry.SpotifyPlaylistId))
+            .Select(entry => new { entry.SpotifyPlaylistId, entry.SyncedAt })
+            .ToDictionaryAsync(entry => entry.SpotifyPlaylistId, entry => entry.SyncedAt, StringComparer.Ordinal, cancellationToken);
+
+        return spotifyPlaylistIds
+            .OrderBy(id => syncedAtById.GetValueOrDefault(id, DateTimeOffset.MinValue))
+            .ToArray();
     }
 
     /// <summary>

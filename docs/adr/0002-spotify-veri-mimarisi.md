@@ -139,4 +139,35 @@ ediyor (branch protection bypass edilmiyor). `ci.yml` ve `deploy.yml` hâlâ `co
 
 Kabul edilen yeni operasyonel bağımlılık: bu workflow'un `gh pr merge --auto` adımının çalışması
 için repo ayarlarında "Allow auto-merge" (Settings > General) açık olmalı — kod dışı, tek seferlik
-bir adım, SEC-001/varolan secret-scoping notlarıyla aynı sınıfta.
+bir adım, SEC-001/varolan secret-scoping notlarıyla aynı sınıfta. Ayrıca bu workflow'un kendi
+`GITHUB_TOKEN`'ıyla PR açabilmesi için "Allow GitHub Actions to create and approve pull requests"
+(Settings > Actions > General > Workflow permissions) açık olmalı — gerçek bir olayla keşfedildi
+(2026-09-10, `the-songs-i-want-to-be` private yapılınca ilk otomatik çalışma bu adımda başarısız
+oldu; PR #70 ile elle düzeltildi, ardından ayar açıldı).
+
+## Sonraki karar notu (2026-09-10) — Spotify rate limit dayanıklılığı
+
+İki gerçek olayla keşfedildi: `sync-spotify.yml` bazen Spotify'ın 429 yanıtı istemci içi 120
+saniyelik yeniden deneme bütçesinin çok üzerinde bir bekleme istediğinde (gözlemlenen bir örnekte
+~83000 saniye, yaklaşık 23 saat) tamamen hata verip çıkıyordu — `SpotifyPlaylistClient` bu süre
+kadar job içinde beklemek yerine (30 dakikalık job timeout'unu aşacağı için) hata fırlatmayı tercih
+ediyor. Bu iki dayanıklılık kararını doğurdu:
+
+1. **`PlaylistCacheSyncService.SyncAsync` artık playlist'leri en son senkronize edilenden en eskiye
+   değil, en eski `synced_at`'tan en yeniye doğru işliyor** (hiç senkronize edilmemiş olanlar en
+   önde). Zaten her playlist ayrı ayrı kaydediliyordu (`SaveChangesAsync` döngü içinde) — bu, bir
+   çalışma yarıda kesildiğinde önceki ilerlemenin kaybolmadığını garanti ediyordu ama hangi
+   playlist'lerin "sırada" kaldığını belirlemiyordu. Yeni sıralamayla, bir çalışma rate limit
+   yüzünden yarıda kesilirse bir sonraki çalışma otomatik olarak tam da yetişilemeyen playlist'lerle
+   başlıyor — ayrı bir "hold/pending" durumu veya yeni bir tablo/alan eklemeden, var olan
+   `synced_at` alanından doğal olarak çıkıyor.
+2. **Yeni `retry-rate-limited-sync.yml` workflow'u**, `sync-spotify.yml`'in son çalışmasını 3 saatte
+   bir kontrol ediyor; hata mesajı tam olarak bilinen rate-limit metnini içeriyorsa ve Spotify'ın
+   istediği bekleme süresi geçmişse `sync-spotify.yml`'i otomatik yeniden tetikliyor. Başka bir
+   sebepten başarısız olursa (build hatası, izin sorunu vb.) dokunmuyor — bu, gerçek bir hatanın
+   sonsuza kadar sessizce yeniden denenip insana hiç görünmemesini engelliyor. Bu workflow hiçbir
+   Spotify/DB credential'ı tutmuyor, yalnızca `actions: write` (workflow tetikleme) izni var.
+
+Bu, madde 5'i (senkron kaynağı editoryal içeriktir) veya madde 2'yi (track listesi kalıcı
+saklanmaz) değiştirmiyor — yalnızca hangi sırayla ve ne zaman senkron denendiğiyle ilgili,
+operasyonel bir dayanıklılık kararı.

@@ -192,11 +192,12 @@ inside the web app or the PR/deploy pipelines:
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
-| `sync-spotify.yml` | Monthly cron, or manual | Refreshes `spotify_playlist_cache` for every playlist and auto-unpublishes any playlist Spotify now reports as private (`docs/specs/auto-unpublish-private-playlists.md`) via a bot-opened, auto-merged pull request — the only workflow with write access to the repository, scoped to this one job. `mode: sync` (default) skips playlists whose Spotify `snapshot_id` hasn't changed since the last run; `resync-eras` forces a full re-read (only needed after the era-bucket rules themselves change); `list-playlists`/`dump-cache` are read-only discovery modes. |
+| `sync-spotify.yml` | Monthly cron, or manual | Refreshes `spotify_playlist_cache` for every playlist and auto-unpublishes any playlist Spotify now reports as private (`docs/specs/auto-unpublish-private-playlists.md`) via a bot-opened, auto-merged pull request — the only workflow with write access to the repository, scoped to this one job. `mode: sync` (default) skips playlists whose Spotify `snapshot_id` hasn't changed since the last run and processes the least-recently-synced playlists first, so a run interrupted mid-list (e.g. a Spotify rate-limit cooldown) resumes with whatever it didn't reach last time instead of restarting from the same point; `resync-eras` forces a full re-read (only needed after the era-bucket rules themselves change); `list-playlists`/`dump-cache` are read-only discovery modes. |
+| `retry-rate-limited-sync.yml` | Every 3 hours, or manual | Re-dispatches `sync-spotify.yml` automatically once a detected Spotify rate-limit cooldown has elapsed — only for that specific known failure signature; any other failure is left alone so it still surfaces to Mehmet. Holds no Spotify/database credential, only `actions: write`. |
 | `report-eras.yml` | Manual | Prints a per-playlist era-distribution report from the cache's stored bucket counts — a plain database read, no Spotify call, safe to re-run any time. |
 | `suggest-curator-note.yml` | Manual | Drafts a curator-note suggestion for one playlist via Gemini, from the cache's public fields only; never writes to `content/playlists/*.md` — Mehmet applies it through a normal PR if he agrees. |
 
-Each of these three is the *only* workflow allowed to hold its particular external credential (see
+Each of `sync-spotify.yml`, `report-eras.yml` and `suggest-curator-note.yml` is the *only* workflow allowed to hold its particular external credential (see
 [Spotify cache database access](#-spotify-cache-database-access-sec-001) below) — `ci.yml` and
 `deploy.yml` can reach neither Spotify nor any AI provider, enforced by regression tests, not just
 convention.
