@@ -166,6 +166,70 @@ public sealed class PlaylistCacheSyncServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task SyncAsync_processes_the_least_recently_synced_playlist_first()
+    {
+        // Resilience for a run interrupted mid-list (e.g. a Spotify rate-limit cooldown): the
+        // service must not always restart from the caller's fixed input order, or a recurring
+        // interruption could starve the same tail-end playlists forever. Staleness-first means a
+        // playlist skipped by one interrupted run is exactly the one the next run reaches first.
+        const string stalePlaylistId = "stale-playlist-id";
+        const string freshPlaylistId = AvailablePlaylistId;
+
+        await using (var seedContext = await CreateMigratedDbContextAsync())
+        {
+            seedContext.SpotifyPlaylistCache.AddRange(
+                new()
+                {
+                    SpotifyPlaylistId = stalePlaylistId,
+                    Name = "Stale",
+                    TrackCount = 0,
+                    Artists = [],
+                    SyncedAt = DateTimeOffset.UtcNow.AddDays(-60),
+                    IsAvailable = true,
+                },
+                new()
+                {
+                    SpotifyPlaylistId = freshPlaylistId,
+                    Name = "Fresh",
+                    TrackCount = 0,
+                    Artists = [],
+                    SyncedAt = DateTimeOffset.UtcNow.AddDays(-1),
+                    IsAvailable = true,
+                });
+            await seedContext.SaveChangesAsync();
+        }
+
+        var callOrder = new List<string>();
+        var handler = new FakeHttpMessageHandler(request =>
+        {
+            var absolutePath = request.RequestUri!.AbsolutePath;
+            foreach (var id in new[] { stalePlaylistId, freshPlaylistId })
+            {
+                if (absolutePath == $"/v1/playlists/{id}")
+                {
+                    callOrder.Add(id);
+                    return JsonResponse("""{ "name": "x", "items": { "total": 0 } }""");
+                }
+
+                if (absolutePath == $"/v1/playlists/{id}/items")
+                {
+                    return JsonResponse("""{"items":[],"next":null}""");
+                }
+            }
+
+            throw new InvalidOperationException($"Unexpected request path '{absolutePath}'.");
+        });
+
+        await using var dbContext = await CreateMigratedDbContextAsync();
+        var service = new PlaylistCacheSyncService(new SpotifyPlaylistClient(new HttpClient(handler)), dbContext);
+
+        // Passed in the "wrong" order (fresh first) - the service must still reach the stale one first.
+        await service.SyncAsync([freshPlaylistId, stalePlaylistId], AccessToken, CancellationToken.None);
+
+        callOrder.ShouldBe([stalePlaylistId, freshPlaylistId]);
+    }
+
+    [Fact]
     public async Task SyncAsync_with_no_playlist_ids_makes_no_spotify_calls_and_writes_nothing()
     {
         var handler = new FakeHttpMessageHandler(
