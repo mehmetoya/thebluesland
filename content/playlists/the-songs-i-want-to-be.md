@@ -14,8 +14,7 @@ occasions:
   - headphones
 eras:
   - mixed-era
-status: published
-publishedAt: 2026-09-05
+status: draft
 ---
 
 Eric Clapton and Lou Reed bring different voices to this small selection. The title offers an invitation to think about what a song can mean to the person choosing it.
