@@ -28,6 +28,7 @@ public static class WebHostFactory
     // spotify_playlist_cache read path above.
     public const string AnalyticsConnectionStringName = "Analytics";
     private const string VisitorHashPepperConfigKey = "Analytics:VisitorHashPepper";
+    private const int DashboardTopPlaylistsLimit = 20;
     private const long SocialCardCacheSizeBytes = 16 * 1024 * 1024;
     private const long SocialCardMaximumBodySizeBytes = 1024 * 1024;
     private static readonly TimeSpan SocialCardCacheDuration = TimeSpan.FromHours(24);
@@ -60,6 +61,11 @@ public static class WebHostFactory
         // handler) so a missing value fails the same way a wrong one does - no special-cased "not
         // configured" branch to forget.
         var cacheHealthKey = builder.Configuration["Diagnostics:CacheHealthKey"];
+
+        // Gates /dashboard below. Same reasoning as cacheHealthKey immediately above - read once
+        // here so a missing value 404s exactly like a wrong one, via the same IsAuthorizedByKey
+        // helper (docs/specs/analytics-dashboard.md, Design section 2).
+        var analyticsDashboardKey = builder.Configuration["Diagnostics:AnalyticsDashboardKey"];
 
         // docs/specs/visitor-and-playlist-click-analytics.md, Design section 3: a random secret
         // (Render env var `Analytics__VisitorHashPepper`, never committed) so VisitorHash cannot be
@@ -269,7 +275,7 @@ public static class WebHostFactory
             IDbContextFactory<TheBlueslandDbContext> dbContextFactory,
             CancellationToken cancellationToken) =>
         {
-            if (!IsAuthorizedCacheHealthRequest(context, cacheHealthKey))
+            if (!IsAuthorizedByKey(context, cacheHealthKey))
             {
                 return Results.NotFound();
             }
@@ -322,6 +328,63 @@ public static class WebHostFactory
             {
                 return Results.Json(new { reachable = false, errorType = ex.GetType().Name });
             }
+        });
+
+        // docs/specs/analytics-dashboard.md: single-owner diagnostic page over the same
+        // AnalyticsDbContext PageViewRecorder already writes through - now read-capable per Design
+        // section 1 (analytics_writer's SELECT grant on page_view_events, widened by hand on the
+        // real Neon database 2026-09-11; create-analytics-role.sql's header comment documents it).
+        // Gated exactly like /health/cache (IsAuthorizedByKey, 404 on missing/wrong key) but keyed
+        // on its own Diagnostics__AnalyticsDashboardKey secret - never reuses cacheHealthKey, so
+        // rotating one gate never affects the other. Renders plain, unstyled HTML (no <style> block:
+        // this app's CSP has no 'unsafe-inline' for style-src) via AnalyticsDashboardHtmlBuilder.
+        app.MapGet("/dashboard", async (
+            HttpContext context,
+            IDbContextFactory<AnalyticsDbContext> dbContextFactory,
+            CancellationToken cancellationToken) =>
+        {
+            if (!IsAuthorizedByKey(context, analyticsDashboardKey))
+            {
+                return Results.NotFound();
+            }
+
+            await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+            // Spec Design section 2's example shape, verbatim: group by the UTC calendar date, count
+            // distinct visitor hashes within it. Only this query is date-limited (last 30 days) -
+            // the two playlist rankings below are deliberately all-time ("what's popular", not
+            // "what's popular this month" - no date-range picker in this iteration).
+            var cutoff = DateTimeOffset.UtcNow.AddDays(-30);
+            var dailyUniqueRows = await dbContext.PageViewEvents
+                .Where(e => e.EventType == "page_view" && e.OccurredAt >= cutoff)
+                .GroupBy(e => e.OccurredAt.Date)
+                .Select(g => new { Day = g.Key, Unique = g.Select(e => e.VisitorHash).Distinct().Count() })
+                .OrderByDescending(g => g.Day)
+                .ToListAsync(cancellationToken);
+            var dailyUniques = dailyUniqueRows
+                .Select(row => new DailyUniqueVisitorCount(DateOnly.FromDateTime(row.Day), row.Unique))
+                .ToList();
+
+            var topByViewRows = await dbContext.PageViewEvents
+                .Where(e => e.EventType == "page_view" && e.PlaylistSlug != null)
+                .GroupBy(e => e.PlaylistSlug!)
+                .Select(g => new { Slug = g.Key, Count = g.Count() })
+                .OrderByDescending(g => g.Count)
+                .Take(DashboardTopPlaylistsLimit)
+                .ToListAsync(cancellationToken);
+            var topByView = topByViewRows.Select(row => new PlaylistEventCount(row.Slug, row.Count)).ToList();
+
+            var topByClickRows = await dbContext.PageViewEvents
+                .Where(e => e.EventType == "spotify_click" && e.PlaylistSlug != null)
+                .GroupBy(e => e.PlaylistSlug!)
+                .Select(g => new { Slug = g.Key, Count = g.Count() })
+                .OrderByDescending(g => g.Count)
+                .Take(DashboardTopPlaylistsLimit)
+                .ToListAsync(cancellationToken);
+            var topByClick = topByClickRows.Select(row => new PlaylistEventCount(row.Slug, row.Count)).ToList();
+
+            var html = AnalyticsDashboardHtmlBuilder.Build(dailyUniques, topByView, topByClick);
+            return Results.Content(html, "text/html");
         });
 
         // Only published content enters the sitemap. SiteUrl uses the configured public origin,
@@ -407,7 +470,10 @@ public static class WebHostFactory
 
     // Length-checked before FixedTimeEquals (which requires equal-length spans) so an unconfigured
     // or wrong-length key still compares in a way that reveals nothing timing-wise beyond "no".
-    private static bool IsAuthorizedCacheHealthRequest(HttpContext context, string? configuredKey)
+    // Shared by /health/cache and /dashboard (docs/specs/analytics-dashboard.md, Design section 2) -
+    // extracted here once a second call site needed the exact same query-key gate (respond 404 on
+    // any mismatch) rather than duplicating it verbatim.
+    private static bool IsAuthorizedByKey(HttpContext context, string? configuredKey)
     {
         if (string.IsNullOrEmpty(configuredKey))
         {
