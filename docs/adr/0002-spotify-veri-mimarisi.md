@@ -188,11 +188,14 @@ Sınır aynı titizlikle korundu, sadece iki ayrı yazma yüzeyi oldu:
   bağımsız — aynı context'e yeni bir `DbSet` eklenmedi, çünkü bu iki connection string'in (biri
   salt-okunur cache, biri yazma-yetkili analytics) aynı context üzerinden ayrıştırılmasını
   imkansız kılardı.
-- Yeni `analytics_writer` rolü (`create-analytics-role.sql`) yalnızca `page_view_events` tablosuna
-  `INSERT` yapabiliyor — o tabloyu bile `SELECT` edemiyor (Mehmet kendi admin oturumuyla okuyor),
+- Yeni `analytics_writer` rolü (`create-analytics-role.sql`) `page_view_events` tablosuna `INSERT`
+  yapabiliyor ve yalnızca kendi ürettiği `id` sütununu geri okuyabiliyor (EF Core'un
+  `INSERT ... RETURNING id` ürettiği için Postgres'in zorunlu tuttuğu tek istisna — 2026-09-11'de
+  production'da bulundu, script'in kendi başlık yorumunda ayrıntılı). Gerçek olay içeriği
+  (`path`, `event_type`, `playlist_slug`, `visitor_hash`, `occurred_at`) hiçbir şekilde okunamıyor,
   ve `spotify_playlist_cache`'e hiçbir erişimi yok. Testcontainers'lı bir test
-  (`AnalyticsRoleTests.cs`) bunun dördünü de gerçek bir Postgres'e karşı kanıtlıyor — yalnızca
-  yorum satırı değil.
+  (`AnalyticsRoleTests.cs`) bu sınırları gerçek bir Postgres'e karşı kanıtlıyor — yalnızca yorum
+  satırı değil.
 - Hiçbir ham IP adresi saklanmıyor, hiçbir cookie kullanılmıyor: `visitor_hash = SHA256(pepper +
   UTC-tarih + ip + user-agent)` — tarih bileşeni yüzünden aynı ziyaretçi her gün farklı hash'e sahip
   oluyor, bu da günlük yaklaşık tekil ziyaretçi sayısını (`COUNT(DISTINCT visitor_hash)`) ham veriyi

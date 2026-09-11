@@ -62,27 +62,60 @@ public sealed class AnalyticsRoleTests : IAsyncLifetime
     [Fact]
     public async Task AnalyticsWriter_insert_into_page_view_events_succeeds()
     {
-        await using var connection = new NpgsqlConnection(BuildRoleConnectionString());
-        await connection.OpenAsync();
-        await using var command = connection.CreateCommand();
-        command.CommandText = InsertEventSql();
+        // Regression test (2026-09-11 production incident): a raw INSERT with no RETURNING clause
+        // (the old version of this test) passed even when the role lacked SELECT on the id column,
+        // because EF Core's Npgsql provider generates INSERT ... RETURNING id for the identity
+        // column - which Postgres rejects without column-level SELECT - and that only ever showed
+        // up against real production traffic. Going through AnalyticsDbContext/SaveChangesAsync
+        // here exercises the actual runtime code path (PageViewRecorder), not a hand-written
+        // approximation of it.
+        var optionsBuilder = new DbContextOptionsBuilder<AnalyticsDbContext>()
+            .UseNpgsql(BuildRoleConnectionString());
+        await using var context = new AnalyticsDbContext(optionsBuilder.Options);
+        context.PageViewEvents.Add(new()
+        {
+            OccurredAt = DateTimeOffset.UtcNow,
+            EventType = "page_view",
+            Path = "/",
+            PlaylistSlug = null,
+            VisitorHash = "test-hash",
+        });
 
-        var affectedRows = await command.ExecuteNonQueryAsync();
-
-        affectedRows.ShouldBe(1);
+        await context.SaveChangesAsync();
     }
 
     [Fact]
-    public async Task AnalyticsWriter_select_from_page_view_events_is_rejected()
+    public async Task AnalyticsWriter_select_of_event_content_from_page_view_events_is_rejected()
     {
+        // analytics_writer has column-level SELECT on `id` only (required for EF Core's
+        // INSERT ... RETURNING id - see create-analytics-role.sql's 2026-09-11 incident note).
+        // This is the boundary that actually matters: no event content is ever readable back,
+        // even though a narrow, unavoidable id-only exception exists (see the next test).
+        await using var connection = new NpgsqlConnection(BuildRoleConnectionString());
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "select visitor_hash from page_view_events";
+
+        var exception = await Should.ThrowAsync<PostgresException>(() => command.ExecuteScalarAsync());
+
+        exception.SqlState.ShouldBe(PostgresErrorCodes.InsufficientPrivilege);
+    }
+
+    [Fact]
+    public async Task AnalyticsWriter_can_count_rows_but_not_read_their_content()
+    {
+        // Documents an intentional, narrow side effect of the id-only SELECT grant: PostgreSQL
+        // allows count(*) once a role has ANY column-level privilege on a table, since counting
+        // rows doesn't read column values. This reveals row existence/count only - visitor_hash,
+        // path, event_type etc. remain unreadable (previous test).
         await using var connection = new NpgsqlConnection(BuildRoleConnectionString());
         await connection.OpenAsync();
         await using var command = connection.CreateCommand();
         command.CommandText = "select count(*) from page_view_events";
 
-        var exception = await Should.ThrowAsync<PostgresException>(() => command.ExecuteScalarAsync());
+        var count = await command.ExecuteScalarAsync();
 
-        exception.SqlState.ShouldBe(PostgresErrorCodes.InsufficientPrivilege);
+        count.ShouldNotBeNull();
     }
 
     [Fact]
@@ -137,12 +170,4 @@ public sealed class AnalyticsRoleTests : IAsyncLifetime
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }
-
-    private static string InsertEventSql() =>
-        """
-        insert into page_view_events
-            (occurred_at, event_type, path, playlist_slug, visitor_hash)
-        values
-            (now(), 'page_view', '/', null, 'test-hash')
-        """;
 }

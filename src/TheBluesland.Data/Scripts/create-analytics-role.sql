@@ -3,9 +3,20 @@
 -- write-capable database credential the production web app has ever held (ADR-0002 madde 4:
 -- previously read-only only). To keep that as narrow as possible, this role is completely
 -- disjoint from spotify_cache_readonly/spotify_cache_readwrite (create-spotify-cache-roles.sql):
--- it can INSERT into page_view_events and nothing else - no SELECT on page_view_events (Mehmet
--- reads via his own Neon SQL editor session, using his own admin credentials, not this role), and
--- no access of any kind to spotify_playlist_cache.
+-- it can INSERT into page_view_events and read back nothing except the id column it just
+-- generated - no SELECT on any other column, and no access of any kind to spotify_playlist_cache.
+--
+-- 2026-09-11 production incident: the version of this script without the schema USAGE and
+-- column-level id SELECT grants below passed AnalyticsRoleTests.cs (which exercises a raw,
+-- RETURNING-free INSERT) but failed in real production traffic with "permission denied for table
+-- page_view_events". Root cause: EF Core's Npgsql provider generates
+-- `INSERT ... RETURNING id` for the identity column, and PostgreSQL requires SELECT privilege on
+-- any column named in a RETURNING clause - INSERT privilege alone is not enough. Fixed by granting
+-- SELECT on just the id column (not the whole table, preserving the "can't read event content"
+-- guarantee) and by granting schema USAGE explicitly rather than assuming Neon grants it to new
+-- roles by default. AnalyticsRoleTests.cs was also fixed to insert via a real
+-- IDbContextFactory<AnalyticsDbContext> (the actual runtime code path) instead of hand-written SQL,
+-- so a future regression here fails the test instead of only showing up in production.
 --
 -- Run this AFTER the TheBluesland.Data migrations for AnalyticsDbContext have been applied (the
 -- page_view_events table must already exist).
@@ -53,5 +64,7 @@ BEGIN
 END
 $$;
 
+GRANT USAGE ON SCHEMA public TO analytics_writer;
 GRANT INSERT ON page_view_events TO analytics_writer;
+GRANT SELECT (id) ON page_view_events TO analytics_writer;
 GRANT USAGE, SELECT ON SEQUENCE page_view_events_id_seq TO analytics_writer;
