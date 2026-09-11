@@ -55,7 +55,10 @@
     @* US-010 AC3/FR-022: always present (even when the cache is unavailable, per FR-024) since it
        is built only from the editorial spotifyPlaylistId, never from cache data. US-012 AC2 adds
        HasValidSpotifyPlaylistId: an unvalidated id must not become a Spotify URL at all, so this
-       link is simply omitted rather than pointing somewhere unvalidated. *@
+       link is simply omitted rather than pointing somewhere unvalidated.
+       docs/specs/visitor-and-playlist-click-analytics.md, Design section 5: routes through
+       /out/{slug} (WebHostFactory) rather than linking straight to open.spotify.com, so the click
+       is recorded as a spotify_click event before the redirect. *@
     @if (HasValidSpotifyPlaylistId)
     {
         <a href="@OpenInSpotifyUrl" class="open-in-spotify" target="_blank" rel="noopener noreferrer">
@@ -105,7 +108,7 @@
 
     private bool CanPlay => CacheSnapshot.IsPlayable && HasValidSpotifyPlaylistId;
 
-    private string OpenInSpotifyUrl => $"https://open.spotify.com/playlist/{Content.SpotifyPlaylistId}";
+    private string OpenInSpotifyUrl => $"/out/{Content.Slug}";
 
     private PlaylistCacheSnapshot GetRelatedCacheSnapshot(PlaylistContent related) =>
         RelatedCacheSnapshots.GetValueOrDefault(related.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable);

@@ -4,6 +4,7 @@
     <!-- Embedded so both TheBluesland.UnitTests and any future Neon-setup tooling can read the
          role script via Assembly.GetManifestResourceStream instead of a fragile relative path. -->
     <EmbeddedResource Include="Scripts/create-spotify-cache-roles.sql" />
+    <EmbeddedResource Include="Scripts/create-analytics-role.sql" />
   </ItemGroup>
 
   <ItemGroup>

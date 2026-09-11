@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using TheBluesland.Data;
+using TheBluesland.Web.Analytics;
 using TheBluesland.Web.Cache;
 using TheBluesland.Web.Components;
 using TheBluesland.Web.Content;
@@ -21,6 +22,12 @@ namespace TheBluesland.Web;
 public static class WebHostFactory
 {
     public const string ConnectionStringName = "SpotifyPlaylistCache";
+
+    // docs/specs/visitor-and-playlist-click-analytics.md, Design section 2: a second, disjoint
+    // connection string/role (analytics_writer) - never shares a role or connection with the
+    // spotify_playlist_cache read path above.
+    public const string AnalyticsConnectionStringName = "Analytics";
+    private const string VisitorHashPepperConfigKey = "Analytics:VisitorHashPepper";
     private const long SocialCardCacheSizeBytes = 16 * 1024 * 1024;
     private const long SocialCardMaximumBodySizeBytes = 1024 * 1024;
     private static readonly TimeSpan SocialCardCacheDuration = TimeSpan.FromHours(24);
@@ -54,6 +61,12 @@ public static class WebHostFactory
         // configured" branch to forget.
         var cacheHealthKey = builder.Configuration["Diagnostics:CacheHealthKey"];
 
+        // docs/specs/visitor-and-playlist-click-analytics.md, Design section 3: a random secret
+        // (Render env var `Analytics__VisitorHashPepper`, never committed) so VisitorHash cannot be
+        // brute-forced back to an IP by anyone without it. The local-dev fallback below is only
+        // ever used outside Render and never protects anything real.
+        var visitorHashPepper = builder.Configuration[VisitorHashPepperConfigKey] ?? "local-dev-pepper-not-for-production";
+
         // Local hostnames permit local development; public traffic must use the configured host or
         // one of the legacy hosts that get redirected to it below (2026-09-09 domain migration -
         // SPEC-custom-domain-migration.md). Without these here, HostFilteringMiddleware would
@@ -77,6 +90,20 @@ public static class WebHostFactory
                 ?? "Host=localhost;Database=thebluesland;Username=postgres;Password=postgres";
             options.UseNpgsql(connectionString);
         });
+
+        // docs/specs/visitor-and-playlist-click-analytics.md, Design section 2: its own
+        // IDbContextFactory, its own connection string - never shared with TheBlueslandDbContext
+        // above, so a bug in this write path cannot touch spotify_playlist_cache.
+        builder.Services.AddDbContextFactory<AnalyticsDbContext>(options =>
+        {
+            var connectionString = builder.Configuration.GetConnectionString(AnalyticsConnectionStringName)
+                ?? "Host=localhost;Database=thebluesland;Username=postgres;Password=postgres";
+            options.UseNpgsql(connectionString);
+        });
+        // Holds only the (effectively singleton-lifetime) db context factory and logger - never any
+        // request-scoped state - so it is safe to use from a detached fire-and-forget task that may
+        // still be running after the request that started it has ended.
+        builder.Services.AddSingleton<PageViewRecorder>();
 
         builder.Services.AddSingleton<StaticAssetVersion>();
         builder.Services.AddSingleton<PlaylistContentReader>();
@@ -158,6 +185,37 @@ public static class WebHostFactory
                 "form-action 'self'");
 
             await next();
+        });
+
+        // docs/specs/visitor-and-playlist-click-analytics.md, Design section 4: runs next() first
+        // so the real response status is known - a 404 for an unknown /playlists/{slug} must never
+        // be logged as a view - then, only for a 200 on one of PageViewRoute's known content
+        // routes, fires off a fire-and-forget write. /out/{slug} is deliberately excluded here
+        // (PageViewRoute never matches it): that endpoint logs its own spotify_click event instead
+        // (Design section 5).
+        app.Use(async (context, next) =>
+        {
+            await next();
+
+            if (context.Response.StatusCode != StatusCodes.Status200OK)
+            {
+                return;
+            }
+
+            var path = context.Request.Path.Value ?? string.Empty;
+            if (!PageViewRoute.TryClassify(path, out var playlistSlug))
+            {
+                return;
+            }
+
+            var visitorHash = VisitorHashing.Compute(
+                visitorHashPepper,
+                DateOnly.FromDateTime(DateTime.UtcNow),
+                context.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
+                context.Request.Headers.UserAgent.ToString());
+
+            context.RequestServices.GetRequiredService<PageViewRecorder>()
+                .RecordFireAndForget("page_view", path, playlistSlug, visitorHash, DateTimeOffset.UtcNow);
         });
 
         // US-013 AC1/spec 12.2: serves wwwroot/css/app.css (the compiled Tailwind stylesheet) and
@@ -314,6 +372,33 @@ public static class WebHostFactory
                 ? Results.NotFound()
                 : Results.File(generator.Generate(content.Title, content.Summary), "image/png");
         }).CacheOutput(policy => policy.Expire(SocialCardCacheDuration).SetVaryByQuery([]));
+
+        // docs/specs/visitor-and-playlist-click-analytics.md, Design section 5: resolves the slug
+        // through PlaylistContentRepository - never a caller-supplied redirect target - so an
+        // unknown slug 404s and redirects nowhere. This is a deliberate open-redirect prevention,
+        // not incidental: never change this to accept/echo a raw target URL from the request.
+        app.MapGet("/out/{slug}", async (
+            string slug,
+            HttpContext context,
+            PlaylistContentRepository repository,
+            PageViewRecorder recorder,
+            CancellationToken cancellationToken) =>
+        {
+            var content = await repository.FindBySlugAsync(slug, cancellationToken);
+            if (content is null)
+            {
+                return Results.NotFound();
+            }
+
+            var visitorHash = VisitorHashing.Compute(
+                visitorHashPepper,
+                DateOnly.FromDateTime(DateTime.UtcNow),
+                context.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
+                context.Request.Headers.UserAgent.ToString());
+            recorder.RecordFireAndForget("spotify_click", $"/out/{slug}", slug, visitorHash, DateTimeOffset.UtcNow);
+
+            return Results.Redirect($"https://open.spotify.com/playlist/{content.SpotifyPlaylistId}");
+        });
 
         app.MapRazorComponents<App>();
 
