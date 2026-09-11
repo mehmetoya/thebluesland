@@ -230,8 +230,11 @@ header comment for the exact steps, including rotating the placeholder passwords
 `page_view_events` (visitor/playlist-click analytics, `docs/specs/visitor-and-playlist-click-analytics.md`)
 is a second, completely separate table/role pair, created by
 [`src/TheBluesland.Data/Scripts/create-analytics-role.sql`](src/TheBluesland.Data/Scripts/create-analytics-role.sql) —
-`analytics_writer` can only `INSERT` into `page_view_events` (not even `SELECT` it back) and has no
-access at all to `spotify_playlist_cache`. Its connection string is `ConnectionStrings__Analytics`,
+`analytics_writer` can `INSERT` into `page_view_events` and read back only the `id` column it just
+generated (required for EF Core's `INSERT ... RETURNING id`; see the role script's 2026-09-11
+incident note) — every actual event column (`path`, `event_type`, `playlist_slug`, `visitor_hash`,
+`occurred_at`) stays unreadable to it, and it has no access at all to `spotify_playlist_cache`. Its
+connection string is `ConnectionStrings__Analytics`,
 a Render environment variable — **the first write-capable database credential the production web
 app has ever held** (previously `spotify_cache_readonly` was its only DB access). No raw IP address
 is ever stored: each event's `visitor_hash` is `SHA256(pepper + UTC-date + ip + user-agent)`, so the
