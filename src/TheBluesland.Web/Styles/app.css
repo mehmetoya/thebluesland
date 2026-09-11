@@ -199,6 +199,18 @@
   color: var(--color-accent);
 }
 
+/* Groups nav + the theme toggle into one flex-wrap unit, so .site-header-inner's space-between
+   layout only ever wraps this whole cluster as a piece - not the toggle alone onto its own line.
+   Fixes a real production bug (2026-09-11, iPhone Pro Max width): wordmark + nav fit on one line
+   by themselves, so the toggle - previously a third independent space-between child - wrapped to
+   a second line completely by itself, flush left. */
+.site-header-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+
 .site-nav {
   display: flex;
   flex-wrap: wrap;
