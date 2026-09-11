@@ -93,6 +93,12 @@ editorial and calm rather than another generic streaming-app UI
 - 🌑 **Palette** — dark-first by design: a deep navy/charcoal background (`#12141b`), warm
   off-white text (`#ece5d8`), and exactly one warm accent, amber (`#d99a4e`). No Spotify-green
   anywhere.
+- 🌗 **Light mode is opt-in, not the default.** A header toggle switches to a warm cream/parchment
+  counterpart palette (WCAG AA-verified) that every first-time visitor still meets as dark
+  regardless of their OS color-scheme setting — the identity above is deliberately what most
+  visitors see first. Choice is remembered (`localStorage`); an external, non-deferred
+  `wwwroot/js/theme.js` (required by this app's inline-script-free CSP) applies it before first
+  paint so there's no flash of the other theme. See `docs/specs/dark-light-mode-toggle.md`.
 - **Type** — serif headings (`ui-serif`) carry the editorial voice; body text uses a system-font
   sans stack aligned with Apple's own (`-apple-system, BlinkMacSystemFont, …`) for familiar, fast,
   zero-webfont legibility.

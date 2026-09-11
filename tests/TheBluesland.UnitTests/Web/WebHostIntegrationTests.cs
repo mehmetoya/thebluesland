@@ -217,4 +217,32 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
 
         response.Headers.Contains("Content-Security-Policy").ShouldBeTrue();
     }
+
+    /// <summary>
+    /// docs/specs/dark-light-mode-toggle.md section 2: theme.js prevents a flash of the wrong theme
+    /// only if it runs synchronously, before first paint - a deferred/async script (like this app's
+    /// other two, infinite-scroll.js/share.js) would run after the document parses/the stylesheet
+    /// applies, defeating the whole point. This guards against someone "cleaning up" the tag later
+    /// by adding `defer` to match the other two scripts, or moving it after the stylesheet link.
+    /// </summary>
+    [Fact]
+    public async Task HomePage_loads_theme_script_synchronously_before_the_stylesheet()
+    {
+        var response = await _httpClient.GetAsync("/");
+        var body = await response.Content.ReadAsStringAsync();
+
+        var themeScriptIndex = body.IndexOf("/js/theme.js", StringComparison.Ordinal);
+        var stylesheetIndex = body.IndexOf("/css/app.css", StringComparison.Ordinal);
+
+        themeScriptIndex.ShouldBeGreaterThanOrEqualTo(0, body);
+        stylesheetIndex.ShouldBeGreaterThanOrEqualTo(0, body);
+        themeScriptIndex.ShouldBeLessThan(stylesheetIndex, body);
+
+        var themeScriptTagStart = body.LastIndexOf("<script", themeScriptIndex, StringComparison.Ordinal);
+        var themeScriptTagEnd = body.IndexOf('>', themeScriptIndex);
+        var themeScriptTag = body[themeScriptTagStart..themeScriptTagEnd];
+
+        themeScriptTag.ShouldNotContain("defer");
+        themeScriptTag.ShouldNotContain("async");
+    }
 }

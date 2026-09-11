@@ -15,6 +15,14 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    @* docs/specs/dark-light-mode-toggle.md section 2: no `defer`/`async` and placed BEFORE the
+       stylesheet link below - this must run synchronously, before first paint, so `data-theme` is
+       set on <html> before app.css is ever applied. A deferred script (like this file's other two)
+       would run only after the document parses, which is exactly the flash-of-wrong-theme this
+       ordering prevents. CSP's script-src 'self' has no 'unsafe-inline'/nonce, so this can't be an
+       inline <script> either - same external-file, same-origin, AssetVersion cache-busting pattern
+       as infinite-scroll.js/share.js below. *@
+    <script src="@($"/js/theme.js?v={AssetVersion.For("js/theme.js")}")"></script>
     @* Spec section 10.2: dark-first design, so the compiled Tailwind stylesheet (US-013 AC1) is
        the only stylesheet the app ever links - no inline <style> blocks or style="" attributes
        anywhere in Components/, since CSP's style-src is 'self' with no 'unsafe-inline' (US-012).
