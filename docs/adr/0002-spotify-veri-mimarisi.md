@@ -171,3 +171,31 @@ ediyor. Bu iki dayanıklılık kararını doğurdu:
 Bu, madde 5'i (senkron kaynağı editoryal içeriktir) veya madde 2'yi (track listesi kalıcı
 saklanmaz) değiştirmiyor — yalnızca hangi sırayla ve ne zaman senkron denendiğiyle ilgili,
 operasyonel bir dayanıklılık kararı.
+
+## Sonraki karar notu (2026-09-11) — production web app artık ikinci bir DB credential'ı tutuyor
+
+`docs/specs/visitor-and-playlist-click-analytics.md`: Mehmet ziyaretçi sayısı ve playlist
+tıklamalarını (`page_view`/`spotify_click`) ölçmek istedi; üçüncü taraf analytics script'i veya CSP
+gevşetmesi yerine kendi Postgres'ine (Neon) sunucu tarafında loglama seçildi. Bu, **madde 4'ün
+"production yalnızca salt-okunur bir connection string tutar" ifadesini daraltıyor**: web app artık
+ikinci, tamamen ayrık bir yazma credential'ı da tutuyor.
+
+Bu, madde 4'ün gerekçesini (Spotify/AI credential'ı hiç production'a girmesin) **ihlal etmiyor** —
+yeni credential'ın `spotify_playlist_cache`'le hiçbir ilgisi yok, hiçbir Spotify/AI erişimi yok.
+Sınır aynı titizlikle korundu, sadece iki ayrı yazma yüzeyi oldu:
+
+- Yeni, ayrı bir `AnalyticsDbContext` (bkz. `TheBluesland.Data`), `TheBlueslandDbContext`'ten tamamen
+  bağımsız — aynı context'e yeni bir `DbSet` eklenmedi, çünkü bu iki connection string'in (biri
+  salt-okunur cache, biri yazma-yetkili analytics) aynı context üzerinden ayrıştırılmasını
+  imkansız kılardı.
+- Yeni `analytics_writer` rolü (`create-analytics-role.sql`) yalnızca `page_view_events` tablosuna
+  `INSERT` yapabiliyor — o tabloyu bile `SELECT` edemiyor (Mehmet kendi admin oturumuyla okuyor),
+  ve `spotify_playlist_cache`'e hiçbir erişimi yok. Testcontainers'lı bir test
+  (`AnalyticsRoleTests.cs`) bunun dördünü de gerçek bir Postgres'e karşı kanıtlıyor — yalnızca
+  yorum satırı değil.
+- Hiçbir ham IP adresi saklanmıyor, hiçbir cookie kullanılmıyor: `visitor_hash = SHA256(pepper +
+  UTC-tarih + ip + user-agent)` — tarih bileşeni yüzünden aynı ziyaretçi her gün farklı hash'e sahip
+  oluyor, bu da günlük yaklaşık tekil ziyaretçi sayısını (`COUNT(DISTINCT visitor_hash)`) ham veriyi
+  hiç saklamadan mümkün kılıyor.
+- Yazma yolu tamamen "fire-and-forget": analytics DB'si erişilemez olduğunda sayfa sunumu hiç
+  etkilenmiyor (cache okuma yolunun mevcut graceful-degradation ilkesinin bir yazma sürümü).

@@ -149,17 +149,22 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldNotContain("<iframe");
         body.ShouldNotContain("Listen here");
-        body.ShouldContain($"href=\"https://open.spotify.com/playlist/{PrimaryPlaylistSpotifyId}\"");
+        body.ShouldContain("href=\"/out/primary-playlist\"");
     }
 
-    /// <summary>US-010 AC3: the exact `https://open.spotify.com/playlist/{id}` shape, distinct from the embed URL.</summary>
+    /// <summary>
+    /// US-010 AC3, updated by docs/specs/visitor-and-playlist-click-analytics.md Design section 5:
+    /// the link goes through the /out/{slug} redirect endpoint (so the click is recorded before
+    /// the visitor leaves the site) rather than linking straight to open.spotify.com, distinct from
+    /// the embed URL.
+    /// </summary>
     [Fact]
-    public async Task PlaylistDetailPage_open_in_spotify_link_points_to_the_direct_playlist_url_not_the_embed_url()
+    public async Task PlaylistDetailPage_open_in_spotify_link_points_through_the_out_redirect_not_the_embed_url()
     {
         var response = await _httpClient.GetAsync("/playlists/primary-playlist");
         var body = await response.Content.ReadAsStringAsync();
 
-        body.ShouldContain($"href=\"https://open.spotify.com/playlist/{PrimaryPlaylistSpotifyId}\"");
+        body.ShouldContain("href=\"/out/primary-playlist\"");
     }
 
     /// <summary>US-010 AC4: the two overlapping fixtures show; the zero-overlap fixture never does.</summary>

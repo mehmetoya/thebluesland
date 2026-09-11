@@ -121,7 +121,10 @@ public sealed class PlaylistRenderSurfaceTests
 
         html.ShouldNotContain("<iframe");
         html.ShouldNotContain("Listen here");
-        html.ShouldContain($"href=\"https://open.spotify.com/playlist/{SamplePlaylist.SpotifyPlaylistId}\"");
+        // docs/specs/visitor-and-playlist-click-analytics.md, Design section 5: routes through the
+        // /out/{slug} redirect endpoint (so the click is recorded) rather than linking straight to
+        // open.spotify.com.
+        html.ShouldContain($"href=\"/out/{SamplePlaylist.Slug}\"");
     }
 
     /// <summary>US-010 AC3/FR-024: present even when the cache is unavailable, built only from the playlist ID.</summary>
@@ -134,7 +137,7 @@ public sealed class PlaylistRenderSurfaceTests
             [nameof(PlaylistDetailView.CacheSnapshot)] = PlaylistCacheSnapshot.Unavailable,
         });
 
-        html.ShouldContain($"href=\"https://open.spotify.com/playlist/{SamplePlaylist.SpotifyPlaylistId}\"");
+        html.ShouldContain($"href=\"/out/{SamplePlaylist.Slug}\"");
     }
 
     /// <summary>US-010 AC4: related playlists (already ranked/capped upstream) render as cards.</summary>

@@ -216,14 +216,29 @@ convention.
 header comment for the exact steps, including rotating the placeholder passwords it ships with):
 
 - `spotify_cache_readonly` — SELECT only. Its connection string is stored as the Render environment
-  variable `ConnectionStrings__SpotifyPlaylistCache` (`.github/render.yaml`) — the production web
-  app's **only** runtime database access — and separately as `NEON_READONLY_CONNECTION_STRING`, a
-  GitHub Actions repository secret scoped only to `suggest-curator-note.yml` (US-016/ADR-0005;
-  Render's environment variables aren't reachable from a GitHub Actions workflow, so the same
-  role's connection string is stored a second time rather than shared).
+  variable `ConnectionStrings__SpotifyPlaylistCache` (`.github/render.yaml`) and separately as
+  `NEON_READONLY_CONNECTION_STRING`, a GitHub Actions repository secret scoped only to
+  `suggest-curator-note.yml` (US-016/ADR-0005; Render's environment variables aren't reachable from
+  a GitHub Actions workflow, so the same role's connection string is stored a second time rather
+  than shared).
 - `spotify_cache_readwrite` — SELECT/INSERT/UPDATE. Its connection string is stored as
   `NEON_SYNC_CONNECTION_STRING`, a GitHub Actions repository secret scoped only to
   `sync-spotify.yml`. It is never present in the Render production environment.
+
+### Analytics database access
+
+`page_view_events` (visitor/playlist-click analytics, `docs/specs/visitor-and-playlist-click-analytics.md`)
+is a second, completely separate table/role pair, created by
+[`src/TheBluesland.Data/Scripts/create-analytics-role.sql`](src/TheBluesland.Data/Scripts/create-analytics-role.sql) —
+`analytics_writer` can only `INSERT` into `page_view_events` (not even `SELECT` it back) and has no
+access at all to `spotify_playlist_cache`. Its connection string is `ConnectionStrings__Analytics`,
+a Render environment variable — **the first write-capable database credential the production web
+app has ever held** (previously `spotify_cache_readonly` was its only DB access). No raw IP address
+is ever stored: each event's `visitor_hash` is `SHA256(pepper + UTC-date + ip + user-agent)`, so the
+same visitor hashes differently every day. `Analytics__VisitorHashPepper` (a random secret string,
+also a Render env var) feeds that hash and must never be committed. See the role script's own header
+comment for example SQL queries (daily unique visitors, top playlists by view/click) to run in the
+Neon SQL editor.
 
 Spotify credentials (`SPOTIFY_CLIENT_ID`, `SPOTIFY_REFRESH_TOKEN`) are likewise GitHub Actions
 secrets scoped only to the monthly sync workflow, and `GEMINI_API_KEY` is scoped only to
