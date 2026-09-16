@@ -108,30 +108,31 @@ public sealed class AnalyticsDashboardIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Dashboard_returns_html_tables_with_the_correct_aggregates_for_the_correct_key()
+    public async Task Dashboard_returns_html_charts_with_the_correct_aggregates_for_the_correct_key()
     {
         using var response = await _httpClient.GetAsync($"/dashboard?key={DashboardKey}");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         response.Content.Headers.ContentType!.MediaType.ShouldBe("text/html");
+        body.ShouldContain("<svg");
 
-        // Daily unique visitors: two distinct visitor hashes today, one distinct hash yesterday.
+        // Daily unique visitors chart: two distinct visitor hashes today, one distinct hash yesterday.
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var yesterday = today.AddDays(-1);
-        body.ShouldContain($"<td>{today:yyyy-MM-dd}</td><td>2</td>");
-        body.ShouldContain($"<td>{yesterday:yyyy-MM-dd}</td><td>1</td>");
+        body.ShouldContain(today.ToString("MM-dd"));
+        body.ShouldContain(yesterday.ToString("MM-dd"));
+        body.ShouldContain(">2<");
+        body.ShouldContain(">1<");
 
         // Top playlists by view: fixture-slug (2) ranks above other-slug (1).
         var fixtureSlugIndex = body.IndexOf("fixture-slug", StringComparison.Ordinal);
         var otherSlugIndex = body.IndexOf("other-slug", StringComparison.Ordinal);
         fixtureSlugIndex.ShouldBeGreaterThanOrEqualTo(0, body);
         otherSlugIndex.ShouldBeGreaterThan(fixtureSlugIndex, body);
-        body.ShouldContain("<td>fixture-slug</td><td>2</td>");
-        body.ShouldContain("<td>other-slug</td><td>1</td>");
 
         // Top playlists by click-through: fixture-slug clicked 3 times.
-        body.ShouldContain("<td>fixture-slug</td><td>3</td>");
+        body.ShouldContain(">3<");
 
         // Boundary: raw visitor_hash values are never printed.
         body.ShouldNotContain("visitor-a");

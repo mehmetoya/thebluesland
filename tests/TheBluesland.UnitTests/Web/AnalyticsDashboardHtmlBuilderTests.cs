@@ -12,7 +12,7 @@ namespace TheBluesland.UnitTests.Web;
 public sealed class AnalyticsDashboardHtmlBuilderTests
 {
     [Fact]
-    public void Build_renders_the_daily_unique_visitor_table()
+    public void Build_renders_the_daily_unique_visitor_chart()
     {
         var html = AnalyticsDashboardHtmlBuilder.Build(
             [new DailyUniqueVisitorCount(new DateOnly(2026, 9, 10), 42)],
@@ -20,12 +20,12 @@ public sealed class AnalyticsDashboardHtmlBuilderTests
             []);
 
         html.ShouldContain("Daily unique visitors");
-        html.ShouldContain("2026-09-10");
-        html.ShouldContain("42");
+        html.ShouldContain("09-10"); // chart axis label (short form, not the full ISO date)
+        html.ShouldContain(">42<"); // value label printed above the bar
     }
 
     [Fact]
-    public void Build_renders_the_top_playlists_by_view_and_by_click_tables()
+    public void Build_renders_the_top_playlists_by_view_and_by_click_charts()
     {
         var html = AnalyticsDashboardHtmlBuilder.Build(
             [],
@@ -34,15 +34,20 @@ public sealed class AnalyticsDashboardHtmlBuilderTests
 
         html.ShouldContain("Top playlists by page view");
         html.ShouldContain("masterpieces-of-erkin-the-father");
-        html.ShouldContain("7");
+        html.ShouldContain(">7<");
         html.ShouldContain("Top playlists by Spotify click-through");
         html.ShouldContain("blue-skies-ahead");
-        html.ShouldContain("3");
+        html.ShouldContain(">3<");
     }
 
-    /// <summary>Boundary: never print a raw visitor_hash - only aggregated counts/slugs/dates.</summary>
+    /// <summary>
+    /// Boundary: never print a raw visitor_hash - only aggregated counts/slugs/dates. Also locks
+    /// down the CSP-safety guarantee the charts must preserve: every visual attribute is a plain
+    /// SVG presentation attribute, never a style="" string or a &lt;style&gt; block (this app's CSP
+    /// has no 'unsafe-inline' for style-src).
+    /// </summary>
     [Fact]
-    public void Build_does_not_render_a_style_block_or_any_visitor_hash_looking_value()
+    public void Build_renders_svg_charts_with_no_style_block_or_style_attribute()
     {
         var html = AnalyticsDashboardHtmlBuilder.Build(
             [new DailyUniqueVisitorCount(new DateOnly(2026, 9, 10), 1)],
@@ -50,7 +55,8 @@ public sealed class AnalyticsDashboardHtmlBuilderTests
             [new PlaylistEventCount("some-slug", 1)]);
 
         html.ShouldNotContain("<style");
-        html.ShouldContain("<table>");
+        html.ShouldNotContain("style=");
+        html.ShouldContain("<svg");
     }
 
     [Fact]
