@@ -132,6 +132,42 @@ engines, not just crawled by classic search bots:
   visible text and the structured data can never drift apart — a requirement of Google's own
   FAQPage guidance.
 
+### 🔌 Public playlists feed
+
+`GET /playlists.json` is a read-only, public JSON listing of every published playlist, for other
+sites to consume (mehmetoya.com fetches it once per build). It is built from the same
+`FindAllPublishedAsync` list the home grid, the collection pages and `sitemap.xml` read, so the
+set of playlists cannot drift from the site. Spec: `docs/specs/playlists-json-feed.md`.
+
+```json
+{
+  "generatedAt": "2026-09-18T12:00:00Z",
+  "playlists": [
+    {
+      "slug": "bluesland",
+      "title": "Bluesland",
+      "url": "https://thebluesland.com/playlists/bluesland",
+      "description": "Short plain-text blurb.",
+      "trackCount": 3195,
+      "image": "https://i.scdn.co/image/…",
+      "collections": ["blues"],
+      "addedAt": "2025-03-14"
+    }
+  ]
+}
+```
+
+- **Always present:** `slug`, `title`, `url` (canonical origin), `addedAt` (the playlist's
+  `publishedAt` front-matter date). **Omitted when unknown, never `null`/empty:** `description`
+  (the editorial summary), `trackCount` and `image` (from the Spotify cache, only while the playlist
+  is playable — same rule as the cards; the cover is the single URL the cards use), `collections`
+  (slugs of the `/collections/<slug>` pages it belongs to).
+- Order: `addedAt` newest first, ties by `title` (case-insensitive), then `slug` — deterministic.
+- Headers: `Content-Type: application/json; charset=utf-8`, `Cache-Control: public, max-age=300`,
+  `X-Robots-Tag: noindex`. GET only (other methods return 405); no CORS headers — it is meant for
+  server-side fetches, not browsers.
+- `slug` values are stable identifiers (validated kebab-case and unique by the content validator).
+
 ## 📁 Repository layout
 
 ```text
