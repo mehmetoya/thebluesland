@@ -8,6 +8,7 @@ using TheBluesland.Web.Analytics;
 using TheBluesland.Web.Cache;
 using TheBluesland.Web.Components;
 using TheBluesland.Web.Content;
+using TheBluesland.Web.Feed;
 using TheBluesland.Web.HealthChecks;
 using TheBluesland.Web.Seo;
 
@@ -413,6 +414,35 @@ public static class WebHostFactory
         {
             var published = await repository.FindAllPublishedAsync(cancellationToken);
             return Results.Text(AiDiscoveryGenerator.BuildLlms(context, published), "text/plain");
+        });
+
+        // docs/specs/playlists-json-feed.md: machine-readable listing for the owner's other site
+        // (fetched server-side once per build - not a browser, so deliberately no CORS headers).
+        // Built from the same FindAllPublishedAsync list the home grid, the collection pages and
+        // /sitemap.xml read, so the set of playlists cannot drift from the site. MapGet is GET-only,
+        // so HEAD/POST/... keep returning 405 like every other route here. Never touches the
+        // security-headers middleware or the CSP; /playlists.json is not a PageViewRoute, so feed
+        // fetches are not counted as visitors.
+        app.MapGet("/playlists.json", async (
+            HttpContext context,
+            PlaylistContentRepository repository,
+            PlaylistCacheLookup cacheLookup,
+            CancellationToken cancellationToken) =>
+        {
+            var published = await repository.FindAllPublishedAsync(cancellationToken);
+            var snapshots = await cacheLookup.GetSnapshotsAsync(
+                published.Select(playlist => playlist.SpotifyPlaylistId).ToList(),
+                cancellationToken);
+
+            var feed = PlaylistsFeedBuilder.Build(
+                published,
+                snapshots,
+                slug => SiteUrl.BuildAbsolute(context, $"/playlists/{slug}"),
+                DateTimeOffset.UtcNow);
+
+            context.Response.Headers.CacheControl = "public, max-age=300";
+            context.Response.Headers["X-Robots-Tag"] = "noindex";
+            return Results.Content(PlaylistsFeedBuilder.Serialize(feed), "application/json; charset=utf-8");
         });
 
         // US-011 AC3/FR-031: site-wide default social card for pages with no dedicated playlist
