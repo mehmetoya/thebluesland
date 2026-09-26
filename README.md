@@ -225,9 +225,11 @@ only, matching spec 16.2's DB-independence rule and needing no new endpoint. To 
 2. This is an external dashboard setup step with no repository-side configuration: no code, secret,
    or workflow change is required, and Render's own `healthCheckPath` (`.github/render.yaml`) stays
    on `/health/ready` unchanged — that setting governs traffic routing to a new deploy, not sleep.
-3. Free-tier instance-hours (750/month per workspace) are still spent while the service stays awake
-   around the clock; for a single service this fits within a 31-day month, but it's shared across
-   every free service in the same Render workspace.
+3. Free-tier instance-hours (750/month) are counted per Render **workspace**, not per service, and
+   an always-awake service spends up to 744 of them in a 31-day month. This service must therefore
+   be the **only** free service in its workspace: in September 2026 it shared a workspace with
+   another free service, the pool ran out on the 26th, and Render suspended both until the next
+   month. Check the workspace's Billing usage page after any change to what runs there.
 
 Everything that talks to Spotify or an AI provider runs out-of-process, on its own schedule, never
 inside the web app or the PR/deploy pipelines:
