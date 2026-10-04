@@ -18,7 +18,8 @@
         ShareUrl="@BuildAbsoluteUrl($"/playlists/{_content.Slug}")"
         CacheSnapshot="_cacheSnapshot"
         RelatedPlaylists="_relatedPlaylists"
-        RelatedCacheSnapshots="_relatedCacheSnapshots" />
+        RelatedCacheSnapshots="_relatedCacheSnapshots"
+        MixQuery="@MixQuery" />
 }
 else if (_hasLoaded && !_redirected)
 {
@@ -39,6 +40,9 @@ else if (_hasLoaded && !_redirected)
 @code {
     [Parameter]
     public string Slug { get; set; } = string.Empty;
+
+    [SupplyParameterFromQuery(Name = "mix")]
+    public string? MixQuery { get; set; }
 
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
