@@ -106,6 +106,22 @@ public sealed class PageViewAnalyticsIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Playlist_mix_selection_route_records_an_aggregated_mix_event()
+    {
+        var path = $"/playlists/{KnownSlug}";
+        var response = await _httpClient.GetAsync($"{path}?mix=more-energetic&mix-selection=related-playlist");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var rows = await WaitForRowsAsync(row => row.Path == path, expectedCount: 2);
+
+        rows.ShouldContain(row => row.EventType == "page_view" && row.PlaylistSlug == KnownSlug);
+        rows.ShouldContain(row =>
+            row.EventType == "playlist_mix_applied_more_energetic"
+            && row.PlaylistSlug == KnownSlug);
+        rows.ShouldAllBe(row => row.VisitorHash.Length == 64);
+    }
+
+    [Fact]
     public async Task Unknown_playlist_slug_404_records_no_row()
     {
         var response = await _httpClient.GetAsync("/playlists/does-not-exist");
@@ -159,13 +175,15 @@ public sealed class PageViewAnalyticsIntegrationTests : IAsyncLifetime
 
     // The write is genuinely fire-and-forget (spec Design section 4), so assertions poll for a
     // short window rather than assuming the row exists the instant the HTTP response returns.
-    private async Task<List<PageViewEvent>> WaitForRowsAsync(Func<PageViewEvent, bool> predicate)
+    private async Task<List<PageViewEvent>> WaitForRowsAsync(
+        Func<PageViewEvent, bool> predicate,
+        int expectedCount = 1)
     {
         var deadline = DateTime.UtcNow.AddSeconds(5);
         while (DateTime.UtcNow < deadline)
         {
             var rows = (await ReadAllRowsAsync()).Where(predicate).ToList();
-            if (rows.Count > 0)
+            if (rows.Count >= expectedCount)
             {
                 return rows;
             }

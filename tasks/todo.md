@@ -2,12 +2,11 @@
 
 ## Ready
 
-- [ ] Ship a follow-up enhancement if we want a true in-place playlist replacement flow instead of preview-and-navigate behavior
-- [ ] Expand the mix logic beyond heuristic ranking if editorial metadata becomes richer
+- None
 
 ## In progress
 
-- [ ] None
+- None
 
 ## Done
 
@@ -21,3 +20,8 @@
 - [x] Add regression tests for empty/loading/duplicate states
 - [x] Validate accessibility and mobile layout
 - [x] Ship the feature via PR #81 and merge it into main
+- [x] Make mode, applied-selection, and preview-dismissal state survive reloads through the URL
+- [x] Replace inert static-SSR event handlers with keyboard-accessible route links
+- [x] Weight related playlists by editorial category and use exact tags for each mix mode
+- [x] Record bounded, privacy-preserving mix-state analytics and show aggregates on the dashboard
+- [x] Add regression tests for route-state restoration, ranking, and analytics classification

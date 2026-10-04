@@ -17,9 +17,10 @@ removed, it's being narrowed differently - see Design section 1 for how this sta
    visitor is redirected to Spotify.
 3. Approximate daily unique visitor counts are derivable from the recorded data without storing any
    raw IP address or setting any cookie.
-4. Mehmet can query this data himself in the Neon SQL editor - no new UI page, no dashboard, no new
-   report workflow in this iteration (avoid building a whole reporting surface nobody asked for
-   yet; revisit if he wants one after seeing the raw data for a while).
+4. Playlist mix preview, application, and dismissal states are counted from validated query-state
+   routes using fixed event names; raw query strings are never stored.
+5. The gated analytics dashboard can show those aggregate mix-state counts alongside visitor and
+   playlist statistics.
 
 ## Design
 
@@ -53,7 +54,7 @@ public sealed class PageViewEvent
 {
     public long Id { get; init; }
     public required DateTimeOffset OccurredAt { get; init; }
-    public required string EventType { get; init; }       // "page_view" | "spotify_click"
+    public required string EventType { get; init; }       // page_view, spotify_click, or bounded playlist_mix_* event
     public required string Path { get; init; }             // e.g. "/", "/playlists/my-slug", "/out/my-slug"
     public string? PlaylistSlug { get; init; }              // set for playlist-detail views and spotify_click; null otherwise
     public required string VisitorHash { get; init; }       // see section 3 - never a raw IP
@@ -115,6 +116,14 @@ below, fires off a background write:
 - Everything else (static assets, `/health/*`, `/sitemap.xml`, `/robots.txt`, `/llms.txt`,
   `*/og-image.png`, `/out/{slug}` - that one is logged separately, see section 5) is not a
   `page_view` and must not be logged as one.
+
+For a playlist detail request with a recognized `mix` mode, the same middleware may record one
+additional state event: `playlist_mix_preview_{mode}`, `playlist_mix_applied_{mode}`, or
+`playlist_mix_dismissed_{mode}`. Mode values are allowlisted (`same_vibe`, `more_energetic`,
+`relaxed_flow`, `deeper_cuts`). The event reuses the page-view playlist slug, daily visitor hash,
+and timestamp. The raw query string and selected-list value are never stored. Unknown modes,
+malformed selections, or conflicting state are not recorded. Counts represent route requests and
+can include repeated visits or reloads.
 
 **The write must be genuinely fire-and-forget and must never throw into the response pipeline**:
 capture only plain values (path, slug, hashed visitor, timestamp) before starting the background

@@ -215,14 +215,26 @@ public static class WebHostFactory
                 return;
             }
 
+            var occurredAt = DateTimeOffset.UtcNow;
             var visitorHash = VisitorHashing.Compute(
                 visitorHashPepper,
-                DateOnly.FromDateTime(DateTime.UtcNow),
+                DateOnly.FromDateTime(occurredAt.UtcDateTime),
                 context.Connection.RemoteIpAddress?.ToString() ?? string.Empty,
                 context.Request.Headers.UserAgent.ToString());
 
-            context.RequestServices.GetRequiredService<PageViewRecorder>()
-                .RecordFireAndForget("page_view", path, playlistSlug, visitorHash, DateTimeOffset.UtcNow);
+            var recorder = context.RequestServices.GetRequiredService<PageViewRecorder>();
+            recorder.RecordFireAndForget("page_view", path, playlistSlug, visitorHash, occurredAt);
+
+            if (PlaylistMixAnalytics.TryClassify(
+                    path,
+                    context.Request.Query["mix"].ToString(),
+                    context.Request.Query["mix-selection"].ToString(),
+                    context.Request.Query["mix-hidden"].ToString(),
+                    context.Request.Query["mix-preview"].ToString(),
+                    out var mixEventType))
+            {
+                recorder.RecordFireAndForget(mixEventType, path, playlistSlug, visitorHash, occurredAt);
+            }
         });
 
         // US-013 AC1/spec 12.2: serves wwwroot/css/app.css (the compiled Tailwind stylesheet) and
@@ -384,7 +396,17 @@ public static class WebHostFactory
                 .ToListAsync(cancellationToken);
             var topByClick = topByClickRows.Select(row => new PlaylistEventCount(row.Slug, row.Count)).ToList();
 
-            var html = AnalyticsDashboardHtmlBuilder.Build(dailyUniques, topByView, topByClick);
+            var mixInteractionRows = await dbContext.PageViewEvents
+                .Where(e => e.EventType.StartsWith(PlaylistMixAnalytics.EventTypePrefix))
+                .GroupBy(e => e.EventType)
+                .Select(g => new { EventType = g.Key, Count = g.Count() })
+                .OrderByDescending(g => g.Count)
+                .ToListAsync(cancellationToken);
+            var mixInteractions = mixInteractionRows
+                .Select(row => new MixInteractionCount(row.EventType, row.Count))
+                .ToList();
+
+            var html = AnalyticsDashboardHtmlBuilder.Build(dailyUniques, topByView, topByClick, mixInteractions);
             return Results.Content(html, "text/html");
         });
 

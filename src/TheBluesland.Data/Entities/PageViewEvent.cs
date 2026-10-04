@@ -16,7 +16,10 @@ public sealed class PageViewEvent
 
     public required DateTimeOffset OccurredAt { get; init; }
 
-    /// <summary>Either <c>"page_view"</c> or <c>"spotify_click"</c>.</summary>
+    /// <summary>
+    /// A page view, Spotify click, or bounded playlist-mix state event whose mode and action are
+    /// validated by the web analytics layer.
+    /// </summary>
     public required string EventType { get; init; }
 
     /// <summary>Request path, e.g. <c>"/"</c>, <c>"/playlists/my-slug"</c>, <c>"/out/my-slug"</c>.</summary>
