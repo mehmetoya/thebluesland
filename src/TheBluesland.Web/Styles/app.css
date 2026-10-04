@@ -890,11 +890,14 @@ body:has(.filter-mobile-toggle:checked) {
 
 .mix-mode-button {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
   border: 1px solid var(--color-border);
   background-color: var(--color-bg);
   color: var(--color-text);
   border-radius: 999px;
   padding: 0.5rem 0.9rem;
+  text-decoration: none;
   font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
