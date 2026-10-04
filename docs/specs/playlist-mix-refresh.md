@@ -40,7 +40,7 @@ The site already presents curated playlists and related content well, but visito
 - Live AI-generated playlist curation across all music metadata
 - Large backend recommendation pipeline
 - Automatic mutation of editorial content without explicit user action
-- Deep analytics instrumentation in this first pass
+- User-level personalization or cross-visit tracking
 
 ## UX behavior
 
@@ -113,6 +113,15 @@ The UI must handle:
 - minor errors without breaking the page,
 - a lightweight fallback if generation is unavailable.
 
+Mix mode, selected playlist, the mode that produced an applied selection, and dismissed-preview
+state are represented in the query string so they survive reloads and work with the site's static
+server rendering. Previewing or dismissing another mode must not change the applied list. Other
+query parameters and URL fragments must be preserved.
+
+Mode previews, applied selections, and dismissed previews are counted in the existing
+privacy-preserving analytics store. Only fixed action/mode event types, the playlist slug, and the
+existing date-scoped visitor hash are stored; raw query values are not.
+
 ## Design requirements
 
 ### Layout
@@ -147,12 +156,16 @@ This approach matches the project’s current style: prefer minimal complexity a
 ## Acceptance criteria
 
 1. A visitor can open a playlist and see a refresh action.
-2. Selecting a mix mode produces a visible preview result.
-3. The current list is not replaced until the user explicitly confirms it.
-4. Loading and empty states are shown gracefully.
-5. The interaction works on mobile and desktop forms without layout breakage.
-6. Keyboard navigation and screen-reader semantics remain usable.
-7. The feature does not require a new heavy dependency or custom infra.
+2. Selecting a mix mode produces a visible preview result and stores the mode in the URL.
+3. The current list is not replaced until the user explicitly confirms it; an applied selection
+   survives a reload and only a playlist in the ranked related set can be applied.
+4. Dismiss and restore actions survive reloads without dropping unrelated query parameters.
+5. Loading and empty states are shown gracefully.
+6. The interaction works on mobile and desktop forms without layout breakage.
+7. Keyboard navigation and screen-reader semantics remain usable.
+8. Mix states are counted using fixed analytics event types without storing raw query strings.
+9. Ranking gives stronger weight to mood and genre overlap and uses exact taxonomy values for modes.
+10. The feature does not require a new heavy dependency or custom infra.
 
 ## Test strategy
 
@@ -162,12 +175,16 @@ This approach matches the project’s current style: prefer minimal complexity a
 - Test that choosing each preset changes the preview output.
 - Test that canceling a preview returns to the original list.
 - Test empty-result handling.
+- Test query-string selection, application, dismissal, and restoration across reloads.
+- Test that refresh controls are usable without client-side Blazor interactivity.
+- Test that analytics accepts only known route modes and state values.
 
 ### Functional validation
 
 - Ensure duplicate tracks are filtered or deprioritized in preview results.
 - Ensure a result set is produced only when there is enough data.
 - Ensure the original content remains stable until a user confirms.
+- Ensure mode-specific ranking is deterministic and based on approved metadata.
 
 ### Manual QA
 

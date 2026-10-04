@@ -32,6 +32,17 @@ public sealed class RelatedPlaylistRankingTests
     }
 
     [Fact]
+    public void Apply_prioritizes_mood_and_genre_overlap_over_occasion_and_era_overlap()
+    {
+        var moodAndGenreMatch = Playlist("mood-and-genre", moods: ["warm"], genres: ["blues"], occasions: [], eras: []);
+        var occasionAndEraMatch = Playlist("occasion-and-era", moods: [], genres: [], occasions: ["late-night"], eras: ["1970s"]);
+
+        var result = RelatedPlaylistRanking.Apply([occasionAndEraMatch, moodAndGenreMatch], Current);
+
+        result.ShouldBe([moodAndGenreMatch, occasionAndEraMatch]);
+    }
+
+    [Fact]
     public void Apply_never_includes_the_current_playlist_itself()
     {
         var result = RelatedPlaylistRanking.Apply([Current], Current);

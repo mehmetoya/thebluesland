@@ -19,7 +19,11 @@
         CacheSnapshot="_cacheSnapshot"
         RelatedPlaylists="_relatedPlaylists"
         RelatedCacheSnapshots="_relatedCacheSnapshots"
-        MixQuery="@MixQuery" />
+        MixQuery="@MixQuery"
+        MixAppliedModeQuery="@MixAppliedModeQuery"
+        MixSelectionQuery="@MixSelectionQuery"
+        MixHiddenQuery="@MixHiddenQuery"
+        MixPreviewQuery="@MixPreviewQuery" />
 }
 else if (_hasLoaded && !_redirected)
 {
@@ -43,6 +47,18 @@ else if (_hasLoaded && !_redirected)
 
     [SupplyParameterFromQuery(Name = "mix")]
     public string? MixQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "mix-applied-mode")]
+    public string? MixAppliedModeQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "mix-selection")]
+    public string? MixSelectionQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "mix-hidden")]
+    public string? MixHiddenQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "mix-preview")]
+    public string? MixPreviewQuery { get; set; }
 
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }

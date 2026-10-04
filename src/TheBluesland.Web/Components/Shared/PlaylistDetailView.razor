@@ -1,6 +1,6 @@
 @using Microsoft.AspNetCore.WebUtilities
+@using MixMode = TheBluesland.Web.Content.PlaylistMixMode
 @inject NavigationManager NavigationManager
-@inject ILogger<PlaylistDetailView> Logger
 
 <article class="playlist-detail">
     @{
@@ -93,20 +93,18 @@
 
             @if (_showMixPreview)
             {
-                <div class="mix-mode-buttons" role="group" aria-label="Choose a mix mode">
+                <nav class="mix-mode-buttons" aria-label="Choose a mix mode">
                     @foreach (var mode in Enum.GetValues<MixMode>())
                     {
                         var isActive = _selectedMixMode == mode;
-                        <button
-                            type="button"
+                        <a
+                            href="@BuildMixQueryString(mode)"
                             class="mix-mode-button @(isActive ? "active" : string.Empty)"
-                            aria-label="@GetModeLabel(mode) mix"
-                            aria-pressed="@isActive"
-                            @onclick="() => SelectMixMode(mode)">
+                            aria-current="@(isActive ? "true" : null)">
                             @GetModeLabel(mode)
-                        </button>
+                        </a>
                     }
-                </div>
+                </nav>
 
                 <p class="mix-mode-helper" id="playlist-mix-helper">@GetModeHelperText(_selectedMixMode)</p>
 
@@ -126,16 +124,16 @@
                     </div>
 
                     <div class="mix-preview-actions" aria-live="polite">
-                        <button type="button" class="mix-open-link" @onclick="ApplySelectedMix" aria-label="Use the selected mix for @CurrentMixPreview[0].Title">Use this mix</button>
-                        <button type="button" class="mix-keep-current" @onclick="DismissMixPreview" aria-label="Keep the current playlist list">Keep current list</button>
+                        <a href="@BuildSelectionQueryString(_selectedMixMode, CurrentMixPreview[0].Slug)" class="mix-open-link" aria-label="Use the selected mix for @CurrentMixPreview[0].Title">Use this mix</a>
+                        <a href="@BuildDismissedPreviewQueryString()" class="mix-keep-current">Keep current list</a>
                     </div>
                 }
             }
             else
             {
                 <div class="mix-preview-actions">
-                    <button type="button" class="mix-open-link" @onclick="RestoreMixPreview">Preview again</button>
-                    <button type="button" class="mix-keep-current" @onclick="ResetAppliedMix">Back to current playlist</button>
+                    <a href="@BuildVisiblePreviewQueryString()" class="mix-open-link">Preview again</a>
+                    <a href="@BuildResetQueryString()" class="mix-keep-current">Back to current playlist</a>
                 </div>
             }
         </section>
@@ -153,19 +151,23 @@
 </article>
 
 @code {
-    public enum MixMode
-    {
-        SameVibe,
-        MoreEnergetic,
-        RelaxedFlow,
-        DeeperCuts,
-    }
-
     [Parameter]
     public string? ShareUrl { get; set; }
 
     [Parameter]
     public string? MixQuery { get; set; }
+
+    [Parameter]
+    public string? MixAppliedModeQuery { get; set; }
+
+    [Parameter]
+    public string? MixSelectionQuery { get; set; }
+
+    [Parameter]
+    public string? MixHiddenQuery { get; set; }
+
+    [Parameter]
+    public string? MixPreviewQuery { get; set; }
 
     /// <summary>Editorial-only fields (US-005 AC1/AC3): must render fully with no cache data.</summary>
     [Parameter, EditorRequired]
@@ -183,22 +185,29 @@
         new Dictionary<string, PlaylistCacheSnapshot>();
 
     private MixMode _selectedMixMode = MixMode.SameVibe;
+    private MixMode _appliedMixMode = MixMode.SameVibe;
     private bool _showMixPreview = true;
     private PlaylistContent? _appliedMix;
 
     protected override void OnParametersSet()
     {
-        var requestedMode = ParseMixMode(MixQuery);
-        if (requestedMode != _selectedMixMode)
-        {
-            _selectedMixMode = requestedMode;
-        }
-
-        _showMixPreview = true;
+        _selectedMixMode = ParseMixMode(MixQuery);
+        _appliedMixMode = ParseMixMode(MixAppliedModeQuery ?? MixQuery);
+        _appliedMix = RelatedPlaylists.FirstOrDefault(playlist =>
+            string.Equals(playlist.Slug, MixSelectionQuery, StringComparison.Ordinal));
+        _showMixPreview = !string.Equals(MixHiddenQuery, "1", StringComparison.Ordinal)
+            && (_appliedMix is null || string.Equals(MixPreviewQuery, "1", StringComparison.Ordinal));
     }
 
     private IReadOnlyList<PlaylistContent> CurrentMixPreview => BuildMixPreview(_selectedMixMode);
-    private IReadOnlyList<PlaylistContent> VisibleRelatedPlaylists => AppliedMix is null ? RelatedPlaylists : CurrentMixPreview;
+    private IReadOnlyList<PlaylistContent> VisibleRelatedPlaylists => AppliedMix is null
+        ? RelatedPlaylists
+        : PlaylistMixRanking.Apply(
+                RelatedPlaylists,
+                Content,
+                _showMixPreview ? _selectedMixMode : _appliedMixMode)
+            .Take(3)
+            .ToList();
     private PlaylistContent ActivePlaylist => AppliedMix ?? Content;
     private PlaylistCacheSnapshot ActiveCacheSnapshot => AppliedMix is null ? CacheSnapshot : GetPlaylistCacheSnapshot(AppliedMix);
     private PlaylistContent? AppliedMix => _appliedMix;
@@ -210,59 +219,6 @@
     private string OpenInSpotifyUrl(PlaylistContent playlist) => $"/out/{playlist.Slug}";
 
     private string BuildAbsoluteUrl(string slug) => $"/playlists/{slug}";
-
-    private void SelectMixMode(MixMode mode)
-    {
-        _selectedMixMode = mode;
-        _showMixPreview = true;
-
-        var newUrl = BuildMixQueryString(mode);
-        Logger.LogInformation("playlist_mix_mode_selected: {Mode} path={Path} query={Query}", mode, Content.Slug, newUrl);
-        NavigationManager.NavigateTo(newUrl, replace: true);
-    }
-
-    private void DismissMixPreview()
-    {
-        _showMixPreview = false;
-        Logger.LogInformation("playlist_mix_preview_dismissed: {Mode} path={Path}", _selectedMixMode, Content.Slug);
-    }
-
-    private void RestoreMixPreview()
-    {
-        _showMixPreview = true;
-        Logger.LogInformation("playlist_mix_preview_restored: {Mode} path={Path}", _selectedMixMode, Content.Slug);
-    }
-
-    private void ApplySelectedMix()
-    {
-        if (CurrentMixPreview.Count == 0)
-        {
-            return;
-        }
-
-        _appliedMix = CurrentMixPreview[0];
-        _showMixPreview = false;
-
-        var mixUrl = BuildMixQueryString(_selectedMixMode);
-        Logger.LogInformation(
-            "playlist_mix_applied: {Mode} path={Path} mix_title={MixTitle} query={Query}",
-            _selectedMixMode,
-            Content.Slug,
-            _appliedMix.Title,
-            mixUrl);
-
-        NavigationManager.NavigateTo(mixUrl, replace: true);
-    }
-
-    private void ResetAppliedMix()
-    {
-        _appliedMix = null;
-        _showMixPreview = true;
-
-        var resetUrl = BuildResetQueryString();
-        Logger.LogInformation("playlist_mix_reset: {Mode} path={Path} query={Query}", _selectedMixMode, Content.Slug, resetUrl);
-        NavigationManager.NavigateTo(resetUrl, replace: true);
-    }
 
     public static MixMode ParseMixMode(string? value)
     {
@@ -294,22 +250,104 @@
     public static string BuildRouteWithMix(string absolutePath, string? existingQueryString, MixMode mode)
     {
         var (basePath, fragment) = SplitPathAndFragment(absolutePath);
-        var query = QueryHelpers.ParseQuery(existingQueryString ?? string.Empty)
-            .Where(pair => !string.Equals(pair.Key, "mix", StringComparison.OrdinalIgnoreCase))
-            .ToDictionary(pair => pair.Key, pair => (string?)pair.Value.ToString());
-
+        var existingQuery = QueryHelpers.ParseQuery(existingQueryString ?? string.Empty);
+        var selectedPlaylistSlug = existingQuery
+            .FirstOrDefault(pair => string.Equals(pair.Key, "mix-selection", StringComparison.OrdinalIgnoreCase))
+            .Value.ToString();
+        var hasSelection = !string.IsNullOrEmpty(selectedPlaylistSlug);
+        var query = BuildQueryWithoutMixState(
+            existingQueryString,
+            preserveSelection: hasSelection,
+            preserveAppliedMixMode: hasSelection);
+        PreserveAppliedMixMode(query);
         query["mix"] = ToQueryToken(mode);
+        if (!string.IsNullOrEmpty(selectedPlaylistSlug))
+        {
+            query["mix-preview"] = "1";
+        }
+
+        return QueryHelpers.AddQueryString(basePath, query) + fragment;
+    }
+
+    public static string BuildRouteWithSelection(
+        string absolutePath,
+        string? existingQueryString,
+        MixMode mode,
+        string selectedPlaylistSlug)
+    {
+        var (basePath, fragment) = SplitPathAndFragment(absolutePath);
+        var query = BuildQueryWithoutMixState(existingQueryString);
+        query["mix"] = ToQueryToken(mode);
+        query["mix-selection"] = selectedPlaylistSlug;
+        query["mix-applied-mode"] = ToQueryToken(mode);
+        return QueryHelpers.AddQueryString(basePath, query) + fragment;
+    }
+
+    public static string BuildRouteWithDismissedPreview(string absolutePath, string? existingQueryString)
+    {
+        var (basePath, fragment) = SplitPathAndFragment(absolutePath);
+        var query = BuildQueryWithoutMixState(
+            existingQueryString,
+            preserveMixMode: true,
+            preserveSelection: true,
+            preserveAppliedMixMode: true);
+        PreserveAppliedMixMode(query);
+        query["mix"] = query.GetValueOrDefault("mix") ?? ToQueryToken(MixMode.SameVibe);
+        query["mix-hidden"] = "1";
+        return QueryHelpers.AddQueryString(basePath, query) + fragment;
+    }
+
+    public static string BuildRouteWithVisiblePreview(string absolutePath, string? existingQueryString)
+    {
+        var (basePath, fragment) = SplitPathAndFragment(absolutePath);
+        var query = BuildQueryWithoutMixState(
+            existingQueryString,
+            preserveMixMode: true,
+            preserveSelection: true,
+            preserveAppliedMixMode: true);
+        PreserveAppliedMixMode(query);
+        query["mix"] = query.GetValueOrDefault("mix") ?? ToQueryToken(MixMode.SameVibe);
+        query["mix-preview"] = "1";
         return QueryHelpers.AddQueryString(basePath, query) + fragment;
     }
 
     public static string BuildRouteWithoutMix(string absolutePath, string? existingQueryString)
     {
         var (basePath, fragment) = SplitPathAndFragment(absolutePath);
-        var query = QueryHelpers.ParseQuery(existingQueryString ?? string.Empty)
-            .Where(pair => !string.Equals(pair.Key, "mix", StringComparison.OrdinalIgnoreCase))
+        var query = BuildQueryWithoutMixState(existingQueryString);
+        return QueryHelpers.AddQueryString(basePath, query) + fragment;
+    }
+
+    private static Dictionary<string, string?> BuildQueryWithoutMixState(
+        string? existingQueryString,
+        bool preserveMixMode = false,
+        bool preserveSelection = false,
+        bool preserveAppliedMixMode = false) =>
+        QueryHelpers.ParseQuery(existingQueryString ?? string.Empty)
+            .Where(pair =>
+                (preserveMixMode && string.Equals(pair.Key, "mix", StringComparison.OrdinalIgnoreCase))
+                || (preserveSelection && string.Equals(pair.Key, "mix-selection", StringComparison.OrdinalIgnoreCase))
+                || (preserveAppliedMixMode && string.Equals(pair.Key, "mix-applied-mode", StringComparison.OrdinalIgnoreCase))
+                || !IsMixStateParameter(pair.Key))
             .ToDictionary(pair => pair.Key, pair => (string?)pair.Value.ToString());
 
-        return QueryHelpers.AddQueryString(basePath, query) + fragment;
+    private static bool IsMixStateParameter(string key) =>
+        string.Equals(key, "mix", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(key, "mix-selection", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(key, "mix-applied-mode", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(key, "mix-hidden", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(key, "mix-preview", StringComparison.OrdinalIgnoreCase);
+
+    private static void PreserveAppliedMixMode(Dictionary<string, string?> query)
+    {
+        if (!query.ContainsKey("mix-selection"))
+        {
+            query.Remove("mix-applied-mode");
+            return;
+        }
+
+        var modeToken = query.GetValueOrDefault("mix-applied-mode") ?? query.GetValueOrDefault("mix");
+        query["mix-applied-mode"] = ToQueryToken(ParseMixMode(modeToken));
     }
 
     private static (string BasePath, string Fragment) SplitPathAndFragment(string absolutePath)
@@ -327,6 +365,32 @@
     {
         var currentUri = new Uri(NavigationManager.Uri);
         return BuildRouteWithMix(currentUri.GetLeftPart(UriPartial.Path) + currentUri.Fragment, currentUri.Query, mode);
+    }
+
+    private string BuildSelectionQueryString(MixMode mode, string selectedPlaylistSlug)
+    {
+        var currentUri = new Uri(NavigationManager.Uri);
+        return BuildRouteWithSelection(
+            currentUri.GetLeftPart(UriPartial.Path) + currentUri.Fragment,
+            currentUri.Query,
+            mode,
+            selectedPlaylistSlug);
+    }
+
+    private string BuildDismissedPreviewQueryString()
+    {
+        var currentUri = new Uri(NavigationManager.Uri);
+        return BuildRouteWithDismissedPreview(
+            currentUri.GetLeftPart(UriPartial.Path) + currentUri.Fragment,
+            currentUri.Query);
+    }
+
+    private string BuildVisiblePreviewQueryString()
+    {
+        var currentUri = new Uri(NavigationManager.Uri);
+        return BuildRouteWithVisiblePreview(
+            currentUri.GetLeftPart(UriPartial.Path) + currentUri.Fragment,
+            currentUri.Query);
     }
 
     private string BuildResetQueryString()
@@ -354,42 +418,9 @@
     };
 
     private IReadOnlyList<PlaylistContent> BuildMixPreview(MixMode mode)
-    {
-        if (RelatedPlaylists.Count == 0)
-        {
-            return [];
-        }
-
-        var ordered = mode switch
-        {
-            MixMode.SameVibe => RelatedPlaylists
-                .OrderBy(playlist => playlist.DisplayOrder)
-                .ThenByDescending(playlist => playlist.PublishedAt)
-                .ToList(),
-            MixMode.MoreEnergetic => RelatedPlaylists
-                .OrderByDescending(playlist => CountTagMatches(playlist, ["energetic", "upbeat", "bright", "pulsing", "night-drive"]))
-                .ThenBy(playlist => playlist.DisplayOrder)
-                .ThenByDescending(playlist => playlist.PublishedAt)
-                .ToList(),
-            MixMode.RelaxedFlow => RelatedPlaylists
-                .OrderByDescending(playlist => CountTagMatches(playlist, ["chill", "slow", "dreamy", "late-night", "smoky", "soulful"]))
-                .ThenBy(playlist => playlist.DisplayOrder)
-                .ThenByDescending(playlist => playlist.PublishedAt)
-                .ToList(),
-            MixMode.DeeperCuts => RelatedPlaylists
-                .OrderByDescending(playlist => CountTagMatches(playlist, ["deep", "obscure", "experimental", "rare", "psych", "late-night"]))
-                .ThenBy(playlist => playlist.DisplayOrder)
-                .ThenByDescending(playlist => playlist.PublishedAt)
-                .ToList(),
-            _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
-        };
-
-        return ordered.Take(3).ToList();
-    }
-
-    private static int CountTagMatches(PlaylistContent playlist, IEnumerable<string> keywords) =>
-        PlaylistTags.All(playlist)
-            .Count(tag => keywords.Any(keyword => tag.Contains(keyword, StringComparison.OrdinalIgnoreCase)));
+        => PlaylistMixRanking.Apply(RelatedPlaylists, Content, mode)
+            .Take(3)
+            .ToList();
 
     private PlaylistCacheSnapshot GetRelatedCacheSnapshot(PlaylistContent related) =>
         RelatedCacheSnapshots.GetValueOrDefault(related.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable);

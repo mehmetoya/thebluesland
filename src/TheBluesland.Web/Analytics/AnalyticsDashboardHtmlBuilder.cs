@@ -10,6 +10,9 @@ public sealed record DailyUniqueVisitorCount(DateOnly Day, int UniqueVisitors);
 /// <summary>One playlist's event count for either the by-view or by-click ranking chart.</summary>
 public sealed record PlaylistEventCount(string PlaylistSlug, int Count);
 
+/// <summary>One playlist-mix action/mode request count on the analytics dashboard.</summary>
+public sealed record MixInteractionCount(string EventType, int Count);
+
 /// <summary>
 /// Renders the <c>/dashboard</c> route (docs/specs/analytics-dashboard.md, Design section 3) as
 /// plain, hand-built HTML with inline SVG bar charts - same "one small dedicated builder per
@@ -33,7 +36,8 @@ public static class AnalyticsDashboardHtmlBuilder
     public static string Build(
         IReadOnlyList<DailyUniqueVisitorCount> dailyUniqueVisitors,
         IReadOnlyList<PlaylistEventCount> topPlaylistsByView,
-        IReadOnlyList<PlaylistEventCount> topPlaylistsByClick)
+        IReadOnlyList<PlaylistEventCount> topPlaylistsByClick,
+        IReadOnlyList<MixInteractionCount>? mixInteractions = null)
     {
         var builder = new StringBuilder();
         builder.Append("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">")
@@ -43,9 +47,36 @@ public static class AnalyticsDashboardHtmlBuilder
         AppendDailyUniquesChart(builder, dailyUniqueVisitors);
         AppendPlaylistBarChart(builder, "Top playlists by page view", topPlaylistsByView, ViewsColor);
         AppendPlaylistBarChart(builder, "Top playlists by Spotify click-through", topPlaylistsByClick, ClicksColor);
+        AppendMixInteractionsTable(builder, mixInteractions ?? []);
 
         builder.Append("</body></html>");
         return builder.ToString();
+    }
+
+    private static void AppendMixInteractionsTable(StringBuilder builder, IReadOnlyList<MixInteractionCount> rows)
+    {
+        builder.Append("<h2>Playlist mix interactions (all time)</h2>")
+            .Append("<p>Request counts may include repeat visits or reloads.</p>");
+        if (rows.Count == 0)
+        {
+            builder.Append("<p>No data yet.</p>");
+            return;
+        }
+
+        builder.Append("<table><thead><tr><th scope=\"col\">Action and mode</th><th scope=\"col\">Requests</th></tr></thead><tbody>");
+        foreach (var row in rows.OrderByDescending(row => row.Count).ThenBy(row => row.EventType, StringComparer.Ordinal))
+        {
+            var label = row.EventType
+                .Replace(PlaylistMixAnalytics.EventTypePrefix, string.Empty, StringComparison.Ordinal)
+                .Replace('_', ' ');
+            builder.Append("<tr><th scope=\"row\">")
+                .Append(WebUtility.HtmlEncode(label))
+                .Append("</th><td>")
+                .Append(row.Count)
+                .Append("</td></tr>");
+        }
+
+        builder.Append("</tbody></table>");
     }
 
     // Vertical bars, oldest-to-newest left-to-right (the query returns newest-first, sorted here

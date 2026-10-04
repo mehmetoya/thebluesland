@@ -8,8 +8,8 @@ in this iteration" boundary.
 ## Objective
 
 A single page Mehmet can visit that shows: daily unique visitors (last 30 days), top playlists by
-page view, and top playlists by Spotify click-through - the same three queries already handed to
-him as raw SQL, now rendered as tables on one page instead of copy-pasted into the Neon SQL editor.
+page view, top playlists by Spotify click-through, and playlist-mix interactions by action and mode.
+The counts are aggregated on one page instead of copy-pasted into the Neon SQL editor.
 
 ## Design
 
@@ -34,7 +34,7 @@ set). Extract the shared-secret check into a small reusable helper (`IsAuthorize
 string? configuredKey)` or similar) rather than duplicating `IsAuthorizedCacheHealthRequest`
 verbatim a second time - two call sites is exactly the point where "copy it" becomes "extract it."
 
-On success, query `AnalyticsDbContext` (now read-capable per section 1) via three LINQ aggregates
+On success, query `AnalyticsDbContext` (now read-capable per section 1) via LINQ aggregates
 matching the SQL already given to Mehmet:
 
 ```csharp
@@ -53,6 +53,10 @@ the two playlist rankings are all-time (no date filter) since this is meant to a
 popular", not "what's popular this month" - keep it simple, no date-range picker in this
 iteration.
 
+Also group `page_view_events` whose `event_type` starts with `playlist_mix_` by exact event type,
+so the page shows preview, application, and dismissal request counts by mode. These are request
+counts and may include reloads; the dashboard never displays raw visitor hashes or query strings.
+
 ### 3. Rendering: plain HTML, not a Razor/Blazor component
 
 This is a single-owner diagnostic view, not a public page - no design-token treatment, no dark/light
@@ -65,7 +69,7 @@ constraint exists). Unstyled tables are perfectly fine for this audience; don't 
 link or any styling machinery for a page only Mehmet will ever open.
 
 A small new class, e.g. `AnalyticsDashboardHtmlBuilder` (same "one small dedicated builder" pattern
-as `SocialCardGenerator`/`SitemapGenerator`/`AiDiscoveryGenerator`), takes the three result sets and
+as `SocialCardGenerator`/`SitemapGenerator`/`AiDiscoveryGenerator`), takes the aggregate result sets and
 returns the HTML string - keeps `WebHostFactory.cs`'s endpoint body short, matching how the other
 `app.MapGet` handlers in that file delegate to a dedicated class rather than building output inline.
 
@@ -80,6 +84,7 @@ No new dependency. `dotnet build TheBluesland.slnx`, `dotnet test TheBluesland.s
 - Integration or unit test for `AnalyticsDashboardHtmlBuilder`: given known fixture rows, the
   rendered HTML contains the expected slugs/counts (a simple string-contains assertion is enough -
   this isn't a page that needs golden-file/snapshot testing).
+- Mix event rendering shows the fixed action/mode labels and counts, never visitor hashes.
 - Seed a few `PageViewEvent` rows (Testcontainers, same pattern as `AnalyticsRoleTests.cs`/existing
   analytics integration tests) and assert the daily-unique-visitor and top-playlist aggregates come
   back correct for a known fixture (distinct visitor_hash counts per day; correct ordering by
@@ -102,8 +107,8 @@ main-session work after this ships, not backend-dev's.
 
 ## Success Criteria
 
-- [ ] `GET /dashboard?key=<correct>` returns an HTML page with three tables: daily unique visitors
-      (30 days), top playlists by view, top playlists by click.
+- [ ] `GET /dashboard?key=<correct>` returns an HTML page with visitor, playlist, and mix-interaction
+      aggregates.
 - [ ] `GET /dashboard` (no key) and `GET /dashboard?key=<wrong>` both return 404.
 - [ ] `dotnet build`/`dotnet test` green, including the new tests above.
 - [ ] Verified live against the real production data (curl with the real key) before calling this

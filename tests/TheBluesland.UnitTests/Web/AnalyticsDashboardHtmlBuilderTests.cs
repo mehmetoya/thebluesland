@@ -40,6 +40,21 @@ public sealed class AnalyticsDashboardHtmlBuilderTests
         html.ShouldContain(">3<");
     }
 
+    [Fact]
+    public void Build_renders_mix_interaction_counts_without_exposing_visitor_hashes()
+    {
+        var html = AnalyticsDashboardHtmlBuilder.Build(
+            [],
+            [],
+            [],
+            [new MixInteractionCount("playlist_mix_applied_more_energetic", 4)]);
+
+        html.ShouldContain("Playlist mix interactions (all time)");
+        html.ShouldContain("applied more energetic");
+        html.ShouldContain(">4</td>");
+        html.ShouldContain("Request counts may include repeat visits or reloads.");
+    }
+
     /// <summary>
     /// Boundary: never print a raw visitor_hash - only aggregated counts/slugs/dates. Also locks
     /// down the CSP-safety guarantee the charts must preserve: every visual attribute is a plain
