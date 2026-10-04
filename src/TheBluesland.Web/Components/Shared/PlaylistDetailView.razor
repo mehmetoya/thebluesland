@@ -293,33 +293,46 @@
 
     public static string BuildRouteWithMix(string absolutePath, string? existingQueryString, MixMode mode)
     {
+        var (basePath, fragment) = SplitPathAndFragment(absolutePath);
         var query = QueryHelpers.ParseQuery(existingQueryString ?? string.Empty)
             .Where(pair => !string.Equals(pair.Key, "mix", StringComparison.OrdinalIgnoreCase))
             .ToDictionary(pair => pair.Key, pair => (string?)pair.Value.ToString());
 
         query["mix"] = ToQueryToken(mode);
-        return QueryHelpers.AddQueryString(absolutePath, query);
+        return QueryHelpers.AddQueryString(basePath, query) + fragment;
     }
 
     public static string BuildRouteWithoutMix(string absolutePath, string? existingQueryString)
     {
+        var (basePath, fragment) = SplitPathAndFragment(absolutePath);
         var query = QueryHelpers.ParseQuery(existingQueryString ?? string.Empty)
             .Where(pair => !string.Equals(pair.Key, "mix", StringComparison.OrdinalIgnoreCase))
             .ToDictionary(pair => pair.Key, pair => (string?)pair.Value.ToString());
 
-        return QueryHelpers.AddQueryString(absolutePath, query);
+        return QueryHelpers.AddQueryString(basePath, query) + fragment;
+    }
+
+    private static (string BasePath, string Fragment) SplitPathAndFragment(string absolutePath)
+    {
+        var hashIndex = absolutePath.IndexOf('#');
+        if (hashIndex < 0)
+        {
+            return (absolutePath, string.Empty);
+        }
+
+        return (absolutePath[..hashIndex], absolutePath[hashIndex..]);
     }
 
     private string BuildMixQueryString(MixMode mode)
     {
         var currentUri = new Uri(NavigationManager.Uri);
-        return BuildRouteWithMix(currentUri.GetLeftPart(UriPartial.Path), currentUri.Query, mode);
+        return BuildRouteWithMix(currentUri.GetLeftPart(UriPartial.Path) + currentUri.Fragment, currentUri.Query, mode);
     }
 
     private string BuildResetQueryString()
     {
         var currentUri = new Uri(NavigationManager.Uri);
-        return BuildRouteWithoutMix(currentUri.GetLeftPart(UriPartial.Path), currentUri.Query);
+        return BuildRouteWithoutMix(currentUri.GetLeftPart(UriPartial.Path) + currentUri.Fragment, currentUri.Query);
     }
 
     private string GetModeLabel(MixMode mode) => mode switch
