@@ -18,7 +18,7 @@ filter, order, and progressive-pagination behavior.
 
 ### Phase 1: Search matching
 
-- [ ] Task 1: Add deterministic playlist search and focused unit tests.
+- [x] Task 1: Add deterministic playlist search and focused unit tests.
   - Acceptance: blank query returns the original catalogue order; title, summary, and taxonomy
     tokens match case-insensitively; partial matches rank by matched query-term count with stable
     ties.
@@ -27,24 +27,25 @@ filter, order, and progressive-pagination behavior.
 
 ### Checkpoint: Search matching
 
-- [ ] Pure search tests pass and the solution builds.
+- [x] Pure search tests pass and the solution builds.
 
 ### Phase 2: Catalogue experience
 
-- [ ] Task 2: Add the accessible GET search field to the home page and compose it with filters,
+- [x] Task 2: Add the accessible GET search field to the home page and compose it with filters,
   result messaging, and pagination.
   - Acceptance: query survives reload and "Show more"; filters still compose; empty/no-match
     states are correct; no JavaScript is needed.
-  - Verify: focused `HomePageSearchIntegrationTests` and existing home-page filter/pagination tests.
-  - Files: `HomePage.razor`, `app.css`, `HomePageSearchIntegrationTests.cs`.
+  - Verify: focused `HomePageFilterIntegrationTests` and `HomePagePaginationIntegrationTests`.
+  - Files: `HomePage.razor`, `app.css`, `HomePageFilterIntegrationTests.cs`,
+    `HomePagePaginationIntegrationTests.cs`.
 
 ### Checkpoint: End-to-end
 
-- [ ] Search, filter composition, and pagination are verified through the HTTP-rendered page.
+- [x] Search, filter composition, and pagination are verified through the HTTP-rendered page.
 
 ### Phase 3: Final verification
 
-- [ ] Task 3: Run build, focused and full tests, and browser accessibility/responsive checks.
+- [x] Task 3: Run build, focused and full tests, and browser accessibility/responsive checks.
   - Acceptance: solution builds; tests pass (environmental limitations documented); search works
     via keyboard and at mobile/desktop widths.
   - Verify: commands in `docs/specs/playlist-search.md` and local browser check.
@@ -52,7 +53,7 @@ filter, order, and progressive-pagination behavior.
 
 ### Checkpoint: Complete
 
-- [ ] All success criteria in `docs/specs/playlist-search.md` are met.
+- [x] All success criteria in `docs/specs/playlist-search.md` are met.
 
 ## Risks and mitigations
 

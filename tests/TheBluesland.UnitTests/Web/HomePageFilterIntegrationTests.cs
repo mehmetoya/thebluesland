@@ -96,9 +96,51 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldContain("No playlists match the selected filters.");
+        body.ShouldContain("Clear filters");
         body.ShouldNotContain("Energetic Headphones Fixture");
         body.ShouldNotContain("Moody Blues Night Fixture");
         body.ShouldNotContain("Warm Road Trip Fixture");
+    }
+
+    [Fact]
+    public async Task HomePage_with_a_search_query_shows_ranked_matching_playlists_only()
+    {
+        var response = await _httpClient.GetAsync("/?q=melancholic");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("Moody Blues Night Fixture");
+        body.ShouldNotContain("Energetic Headphones Fixture");
+        body.ShouldNotContain("Warm Road Trip Fixture");
+        body.ShouldContain("name=\"q\"");
+        body.ShouldContain("value=\"melancholic\"");
+    }
+
+    [Fact]
+    public async Task HomePage_search_composes_with_existing_taxonomy_filters()
+    {
+        var response = await _httpClient.GetAsync("/?q=melancholic&genre=rock");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("No playlists match your search and filters.");
+        body.ShouldNotContain("Warm Road Trip Fixture");
+        body.ShouldNotContain("Energetic Headphones Fixture");
+        body.ShouldNotContain("Moody Blues Night Fixture");
+        body.ShouldContain("type=\"hidden\" name=\"genre\" value=\"rock\"");
+        body.ShouldContain("type=\"hidden\" name=\"q\" value=\"melancholic\"");
+    }
+
+    [Fact]
+    public async Task HomePage_with_an_unmatched_search_query_shows_search_specific_empty_state()
+    {
+        var response = await _httpClient.GetAsync("/?q=shoegaze");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("No playlists match your search.");
+        body.ShouldContain("Clear search and filters");
+        body.ShouldContain("href=\"/\" class=\"clear-filters\"");
     }
 
     [Fact]

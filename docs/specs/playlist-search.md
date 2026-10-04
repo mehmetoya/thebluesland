@@ -27,7 +27,7 @@ and the existing xUnit/Shouldly test project. No new packages, database changes,
 ## Commands
 
 - Build: `dotnet build TheBluesland.slnx --no-restore`
-- Focused tests: `dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --no-restore --filter "FullyQualifiedName~PlaylistSearchTests|FullyQualifiedName~HomePageSearchIntegrationTests"`
+- Focused tests: `dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --no-restore --filter "FullyQualifiedName~PlaylistSearchTests|FullyQualifiedName~HomePageFilterIntegrationTests|FullyQualifiedName~HomePagePaginationIntegrationTests"`
 - Full tests: `dotnet test TheBluesland.slnx --no-restore`
 - Local app: `dotnet run --project src/TheBluesland.Web`
 
