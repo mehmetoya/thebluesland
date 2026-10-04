@@ -102,6 +102,16 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
         body.ShouldContain("href=\"/?page=2\" class=\"load-more\"");
     }
 
+    [Fact]
+    public async Task HomePage_show_more_link_preserves_the_search_query()
+    {
+        var response = await _httpClient.GetAsync("/?q=pagination&page=1");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("href=\"/?page=2&amp;q=pagination\" class=\"load-more\"");
+    }
+
     /// <summary>
     /// US-019: infinite-scroll is progressive enhancement over the "Show more" link above, not a
     /// replacement for it - the home page must reference the script, and the script itself must

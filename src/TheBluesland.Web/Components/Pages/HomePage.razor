@@ -23,6 +23,36 @@
     </p>
 </section>
 
+<form method="get" action="/" class="playlist-search">
+    @foreach (var mood in MoodQuery ?? [])
+    {
+        <input type="hidden" name="mood" value="@mood" />
+    }
+    @foreach (var genre in GenreQuery ?? [])
+    {
+        <input type="hidden" name="genre" value="@genre" />
+    }
+    @foreach (var occasion in OccasionQuery ?? [])
+    {
+        <input type="hidden" name="occasion" value="@occasion" />
+    }
+    @foreach (var era in EraQuery ?? [])
+    {
+        <input type="hidden" name="era" value="@era" />
+    }
+    <label for="playlist-search-query">Find a playlist by style or mood</label>
+    <div class="playlist-search-controls">
+        <input
+            id="playlist-search-query"
+            type="search"
+            name="q"
+            value="@SearchQuery"
+            placeholder="e.g. melancholic blues"
+            autocomplete="off" />
+        <button type="submit" class="filter-apply">Search</button>
+    </div>
+</form>
+
 @*
     US-009 design decision (still load-bearing under US-018's navbar restyle): filtering is a plain
     `<form method="get">` bound to [SupplyParameterFromQuery] array parameters below (@code block),
@@ -30,6 +60,8 @@
     The query string *is* the filter state (so opening a filtered URL directly reproduces the same
     result a form submission would), and a normal browser GET form submission both updates the URL
     and re-renders the filtered list with zero JavaScript/SignalR involved.
+    The separate style/mood search GET form above preserves active taxonomy selections through
+    hidden fields; this form preserves an active search query when visitors change filters.
 
     US-018: the four dimensions are now `<details>`/`<summary>` disclosures instead of always-open
     `<fieldset>`s. `<details>` is native HTML - opening one reveals only its own panel (AC2) and
@@ -69,6 +101,10 @@
         <span class="filter-mobile-trigger-close">Close</span>
     </label>
     <form method="get" action="/" class="filter-navbar-form">
+        @if (!string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            <input type="hidden" name="q" value="@SearchQuery" />
+        }
         <details class="filter-dropdown" name="filter-dropdown-group">
             <summary>@DimensionLabel("Mood", _criteria.Moods.Count)</summary>
             <div class="filter-dropdown-panel">
@@ -120,10 +156,12 @@
     <h2>Playlists</h2>
     @if (_filteredPlaylists.Count == 0)
     {
-        @if (_criteria.IsActive)
+        @if (_criteria.IsActive || !string.IsNullOrWhiteSpace(SearchQuery))
         {
-            <p class="no-results">No playlists match the selected filters.</p>
-            <a href="/" class="clear-filters">Clear filters</a>
+            <p class="no-results">@GetNoResultsMessage()</p>
+            <a href="/" class="clear-filters">
+                @(string.IsNullOrWhiteSpace(SearchQuery) ? "Clear filters" : "Clear search and filters")
+            </a>
         }
         else
         {
@@ -175,6 +213,10 @@
     [SupplyParameterFromQuery(Name = "era")]
     public string[]? EraQuery { get; set; }
 
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "q")]
+    public string? SearchQuery { get; set; }
+
     // US-019 AC5: the page number lives in the URL, not in any server/session/interactive state -
     // deliberately not carried as a hidden field on the filter-navbar form above, so submitting
     // that form (a plain GET that replaces the whole query string) naturally resets pagination
@@ -202,6 +244,7 @@
         // Already sorted by displayOrder, then publishedAt descending (US-009 AC1/FR-001).
         var allPublished = await ContentRepository.FindAllPublishedAsync(cancellationToken);
         _filteredPlaylists = PlaylistFilter.Apply(allPublished, _criteria);
+        _filteredPlaylists = PlaylistSearch.Apply(_filteredPlaylists, SearchQuery);
         _visiblePlaylists = PlaylistCataloguePage.Take(_filteredPlaylists, PageQuery);
 
         // Never throws (spec 16.1): a DB outage must still yield a 200 with editorial content.
@@ -236,8 +279,20 @@
         {
             query["era"] = EraQuery;
         }
+        if (!string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            query["q"] = SearchQuery;
+        }
+
         return QueryHelpers.AddQueryString("/", query);
     }
+
+    private string GetNoResultsMessage() =>
+        !string.IsNullOrWhiteSpace(SearchQuery) && _criteria.IsActive
+            ? "No playlists match your search and filters."
+            : !string.IsNullOrWhiteSpace(SearchQuery)
+                ? "No playlists match your search."
+                : "No playlists match the selected filters.";
 
     // US-018 AC4: "Genre (2)" - the active-count indicator shown in each dropdown's <summary>.
     private static string DimensionLabel(string name, int activeCount) =>
