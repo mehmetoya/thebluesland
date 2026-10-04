@@ -1,19 +1,26 @@
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager NavigationManager
+@inject ILogger<PlaylistDetailView> Logger
+
 <article class="playlist-detail">
+    @{
+        var activePlaylist = ActivePlaylist;
+        var activeCacheSnapshot = ActiveCacheSnapshot;
+        var tags = PlaylistTags.All(activePlaylist);
+    }
+
     @* spec 14 "visible breadcrumb navigation on detail pages"; mirrors StructuredData's
        BreadcrumbList JSON-LD built alongside this page in PlaylistDetailPage.razor. *@
     <nav aria-label="Breadcrumb" class="breadcrumb">
         <a href="/">Home</a>
         <span aria-hidden="true"> / </span>
-        <span aria-current="page">@Content.Title</span>
+        <span aria-current="page">@activePlaylist.Title</span>
     </nav>
-    <h1>@Content.Title</h1>
-    <p class="summary">@Content.Summary</p>
+    <h1>@activePlaylist.Title</h1>
+    <p class="summary">@activePlaylist.Summary</p>
 
     @* US-010 AC1: mood/genre/occasion/era shown together as one tag list (PlaylistTags.All - era
        included, blank era excluded so a playlist with no era doesn't render an empty tag pill). *@
-    @{
-        var tags = PlaylistTags.All(Content);
-    }
     @if (tags.Count > 0)
     {
         <ul class="tags">
@@ -28,20 +35,20 @@
        source Markdown is escaped rather than passed through - see CuratorNoteRenderer's doc
        comment. MarkupString is safe here specifically because the HTML came out of that sanitizing
        pipeline, not from unprocessed user input. *@
-    <div class="curator-note">@((MarkupString)CuratorNoteRenderer.ToSanitizedHtml(Content.CuratorNote))</div>
+    <div class="curator-note">@((MarkupString)CuratorNoteRenderer.ToSanitizedHtml(activePlaylist.CuratorNote))</div>
 
     @* US-012 AC2/spec 12.4(a)/SEC-004: CanPlay additionally requires a validated spotifyPlaylistId
        (SpotifyPlaylistIdFormat.IsValid) so a malformed id - even one that happens to match an
        existing/available cache row - can never reach the embed src below. *@
-    @if (CanPlay)
+    @if (CanPlay(activeCacheSnapshot, activePlaylist))
     {
-        @if (CacheSnapshot.TrackCount is { } trackCount)
+        @if (activeCacheSnapshot.TrackCount is { } trackCount)
         {
             <p class="track-count">@trackCount tracks</p>
         }
-        @if (CacheSnapshot.CoverImageUrl is { } coverImageUrl)
+        @if (activeCacheSnapshot.CoverImageUrl is { } coverImageUrl)
         {
-            <img class="cover-image" src="@coverImageUrl" alt="@($"{Content.Title} cover art")" />
+            <img class="cover-image" src="@coverImageUrl" alt="@($"{activePlaylist.Title} cover art")" />
         }
     }
     else
@@ -59,16 +66,16 @@
        docs/specs/visitor-and-playlist-click-analytics.md, Design section 5: routes through
        /out/{slug} (WebHostFactory) rather than linking straight to open.spotify.com, so the click
        is recorded as a spotify_click event before the redirect. *@
-    @if (HasValidSpotifyPlaylistId)
+    @if (HasValidSpotifyPlaylistId(activePlaylist))
     {
-        <a href="@OpenInSpotifyUrl" class="open-in-spotify" target="_blank" rel="noopener noreferrer">
+        <a href="@OpenInSpotifyUrl(activePlaylist)" class="open-in-spotify" target="_blank" rel="noopener noreferrer">
             Open in Spotify
         </a>
     }
 
     @if (!string.IsNullOrEmpty(ShareUrl))
     {
-        <SharePlaylist Title="@Content.Title" Url="@ShareUrl" />
+        <SharePlaylist Title="@activePlaylist.Title" Url="@BuildAbsoluteUrl(activePlaylist.Slug)" />
     }
 
     @if (RelatedPlaylists.Count > 0)
@@ -78,6 +85,11 @@
                 <h2 id="playlist-mix-heading">Refresh mix</h2>
                 <p>Keep the same mood, but try a fresher route through nearby playlists.</p>
             </div>
+
+            @if (AppliedMix is not null)
+            {
+                <p class="mix-active-status" role="status">Currently exploring: <strong>@AppliedMix.Title</strong></p>
+            }
 
             @if (_showMixPreview)
             {
@@ -114,7 +126,7 @@
                     </div>
 
                     <div class="mix-preview-actions" aria-live="polite">
-                        <a class="mix-open-link" href="@($"/playlists/{CurrentMixPreview[0].Slug}")" aria-label="Use the selected mix for @CurrentMixPreview[0].Title">Use this mix</a>
+                        <button type="button" class="mix-open-link" @onclick="ApplySelectedMix" aria-label="Use the selected mix for @CurrentMixPreview[0].Title">Use this mix</button>
                         <button type="button" class="mix-keep-current" @onclick="DismissMixPreview" aria-label="Keep the current playlist list">Keep current list</button>
                     </div>
                 }
@@ -123,13 +135,14 @@
             {
                 <div class="mix-preview-actions">
                     <button type="button" class="mix-open-link" @onclick="RestoreMixPreview">Preview again</button>
+                    <button type="button" class="mix-keep-current" @onclick="ResetAppliedMix">Back to current playlist</button>
                 </div>
             }
         </section>
 
         <section class="related-playlists">
-            <h2>Related playlists</h2>
-            @foreach (var related in RelatedPlaylists)
+            <h2>@(AppliedMix is null ? "Related playlists" : "Fresh mix selection")</h2>
+            @foreach (var related in VisibleRelatedPlaylists)
             {
                 <a href="@($"/playlists/{related.Slug}")" class="playlist-card-link">
                     <PlaylistCard Content="related" CacheSnapshot="GetRelatedCacheSnapshot(related)" />
@@ -140,7 +153,7 @@
 </article>
 
 @code {
-    private enum MixMode
+    public enum MixMode
     {
         SameVibe,
         MoreEnergetic,
@@ -150,6 +163,9 @@
 
     [Parameter]
     public string? ShareUrl { get; set; }
+
+    [Parameter]
+    public string? MixQuery { get; set; }
 
     /// <summary>Editorial-only fields (US-005 AC1/AC3): must render fully with no cache data.</summary>
     [Parameter, EditorRequired]
@@ -168,24 +184,122 @@
 
     private MixMode _selectedMixMode = MixMode.SameVibe;
     private bool _showMixPreview = true;
+    private PlaylistContent? _appliedMix;
+
+    protected override void OnParametersSet()
+    {
+        var requestedMode = ParseMixMode(MixQuery);
+        if (requestedMode != _selectedMixMode)
+        {
+            _selectedMixMode = requestedMode;
+        }
+
+        _showMixPreview = true;
+    }
 
     private IReadOnlyList<PlaylistContent> CurrentMixPreview => BuildMixPreview(_selectedMixMode);
+    private IReadOnlyList<PlaylistContent> VisibleRelatedPlaylists => AppliedMix is null ? RelatedPlaylists : CurrentMixPreview;
+    private PlaylistContent ActivePlaylist => AppliedMix ?? Content;
+    private PlaylistCacheSnapshot ActiveCacheSnapshot => AppliedMix is null ? CacheSnapshot : GetPlaylistCacheSnapshot(AppliedMix);
+    private PlaylistContent? AppliedMix => _appliedMix;
 
-    private bool HasValidSpotifyPlaylistId => SpotifyPlaylistIdFormat.IsValid(Content.SpotifyPlaylistId);
+    private bool HasValidSpotifyPlaylistId(PlaylistContent playlist) => SpotifyPlaylistIdFormat.IsValid(playlist.SpotifyPlaylistId);
 
-    private bool CanPlay => CacheSnapshot.IsPlayable && HasValidSpotifyPlaylistId;
+    private bool CanPlay(PlaylistCacheSnapshot snapshot, PlaylistContent playlist) => snapshot.IsPlayable && HasValidSpotifyPlaylistId(playlist);
 
-    private string OpenInSpotifyUrl => $"/out/{Content.Slug}";
+    private string OpenInSpotifyUrl(PlaylistContent playlist) => $"/out/{playlist.Slug}";
+
+    private string BuildAbsoluteUrl(string slug) => $"/playlists/{slug}";
 
     private void SelectMixMode(MixMode mode)
     {
         _selectedMixMode = mode;
         _showMixPreview = true;
+
+        var newUrl = BuildMixQueryString(mode);
+        Logger.LogInformation("playlist_mix_mode_selected: {Mode} path={Path} query={Query}", mode, Content.Slug, newUrl);
+        NavigationManager.NavigateTo(newUrl, replace: true);
     }
 
-    private void DismissMixPreview() => _showMixPreview = false;
+    private void DismissMixPreview()
+    {
+        _showMixPreview = false;
+        Logger.LogInformation("playlist_mix_preview_dismissed: {Mode} path={Path}", _selectedMixMode, Content.Slug);
+    }
 
-    private void RestoreMixPreview() => _showMixPreview = true;
+    private void RestoreMixPreview()
+    {
+        _showMixPreview = true;
+        Logger.LogInformation("playlist_mix_preview_restored: {Mode} path={Path}", _selectedMixMode, Content.Slug);
+    }
+
+    private void ApplySelectedMix()
+    {
+        if (CurrentMixPreview.Count == 0)
+        {
+            return;
+        }
+
+        _appliedMix = CurrentMixPreview[0];
+        _showMixPreview = false;
+
+        var mixUrl = BuildMixQueryString(_selectedMixMode);
+        Logger.LogInformation(
+            "playlist_mix_applied: {Mode} path={Path} mix_title={MixTitle} query={Query}",
+            _selectedMixMode,
+            Content.Slug,
+            _appliedMix.Title,
+            mixUrl);
+
+        NavigationManager.NavigateTo(mixUrl, replace: true);
+    }
+
+    private void ResetAppliedMix()
+    {
+        _appliedMix = null;
+        _showMixPreview = true;
+
+        var resetUrl = $"/playlists/{Content.Slug}";
+        Logger.LogInformation("playlist_mix_reset: {Mode} path={Path} query={Query}", _selectedMixMode, Content.Slug, resetUrl);
+        NavigationManager.NavigateTo(resetUrl, replace: true);
+    }
+
+    public static MixMode ParseMixMode(string? value)
+    {
+        var token = value?.Trim();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return MixMode.SameVibe;
+        }
+
+        return token switch
+        {
+            "same-vibe" => MixMode.SameVibe,
+            "more-energetic" => MixMode.MoreEnergetic,
+            "relaxed-flow" => MixMode.RelaxedFlow,
+            "deeper-cuts" => MixMode.DeeperCuts,
+            _ => MixMode.SameVibe,
+        };
+    }
+
+    public static string ToQueryToken(MixMode mode) => mode switch
+    {
+        MixMode.SameVibe => "same-vibe",
+        MixMode.MoreEnergetic => "more-energetic",
+        MixMode.RelaxedFlow => "relaxed-flow",
+        MixMode.DeeperCuts => "deeper-cuts",
+        _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
+    };
+
+    private string BuildMixQueryString(MixMode mode)
+    {
+        var query = new Dictionary<string, string?>
+        {
+            ["mix"] = ToQueryToken(mode),
+        };
+
+        return QueryHelpers.AddQueryString($"/playlists/{Content.Slug}", query);
+    }
 
     private string GetModeLabel(MixMode mode) => mode switch
     {
@@ -245,4 +359,14 @@
 
     private PlaylistCacheSnapshot GetRelatedCacheSnapshot(PlaylistContent related) =>
         RelatedCacheSnapshots.GetValueOrDefault(related.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable);
+
+    private PlaylistCacheSnapshot GetPlaylistCacheSnapshot(PlaylistContent playlist)
+    {
+        if (playlist.Slug == Content.Slug)
+        {
+            return CacheSnapshot;
+        }
+
+        return GetRelatedCacheSnapshot(playlist);
+    }
 }

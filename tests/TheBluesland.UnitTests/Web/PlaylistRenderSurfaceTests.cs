@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
+using System.Diagnostics.CodeAnalysis;
 using TheBluesland.Web.Cache;
 using TheBluesland.Web.Components.Shared;
 using TheBluesland.Web.Content;
@@ -177,11 +178,44 @@ public sealed class PlaylistRenderSurfaceTests
         html.ShouldContain("A Related Playlist");
     }
 
+    [Fact]
+    public void PlaylistDetailView_parses_mix_mode_from_query_tokens()
+    {
+        PlaylistDetailView.ParseMixMode("same-vibe").ShouldBe(PlaylistDetailView.MixMode.SameVibe);
+        PlaylistDetailView.ParseMixMode("more-energetic").ShouldBe(PlaylistDetailView.MixMode.MoreEnergetic);
+        PlaylistDetailView.ParseMixMode("relaxed-flow").ShouldBe(PlaylistDetailView.MixMode.RelaxedFlow);
+        PlaylistDetailView.ParseMixMode("deeper-cuts").ShouldBe(PlaylistDetailView.MixMode.DeeperCuts);
+        PlaylistDetailView.ParseMixMode("unknown-mode").ShouldBe(PlaylistDetailView.MixMode.SameVibe);
+    }
+
+    [Fact]
+    public void PlaylistDetailView_serializes_mix_mode_to_query_tokens()
+    {
+        PlaylistDetailView.ToQueryToken(PlaylistDetailView.MixMode.SameVibe).ShouldBe("same-vibe");
+        PlaylistDetailView.ToQueryToken(PlaylistDetailView.MixMode.MoreEnergetic).ShouldBe("more-energetic");
+        PlaylistDetailView.ToQueryToken(PlaylistDetailView.MixMode.RelaxedFlow).ShouldBe("relaxed-flow");
+        PlaylistDetailView.ToQueryToken(PlaylistDetailView.MixMode.DeeperCuts).ShouldBe("deeper-cuts");
+    }
+
+
+    private sealed class TestNavigationManager : NavigationManager
+    {
+        public TestNavigationManager()
+        {
+            Initialize("http://localhost/", "http://localhost/");
+        }
+
+        protected override void NavigateToCore(string uri, bool forceLoad)
+        {
+            Uri = ToAbsoluteUri(uri).ToString();
+        }
+    }
     private static async Task<string> RenderAsync<TComponent>(Dictionary<string, object?> parameters)
         where TComponent : IComponent
     {
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton<NavigationManager, TestNavigationManager>();
         await using var serviceProvider = services.BuildServiceProvider();
         await using var htmlRenderer = new HtmlRenderer(serviceProvider, NullLoggerFactory.Instance);
 
