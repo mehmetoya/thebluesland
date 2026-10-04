@@ -50,8 +50,21 @@ public sealed class SmokeTests : IAsyncLifetime
         var addressesFeature = _app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>();
         _baseAddress = addressesFeature!.Addresses.First();
 
+        EnsureChromiumBrowserAvailable();
+
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync();
+    }
+
+    private static void EnsureChromiumBrowserAvailable()
+    {
+        var playwrightRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ms-playwright");
+        if (Directory.Exists(playwrightRoot) && Directory.EnumerateFiles(playwrightRoot, "headless_shell", SearchOption.AllDirectories).Any())
+        {
+            return;
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
     }
 
     public async Task DisposeAsync()
