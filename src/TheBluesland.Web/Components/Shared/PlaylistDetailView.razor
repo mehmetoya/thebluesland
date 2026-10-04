@@ -75,7 +75,7 @@
 
     @if (!string.IsNullOrEmpty(ShareUrl))
     {
-        <SharePlaylist Title="@activePlaylist.Title" Url="@BuildAbsoluteUrl(activePlaylist.Slug)" />
+        <SharePlaylist Title="@activePlaylist.Title" Url="@ShareUrl" />
     }
 
     @if (RelatedPlaylists.Count > 0)
@@ -259,7 +259,7 @@
         _appliedMix = null;
         _showMixPreview = true;
 
-        var resetUrl = $"/playlists/{Content.Slug}";
+        var resetUrl = BuildResetQueryString();
         Logger.LogInformation("playlist_mix_reset: {Mode} path={Path} query={Query}", _selectedMixMode, Content.Slug, resetUrl);
         NavigationManager.NavigateTo(resetUrl, replace: true);
     }
@@ -272,7 +272,7 @@
             return MixMode.SameVibe;
         }
 
-        return token switch
+        return token.ToLowerInvariant() switch
         {
             "same-vibe" => MixMode.SameVibe,
             "more-energetic" => MixMode.MoreEnergetic,
@@ -291,14 +291,35 @@
         _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
     };
 
+    public static string BuildRouteWithMix(string absolutePath, string? existingQueryString, MixMode mode)
+    {
+        var query = QueryHelpers.ParseQuery(existingQueryString ?? string.Empty)
+            .Where(pair => !string.Equals(pair.Key, "mix", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(pair => pair.Key, pair => (string?)pair.Value.ToString());
+
+        query["mix"] = ToQueryToken(mode);
+        return QueryHelpers.AddQueryString(absolutePath, query);
+    }
+
+    public static string BuildRouteWithoutMix(string absolutePath, string? existingQueryString)
+    {
+        var query = QueryHelpers.ParseQuery(existingQueryString ?? string.Empty)
+            .Where(pair => !string.Equals(pair.Key, "mix", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(pair => pair.Key, pair => (string?)pair.Value.ToString());
+
+        return QueryHelpers.AddQueryString(absolutePath, query);
+    }
+
     private string BuildMixQueryString(MixMode mode)
     {
-        var query = new Dictionary<string, string?>
-        {
-            ["mix"] = ToQueryToken(mode),
-        };
+        var currentUri = new Uri(NavigationManager.Uri);
+        return BuildRouteWithMix(currentUri.GetLeftPart(UriPartial.Path), currentUri.Query, mode);
+    }
 
-        return QueryHelpers.AddQueryString($"/playlists/{Content.Slug}", query);
+    private string BuildResetQueryString()
+    {
+        var currentUri = new Uri(NavigationManager.Uri);
+        return BuildRouteWithoutMix(currentUri.GetLeftPart(UriPartial.Path), currentUri.Query);
     }
 
     private string GetModeLabel(MixMode mode) => mode switch

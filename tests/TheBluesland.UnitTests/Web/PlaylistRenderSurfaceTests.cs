@@ -197,6 +197,17 @@ public sealed class PlaylistRenderSurfaceTests
         PlaylistDetailView.ToQueryToken(PlaylistDetailView.MixMode.DeeperCuts).ShouldBe("deeper-cuts");
     }
 
+    [Fact]
+    public void PlaylistDetailView_preserves_existing_query_parameters_when_updating_or_clearing_mix_state()
+    {
+        var withMix = PlaylistDetailView.BuildRouteWithMix("/playlists/test-slug", "?utm_source=test", PlaylistDetailView.MixMode.MoreEnergetic);
+        withMix.ShouldContain("utm_source=test");
+        withMix.ShouldContain("mix=more-energetic");
+        withMix.ShouldNotContain("mix=same-vibe");
+
+        var withoutMix = PlaylistDetailView.BuildRouteWithoutMix("/playlists/test-slug", "?utm_source=test&mix=more-energetic");
+        withoutMix.ShouldBe("/playlists/test-slug?utm_source=test");
+    }
 
     private sealed class TestNavigationManager : NavigationManager
     {
