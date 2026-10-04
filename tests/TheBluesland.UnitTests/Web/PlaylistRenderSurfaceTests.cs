@@ -157,6 +157,26 @@ public sealed class PlaylistRenderSurfaceTests
         html.ShouldContain("href=\"/playlists/related-slug\"");
     }
 
+    [Fact]
+    public async Task PlaylistDetailView_renders_a_refresh_mix_panel_for_related_playlists()
+    {
+        var related = SamplePlaylist with { Slug = "related-slug", Title = "A Related Playlist" };
+
+        var html = await RenderAsync<PlaylistDetailView>(new Dictionary<string, object?>
+        {
+            [nameof(PlaylistDetailView.Content)] = SamplePlaylist,
+            [nameof(PlaylistDetailView.CacheSnapshot)] = PlaylistCacheSnapshot.Unavailable,
+            [nameof(PlaylistDetailView.RelatedPlaylists)] = new List<PlaylistContent> { related },
+        });
+
+        html.ShouldContain("Refresh mix");
+        html.ShouldContain("Same vibe");
+        html.ShouldContain("More energetic");
+        html.ShouldContain("Use this mix");
+        html.ShouldContain("Keep the mood and swap in nearby tracks.");
+        html.ShouldContain("A Related Playlist");
+    }
+
     private static async Task<string> RenderAsync<TComponent>(Dictionary<string, object?> parameters)
         where TComponent : IComponent
     {
