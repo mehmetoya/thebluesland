@@ -117,7 +117,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
 
         response.StatusCode.ShouldBe(HttpStatusCode.MovedPermanently);
         response.Headers.Location.ShouldNotBeNull();
-        response.Headers.Location!.OriginalString.ShouldBe("/playlists/primary-playlist");
+        response.Headers.Location!.OriginalString.ShouldBe("/en/playlists/primary-playlist");
     }
 
     [Fact]

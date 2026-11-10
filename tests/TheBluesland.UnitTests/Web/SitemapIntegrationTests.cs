@@ -59,11 +59,14 @@ public sealed class SitemapIntegrationTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         response.Content.Headers.ContentType!.MediaType.ShouldBe("application/xml");
         body.ShouldContain("<loc>https://thebluesland.onrender.com");
-        body.ShouldContain("/playlists/masterpieces-of-erkin-the-father</loc>");
-        body.ShouldContain("/about</loc>");
-        body.ShouldContain("/privacy</loc>");
-        body.ShouldContain("/terms</loc>");
-        body.ShouldContain("/weekly</loc>");
+        foreach (var language in new[] { "tr", "en" })
+        {
+            body.ShouldContain($"/{language}/playlists/masterpieces-of-erkin-the-father</loc>");
+            body.ShouldContain($"/{language}/about</loc>");
+            body.ShouldContain($"/{language}/privacy</loc>");
+            body.ShouldContain($"/{language}/terms</loc>");
+            body.ShouldContain($"/{language}/weekly</loc>");
+        }
     }
 
     [Fact]
@@ -118,7 +121,7 @@ public sealed class SitemapIntegrationTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
         response.Content.Headers.ContentType!.MediaType.ShouldBe("text/plain");
         body.ShouldStartWith("# TheBluesland\n");
-        body.ShouldContain("https://thebluesland.onrender.com/playlists/masterpieces-of-erkin-the-father");
+        body.ShouldContain("https://thebluesland.onrender.com/en/playlists/masterpieces-of-erkin-the-father");
         body.ShouldNotContain("dear-mr-fantasy");
         body.ShouldNotContain("masterpieces-of-erkin-the-father-alt-slug");
     }

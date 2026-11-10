@@ -140,7 +140,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldContain("No playlists match your search.");
         body.ShouldContain("Clear search and filters");
-        body.ShouldContain("href=\"/\" class=\"clear-filters\"");
+        body.ShouldContain("href=\"/en\" class=\"clear-filters\"");
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
         var response = await _httpClient.GetAsync("/en?mood=warm&occasion=late-night");
         var body = await response.Content.ReadAsStringAsync();
 
-        body.ShouldContain("href=\"/\" class=\"clear-filters\"");
+        body.ShouldContain("href=\"/en\" class=\"clear-filters\"");
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("<button type=\"submit\" class=\"filter-apply\">Apply filters</button>");
-        body.ShouldContain("href=\"/\" class=\"filter-clear\">Clear filters</a>");
+        body.ShouldContain("href=\"/en\" class=\"filter-clear\">Clear filters</a>");
     }
 
     /// <summary>

@@ -99,7 +99,7 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
         var response = await _httpClient.GetAsync("/en");
         var body = await response.Content.ReadAsStringAsync();
 
-        body.ShouldContain("href=\"/?page=2\" class=\"load-more\"");
+        body.ShouldContain("href=\"/en?page=2\" class=\"load-more\"");
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
-        body.ShouldContain("href=\"/?page=2&amp;q=pagination\" class=\"load-more\"");
+        body.ShouldContain("href=\"/en?page=2&amp;q=pagination\" class=\"load-more\"");
     }
 
     /// <summary>

@@ -85,7 +85,7 @@ public sealed class PageViewAnalyticsIntegrationTests : IAsyncLifetime
         var response = await _httpClient.GetAsync("/en");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var rows = await WaitForRowsAsync(row => row.Path == "/");
+        var rows = await WaitForRowsAsync(row => row.Path == "/en");
 
         rows.Count.ShouldBe(1);
         rows[0].EventType.ShouldBe("page_view");
@@ -98,7 +98,7 @@ public sealed class PageViewAnalyticsIntegrationTests : IAsyncLifetime
         var response = await _httpClient.GetAsync($"/en/playlists/{KnownSlug}");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var rows = await WaitForRowsAsync(row => row.Path == $"/playlists/{KnownSlug}");
+        var rows = await WaitForRowsAsync(row => row.Path == $"/en/playlists/{KnownSlug}");
 
         rows.Count.ShouldBe(1);
         rows[0].EventType.ShouldBe("page_view");
@@ -108,7 +108,7 @@ public sealed class PageViewAnalyticsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task Playlist_mix_selection_route_records_an_aggregated_mix_event()
     {
-        var path = $"/playlists/{KnownSlug}";
+        var path = $"/en/playlists/{KnownSlug}";
         var response = await _httpClient.GetAsync($"{path}?mix=more-energetic&mix-selection=related-playlist");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
@@ -130,7 +130,7 @@ public sealed class PageViewAnalyticsIntegrationTests : IAsyncLifetime
         await Task.Delay(TimeSpan.FromMilliseconds(300));
         var rows = await ReadAllRowsAsync();
 
-        rows.ShouldNotContain(row => row.Path == "/playlists/does-not-exist");
+        rows.ShouldNotContain(row => row.Path == "/en/playlists/does-not-exist");
     }
 
     [Fact]

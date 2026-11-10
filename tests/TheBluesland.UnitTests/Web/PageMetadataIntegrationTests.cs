@@ -114,7 +114,7 @@ public sealed class PageMetadataIntegrationTests : IAsyncLifetime
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
-        var expectedCanonical = "<link rel=\"canonical\" href=\"https://thebluesland.onrender.com/\" />";
+        var expectedCanonical = "<link rel=\"canonical\" href=\"https://thebluesland.onrender.com/en\" />";
         body.ShouldContain(expectedCanonical);
     }
 }
