@@ -2,7 +2,7 @@
 
 Modül: `issue-review` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Önceki modül:
 [issue-drafting](weekly-newsletter-issue-drafting.md) · Sınır: [ADR-0006](../adr/0006-weekly-newsletter-ai-metin-siniri.md)
-madde 2 ve 5 · Durum: ONAYLANDI — 2026-11-10 (Mehmet: beş kararın hepsi)
+madde 2 ve 5 · Durum: UYGULANDI — 2026-11-10 (PR #97; uçtan uca deneme PR #98 kapatıldı; ilk zamanlanmış çalışma 2026-11-15)
 
 ## Assumptions
 
@@ -179,11 +179,11 @@ tests/TheBluesland.UnitTests/Workflows/NewsletterDraftWorkflowTests.cs
 ## Success Criteria
 
 - [ ] Pazar 07:00 UTC'de draft PR kendiliğinden açılır; ikinci cron hiçbir şey yapmaz.
-- [ ] "Ready for review" tüm CI job'larını tetikler; `validate-weekly` yeşil.
-- [ ] PR açıklaması Mehmet'in ihtiyacının tamamını içerir: uyarılar, seçim nedenleri, kaynaklar
+- [x] "Ready for review" tüm CI job'larını tetikler; `validate-weekly` yeşil. (PR #98: 6/6 yeşil.)
+- [x] PR açıklaması Mehmet'in ihtiyacının tamamını içerir: uyarılar, seçim nedenleri, kaynaklar
       ve yapıştırılmaya hazır yedekler.
-- [ ] İzolasyon testleri iki job'un ayrımını kanıtlar.
-- [ ] Tam build ve test yeşil; yeni paket ve secret yok.
+- [x] İzolasyon testleri iki job'un ayrımını kanıtlar.
+- [x] Tam build ve test yeşil (745); yeni paket ve secret yok.
 
 ## Kararlar (onaylandı, 2026-11-10)
 

@@ -6,10 +6,12 @@ Plan: [tasks/plan.md](plan.md) · Spec: [docs/specs/weekly-newsletter-issue-revi
 - [x] **T2: `PullRequestBodyFormatter`** — M
 - [x] **T3: `WeeklyIssueValidator`, `validate-weekly` ve `issue-week` alt komutları, `ci.yml`** — M
 - [x] **T4: `newsletter-draft.yml` (schedule, `open_pr`, `open-pr` job'u) ve workflow testleri** — M
-- [ ] **T5: Doküman ve uçtan uca deneme** — S
-- [ ] Checkpoint: tam build, test ve format; PR ve merge; gerçek draft PR; Ready for review ile CI
+- [x] **T5: Doküman ve uçtan uca deneme** — S
+- [x] Checkpoint: tam build, test ve format; PR ve merge; gerçek draft PR; Ready for review ile CI
 
 ## Takip
+
+- [ ] 2026-11-15 pazar: ilk zamanlanmış çalışmanın draft PR'ı açtığını ve 10:00 UTC denemesinin hiçbir şey yapmadığını doğrula.
 
 - [ ] 2026-W47 tam haftası etiketlenip ikinci clustering gold set'i olarak eklenecek.
 - [ ] İlk 4 haftadan sonra: Mehmet ayda birden fazla yedekle değiştirdiyse `swap` workflow'u (ayrı spec).
