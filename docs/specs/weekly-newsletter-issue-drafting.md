@@ -2,7 +2,7 @@
 
 Modül: `issue-drafting` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Önceki modül:
 [story-ranking](weekly-newsletter-story-ranking.md) · Sınır: [ADR-0006](../adr/0006-weekly-newsletter-ai-metin-siniri.md)
-· Ses: [docs/weekly/ses-rehberi.md](../weekly/ses-rehberi.md) · Durum: ONAYLANDI — Mehmet, 2026-11-10 (4 karar)
+· Ses: [docs/weekly/ses-rehberi.md](../weekly/ses-rehberi.md) · Durum: UYGULANDI — 2026-11-10 (PR bekliyor; ilk gerçek taslak production'da çalıştırılacak)
 
 ## Assumptions
 
@@ -161,7 +161,7 @@ Gerçek Gemini çağrısı testte **yapılmaz**; `HttpMessageHandler` sahte yan�
 - [ ] `newsletter-draft` production verisiyle çalışır ve iki dosya + yedek dosyası üretir.
 - [ ] Mehmet'in değerlendirmesi: ilk gerçek taslakta TR metinde en fazla birkaç cümle düzeltme
       gerekir. Ölçüm: PR'daki diff, issue-review ile otomatik izlenir.
-- [ ] Ses rehberindeki örnek sayı denetçiden sıfır uyarıyla geçer.
+- [x] Ses rehberindeki örnek sayı denetçiden sıfır uyarıyla geçer. (Kalibrasyon iki kuralı örneğe uydurdu: "neden önemli" ≤ 2 cümle, kapanış ≤ 2 cümle; "TV" özel ad sayılmaz.)
 - [ ] Tam build ve test yeşil; yeni paket yok.
 
 ## Kararlar (onaylandı, 2026-11-10)

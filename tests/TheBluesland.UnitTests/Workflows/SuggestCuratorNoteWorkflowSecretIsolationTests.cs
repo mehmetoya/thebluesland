@@ -51,6 +51,24 @@ public sealed class SuggestCuratorNoteWorkflowSecretIsolationTests
         yaml.ShouldNotContain("push:");
     }
 
+    /// <summary>
+    /// Scans every workflow: the AI key may appear only in the curator-note suggestion and the
+    /// Weekly draft workflow (ADR-0005 madde 3, ADR-0006 madde 5).
+    /// </summary>
+    [Fact]
+    public void Only_the_curator_note_and_weekly_draft_workflows_reference_the_ai_key()
+    {
+        var directory = Path.GetDirectoryName(FindRepoFile(".github/workflows/suggest-curator-note.yml"))!;
+        var holders = Directory.GetFiles(directory, "*.yml")
+            .Concat(Directory.GetFiles(directory, "*.yaml"))
+            .Where(path => File.ReadAllText(path).Contains(SecretExpression("GEMINI_API_KEY"), StringComparison.Ordinal))
+            .Select(Path.GetFileName)
+            .Order()
+            .ToList();
+
+        holders.ShouldBe(["newsletter-draft.yml", "suggest-curator-note.yml"]);
+    }
+
     [Theory]
     [InlineData(".github/workflows/ci.yml")]
     [InlineData(".github/workflows/deploy.yml")]

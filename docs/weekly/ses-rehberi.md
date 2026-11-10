@@ -35,7 +35,7 @@ Haber × 5    Başlık (≤ 70 karakter, bizim başlığımız, clickbait yok)
              2–3 cümle: ne oldu
              Neden önemli: 1–2 kısa cümle
              Kaynaklar: (kod ekler)
-Kapanış      Tek cümle.
+Kapanış      1–2 kısa cümle.
 Not          Bu sayı yapay zekâ yardımıyla hazırlandı ve TheBluesland editörü tarafından düzenlendi.
 ```
 
