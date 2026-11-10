@@ -40,6 +40,8 @@ public sealed class IssueWeekTests
     [InlineData("2026-12-27T07:00:00Z", "2026-12-28", "2026-W53")]
     [InlineData("2027-01-03T07:00:00Z", "2027-01-04", "2027-W01")]
     [InlineData("2026-11-10T10:00:00Z", "2026-11-16", "2026-W47")]
+    [InlineData("2026-11-15T21:00:00Z", "2026-11-16", "2026-W47")] // Monday 00:00 Istanbul, exclusive
+
     public void ForWindow_sends_on_the_first_Monday_after_the_window(string to, string sendDate, string id)
     {
         var end = DateTimeOffset.Parse(to, System.Globalization.CultureInfo.InvariantCulture);

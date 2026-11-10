@@ -28,10 +28,14 @@ public sealed record IssueWeek(int Year, int Week, DateOnly SendDate, DateTimeOf
         return ForWindow(end - TimeSpan.FromDays(7), end);
     }
 
-    /// <summary>An explicit window; the issue is sent on the first Monday after the window's last Istanbul day.</summary>
+    /// <summary>
+    /// An explicit window; the issue is sent on the first Monday after the window's last Istanbul
+    /// day. <paramref name="to"/> is exclusive, so a window ending at Monday 00:00 still belongs to
+    /// that Monday's issue.
+    /// </summary>
     public static IssueWeek ForWindow(DateTimeOffset from, DateTimeOffset to)
     {
-        var lastDay = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(to, Istanbul).DateTime);
+        var lastDay = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(to.AddTicks(-1), Istanbul).DateTime);
         var daysToMonday = ((int)DayOfWeek.Monday - (int)lastDay.DayOfWeek + 7) % 7;
         var sendDate = lastDay.AddDays(daysToMonday == 0 ? 7 : daysToMonday);
         var sendDateTime = sendDate.ToDateTime(TimeOnly.MinValue);

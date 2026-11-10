@@ -61,6 +61,49 @@ public sealed class DraftValidatorTests(ITestOutputHelper output)
     }
 
     [Fact]
+    public void Newlines_and_separators_never_survive_so_front_matter_and_headings_stay_intact()
+    {
+        var key = Card.Picks.First().Key;
+        var draft = DraftResponse.Parse(FakeAnswer(Card.Stories.Select(story => story.Key)), Card);
+        draft = draft with { Stories = draft.Stories.Select(story => story.Key == key ? story with { Headline = "A\n---\nB\u2028# C\r\nD" } : story).ToList() };
+
+        var (clean, _) = DraftValidator.Validate(draft, Card);
+        var markdown = IssueMarkdownWriter.Issue(Week46, DraftLanguage.English, clean, Card);
+
+        clean.For(key).Headline.ShouldBe("A --- B # C D");
+        markdown.Split('\n').Count(line => line == "---").ShouldBe(2);
+        markdown.ShouldContain("## A --- B # C D\n");
+    }
+
+    [Fact]
+    public void Email_addresses_and_bare_domains_are_removed()
+    {
+        var key = Card.Picks.First().Key;
+        var draft = new DraftResponse("Yaz: editor@example.com ya da evil.com/x adresine.", "Görüşürüz.", [new DraftStory(key, "Başlık", "Gövde.", "Önemli.")]);
+
+        var (clean, warnings) = DraftValidator.Validate(draft, Card);
+
+        clean.Intro.ShouldBe("Yaz: ya da adresine.");
+        warnings.ShouldContain(warning => warning.Where == "intro");
+    }
+
+    [Fact]
+    public void Names_match_whole_words_and_card_dates_count_as_facts()
+    {
+        var key = Card.Picks.First().Key;
+        var draft = new DraftResponse(
+            "Giriş.",
+            "Kapanış.",
+            [new DraftStory(key, "Başlık", "Haber 7 Kasım'da geldi ve Lloy ile Richard konuştu.", "Önemli.")]);
+
+        var (_, warnings) = DraftValidator.Validate(draft, Card);
+
+        warnings.ShouldContain(warning => warning.Message.Contains("name “Lloy”", StringComparison.Ordinal));
+        warnings.ShouldNotContain(warning => warning.Message.Contains("Richard", StringComparison.Ordinal));
+        warnings.ShouldNotContain(warning => warning.Message.Contains("number “7”", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Lengths_and_sentence_counts_are_flagged()
     {
         var key = Card.Picks.First().Key;

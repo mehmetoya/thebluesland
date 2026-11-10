@@ -10,7 +10,7 @@ namespace TheBluesland.WeeklyNewsletter.Drafting;
 /// fact card → one Gemini call per language → checks → issue and backups files → job summary.
 /// Writes only files; never the database, never a branch. Exit 0 when both languages were written
 /// (warnings included); 1 on bad configuration, too few stories, a database or Gemini failure, or
-/// a model answer that is malformed twice.
+/// a model answer that is malformed twice, or an issue file that already exists (never overwritten).
 /// </summary>
 public static class DraftCommand
 {
@@ -48,6 +48,11 @@ public static class DraftCommand
             problems.Add($"{GeminiClient.ApiKeyVariable} is not set.");
         }
 
+        if (!string.IsNullOrWhiteSpace(model) && !GeminiClient.IsValidModel(model))
+        {
+            problems.Add($"{GeminiClient.ModelVariable} '{model}' is not a valid model id (lowercase letters, digits, '.' and '-').");
+        }
+
         if (from is not null && to is not null && from >= to)
         {
             problems.Add("--from must be before --to.");
@@ -83,6 +88,17 @@ public static class DraftCommand
         catch (Exception ex) when (DatabaseErrors.Find(ex) is { } database)
         {
             await error.WriteLineAsync($"Database error: {DatabaseErrors.Describe(database)}");
+            return 1;
+        }
+
+        var targets = DraftLanguage.All
+            .SelectMany(language => new[] { IssueMarkdownWriter.IssueFileName(week, language), IssueMarkdownWriter.BackupsFileName(week, language) })
+            .Select(name => Path.Combine(outputDirectory, name))
+            .ToList();
+        if (targets.FirstOrDefault(File.Exists) is { } existing)
+        {
+            // Never overwrite a draft Mehmet may already have edited; delete it first to redraft.
+            await error.WriteLineAsync($"{existing} already exists; delete it to draft {week.Id} again. Nothing was written.");
             return 1;
         }
 

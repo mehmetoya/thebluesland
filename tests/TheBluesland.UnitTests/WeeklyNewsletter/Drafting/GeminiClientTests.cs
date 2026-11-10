@@ -40,6 +40,34 @@ public sealed class GeminiClientTests
     }
 
     [Fact]
+    public async Task GenerateJsonAsync_retries_a_dropped_connection()
+    {
+        var handler = new QueueHandler(
+            _ => throw new HttpRequestException("connection reset"),
+            _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(GeminiEnvelope("{}")) });
+
+        (await new GeminiClient(new HttpClient(handler), "k", "m", TimeSpan.Zero).GenerateJsonAsync("p", new { }, CancellationToken.None)).ShouldBe("{}");
+        handler.Requests.Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task GenerateJsonAsync_reports_a_non_json_success_body_as_a_format_problem()
+    {
+        var handler = new QueueHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("<html>oops</html>") });
+
+        await Should.ThrowAsync<DraftFormatException>(() => new GeminiClient(new HttpClient(handler), "k", "m", TimeSpan.Zero).GenerateJsonAsync("p", new { }, CancellationToken.None));
+    }
+
+    [Theory]
+    [InlineData("gemini-3.8-flash", true)]
+    [InlineData("../other", false)]
+    [InlineData("Gemini Pro", false)]
+    public void IsValidModel_accepts_only_path_safe_ids(string model, bool expected)
+    {
+        GeminiClient.IsValidModel(model).ShouldBe(expected);
+    }
+
+    [Fact]
     public async Task GenerateJsonAsync_does_not_retry_a_client_error()
     {
         var handler = new QueueHandler(_ => new HttpResponseMessage(HttpStatusCode.BadRequest));

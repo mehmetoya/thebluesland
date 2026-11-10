@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace TheBluesland.WeeklyNewsletter.Drafting;
@@ -19,6 +20,7 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
     public const string DefaultModel = "gemini-3.8-flash";
 
     private const int MaxAttempts = 3;
+    private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromMinutes(1);
     private readonly TimeSpan _retryDelay = retryDelay ?? TimeSpan.FromSeconds(5);
 
     public async Task<string> GenerateJsonAsync(string prompt, object responseSchema, CancellationToken cancellationToken)
@@ -35,25 +37,59 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
             };
             request.Headers.Add("x-goog-api-key", apiKey);
 
-            using var response = await httpClient.SendAsync(request, cancellationToken);
-            if (response.IsSuccessStatusCode)
+            HttpResponseMessage response;
+            try
             {
-                var payload = await response.Content.ReadFromJsonAsync<Response>(cancellationToken);
-                return payload?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text is { Length: > 0 } text
-                    ? text
-                    : throw new DraftFormatException("Gemini's answer contained no text.");
+                response = await httpClient.SendAsync(request, cancellationToken);
+            }
+            catch (HttpRequestException) when (attempt < MaxAttempts)
+            {
+                // Connection reset or DNS hiccup: worth another try, like a 5xx.
+                await Task.Delay(_retryDelay, cancellationToken);
+                continue;
             }
 
-            if (!IsTransient(response.StatusCode) || attempt >= MaxAttempts)
+            using (response)
             {
-                throw new HttpRequestException(
-                    $"Gemini request failed with {(int)response.StatusCode} {response.StatusCode} (attempt {attempt} of {MaxAttempts}).",
-                    null,
-                    response.StatusCode);
-            }
+                if (response.IsSuccessStatusCode)
+                {
+                    Response? payload;
+                    try
+                    {
+                        payload = await response.Content.ReadFromJsonAsync<Response>(cancellationToken);
+                    }
+                    catch (JsonException ex)
+                    {
+                        throw new DraftFormatException($"Gemini's answer was not the expected JSON envelope: {ex.Message}");
+                    }
 
-            await Task.Delay(_retryDelay, cancellationToken);
+                    return payload?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text is { Length: > 0 } text
+                        ? text
+                        : throw new DraftFormatException("Gemini's answer contained no text.");
+                }
+
+                if (!IsTransient(response.StatusCode) || attempt >= MaxAttempts)
+                {
+                    throw new HttpRequestException(
+                        $"Gemini request failed with {(int)response.StatusCode} {response.StatusCode} (attempt {attempt} of {MaxAttempts}).",
+                        null,
+                        response.StatusCode);
+                }
+
+                await Task.Delay(RetryDelay(response), cancellationToken);
+            }
         }
+    }
+
+    /// <summary>A model id may only be a path segment like "gemini-3.8-flash".</summary>
+    public static bool IsValidModel(string model) =>
+        model.Length is > 0 and <= 64 && model.All(character => character is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '.' or '-');
+
+    /// <summary>Gemini's own Retry-After when it sends one (free-tier 429s), capped at a minute.</summary>
+    private TimeSpan RetryDelay(HttpResponseMessage response)
+    {
+        var suggested = response.Headers.RetryAfter?.Delta;
+        return suggested is { } delta && delta > _retryDelay ? (delta < MaxRetryDelay ? delta : MaxRetryDelay) : _retryDelay;
     }
 
     private static bool IsTransient(HttpStatusCode status) =>

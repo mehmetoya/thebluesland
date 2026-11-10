@@ -101,6 +101,29 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task RunAsync_never_overwrites_an_existing_draft()
+    {
+        Directory.CreateDirectory(_out);
+        await File.WriteAllTextAsync(Path.Combine(_out, "2026-W47.tr.md"), "edited by Mehmet");
+        var handler = new QueueHandler(EchoKeys);
+
+        (await RunAsync(handler)).ShouldBe(1);
+        _error.ToString().ShouldContain("already exists");
+        (await File.ReadAllTextAsync(Path.Combine(_out, "2026-W47.tr.md"))).ShouldBe("edited by Mehmet");
+        handler.Requests.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task RunAsync_rejects_an_unsafe_model_id()
+    {
+        var handler = new QueueHandler(EchoKeys);
+
+        (await RunAsync(handler, model: "../x")).ShouldBe(1);
+        _error.ToString().ShouldContain("not a valid model id");
+        handler.Requests.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task RunAsync_without_api_key_fails_before_reading()
     {
         var handler = new QueueHandler(EchoKeys);
@@ -120,14 +143,14 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
         handler.Requests.ShouldBeEmpty();
     }
 
-    private Task<int> RunAsync(QueueHandler handler, string? apiKey = "test-key", DateTimeOffset? from = null, DateTimeOffset? to = null) =>
+    private Task<int> RunAsync(QueueHandler handler, string? apiKey = "test-key", DateTimeOffset? from = null, DateTimeOffset? to = null, string model = "test-model") =>
         DraftCommand.RunAsync(
             Path.GetDirectoryName(RepoFiles.Find("tools/weekly-newsletter/ranking.yml"))!,
             RepoFiles.Find("docs/weekly/ses-rehberi.md"),
             _out,
             _postgres.GetConnectionString(),
             apiKey,
-            "test-model",
+            model,
             from ?? From,
             to ?? To,
             new HttpClient(handler),
