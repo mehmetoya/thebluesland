@@ -1,3 +1,5 @@
+using TheBluesland.Web.Localization;
+
 namespace TheBluesland.Web.Analytics;
 
 /// <summary>
@@ -22,6 +24,15 @@ public static class PageViewRoute
     public static bool TryClassify(string path, out string? playlistSlug)
     {
         playlistSlug = null;
+
+        // docs/specs/site-i18n.md: pages live under /tr and /en. The route table below is about the page,
+        // not its language, so the prefix is dropped before matching ("/tr" is the home page, "/en/about"
+        // is "/about"); the stored path keeps the prefix because the middleware records the raw path.
+        // Unprefixed paths still classify: they are the legacy URLs, which redirect and never reach a 200.
+        if (SiteLanguage.TrySplit(path, out _, out var unprefixed))
+        {
+            path = unprefixed;
+        }
 
         if (ExactMatchRoutes.Contains(path, StringComparer.Ordinal))
         {

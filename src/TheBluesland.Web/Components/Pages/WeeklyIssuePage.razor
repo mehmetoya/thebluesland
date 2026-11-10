@@ -1,36 +1,39 @@
-@page "/weekly/{Id}/{Language}"
+@page "/tr/weekly/{Id}"
+@page "/en/weekly/{Id}"
 @inject WeeklyIssueRepository Issues
 @inject IConfiguration Configuration
 
+@* The issue language is the URL's language prefix: /tr/weekly/2026-W47 is the Turkish issue, so the
+   page chrome and the issue body always agree (docs/specs/site-i18n.md). *@
 @if (_issue is not null)
 {
-    var tr = _issue.Language == "tr";
     <PageTitle>@($"{_issue.Title} - TheBluesland")</PageTitle>
     <PageMetadata
         Title="@($"{_issue.Title} - TheBluesland")"
-        Description="@(tr ? "Haftanın beş müzik haberi, beş dakikada." : "The week's five music stories, in five minutes.")"
-        CanonicalPath="@_issue.Path"
+        Description="@Site.T.WeeklyIssueDescription"
+        CanonicalPath="@_issue.NeutralPath"
+        AlternateLanguages="@_languages"
         ImagePath="/og-image.png" />
     <article class="weekly weekly-issue" lang="@_issue.Language">
-        <nav aria-label="@(tr ? "Konum" : "Breadcrumb")" class="breadcrumb">
-            <a href="/weekly">TheBluesland Weekly</a>
+        <nav aria-label="@Site.T.BreadcrumbLabel" class="breadcrumb">
+            <a href="@Site.Url("/weekly")">TheBluesland Weekly</a>
             <span aria-hidden="true"> / </span>
             <span aria-current="page">@_issue.DisplayTitle</span>
         </nav>
         <header class="weekly-masthead">
-            <p class="weekly-eyebrow">TheBluesland Weekly <span aria-hidden="true">·</span> @(tr ? "Sayı" : "Issue") @_issue.Number</p>
+            <p class="weekly-eyebrow">TheBluesland Weekly <span aria-hidden="true">·</span> @Site.T.WeeklyIssueWord @_issue.Number</p>
             <h1>@_issue.DisplayTitle</h1>
             <div class="weekly-meta">
                 <p class="weekly-meta-line">
-                    <time datetime="@_issue.SendDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@_issue.FormattedDate</time>
+                    <time datetime="@_issue.SendDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@Site.FormatDate(_issue.SendDate)</time>
                     <span aria-hidden="true">·</span>
-                    @StoriesText(_issue)
+                    @Site.T.WeeklyStories(_issue.StoryCount)
                     <span aria-hidden="true">·</span>
-                    ~@_issue.ReadMinutes @(tr ? "dk" : "min")
+                    ~@_issue.ReadMinutes @Site.T.WeeklyMinutes
                 </p>
                 @if (_other is not null)
                 {
-                    <nav class="weekly-lang" aria-label="@(tr ? "Dil" : "Language")">
+                    <nav class="weekly-lang" aria-label="@Site.T.WeeklyLanguageNavLabel">
                         <a href="@_issue.Path" lang="@_issue.Language" hreflang="@_issue.Language" aria-current="page">@_issue.LanguageName</a>
                         <a href="@_other.Path" lang="@_other.Language" hreflang="@_other.Language">@_other.LanguageName</a>
                     </nav>
@@ -38,24 +41,24 @@
             </div>
             @if (_hasSignup)
             {
-                <p class="weekly-jump"><a href="#weekly-subscribe">@(tr ? "Her pazartesi e-postanda" : "Get it every Monday") <span aria-hidden="true">↓</span></a></p>
+                <p class="weekly-jump"><a href="#weekly-subscribe">@Site.T.WeeklyJumpToSubscribe <span aria-hidden="true">↓</span></a></p>
             }
         </header>
         <div class="weekly-body">@((MarkupString)_issue.Html)</div>
         @if (_previous is not null || _next is not null)
         {
-            <nav class="weekly-pager" aria-label="@(tr ? "Sayılar" : "Issues")">
+            <nav class="weekly-pager" aria-label="@Site.T.WeeklyIssuesNavLabel">
                 @if (_previous is not null)
                 {
-                    <a class="weekly-pager-previous" href="@_previous.Path"><span class="weekly-pager-label"><span aria-hidden="true">←</span> @(tr ? "Önceki sayı" : "Previous issue")</span> @_previous.DisplayTitle</a>
+                    <a class="weekly-pager-previous" href="@_previous.Path"><span class="weekly-pager-label"><span aria-hidden="true">←</span> @Site.T.WeeklyPreviousIssue</span> @_previous.DisplayTitle</a>
                 }
                 @if (_next is not null)
                 {
-                    <a class="weekly-pager-next" href="@_next.Path"><span class="weekly-pager-label">@(tr ? "Sonraki sayı" : "Next issue") <span aria-hidden="true">→</span></span> @_next.DisplayTitle</a>
+                    <a class="weekly-pager-next" href="@_next.Path"><span class="weekly-pager-label">@Site.T.WeeklyNextIssue <span aria-hidden="true">→</span></span> @_next.DisplayTitle</a>
                 }
             </nav>
         }
-        <WeeklySubscribe Language="@_issue.Language" />
+        <WeeklySubscribe />
     </article>
 }
 else if (!_redirected)
@@ -67,9 +70,6 @@ else if (!_redirected)
     [Parameter]
     public string Id { get; set; } = string.Empty;
 
-    [Parameter]
-    public string Language { get; set; } = string.Empty;
-
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 
@@ -77,26 +77,36 @@ else if (!_redirected)
     private WeeklyIssue? _other;
     private WeeklyIssue? _previous;
     private WeeklyIssue? _next;
+    private IReadOnlyList<string> _languages = SiteLanguage.Supported;
     private bool _hasSignup;
     private bool _redirected;
 
     protected override void OnParametersSet()
     {
-        _issue = Issues.Find(Id, Language);
-        _other = _issue is null ? null : Issues.Find(Id, Language == "tr" ? "en" : "tr");
+        _issue = Issues.Find(Id, Site.Code);
+        _other = _issue is null ? null : Issues.Find(Id, Site.OtherCode);
+        _languages = _other is null ? [Site.Code] : SiteLanguage.Supported;
         (_previous, _next) = _issue is null ? (null, null) : Issues.Neighbours(_issue);
         _hasSignup = WeeklySignup.Forms(Configuration).Count > 0;
 
-        // UX-10: /weekly/2026-w47/TR is the same issue under a non-canonical spelling; send it home.
-        if (_issue is null && HttpContext is not null
-            && Issues.Find(Id.ToUpperInvariant(), Language.ToLowerInvariant()) is { } canonical)
+        if (_issue is not null || HttpContext is null)
+        {
+            return;
+        }
+
+        // UX-10: /tr/weekly/2026-w47 is the same issue under a non-canonical spelling; send it home.
+        var canonicalId = Id.ToUpperInvariant();
+        if (canonicalId != Id && Issues.Find(canonicalId, Site.Code) is { } canonical)
         {
             HttpContext.Response.Redirect(canonical.Path, permanent: true);
             _redirected = true;
         }
+        // Only the other language's issue exists (yet): send the visitor there, but not permanently -
+        // the missing translation may be published later.
+        else if (Issues.Find(canonicalId, Site.OtherCode) is { } otherLanguage)
+        {
+            HttpContext.Response.Redirect(otherLanguage.Path, permanent: false);
+            _redirected = true;
+        }
     }
-
-    private static string StoriesText(WeeklyIssue issue) => issue.Language == "tr"
-        ? $"{issue.StoryCount} haber"
-        : issue.StoryCount == 1 ? "1 story" : $"{issue.StoryCount} stories";
 }

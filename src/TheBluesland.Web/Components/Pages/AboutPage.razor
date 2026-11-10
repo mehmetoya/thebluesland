@@ -1,36 +1,61 @@
-@page "/about"
+@page "/tr/about"
+@page "/en/about"
 
-<PageTitle>About - TheBluesland</PageTitle>
+<PageTitle>@Site.T.AboutTitle</PageTitle>
 <PageMetadata
-    Title="About - TheBluesland"
-    Description="Meet TheBluesland: Mehmet's personal collection of Spotify playlists, with roots in blues and room for jazz, folk, rock and electronic music."
+    Title="@Site.T.AboutTitle"
+    Description="@Site.T.AboutDescription"
     CanonicalPath="/about"
     ImagePath="/og-image.png"
     StructuredDataJson="@(new[] { AboutPageJsonLd, FaqPageJsonLd })" />
 
 <article class="about">
-    <h1>About TheBluesland</h1>
-    <p>
-        I'm Mehmet, and TheBluesland is a place to share my Spotify playlists.
-        Blues and rock are at the heart of the collection, alongside folk, jazz, soul,
-        electronic music, and the connections between them.
-    </p>
-    <p>
-        Some playlists stay with one artist or a particular sound. Others bring together music
-        for a long drive, a quiet evening, or a change of mood. There are tributes, film-inspired
-        selections, and mixes that wander across genres.
-    </p>
-    <p>
-        Each playlist has a short note to give you a feel for the music before you press play.
-        Browse by mood, genre, occasion, or era, explore the <a href="/collections">collections</a>,
-        or head straight to <a href="/">all playlists</a>. When something catches your ear,
-        open it in Spotify and listen.
-    </p>
+    <h1>@Site.T.AboutHeading</h1>
+    @if (Site.IsTurkish)
+    {
+        <p>
+            Ben Mehmet; TheBluesland da Spotify çalma listelerimi paylaştığım bir yer.
+            Koleksiyonun merkezinde blues ve rock var; yanlarında folk, caz, soul,
+            elektronik müzik ve bunlar arasındaki bağlantılar yer alıyor.
+        </p>
+        <p>
+            Bazı çalma listeleri tek bir sanatçıya ya da belirli bir sese bağlı kalıyor. Diğerleri
+            uzun bir yol, sakin bir akşam ya da ruh hâlindeki bir değişiklik için müzikleri bir araya
+            getiriyor. Saygı duruşları, filmlerden ilham alan seçkiler ve türler arasında dolaşan
+            karışımlar da var.
+        </p>
+        <p>
+            Her çalma listesinin, play'e basmadan önce müziğe dair fikir veren kısa bir notu var.
+            Şimdilik çalma listesi başlıkları, özetleri ve notları İngilizce. Ruh haline, türe, ortama ya da
+            döneme göre göz atabilir, <a href="@Site.Url("/collections")">koleksiyonları</a> keşfedebilir
+            ya da doğrudan <a href="@Site.Url("/")">tüm çalma listelerine</a> geçebilirsin. Kulağına
+            bir şey takılırsa Spotify'da aç ve dinle.
+        </p>
+    }
+    else
+    {
+        <p>
+            I'm Mehmet, and TheBluesland is a place to share my Spotify playlists.
+            Blues and rock are at the heart of the collection, alongside folk, jazz, soul,
+            electronic music, and the connections between them.
+        </p>
+        <p>
+            Some playlists stay with one artist or a particular sound. Others bring together music
+            for a long drive, a quiet evening, or a change of mood. There are tributes, film-inspired
+            selections, and mixes that wander across genres.
+        </p>
+        <p>
+            Each playlist has a short note to give you a feel for the music before you press play.
+            Browse by mood, genre, occasion, or era, explore the <a href="@Site.Url("/collections")">collections</a>,
+            or head straight to <a href="@Site.Url("/")">all playlists</a>. When something catches your ear,
+            open it in Spotify and listen.
+        </p>
+    }
 
-    @* Visible markup and FaqPageJsonLd below share this same array by construction (@code), so the
-       two can never drift apart - a requirement of Google's FAQPage guidance, not just tidiness. *@
-    <h2>Frequently asked questions</h2>
-    @foreach (var (question, answer) in FaqItems)
+    @* Visible markup and FaqPageJsonLd below share this same array by construction (SiteText.AboutFaq),
+       so the two can never drift apart - a requirement of Google's FAQPage guidance, not just tidiness. *@
+    <h2>@Site.T.AboutFaqHeading</h2>
+    @foreach (var (question, answer) in Site.T.AboutFaq)
     {
         <h3>@question</h3>
         <p>@answer</p>
@@ -41,31 +66,14 @@
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 
-    private static readonly (string Question, string Answer)[] FaqItems =
-    [
-        ("What is TheBluesland?",
-         "TheBluesland is Mehmet's personal collection of Spotify playlists, rooted in blues and " +
-         "spanning rock, folk, jazz, soul and electronic music. Each playlist comes with a short " +
-         "curator note."),
-        ("Is TheBluesland affiliated with Spotify?",
-         "No. TheBluesland is an independent, personal project. It links to playlists hosted on " +
-         "Spotify but isn't affiliated with, endorsed by, or operated by Spotify."),
-        ("How are the mood, genre, occasion and era tags chosen?",
-         "Mood, genre and occasion tags are chosen by hand for each playlist. Era tags are usually " +
-         "chosen by hand too; for playlists that mix many periods, an era estimate is calculated " +
-         "from Spotify's release-date data and kept up to date automatically."),
-        ("How often is the site updated?",
-         "New playlists and curator notes are added whenever there's more to share. Playlist " +
-         "details such as track counts sync from Spotify roughly once a month."),
-    ];
-
     private string AboutPageJsonLd =>
         StructuredDataBuilder.BuildAboutPage(
             "Mehmet",
-            "Curator of TheBluesland, a personal collection of Spotify playlists rooted in blues.",
-            BuildAbsoluteUrl("/about"));
+            Site.T.AboutCuratorDescription,
+            BuildAbsoluteUrl(Site.Url("/about")),
+            Site.Code);
 
-    private string FaqPageJsonLd => StructuredDataBuilder.BuildFaqPage(FaqItems);
+    private string FaqPageJsonLd => StructuredDataBuilder.BuildFaqPage(Site.T.AboutFaq, Site.Code);
 
     private string BuildAbsoluteUrl(string path) =>
         HttpContext is null ? path : SiteUrl.BuildAbsolute(HttpContext, path);

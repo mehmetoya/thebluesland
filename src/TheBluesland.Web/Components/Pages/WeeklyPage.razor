@@ -1,29 +1,29 @@
-@page "/weekly"
+@page "/tr/weekly"
+@page "/en/weekly"
 @inject WeeklyIssueRepository Issues
 @inject IConfiguration Configuration
 
-<PageTitle>TheBluesland Weekly - TheBluesland</PageTitle>
+<PageTitle>@Site.T.WeeklyTitle</PageTitle>
 <PageMetadata
-    Title="TheBluesland Weekly - TheBluesland"
-    Description="Every Monday, five music stories in five minutes, in Turkish and English. Read past issues of TheBluesland Weekly."
+    Title="@Site.T.WeeklyTitle"
+    Description="@Site.T.WeeklyDescription"
     CanonicalPath="/weekly"
     ImagePath="/og-image.png" />
 
 <article class="weekly-hub">
     <section class="brand-intro">
         <h1>TheBluesland Weekly</h1>
-        <p>Every Monday: the week's five music stories and why they matter, in Turkish and English.</p>
+        <p>@Site.T.WeeklyIntro</p>
     </section>
 
-    <WeeklySubscribe Language="en" ShowWhenUnavailable="true" />
+    <WeeklySubscribe ShowWhenUnavailable="true" />
 
     <section class="weekly-archive" aria-labelledby="weekly-archive-title">
-        <h2 id="weekly-archive-title">Past issues</h2>
-        <p class="weekly-archive-subtitle" lang="tr">Geçmiş sayılar</p>
+        <h2 id="weekly-archive-title">@Site.T.WeeklyPastIssues</h2>
         @if (_issues.Count == 0)
         {
             <p class="weekly-empty">
-                The first issue arrives Monday 08:00 (TR) / 15:00 (EN), Istanbul time.@(_hasSignup ? " Subscribe above to get it first." : "")
+                @Site.T.WeeklyFirstIssue@(_hasSignup ? Site.T.WeeklyFirstIssueSubscribe : "")
             </p>
         }
         else
@@ -31,12 +31,13 @@
             <ul class="weekly-cards">
                 @foreach (var group in _issues.GroupBy(issue => issue.Id))
                 {
-                    var lead = group.FirstOrDefault(issue => issue.Language == "en") ?? group.First();
+                    // The card reads in the page language when that issue exists, else in the other one.
+                    var lead = group.FirstOrDefault(issue => issue.Language == Site.Code) ?? group.First();
                     <li class="collection-link weekly-card">
                         <p class="weekly-card-eyebrow">
-                            <time datetime="@lead.SendDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@WeeklyIssue.FormatDate(lead.SendDate, "en")</time>
+                            <time datetime="@lead.SendDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@Site.FormatDate(lead.SendDate)</time>
                             <span aria-hidden="true">·</span>
-                            @(lead.Language == "tr" ? "Sayı" : "Issue") @lead.Number
+                            @Site.T.WeeklyIssueWord @lead.Number
                         </p>
                         <p class="weekly-card-lede" lang="@lead.Language">@lead.Lede</p>
                         <ul class="weekly-card-headlines" lang="@lead.Language">
@@ -46,9 +47,10 @@
                             }
                         </ul>
                         <p class="weekly-card-actions">
-                            @foreach (var issue in group)
+                            @* Each button names its own language ("Türkçe oku" / "Read in English"), whichever page it is on. *@
+                            @foreach (var issue in group.OrderBy(issue => issue.Language == Site.Code ? 0 : 1))
                             {
-                                <a class="weekly-button weekly-button-outline" href="@issue.Path" lang="@issue.Language" hreflang="@issue.Language">@(issue.Language == "tr" ? "Türkçe oku" : "Read in English")<span class="sr-only"> (@(issue.Language == "tr" ? "Sayı" : "Issue") @issue.Number)</span></a>
+                                <a class="weekly-button weekly-button-outline" href="@issue.Path" lang="@issue.Language" hreflang="@issue.Language">@(issue.Language == "tr" ? "Türkçe oku" : "Read in English")<span class="sr-only"> (@Site.T.WeeklyIssueWord @issue.Number)</span></a>
                             }
                         </p>
                     </li>

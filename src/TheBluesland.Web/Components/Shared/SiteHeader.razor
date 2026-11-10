@@ -27,8 +27,8 @@
                     {
                         <span aria-hidden="true">|</span>
                     }
-                    <a href="@Site.SwitchUrl(code)" lang="@code" hreflang="@code" title="@SiteText.For(code).LanguageName"
-                       aria-current="@(code == Site.Code ? "true" : null)">@code.ToUpperInvariant()</a>
+                    <a href="@Site.SwitchUrl(code)" lang="@(code)" hreflang="@(code)" title="@SiteText.For(code).LanguageName"
+                       aria-current="@(code == Site.Code ? "true" : null)">@(code).ToUpperInvariant()</a>
                 }
             </nav>
             @* docs/specs/dark-light-mode-toggle.md section 3: hand-authored inline SVGs (no icon

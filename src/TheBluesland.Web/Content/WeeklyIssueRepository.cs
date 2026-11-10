@@ -24,7 +24,11 @@ public sealed record WeeklyIssue(
     private static readonly string[] EnglishMonths =
         ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-    public string Path => $"/weekly/{Id}/{Language}";
+    /// <summary>"/{lang}/weekly/{id}" - the language lives in the path prefix (docs/specs/site-i18n.md).</summary>
+    public string Path => $"/{Language}/weekly/{Id}";
+
+    /// <summary>The language-neutral part of <see cref="Path"/> ("/weekly/{id}"), for PageMetadata.</summary>
+    public string NeutralPath => $"/weekly/{Id}";
 
     public string LanguageName => Language == "tr" ? "Türkçe" : "English";
 

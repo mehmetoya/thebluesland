@@ -1,30 +1,16 @@
-@page "/weekly/thanks"
+@page "/tr/weekly/thanks"
+@page "/en/weekly/thanks"
 
-@* UX-3: Kit's "after sign-up" redirect target (/weekly/thanks?lang=tr or ?lang=en). Static, not
-   indexed, and it builds its own <HeadContent> instead of PageMetadata (one HeadContent per page). *@
-<PageTitle>@(_tr ? "Neredeyse tamam" : "Almost there") - TheBluesland</PageTitle>
+@* UX-3: where Kit sends a new subscriber after sign-up. Kit's forms still point at the old
+   /weekly/thanks?lang=tr|en; WebHostFactory redirects those here. Static, not indexed, and it
+   builds its own <HeadContent> instead of PageMetadata (one HeadContent per page). *@
+<PageTitle>@Site.T.WeeklyThanksTitle - TheBluesland</PageTitle>
 <HeadContent>
     <meta name="robots" content="noindex" />
 </HeadContent>
 
-<article class="weekly weekly-thanks" lang="@(_tr ? "tr" : "en")">
-    @if (_tr)
-    {
-        <h1>Neredeyse tamam</h1>
-        <p>Gelen kutunu (ve spam klasörünü) kontrol et. Kit'ten gelen e-postadaki onay bağlantısına tıkla; aboneliğin onayladığında başlar.</p>
-        <p><a href="/weekly">TheBluesland Weekly'ye dön</a></p>
-    }
-    else
-    {
-        <h1>Almost there</h1>
-        <p>Check your inbox (and your spam folder) for an e-mail from Kit and click the confirmation link. Your subscription starts when you confirm.</p>
-        <p><a href="/weekly">Back to TheBluesland Weekly</a></p>
-    }
+<article class="weekly weekly-thanks" lang="@Site.Code">
+    <h1>@Site.T.WeeklyThanksTitle</h1>
+    <p>@Site.T.WeeklyThanksBody</p>
+    <p><a href="@Site.Url("/weekly")">@Site.T.WeeklyBackToWeekly</a></p>
 </article>
-
-@code {
-    [SupplyParameterFromQuery(Name = "lang")]
-    public string? Lang { get; set; }
-
-    private bool _tr => string.Equals(Lang, "tr", StringComparison.OrdinalIgnoreCase);
-}

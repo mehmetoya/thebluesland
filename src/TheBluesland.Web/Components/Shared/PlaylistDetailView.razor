@@ -7,17 +7,20 @@
         var activePlaylist = ActivePlaylist;
         var activeCacheSnapshot = ActiveCacheSnapshot;
         var tags = PlaylistTags.All(activePlaylist);
+        var title = activePlaylist.TitleIn(Site.Code);
+        var summary = activePlaylist.SummaryIn(Site.Code);
+        var note = activePlaylist.CuratorNoteIn(Site.Code);
     }
 
     @* spec 14 "visible breadcrumb navigation on detail pages"; mirrors StructuredData's
        BreadcrumbList JSON-LD built alongside this page in PlaylistDetailPage.razor. *@
-    <nav aria-label="Breadcrumb" class="breadcrumb">
-        <a href="/">Home</a>
+    <nav aria-label="@Site.T.BreadcrumbLabel" class="breadcrumb">
+        <a href="@Site.Url("/")">@Site.T.Home</a>
         <span aria-hidden="true"> / </span>
-        <span aria-current="page">@activePlaylist.Title</span>
+        <span aria-current="page" lang="@title.Lang">@title.Text</span>
     </nav>
-    <h1>@activePlaylist.Title</h1>
-    <p class="summary">@activePlaylist.Summary</p>
+    <h1 lang="@title.Lang">@title.Text</h1>
+    <p class="summary" lang="@summary.Lang">@summary.Text</p>
 
     @* US-010 AC1: mood/genre/occasion/era shown together as one tag list (PlaylistTags.All - era
        included, blank era excluded so a playlist with no era doesn't render an empty tag pill). *@
@@ -26,7 +29,7 @@
         <ul class="tags">
             @foreach (var tag in tags)
             {
-                <li>@tag</li>
+                <li>@TaxonomyLabels.Label(tag, Site.Code)</li>
             }
         </ul>
     }
@@ -35,7 +38,7 @@
        source Markdown is escaped rather than passed through - see CuratorNoteRenderer's doc
        comment. MarkupString is safe here specifically because the HTML came out of that sanitizing
        pipeline, not from unprocessed user input. *@
-    <div class="curator-note">@((MarkupString)CuratorNoteRenderer.ToSanitizedHtml(activePlaylist.CuratorNote))</div>
+    <div class="curator-note" lang="@note.Lang">@((MarkupString)CuratorNoteRenderer.ToSanitizedHtml(note.Text))</div>
 
     @* US-012 AC2/spec 12.4(a)/SEC-004: CanPlay additionally requires a validated spotifyPlaylistId
        (SpotifyPlaylistIdFormat.IsValid) so a malformed id - even one that happens to match an
@@ -44,18 +47,18 @@
     {
         @if (activeCacheSnapshot.TrackCount is { } trackCount)
         {
-            <p class="track-count">@trackCount tracks</p>
+            <p class="track-count">@Site.T.TrackCount(trackCount)</p>
         }
         @if (activeCacheSnapshot.CoverImageUrl is { } coverImageUrl)
         {
-            <img class="cover-image" src="@coverImageUrl" alt="@($"{activePlaylist.Title} cover art")" />
+            <img class="cover-image" src="@coverImageUrl" alt="@Site.T.CoverAlt(activePlaylist.Title)" />
         }
     }
     else
     {
         <!-- US-005 AC2/FR-024: never a bare/broken iframe, always a readable fallback message. -->
         <p class="player-unavailable" role="status">
-            Cover art and track count are temporarily unavailable.
+            @Site.T.PlayerUnavailable
         </p>
     }
 
@@ -69,7 +72,7 @@
     @if (HasValidSpotifyPlaylistId(activePlaylist))
     {
         <a href="@OpenInSpotifyUrl(activePlaylist)" class="open-in-spotify" target="_blank" rel="noopener noreferrer">
-            Open in Spotify
+            @Site.T.OpenInSpotify
         </a>
     }
 
@@ -82,18 +85,18 @@
     {
         <section class="playlist-mix" aria-labelledby="playlist-mix-heading">
             <div class="playlist-mix-header">
-                <h2 id="playlist-mix-heading">Refresh mix</h2>
-                <p>Keep the same mood, but try a fresher route through nearby playlists.</p>
+                <h2 id="playlist-mix-heading">@Site.T.RefreshMixHeading</h2>
+                <p>@Site.T.RefreshMixIntro</p>
             </div>
 
             @if (AppliedMix is not null)
             {
-                <p class="mix-active-status" role="status">Currently exploring: <strong>@AppliedMix.Title</strong></p>
+                <p class="mix-active-status" role="status">@Site.T.CurrentlyExploring <strong lang="@AppliedMix.TitleIn(Site.Code).Lang">@AppliedMix.TitleIn(Site.Code).Text</strong></p>
             }
 
             @if (_showMixPreview)
             {
-                <nav class="mix-mode-buttons" aria-label="Choose a mix mode">
+                <nav class="mix-mode-buttons" aria-label="@Site.T.MixModeNavLabel">
                     @foreach (var mode in Enum.GetValues<MixMode>())
                     {
                         var isActive = _selectedMixMode == mode;
@@ -110,39 +113,39 @@
 
                 @if (CurrentMixPreview.Count == 0)
                 {
-                    <p class="mix-empty" role="status">No nearby mix was found for this mode yet. Keep the current selection and try a different mood.</p>
+                    <p class="mix-empty" role="status">@Site.T.MixEmpty</p>
                 }
                 else
                 {
                     <div class="mix-preview">
                         @foreach (var preview in CurrentMixPreview)
                         {
-                            <a href="@($"/playlists/{preview.Slug}")" class="playlist-card-link">
+                            <a href="@Site.Url($"/playlists/{preview.Slug}")" class="playlist-card-link">
                                 <PlaylistCard Content="preview" CacheSnapshot="GetRelatedCacheSnapshot(preview)" />
                             </a>
                         }
                     </div>
 
                     <div class="mix-preview-actions" aria-live="polite">
-                        <a href="@BuildSelectionQueryString(_selectedMixMode, CurrentMixPreview[0].Slug)" class="mix-open-link" aria-label="Use the selected mix for @CurrentMixPreview[0].Title">Use this mix</a>
-                        <a href="@BuildDismissedPreviewQueryString()" class="mix-keep-current">Keep current list</a>
+                        <a href="@BuildSelectionQueryString(_selectedMixMode, CurrentMixPreview[0].Slug)" class="mix-open-link" aria-label="@Site.T.UseThisMixLabel(CurrentMixPreview[0].Title)">@Site.T.UseThisMix</a>
+                        <a href="@BuildDismissedPreviewQueryString()" class="mix-keep-current">@Site.T.KeepCurrentList</a>
                     </div>
                 }
             }
             else
             {
                 <div class="mix-preview-actions">
-                    <a href="@BuildVisiblePreviewQueryString()" class="mix-open-link">Preview again</a>
-                    <a href="@BuildResetQueryString()" class="mix-keep-current">Back to current playlist</a>
+                    <a href="@BuildVisiblePreviewQueryString()" class="mix-open-link">@Site.T.PreviewAgain</a>
+                    <a href="@BuildResetQueryString()" class="mix-keep-current">@Site.T.BackToCurrentPlaylist</a>
                 </div>
             }
         </section>
 
         <section class="related-playlists">
-            <h2>@(AppliedMix is null ? "Related playlists" : "Fresh mix selection")</h2>
+            <h2>@(AppliedMix is null ? Site.T.RelatedPlaylists : Site.T.FreshMixSelection)</h2>
             @foreach (var related in VisibleRelatedPlaylists)
             {
-                <a href="@($"/playlists/{related.Slug}")" class="playlist-card-link">
+                <a href="@Site.Url($"/playlists/{related.Slug}")" class="playlist-card-link">
                     <PlaylistCard Content="related" CacheSnapshot="GetRelatedCacheSnapshot(related)" />
                 </a>
             }
@@ -217,8 +220,6 @@
     private bool CanPlay(PlaylistCacheSnapshot snapshot, PlaylistContent playlist) => snapshot.IsPlayable && HasValidSpotifyPlaylistId(playlist);
 
     private string OpenInSpotifyUrl(PlaylistContent playlist) => $"/out/{playlist.Slug}";
-
-    private string BuildAbsoluteUrl(string slug) => $"/playlists/{slug}";
 
     public static MixMode ParseMixMode(string? value)
     {
@@ -401,19 +402,19 @@
 
     private string GetModeLabel(MixMode mode) => mode switch
     {
-        MixMode.SameVibe => "Same vibe",
-        MixMode.MoreEnergetic => "More energetic",
-        MixMode.RelaxedFlow => "Relaxed flow",
-        MixMode.DeeperCuts => "Deeper cuts",
+        MixMode.SameVibe => Site.T.ModeSameVibe,
+        MixMode.MoreEnergetic => Site.T.ModeMoreEnergetic,
+        MixMode.RelaxedFlow => Site.T.ModeRelaxedFlow,
+        MixMode.DeeperCuts => Site.T.ModeDeeperCuts,
         _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
     };
 
     private string GetModeHelperText(MixMode mode) => mode switch
     {
-        MixMode.SameVibe => "Keep the mood and swap in nearby tracks.",
-        MixMode.MoreEnergetic => "Push toward brighter, more immediate selections.",
-        MixMode.RelaxedFlow => "Lower the intensity while keeping the atmosphere warm.",
-        MixMode.DeeperCuts => "Lean toward rarer, more niche discoveries from the same lane.",
+        MixMode.SameVibe => Site.T.ModeSameVibeHelp,
+        MixMode.MoreEnergetic => Site.T.ModeMoreEnergeticHelp,
+        MixMode.RelaxedFlow => Site.T.ModeRelaxedFlowHelp,
+        MixMode.DeeperCuts => Site.T.ModeDeeperCutsHelp,
         _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
     };
 

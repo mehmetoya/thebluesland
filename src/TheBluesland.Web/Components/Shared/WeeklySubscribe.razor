@@ -5,79 +5,50 @@
    is needed (CSP only grants form-action to app.kit.com). Kit runs double opt-in, so the address
    is never seen or stored by this site. Hidden until the Kit form ids are configured (or replaced
    by a short note when ShowWhenUnavailable is set). The page language's button is filled, the
-   other one outlined. *@
+   other one outlined. The wording follows the page language (the URL prefix). *@
 @if (_forms.Count > 0)
 {
-    <section class="weekly-subscribe" id="weekly-subscribe" aria-labelledby="weekly-subscribe-title" lang="@_language">
-        <h2 id="weekly-subscribe-title">@_copy.Heading</h2>
-        <p>@_copy.Intro</p>
+    <section class="weekly-subscribe" id="weekly-subscribe" aria-labelledby="weekly-subscribe-title" lang="@Site.Code">
+        <h2 id="weekly-subscribe-title">@Site.T.SubscribeHeading</h2>
+        <p>@Site.T.SubscribeIntro</p>
         <form class="weekly-subscribe-form" method="post" action="@_forms[0].Action">
-            <label for="weekly-subscribe-email">@_copy.Label</label>
+            <label for="weekly-subscribe-email">@Site.T.SubscribeEmailLabel</label>
             <div class="weekly-subscribe-controls">
                 <input id="weekly-subscribe-email" type="email" name="email_address" required autocomplete="email"
-                       inputmode="email" placeholder="@_copy.Placeholder" />
+                       inputmode="email" placeholder="@Site.T.SubscribeEmailPlaceholder" />
                 @foreach (var form in _forms)
                 {
                     <button type="submit" formaction="@form.Action"
-                            class="@(form.Language == _language ? "weekly-button" : "weekly-button weekly-button-outline")">@form.Label</button>
+                            class="@(form.Language == Site.Code ? "weekly-button" : "weekly-button weekly-button-outline")">@form.Label</button>
                 }
             </div>
         </form>
-        <p class="weekly-subscribe-note">@_copy.Note <a href="/privacy">@_copy.PrivacyLink</a>.</p>
+        <p class="weekly-subscribe-note">@Site.T.SubscribeNote <a href="@Site.Url("/privacy")">@Site.T.SubscribePrivacyLink</a>.</p>
     </section>
 }
 else if (ShowWhenUnavailable)
 {
-    <p class="weekly-subscribe-soon" lang="@_language">@(_language == "tr" ? "Kayıtlar yakında açılıyor." : "Sign-ups open soon.")</p>
+    <p class="weekly-subscribe-soon" lang="@Site.Code">@Site.T.SubscribeSoon</p>
 }
 
 @code {
-    private sealed record Copy(
-        string Heading, string Intro, string Label, string Placeholder, string TurkishButton, string EnglishButton,
-        string Note, string PrivacyLink);
-
     private sealed record Form(string Language, string Label, string Action);
-
-    private static readonly Copy English = new(
-        "Get it every Monday",
-        "Five music stories in five minutes. Choose Turkish, English or both. Unsubscribe anytime with one click.",
-        "E-mail address",
-        "you@example.com",
-        "Get it in Turkish",
-        "Get it in English",
-        "Sign-ups go through Kit (kit.com). You'll get a confirmation e-mail; your subscription starts when you confirm. See",
-        "Privacy");
-
-    private static readonly Copy Turkish = new(
-        "Her pazartesi e-postanda",
-        "Beş müzik haberi, beş dakika. Türkçe, İngilizce ya da ikisini birden seç. Aboneliği tek tıkla bırakabilirsin.",
-        "E-posta adresin",
-        "ornek@eposta.com",
-        "Türkçe al",
-        "İngilizce al",
-        "Kayıtlar Kit (kit.com) üzerinden yapılır. Önce bir onay e-postası gelir; onayladığında aboneliğin başlar. Ayrıntılar:",
-        "Gizlilik");
-
-    /// <summary>"tr" or "en": the language of the page the box sits on (anything else is English).</summary>
-    [Parameter]
-    public string Language { get; set; } = "en";
 
     /// <summary>Show "Sign-ups open soon." instead of nothing while no Kit form id is configured.</summary>
     [Parameter]
     public bool ShowWhenUnavailable { get; set; }
 
-    private string _language = "en";
-    private Copy _copy = English;
     private List<Form> _forms = [];
 
     protected override void OnParametersSet()
     {
-        _language = Language == "tr" ? "tr" : "en";
-        _copy = _language == "tr" ? Turkish : English;
         // The page language's button comes first.
         _forms = WeeklySignup.Forms(Configuration)
-            .Select(form => new Form(form.Language, form.Language == "tr" ? _copy.TurkishButton : _copy.EnglishButton, form.Action))
-            .OrderBy(form => form.Language == _language ? 0 : 1)
+            .Select(form => new Form(
+                form.Language,
+                form.Language == SiteLanguage.Turkish ? Site.T.SubscribeTurkishButton : Site.T.SubscribeEnglishButton,
+                form.Action))
+            .OrderBy(form => form.Language == Site.Code ? 0 : 1)
             .ToList();
     }
 }

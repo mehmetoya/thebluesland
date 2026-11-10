@@ -1,35 +1,44 @@
-@page "/collections"
+@page "/tr/collections"
+@page "/en/collections"
 
-<PageTitle>Spotify Playlist Collections - TheBluesland</PageTitle>
-<PageMetadata Title="Spotify Playlist Collections - TheBluesland"
-              Description="Explore Spotify playlists for Anadolu rock, blues and late-night listening. Find a sound or a mood to start with at TheBluesland."
+<PageTitle>@Site.T.CollectionsTitle</PageTitle>
+<PageMetadata Title="@Site.T.CollectionsTitle"
+              Description="@Site.T.CollectionsDescription"
               CanonicalPath="/collections" ImagePath="/og-image.png" />
 
 <section class="brand-intro">
-    <h1>Playlist collections</h1>
-    <p>A few places to start. Follow a sound you love or find something that suits the hour.</p>
+    <h1>@Site.T.CollectionsHeading</h1>
+    <p>@Site.T.CollectionsIntro</p>
 </section>
 @foreach (var dimension in DimensionOrder)
 {
     var collections = PlaylistCollections.All.Where(collection => collection.Dimension == dimension).ToList();
     if (collections.Count > 0)
     {
-        <section class="collection-group" aria-label="@dimension.ToString()">
-            <h2>@dimension</h2>
+        <section class="collection-group" aria-label="@DimensionName(dimension)">
+            <h2>@DimensionName(dimension)</h2>
             <div class="collection-links">
                 @foreach (var collection in collections)
                 {
-                    <a class="collection-link" href="@($"/collections/{collection.Slug}")">
-                        <h3>@collection.Title</h3>
-                        <p>@collection.Description</p>
+                    <a class="collection-link" href="@Site.Url($"/collections/{collection.Slug}")">
+                        <h3 lang="@Site.EnglishContentLang">@collection.Title</h3>
+                        <p lang="@Site.EnglishContentLang">@collection.Description</p>
                     </a>
                 }
             </div>
         </section>
     }
 }
-<p><a href="/">Browse all playlists</a></p>
+<p><a href="@Site.Url("/")">@Site.T.BrowseAllPlaylists</a></p>
 
 @code {
     private static readonly Dimension[] DimensionOrder = [Dimension.Genre, Dimension.Occasion, Dimension.Mood, Dimension.Era];
+
+    private string DimensionName(Dimension dimension) => dimension switch
+    {
+        Dimension.Genre => Site.T.FilterGenre,
+        Dimension.Occasion => Site.T.FilterOccasion,
+        Dimension.Mood => Site.T.FilterMood,
+        _ => Site.T.FilterEra,
+    };
 }

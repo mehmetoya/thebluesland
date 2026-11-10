@@ -27,7 +27,7 @@
        English anyway). A page that exists in one language only passes AlternateLanguages. *@
     @foreach (var code in Alternates)
     {
-        <link rel="alternate" hreflang="@code" href="@BuildAbsolute(SiteLanguage.UrlFor(code, CanonicalPath))" />
+        <link rel="alternate" hreflang="@(code)" href="@BuildAbsolute(SiteLanguage.UrlFor(code, CanonicalPath))" />
     }
     <link rel="alternate" hreflang="x-default" href="@BuildAbsolute(SiteLanguage.UrlFor(DefaultAlternate, CanonicalPath))" />
     <meta property="og:locale" content="@Site.OpenGraphLocale" />

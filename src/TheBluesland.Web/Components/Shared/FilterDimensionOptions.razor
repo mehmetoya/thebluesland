@@ -7,7 +7,7 @@
 {
     <label>
         <input type="checkbox" name="@FieldName" value="@value" checked="@Selected.Contains(value)" />
-        @value
+        @TaxonomyLabels.Label(value, Site.Code)
     </label>
 }
 

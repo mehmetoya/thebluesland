@@ -18,18 +18,19 @@ public static class AiDiscoveryGenerator
         return text.Append("Sitemap: ").Append(SiteUrl.BuildAbsolute(context, "/sitemap.xml")).Append('\n').ToString();
     }
 
+    // The editorial text is English, so the links point at the /en pages (docs/specs/site-i18n.md).
     public static string BuildLlms(HttpContext context, IReadOnlyList<PlaylistContent> playlists)
     {
         var text = new StringBuilder("# TheBluesland\n\n> ").Append(SiteDescription)
             .Append("\n\nPlaylist pages contain editorial descriptions, not complete track listings. Listen through the Spotify links on each page.\n\n## Site\n\n")
-            .Append("- [Catalogue](").Append(SiteUrl.BuildAbsolute(context, "/")).Append("): Browse published playlists.\n")
-            .Append("- [Collections](").Append(SiteUrl.BuildAbsolute(context, "/collections")).Append("): Explore genres and listening occasions.\n")
-            .Append("- [About](").Append(SiteUrl.BuildAbsolute(context, "/about")).Append("): About the collection.\n")
+            .Append("- [Catalogue](").Append(SiteUrl.BuildAbsolute(context, "/en")).Append("): Browse published playlists.\n")
+            .Append("- [Collections](").Append(SiteUrl.BuildAbsolute(context, "/en/collections")).Append("): Explore genres and listening occasions.\n")
+            .Append("- [About](").Append(SiteUrl.BuildAbsolute(context, "/en/about")).Append("): About the collection.\n")
             .Append("\n## Playlists\n\n");
         foreach (var playlist in playlists.Where(item => item.IsPublished).OrderBy(item => item.Slug, StringComparer.Ordinal))
         {
             text.Append("- [").Append(EscapeText(playlist.Title)).Append("](")
-                .Append(SiteUrl.BuildAbsolute(context, $"/playlists/{Uri.EscapeDataString(playlist.Slug)}"))
+                .Append(SiteUrl.BuildAbsolute(context, $"/en/playlists/{Uri.EscapeDataString(playlist.Slug)}"))
                 .Append("): ").Append(EscapeText(playlist.Summary)).Append('\n');
         }
         return text.ToString();

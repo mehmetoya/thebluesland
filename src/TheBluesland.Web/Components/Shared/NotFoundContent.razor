@@ -2,8 +2,9 @@
 
 @* UX-1/A11Y-6/UXW-6: the body of every 404 - the Router's NotFound fragment, the /not-found page the
    status-code middleware re-executes for empty 404 responses (unknown issue, unknown slug, ...), and
-   that page opened directly. The status stays 404 in all three. /weekly paths get issue-specific
-   copy in the issue's language (both languages when the path does not say which). *@
+   that page opened directly. The status stays 404 in all three. The language is the one of the
+   ORIGINAL request's URL prefix (SiteLanguage reads the re-execute feature); /weekly paths get
+   issue-specific copy, and a legacy unprefixed /weekly/... path shows both languages. *@
 <PageTitle>@_title - TheBluesland</PageTitle>
 <HeadContent>
     <meta name="robots" content="noindex" />
@@ -11,35 +12,29 @@
 @if (_failed)
 {
     <section class="about">
-        <h1>Something went wrong</h1>
-        <p>This page couldn't be shown. Try again in a moment or <a href="/">browse the playlists</a>.</p>
+        <h1>@Site.T.FailedTitle</h1>
+        <p>@Site.T.FailedBodyBefore<a href="@Site.Url("/")">@Site.T.BrowseThePlaylistsLink</a>.</p>
     </section>
 }
 else if (_weekly)
 {
     <section class="weekly-notfound">
-        @if (_showEnglish)
+        @foreach (var code in _weeklyLanguages)
         {
-            <div lang="en">
-                <h1>We couldn't find this issue</h1>
-                <p>The address may be wrong, or the issue isn't out yet. <a href="/weekly">Browse all issues</a>.</p>
+            var text = SiteText.For(code);
+            <div lang="@(code)">
+                <h1>@text.WeeklyNotFoundHeading</h1>
+                <p>@text.WeeklyNotFoundBodyBefore<a href="@SiteLanguage.UrlFor(code, "/weekly")">@text.WeeklyNotFoundLink</a>.</p>
             </div>
         }
-        @if (_showTurkish)
-        {
-            <div lang="tr">
-                <h1>Bu sayı bulunamadı</h1>
-                <p>Adres yanlış olabilir ya da sayı henüz yayımlanmadı. <a href="/weekly">Tüm sayılara göz at</a>.</p>
-            </div>
-        }
-        <p><a href="/">TheBluesland</a></p>
+        <p><a href="@Site.Url("/")">TheBluesland</a></p>
     </section>
 }
 else
 {
     <section class="about">
-        <h1>Page not found</h1>
-        <p>We couldn't find this page. Check the address or <a href="/">browse the playlists</a>.</p>
+        <h1>@Site.T.NotFoundHeading</h1>
+        <p>@Site.T.NotFoundBodyBefore<a href="@Site.Url("/")">@Site.T.BrowseThePlaylistsLink</a>.</p>
     </section>
 }
 
@@ -49,12 +44,12 @@ else
 
     private bool _weekly;
     private bool _failed;
-    private bool _showEnglish = true;
-    private bool _showTurkish = true;
-    private string _title = "Page not found";
+    private IReadOnlyList<string> _weeklyLanguages = [];
+    private string _title = string.Empty;
 
     protected override void OnInitialized()
     {
+        _title = Site.T.NotFoundTitle;
         if (HttpContext is null)
         {
             return;
@@ -62,21 +57,27 @@ else
 
         var reExecute = HttpContext.Features.Get<IStatusCodeReExecuteFeature>();
         var path = reExecute?.OriginalPath ?? HttpContext.Request.Path.Value ?? string.Empty;
-        _weekly = path.StartsWith("/weekly/", StringComparison.OrdinalIgnoreCase);
+        var prefixed = SiteLanguage.TrySplit(path, out _, out var rest);
+        _weekly = (prefixed ? rest : path).StartsWith("/weekly/", StringComparison.OrdinalIgnoreCase);
 
         // Re-executed for some other empty error response (not a 404): same chrome, neutral copy.
         _failed = reExecute is not null && HttpContext.Response.StatusCode != StatusCodes.Status404NotFound;
         if (_failed)
         {
-            _title = "Something went wrong";
+            _title = Site.T.FailedTitle;
             return;
         }
 
         if (_weekly)
         {
-            _title = "Issue not found";
-            _showTurkish = !path.EndsWith("/en", StringComparison.OrdinalIgnoreCase);
-            _showEnglish = !path.EndsWith("/tr", StringComparison.OrdinalIgnoreCase);
+            _title = Site.T.WeeklyNotFoundTitle;
+            // A prefixed path says which language; a legacy unprefixed one (or one that ends in
+            // /tr or /en) shows the language it names, else both.
+            _weeklyLanguages = prefixed
+                ? [Site.Code]
+                : path.EndsWith("/en", StringComparison.OrdinalIgnoreCase) ? [SiteLanguage.English]
+                : path.EndsWith("/tr", StringComparison.OrdinalIgnoreCase) ? [SiteLanguage.Turkish]
+                : SiteLanguage.Supported;
         }
 
         // Re-executed after another middleware/endpoint already chose the status: keep it.

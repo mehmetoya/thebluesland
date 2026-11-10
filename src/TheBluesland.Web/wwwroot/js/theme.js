@@ -27,7 +27,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
       var nowLight = !isLight;
       button.setAttribute("aria-pressed", String(nowLight));
-      button.setAttribute("aria-label", nowLight ? "Switch to dark theme" : "Switch to light theme");
+      // Labels are server-rendered per page language (data-label-to-*); English is the fallback.
+      button.setAttribute(
+        "aria-label",
+        nowLight
+          ? button.dataset.labelToDark || "Switch to dark theme"
+          : button.dataset.labelToLight || "Switch to light theme"
+      );
     });
   });
 });
