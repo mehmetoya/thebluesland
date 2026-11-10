@@ -1497,7 +1497,7 @@ body:has(.filter-mobile-toggle:checked) {
   border-color: var(--color-border);
 }
 
-.weekly-card-eyebrow {
+.weekly-card .weekly-card-eyebrow {
   font-family: var(--font-serif);
   font-size: var(--font-size-sm);
   font-weight: 600;
