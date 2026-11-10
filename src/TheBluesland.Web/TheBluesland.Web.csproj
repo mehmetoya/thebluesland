@@ -12,13 +12,20 @@
     <!-- US-010/spec 12.2: renders curator-note Markdown to sanitized HTML (Markdig.DisableHtml()). -->
     <PackageReference Include="Markdig" />
     <!--
-      US-011 AC3/FR-031: server-side text-on-image composition for the owned 1200x630 social card
-      (see Seo/SocialCardGenerator.cs for the full SkiaSharp-vs-ImageSharp license/native-dependency
-      rationale).
+      US-011 AC3/FR-031: server-side text-on-image composition for the owned 1200x630 social card.
+      SkiaSharp (MIT) replaced SixLabors.ImageSharp on 2026-11-10 - see Seo/SocialCardGenerator.cs.
+      NativeAssets.Linux.NoDependencies bundles libSkiaSharp without a fontconfig/freetype
+      dependency, so the Docker image needs no apt-get step; macOS/Windows natives ship with SkiaSharp.
     -->
-    <PackageReference Include="SixLabors.ImageSharp" />
-    <PackageReference Include="SixLabors.ImageSharp.Drawing" />
-    <PackageReference Include="SixLabors.Fonts" />
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Inter (SIL OFL 1.1, see Inter-OFL.txt) embedded so the social card never depends on which
+         system fonts the host happens to have installed. -->
+    <EmbeddedResource Include="Seo/Fonts/Inter-Regular.ttf" LogicalName="TheBluesland.Web.Seo.Fonts.Inter-Regular.ttf" />
+    <EmbeddedResource Include="Seo/Fonts/Inter-Bold.ttf" LogicalName="TheBluesland.Web.Seo.Fonts.Inter-Bold.ttf" />
   </ItemGroup>
 
   <ItemGroup>
