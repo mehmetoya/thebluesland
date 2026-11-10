@@ -1,0 +1,25 @@
+# TheBluesland Weekly - story-clustering ayarlari
+# (docs/specs/weekly-newsletter-story-clustering.md, Design section 2).
+#
+# Kalibrasyon yalnizca bu dosyayi degistirir. Her degisiklikten sonra gold set testi
+# (StoryClustererGoldSetTests) calisir; skor esigin altina duserse test kirilir.
+#
+# 2026-11-10 olcumu (2026-W46 gold set, 124 haber): threshold 0.22 -> precision 1.00, recall 0.96.
+# 0.18'de bir yanlis birlesme basliyor, 0.26'da recall 0.76'ya dusuyor.
+
+# Iki hikaye ancak tum haber ciftlerinin ortalama kosinus benzerligi bu degere ulasirsa birlesir.
+similarityThreshold: 0.22
+
+# Etkin zamanlari bundan uzak iki haber hic baglanmaz.
+maxHoursApart: 96
+
+# Ozetin metne eklenen ilk N karakteri (baslik iki kez sayilir).
+summaryCharacters: 300
+
+# Kucuk harfe cevrildikten sonra, noktalama silinmeden once uygulanir. Yalnizca gold set'te
+# kaciran bir eslesmeyi kanitlanmis bicimde duzelten girdiler eklenir.
+abbreviations:
+  - from: grand theft auto   # Consequence/NME "Grand Theft Auto VI", Pitchfork "GTA VI"
+    to: gta
+  - from: p!nk               # Consequence "P!NK", Rolling Stone "Pink"
+    to: pink
