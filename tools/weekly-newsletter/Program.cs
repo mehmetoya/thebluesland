@@ -11,7 +11,7 @@ using TheBluesland.WeeklyNewsletter.Review;
 // (docs/specs/weekly-newsletter-story-clustering.md) and "rank"
 // (docs/specs/weekly-newsletter-story-ranking.md); "draft" (docs/specs/weekly-newsletter-issue-drafting.md);
 // "issue-week" and "validate-weekly" (docs/specs/weekly-newsletter-issue-review.md); "deliver"
-// (docs/specs/weekly-newsletter-issue-delivery.md). Runs only from
+// (docs/specs/weekly-newsletter-issue-delivery.md), "kit-sync-tags", "kit-tags" and "kit-smoke". Runs only from
 // GitHub Actions or Mehmet's own machine, from the repository root.
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>
@@ -31,6 +31,7 @@ const string Usage = """
       validate-weekly [path/to/content/weekly]
       deliver [--content <dir>] [--dry-run]   (schedules merged issues in Kit; default content: content/weekly)
       kit-sync-tags [--dry-run]   (tags each language's confirmed form subscribers with its delivery tag; Kit free plan has no form rules)
+      kit-smoke   (creates a never-sent draft in Kit for the weekly-tr tag, reads it back and deletes it; prints the account's non-secret facts)
       kit-tags [tag ...]   (creates the delivery tags in Kit if missing and prints their ids; default: weekly-tr weekly-en)
     """;
 
@@ -66,6 +67,19 @@ switch (args.FirstOrDefault())
                 args.Length > 1 ? args[1..] : KitTagsCommand.DefaultTags,
                 Environment.GetEnvironmentVariable(KitClient.ApiKeyVariable),
                 httpClient,
+                Console.Out,
+                Console.Error,
+                cts.Token);
+        }
+
+    case "kit-smoke":
+        {
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(1) };
+            return await KitSmokeCommand.RunAsync(
+                toolDirectory,
+                Environment.GetEnvironmentVariable(KitClient.ApiKeyVariable),
+                httpClient,
+                TimeProvider.System,
                 Console.Out,
                 Console.Error,
                 cts.Token);

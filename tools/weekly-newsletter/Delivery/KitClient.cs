@@ -20,8 +20,11 @@ public sealed record KitBroadcast(
 /// <summary>A Kit tag; the delivery lists are the tags "weekly-tr" and "weekly-en".</summary>
 public sealed record KitTag(long Id, string Name);
 
-/// <summary>What we ask Kit to send: one issue, to one tag, at one instant.</summary>
-public sealed record KitBroadcastRequest(string Description, IssueEmail Email, DateTimeOffset SendAt, long TagId, bool Public);
+/// <summary>What we ask Kit to send: one issue, to one tag, at one instant. No <c>SendAt</c> makes a draft that never sends (kit-smoke).</summary>
+public sealed record KitBroadcastRequest(string Description, IssueEmail Email, DateTimeOffset? SendAt, long TagId, bool Public);
+
+/// <summary>The non-secret facts of the Kit account that kit-smoke prints; any may be missing.</summary>
+public sealed record KitAccount(string? Name, string? Plan, string? PrimaryEmail);
 
 public sealed class KitException(string message, HttpStatusCode? status = null) : Exception(message)
 {
@@ -32,6 +35,8 @@ public sealed class KitException(string message, HttpStatusCode? status = null) 
 /// Kit API v4 broadcasts (issue-delivery spec, Design sections 2-3): list, create, update, delete.
 /// The key goes in the X-Kit-Api-Key header, never the URL. Kit's 429 carries no Retry-After, so
 /// 429 and 5xx are retried with a doubling pause. Error text is Kit's "errors" array, never the key.
+/// Creating a broadcast is the one call that must not be retried blindly: after a timeout or 5xx
+/// Kit may have created it anyway, so <see cref="CreateAsync"/> looks for its marker first.
 /// </summary>
 public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? retryDelay = null)
 {
@@ -39,6 +44,7 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
     private const string BaseUrl = "https://api.kit.com/v4/broadcasts";
     private const string TagsUrl = "https://api.kit.com/v4/tags";
     private const string FormsUrl = "https://api.kit.com/v4/forms";
+    private const string AccountUrl = "https://api.kit.com/v4/account";
     private const int MaxAttempts = 4;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -122,11 +128,54 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
         return ids;
     }
 
+    /// <summary>
+    /// Creates a broadcast. A timeout, network error or 5xx is ambiguous (Kit may have created it
+    /// before failing), so a blind retry could schedule the same issue twice and the planner, seeing
+    /// two markers, would do nothing and let both send. After such a failure the broadcasts are
+    /// listed and one carrying the same description is taken as ours; only when none exists is the
+    /// POST repeated. 429 is a clean refusal and is retried as usual.
+    /// </summary>
     public async Task<long> CreateAsync(KitBroadcastRequest request, CancellationToken cancellationToken)
     {
-        using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, BaseUrl) { Content = Body(request, null) }, cancellationToken);
-        var created = await response.Content.ReadFromJsonAsync<SingleResponse>(Json, cancellationToken);
-        return created?.Broadcast?.Id ?? throw new KitException("Kit did not return the new broadcast's id.");
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, BaseUrl) { Content = Body(request, null) }, cancellationToken, retryAmbiguous: false);
+                var created = await response.Content.ReadFromJsonAsync<SingleResponse>(Json, cancellationToken);
+                return created?.Broadcast?.Id ?? throw new KitException("Kit did not return the new broadcast's id.");
+            }
+            catch (AmbiguousSendException ex)
+            {
+                await Task.Delay(_retryDelay * Math.Pow(2, attempt - 1), cancellationToken);
+                var existing = (await ListAsync(cancellationToken))
+                    .FirstOrDefault(broadcast => string.Equals(broadcast.Description?.Trim(), request.Description, StringComparison.Ordinal));
+                if (existing is not null)
+                {
+                    return existing.Id;
+                }
+
+                if (attempt >= MaxAttempts)
+                {
+                    throw new KitException(ex.Message, ex.Status);
+                }
+            }
+        }
+    }
+
+    public async Task<KitBroadcast> GetAsync(long id, CancellationToken cancellationToken)
+    {
+        using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/{id}"), cancellationToken);
+        var single = await response.Content.ReadFromJsonAsync<SingleResponse>(Json, cancellationToken);
+        return single?.Broadcast is { } dto ? Map(dto) : throw new KitException($"Kit did not return broadcast {id}.");
+    }
+
+    /// <summary>The account's name, plan and primary e-mail (the default sender); only these fields are read.</summary>
+    public async Task<KitAccount> GetAccountAsync(CancellationToken cancellationToken)
+    {
+        using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, AccountUrl), cancellationToken);
+        var account = await response.Content.ReadFromJsonAsync<AccountResponse>(Json, cancellationToken);
+        return new KitAccount(account?.Account?.Name, account?.Account?.PlanType, account?.Account?.PrimaryEmailAddress ?? account?.User?.Email);
     }
 
     public async Task UpdateAsync(long id, KitBroadcastRequest request, long? emailTemplateId, CancellationToken cancellationToken)
@@ -146,8 +195,8 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
             ["content"] = request.Email.Html,
             ["description"] = request.Description,
             ["public"] = request.Public,
-            ["published_at"] = request.SendAt.ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture),
-            ["send_at"] = request.SendAt.ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture),
+            ["published_at"] = request.SendAt?.ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture),
+            ["send_at"] = request.SendAt?.ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture),
             ["preview_text"] = request.Email.PreviewText,
             ["subject"] = request.Email.Subject,
             ["email_address"] = null,
@@ -173,7 +222,12 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
         return JsonContent.Create(body);
     }
 
-    private async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> build, CancellationToken cancellationToken)
+    /// <summary>
+    /// Sends with retries. With <paramref name="retryAmbiguous"/> off (a POST that creates something),
+    /// a timeout, network error or 5xx is not retried but raised as <see cref="AmbiguousSendException"/>
+    /// so the caller can check whether Kit acted before failing.
+    /// </summary>
+    private async Task<HttpResponseMessage> SendAsync(Func<HttpRequestMessage> build, CancellationToken cancellationToken, bool retryAmbiguous = true)
     {
         for (var attempt = 1; ; attempt++)
         {
@@ -184,9 +238,18 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
             {
                 response = await httpClient.SendAsync(request, cancellationToken);
             }
-            catch (Exception ex) when (attempt < MaxAttempts
-                && (ex is HttpRequestException || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested)))
+            catch (Exception ex) when (ex is HttpRequestException || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested))
             {
+                if (!retryAmbiguous)
+                {
+                    throw new AmbiguousSendException($"Kit {request.Method} {request.RequestUri?.AbsolutePath} got no usable answer ({ex.GetType().Name}).", null);
+                }
+
+                if (attempt >= MaxAttempts)
+                {
+                    throw;
+                }
+
                 await Task.Delay(_retryDelay * Math.Pow(2, attempt - 1), cancellationToken);
                 continue;
             }
@@ -198,17 +261,25 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
 
             using (response)
             {
-                var transient = response.StatusCode is HttpStatusCode.TooManyRequests || (int)response.StatusCode >= 500;
-                if (!transient || attempt >= MaxAttempts)
+                var serverError = (int)response.StatusCode >= 500;
+                var transient = response.StatusCode is HttpStatusCode.TooManyRequests || serverError;
+                if (!transient || attempt >= MaxAttempts || (serverError && !retryAmbiguous))
                 {
-                    throw new KitException(
-                        $"Kit {request.Method} {request.RequestUri?.AbsolutePath} failed with {(int)response.StatusCode} {response.StatusCode} (attempt {attempt} of {MaxAttempts}){await ErrorDetailAsync(response, cancellationToken)}.",
-                        response.StatusCode);
+                    var message = $"Kit {request.Method} {request.RequestUri?.AbsolutePath} failed with {(int)response.StatusCode} {response.StatusCode}{(retryAmbiguous ? $" (attempt {attempt} of {MaxAttempts})" : string.Empty)}{await ErrorDetailAsync(response, cancellationToken)}.";
+                    throw serverError && !retryAmbiguous
+                        ? new AmbiguousSendException(message, response.StatusCode)
+                        : new KitException(message, response.StatusCode);
                 }
             }
 
             await Task.Delay(_retryDelay * Math.Pow(2, attempt - 1), cancellationToken);
         }
+    }
+
+    /// <summary>A create that failed in a way that may still have created the broadcast in Kit.</summary>
+    private sealed class AmbiguousSendException(string message, HttpStatusCode? status) : Exception(message)
+    {
+        public HttpStatusCode? Status { get; } = status;
     }
 
     private static async Task<string> ErrorDetailAsync(HttpResponseMessage response, CancellationToken cancellationToken)
@@ -243,6 +314,12 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
     private sealed record ListResponse(List<BroadcastDto>? Broadcasts, Pagination? Pagination);
 
     private sealed record Pagination(bool HasNextPage, string? EndCursor);
+
+    private sealed record AccountDto(string? Name, string? PlanType, string? PrimaryEmailAddress);
+
+    private sealed record AccountUserDto(string? Email);
+
+    private sealed record AccountResponse(AccountDto? Account, AccountUserDto? User);
 
     private sealed record SingleResponse(BroadcastDto? Broadcast);
 

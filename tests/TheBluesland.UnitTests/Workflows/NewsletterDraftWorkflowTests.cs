@@ -18,10 +18,13 @@ public sealed partial class NewsletterDraftWorkflowTests
     private static readonly string OpenPrJob = Yaml[Yaml.IndexOf("\n  open-pr:\n", StringComparison.Ordinal)..];
 
     [Fact]
-    public void Runs_on_sunday_10_00_istanbul_with_a_safety_retry_and_on_demand_one_run_at_a_time()
+    public void Runs_on_sunday_11_15_istanbul_after_the_gemini_quota_reset_with_a_safety_retry_and_on_demand_one_run_at_a_time()
     {
-        Header.ShouldContain("cron: \"0 7 * * 0\"");
-        Header.ShouldContain("cron: \"0 10 * * 0\"");
+        // Gemini's free quota resets at 00:00 Pacific = 08:00 UTC; both crons must fall after it.
+        Header.ShouldContain("cron: \"15 8 * * 0\"");
+        Header.ShouldContain("cron: \"0 11 * * 0\"");
+        Header.ShouldNotContain("cron: \"0 7 * * 0\"");
+        Header.ShouldNotContain("cron: \"0 10 * * 0\"");
         Header.ShouldContain("workflow_dispatch:");
         Header.ShouldContain("open_pr:");
         Header.ShouldContain("group: newsletter-draft");
@@ -32,7 +35,8 @@ public sealed partial class NewsletterDraftWorkflowTests
     public void The_workflow_default_is_read_only_and_only_open_pr_may_write()
     {
         Between(Header, "\npermissions:", "\nconcurrency:").Trim().ShouldBe("permissions:\n  contents: read");
-        DraftJob.ShouldNotContain("permissions:");
+        // The draft job (which holds the AI key) may only read; pull-requests: read lets Plan see the week's PR.
+        Between(DraftJob, "permissions:", "timeout-minutes:").ShouldContain("contents: read\n      pull-requests: read");
         DraftJob.ShouldNotContain("write");
         OpenPrJob.ShouldContain("permissions:\n      contents: write\n      pull-requests: write\n");
     }
@@ -59,6 +63,33 @@ public sealed partial class NewsletterDraftWorkflowTests
         Yaml.ShouldNotContain("gh pr review");
         Yaml.ShouldNotContain("--approve");
         Yaml.ShouldNotContain("git push --force");
+    }
+
+    [Fact]
+    public void The_draft_step_ingests_first_and_an_ingest_failure_only_warns()
+    {
+        var step = Between(DraftJob, "- name: Draft\n", "- name: Upload draft");
+
+        step.ShouldContain("ingest_status=0");
+        step.ShouldContain("-- ingest | tee -a \"$GITHUB_STEP_SUMMARY\" || ingest_status=$?");
+        step.IndexOf("-- ingest |", StringComparison.Ordinal).ShouldBeLessThan(step.IndexOf("\"${args[@]}\"", StringComparison.Ordinal));
+        step.ShouldContain("::warning title=Ingest failed before drafting::");
+        step.IndexOf("::warning title=Ingest failed", StringComparison.Ordinal).ShouldBeGreaterThan(step.IndexOf("echo \"::${stop_token}::\"", StringComparison.Ordinal));
+        step.ShouldContain("exit \"$draft_status\"");
+    }
+
+    [Fact]
+    public void A_week_is_skipped_only_when_a_pr_exists_or_issue_files_are_on_main_and_a_prless_branch_gets_its_pr()
+    {
+        var plan = Between(DraftJob, "- name: Plan\n", "- name: Draft\n");
+        plan.ShouldContain("gh pr list --head \"newsletter/$week\" --state all");
+        plan.ShouldNotContain("ls-remote");
+        plan.ShouldContain("[ \"$pr_count\" != \"0\" ] || [ -e \"content/weekly/$week.tr.md\" ]");
+
+        OpenPrJob.ShouldContain("gh pr list --head \"$branch\" --state all");
+        OpenPrJob.ShouldContain("git switch -c \"$branch\" FETCH_HEAD");
+        OpenPrJob.IndexOf("gh pr list --head", StringComparison.Ordinal).ShouldBeLessThan(OpenPrJob.IndexOf("gh pr create --draft", StringComparison.Ordinal));
+        OpenPrJob.ShouldNotContain("--force");
     }
 
     [Fact]

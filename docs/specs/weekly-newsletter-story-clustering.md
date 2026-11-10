@@ -6,7 +6,7 @@ Modül: `story-clustering` · Map: [weekly-newsletter.md](weekly-newsletter.md) 
 ## Assumptions
 
 1. Kümeleme ayrı bir zamanlanmış job değildir; bir kütüphane bileşenidir. Tüketicisi
-   `story-ranking`'dir ve haftada bir, taslak hazırlanırken (pazar 10:00) bellekte çalışır. Bu
+   `story-ranking`'dir ve haftada bir, taslak hazırlanırken (pazar 11:15; pencere 10:00'da biter) bellekte çalışır. Bu
    modül DB'ye **yazmaz**, yeni tablo veya migration eklemez. Tek DB erişimi `newsletter_writer`
    rolünün zaten sahip olduğu `SELECT` yetkisiyle `news_article` okumaktır.
 2. Girdi yalnızca bizim sakladığımız alanlardır: başlık, feed özeti, kaynak, kategoriler, yayın

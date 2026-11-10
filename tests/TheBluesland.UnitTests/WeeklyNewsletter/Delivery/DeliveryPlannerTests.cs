@@ -104,13 +104,56 @@ public sealed class DeliveryPlannerTests
     }
 
     [Fact]
-    public void Two_broadcasts_with_one_marker_stop_everything()
+    public void Two_unsent_broadcasts_with_one_marker_lose_the_newer_one_and_the_older_carries_on()
     {
         var tr = Issue(DraftLanguage.Turkish);
 
-        var actions = DeliveryPlanner.Plan([tr, Issue(DraftLanguage.English)], [Broadcast(tr, id: 1), Broadcast(tr, id: 2)], SundayNoon, Lead);
+        var actions = DeliveryPlanner.Plan([tr], [Broadcast(tr, id: 2), Broadcast(tr, id: 1)], SundayNoon, Lead);
+
+        actions.Select(action => (action.Kind, action.BroadcastId)).ShouldBe([(DeliveryActionKind.DeleteDuplicate, (long?)2), (DeliveryActionKind.Unchanged, (long?)1)]);
+    }
+
+    [Fact]
+    public void Duplicates_of_a_reverted_issue_are_removed_and_the_survivor_is_cancelled()
+    {
+        var tr = Issue(DraftLanguage.Turkish);
+
+        var actions = DeliveryPlanner.Plan([], [Broadcast(tr, id: 1), Broadcast(tr, id: 2)], SundayNoon, Lead);
+
+        actions.Select(action => (action.Kind, action.BroadcastId)).ShouldBe([(DeliveryActionKind.DeleteDuplicate, (long?)2), (DeliveryActionKind.Cancel, (long?)1)]);
+    }
+
+    [Theory]
+    [InlineData("sending")]
+    [InlineData("completed")]
+    [InlineData("aborted")]
+    public void Duplicates_of_which_one_is_already_sent_or_stopped_change_nothing_and_stay_a_conflict(string status)
+    {
+        var tr = Issue(DraftLanguage.Turkish);
+
+        var actions = DeliveryPlanner.Plan([tr, Issue(DraftLanguage.English)], [Broadcast(tr, id: 1, status: status), Broadcast(tr, id: 2)], SundayNoon, Lead);
 
         actions.ShouldHaveSingleItem().Kind.ShouldBe(DeliveryActionKind.Conflict);
+    }
+
+    [Fact]
+    public void Duplicates_inside_the_cut_off_stay_a_conflict()
+    {
+        var tr = Issue(DraftLanguage.Turkish);
+
+        DeliveryPlanner.Plan([tr], [Broadcast(tr, id: 1), Broadcast(tr, id: 2)], tr.SendAt - TimeSpan.FromMinutes(1), Lead)
+            .ShouldHaveSingleItem().Kind.ShouldBe(DeliveryActionKind.Conflict);
+    }
+
+    [Fact]
+    public void A_smoke_test_broadcast_is_not_one_of_ours_and_is_never_cancelled()
+    {
+        // kit-smoke creates "thebluesland-weekly-smoke:<timestamp>"; it shares a prefix with the real
+        // marker but not the colon, so the planner must neither plan for nor cancel it.
+        var smoke = new KitBroadcast(4, "thebluesland-weekly-smoke:2026-11-15T09:00:00Z", "Smoke", "Smoke", "<p>x</p>", null, "draft", null, 111);
+
+        DeliveryPlanner.Plan([], [smoke], SundayNoon, Lead).ShouldBeEmpty();
+        DeliveryPlanner.Plan([Issue(DraftLanguage.Turkish)], [smoke], SundayNoon, Lead).ShouldHaveSingleItem().Kind.ShouldBe(DeliveryActionKind.Create);
     }
 
     [Fact]

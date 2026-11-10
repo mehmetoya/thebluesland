@@ -108,6 +108,70 @@ public sealed class KitClientTests
         handler.Requests.Count.ShouldBe(1);
     }
 
+    [Fact]
+    public async Task A_create_that_timed_out_after_kit_made_the_broadcast_is_found_not_posted_twice()
+    {
+        var handler = new QueueHandler(
+            _ => throw new TaskCanceledException("The request was canceled due to the configured HttpClient.Timeout."),
+            _ => Json(HttpStatusCode.OK, """{"broadcasts":[{"id":5,"description":"other"},{"id":88,"description":"thebluesland-weekly:2026-W47:tr","status":"scheduled"}],"pagination":{"has_next_page":false}}"""));
+
+        var id = await Client(handler).CreateAsync(Request, CancellationToken.None);
+
+        id.ShouldBe(88);
+        handler.Requests.Select(item => item.Request.Method).ShouldBe([HttpMethod.Post, HttpMethod.Get]);
+    }
+
+    [Fact]
+    public async Task A_create_that_got_a_server_error_after_kit_made_the_broadcast_is_found_not_posted_twice()
+    {
+        var handler = new QueueHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.GatewayTimeout),
+            _ => Json(HttpStatusCode.OK, """{"broadcasts":[{"id":88,"description":"thebluesland-weekly:2026-W47:tr"}],"pagination":{"has_next_page":false}}"""));
+
+        (await Client(handler).CreateAsync(Request, CancellationToken.None)).ShouldBe(88);
+
+        handler.Requests.Count(item => item.Request.Method == HttpMethod.Post).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task A_create_that_failed_without_making_anything_is_posted_again()
+    {
+        var handler = new QueueHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.BadGateway),
+            _ => Json(HttpStatusCode.OK, """{"broadcasts":[{"id":5,"description":"thebluesland-weekly:2026-W47:en"}],"pagination":{"has_next_page":false}}"""),
+            _ => Json(HttpStatusCode.Created, """{"broadcast":{"id":99}}"""));
+
+        (await Client(handler).CreateAsync(Request, CancellationToken.None)).ShouldBe(99);
+
+        handler.Requests.Select(item => item.Request.Method).ShouldBe([HttpMethod.Post, HttpMethod.Get, HttpMethod.Post]);
+    }
+
+    [Fact]
+    public async Task A_create_that_keeps_failing_gives_up_after_four_posts_and_never_leaks_the_key()
+    {
+        var handler = new QueueHandler(request => request.Method == HttpMethod.Post
+            ? new HttpResponseMessage(HttpStatusCode.InternalServerError)
+            : Json(HttpStatusCode.OK, """{"broadcasts":[],"pagination":{"has_next_page":false}}"""));
+
+        var error = await Should.ThrowAsync<KitException>(() => Client(handler).CreateAsync(Request, CancellationToken.None));
+
+        error.Status.ShouldBe(HttpStatusCode.InternalServerError);
+        error.Message.ShouldNotContain("secret");
+        handler.Requests.Count(item => item.Request.Method == HttpMethod.Post).ShouldBe(4);
+    }
+
+    [Fact]
+    public async Task A_rate_limited_create_is_retried_without_listing_because_kit_did_nothing()
+    {
+        var handler = new QueueHandler(
+            _ => new HttpResponseMessage(HttpStatusCode.TooManyRequests),
+            _ => Json(HttpStatusCode.Created, """{"broadcast":{"id":99}}"""));
+
+        (await Client(handler).CreateAsync(Request, CancellationToken.None)).ShouldBe(99);
+
+        handler.Requests.Select(item => item.Request.Method).ShouldBe([HttpMethod.Post, HttpMethod.Post]);
+    }
+
     private static KitClient Client(QueueHandler handler) => new(new HttpClient(handler), "secret", TimeSpan.Zero);
 
     private static HttpResponseMessage Json(HttpStatusCode status, string json) =>
