@@ -12,9 +12,9 @@ public sealed record DraftWarning(string Where, string Message);
 /// <summary>
 /// Deterministic checks on the model's text (issue-drafting spec, Design section 3). Links,
 /// brackets, angle brackets, emoji and exclamation marks are removed. Everything else only
-/// produces warnings: lengths, numbers and proper names that do not appear in the fact card, and
-/// runs of eight or more words copied from a summary. The approved sample issue in the voice guide
-/// passes with no warning; that is this validator's calibration.
+/// produces warnings: lengths, numbers and proper names that do not appear in the fact card, runs
+/// of eight or more words copied from a summary, and the hype words the voice guide forbids. The
+/// approved sample issue in the voice guide passes with no warning; that is this validator's calibration.
 /// </summary>
 public static partial class DraftValidator
 {
@@ -83,6 +83,11 @@ public static partial class DraftValidator
                 warnings.Add(new DraftWarning(where, $"{field}: name “{name}” is not in the fact card."));
             }
 
+            foreach (var hype in HypeWords(clean))
+            {
+                warnings.Add(new DraftWarning(where, $"{field}: hype word “{hype}” (voice guide: no superlatives)."));
+            }
+
             if (Runs(clean).FirstOrDefault(summaryRuns.Contains) is { } copied)
             {
                 warnings.Add(new DraftWarning(where, $"{field}: copies a summary (“{copied}…”)."));
@@ -146,6 +151,16 @@ public static partial class DraftValidator
         return Spaces().Replace(builder.ToString(), " ").Trim();
     }
 
+    /// <summary>
+    /// The voice guide's banned superlatives ("efsanevi", "tarihi", "inanılmaz" and their English
+    /// kin), lowercased. Turkish "tarihi" alone is also "its date", so only the hype phrases count.
+    /// </summary>
+    private static IEnumerable<string> HypeWords(string text) =>
+        // Invariant lowering leaves Turkish "İ" as is; map it by hand so "İnanılmaz" is caught too.
+        Hype().Matches(text.Replace('İ', 'i').ToLowerInvariant())
+            .Select(match => match.Value)
+            .Distinct(StringComparer.Ordinal);
+
     /// <summary>Capitalized words that do not start a sentence, without a Turkish suffix after an apostrophe.</summary>
     private static IEnumerable<string> Names(string text)
     {
@@ -205,6 +220,9 @@ public static partial class DraftValidator
 
     [GeneratedRegex("<[^>]*>", RegexOptions.CultureInvariant, 1000)]
     private static partial Regex HtmlTag();
+
+    [GeneratedRegex(@"(?<!\w)(efsane\w*|inanılmaz\w*|inanilmaz\w*|muhteşem\w*|müthiş\w*|tarihi bir|tarihe geç\w*|tarih yazd\w*|legend\w*|historic\w*|incredibl\w*|unbelievabl\w*|iconic\w*|amazing\w*|epic)(?!\w)", RegexOptions.CultureInvariant, 1000)]
+    private static partial Regex Hype();
 
     [GeneratedRegex(@"\d+", RegexOptions.CultureInvariant, 1000)]
     private static partial Regex Number();

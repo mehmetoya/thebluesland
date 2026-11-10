@@ -69,6 +69,7 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
         handler.Requests.ShouldAllBe(request => !Prompt(request.Body).Contains("http", StringComparison.Ordinal));
         _output.ToString().ShouldStartWith("## Weekly draft · 2026-W47 · send 2026-11-16");
         _output.ToString().ShouldContain("<details><summary>TR issue</summary>");
+        _output.ToString().ShouldContain("Written by `test-model`.");
     }
 
     [Fact]
@@ -97,6 +98,30 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
 
         (await RunAsync(handler)).ShouldBe(1);
         _error.ToString().ShouldContain("403");
+        Directory.Exists(_out).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task RunAsync_falls_back_to_the_lighter_model_when_the_default_is_overloaded()
+    {
+        var handler = new QueueHandler(Overloaded, Overloaded, Overloaded, Overloaded, EchoKeys, EchoKeys);
+
+        (await RunAsync(handler, model: null)).ShouldBe(0, _error.ToString());
+        handler.Requests.Take(4).ShouldAllBe(request => request.Request.RequestUri!.AbsolutePath.Contains(GeminiClient.DefaultModel));
+        handler.Requests.Skip(4).Count().ShouldBe(2);
+        handler.Requests.Skip(4).ShouldAllBe(request => request.Request.RequestUri!.AbsolutePath.Contains(GeminiClient.FallbackModel));
+        _output.ToString().ShouldContain($"Written by `{GeminiClient.FallbackModel}` because `{GeminiClient.DefaultModel}` was unavailable");
+        _error.ToString().ShouldContain($"writing the Turkish draft with {GeminiClient.FallbackModel}");
+    }
+
+    [Fact]
+    public async Task RunAsync_keeps_an_explicitly_chosen_model_even_when_it_is_overloaded()
+    {
+        var handler = new QueueHandler(Overloaded);
+
+        (await RunAsync(handler, model: "chosen-model")).ShouldBe(1);
+        handler.Requests.Count.ShouldBe(4);
+        handler.Requests.ShouldAllBe(request => request.Request.RequestUri!.AbsolutePath.Contains("chosen-model"));
         Directory.Exists(_out).ShouldBeFalse();
     }
 
@@ -143,7 +168,7 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
         handler.Requests.ShouldBeEmpty();
     }
 
-    private Task<int> RunAsync(QueueHandler handler, string? apiKey = "test-key", DateTimeOffset? from = null, DateTimeOffset? to = null, string model = "test-model") =>
+    private Task<int> RunAsync(QueueHandler handler, string? apiKey = "test-key", DateTimeOffset? from = null, DateTimeOffset? to = null, string? model = "test-model") =>
         DraftCommand.RunAsync(
             Path.GetDirectoryName(RepoFiles.Find("tools/weekly-newsletter/ranking.yml"))!,
             RepoFiles.Find("docs/weekly/ses-rehberi.md"),
@@ -157,7 +182,11 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
             TimeProvider.System,
             _output,
             _error,
-            CancellationToken.None);
+            CancellationToken.None,
+            TimeSpan.Zero);
+
+    private static HttpResponseMessage Overloaded(HttpRequestMessage request) =>
+        new(HttpStatusCode.ServiceUnavailable) { Content = new StringContent("{\"error\":{\"message\":\"This model is currently experiencing high demand.\"}}") };
 
     /// <summary>Answers with a valid draft for exactly the story keys the prompt lists.</summary>
     private static HttpResponseMessage EchoKeys(HttpRequestMessage request)

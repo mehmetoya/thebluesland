@@ -47,6 +47,9 @@ yazmayacak. 8 hikâye girer (5 seçim + 3 yedek).
   `{ intro, outro, stories: [{ key, headline, body, whyItMatters }] }`.
 - Sıcaklık düşüktür (0.4). Hata durumunda istemci 429/5xx için bir kez bekleyip yeniden dener
   (fetcher deseni).
+- Varsayılan model yoğunluk veya kota nedeniyle (503/429) yanıt vermezse taslak ücretsiz katmandaki
+  `gemini-flash-lite-latest` ile yazılır; rapor hangi modelin yazdığını gösterir. Elle seçilen model
+  değiştirilmez. (2026-11-10, ilk production çalıştırmalarından sonra eklendi.)
 
 ### 3. Deterministik denetim (kod, yanıt geldikten sonra)
 
@@ -58,6 +61,7 @@ yazmayacak. 8 hikâye girer (5 seçim + 3 yedek).
 | **Rakam** | Metindeki her sayı (yıl, yaş, tarih, tutar) olgu kartında geçmeli | Uyarı, cümle işaretlenir |
 | **Özel ad** | Büyük harfle başlayan her ad (ilk kelime hariç) olgu kartında geçmeli | Uyarı |
 | Kopya | Özetten 8+ kelimelik aynı dizi | Uyarı |
+| Abartı | Ses rehberinin yasakladığı sıfatlar (efsane, inanılmaz, "tarihi bir", legendary, iconic…) | Uyarı |
 
 Uyarılar dosyaya **girmez**. Job summary'de (ve ileride PR açıklamasında) hikâye hikâye
 listelenir. Mehmet'in neye bakacağını bilmesi için vardır; taslağı engellemez.

@@ -47,6 +47,31 @@ public sealed class DraftValidatorTests(ITestOutputHelper output)
         warnings.ShouldContain(warning => warning.Message.Contains("copies a summary", StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData("Efsane ikili yine sahnede.", "efsane")]
+    [InlineData("İnanılmaz bir dönüş.", "inanılmaz")]
+    [InlineData("Grup tarihi bir konser verdi.", "tarihi bir")]
+    [InlineData("A legendary duo, back on stage.", "legendary")]
+    [InlineData("An Iconic return.", "iconic")]
+    public void Hype_words_are_flagged(string body, string word)
+    {
+        var key = Card.Picks.First().Key;
+        var draft = new DraftResponse("Bu hafta beş haber var.", "Haftaya görüşürüz.", [new DraftStory(key, "Başlık", body, "Önemli.")]);
+
+        var (_, warnings) = DraftValidator.Validate(draft, Card);
+
+        warnings.ShouldContain(warning => warning.Where == key && warning.Message.Contains($"hype word “{word}”", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_release_date_is_not_hype()
+    {
+        var key = Card.Picks.First().Key;
+        var draft = new DraftResponse("Bu hafta beş haber var.", "Haftaya görüşürüz.", [new DraftStory(key, "Başlık", "Albümün çıkış tarihi belli oldu. A history of the band.", "Önemli.")]);
+
+        DraftValidator.Validate(draft, Card).Warnings.ShouldNotContain(warning => warning.Message.Contains("hype", StringComparison.Ordinal));
+    }
+
     [Fact]
     public void Links_brackets_emoji_and_exclamation_marks_are_removed_and_reported()
     {

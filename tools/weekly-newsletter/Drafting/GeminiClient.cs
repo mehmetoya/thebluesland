@@ -19,9 +19,19 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
     // Same free-tier default as suggest-curator-note.yml (verified there against the live API).
     public const string DefaultModel = "gemini-3.8-flash";
 
+    // When the default model stays overloaded (503 "high demand", first production runs on
+    // 2026-11-10), the lighter model on the same free tier usually still answers.
+    public const string FallbackModel = "gemini-flash-lite-latest";
+
     private const int MaxAttempts = 4;
     private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromMinutes(1);
     private readonly TimeSpan _retryDelay = retryDelay ?? TimeSpan.FromSeconds(5);
+
+    public string Model => model;
+
+    /// <summary>The model is busy or out of free quota, not refusing this request: another model may answer.</summary>
+    public static bool IsUnavailable(HttpRequestException exception) =>
+        exception.StatusCode is HttpStatusCode.ServiceUnavailable or HttpStatusCode.TooManyRequests;
 
     public async Task<string> GenerateJsonAsync(string prompt, object responseSchema, CancellationToken cancellationToken)
     {
