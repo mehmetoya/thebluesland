@@ -79,6 +79,53 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task RunAsync_repairs_a_language_once_and_reports_the_warning_drop()
+    {
+        // Turkish answers with a stock phrase, its one repair is clean, English needs no repair: 3 requests.
+        var handler = new QueueHandler(StockPhrase, EchoKeys, EchoKeys);
+
+        (await RunAsync(handler)).ShouldBe(0, _error.ToString());
+
+        handler.Requests.Count.ShouldBe(3);
+        Prompt(handler.Requests[1].Body).ShouldContain("PROBLEMS:");
+        Prompt(handler.Requests[2].Body).ShouldContain("Write the issue in English");
+        var body = await File.ReadAllTextAsync(Path.Combine(_out, "review", "2026-W47.pr-body.md"));
+        var line = TurkishRepairLine().Match(body);
+        line.Success.ShouldBeTrue(body);
+        int.Parse(line.Groups["before"].Value).ShouldBeGreaterThan(int.Parse(line.Groups["after"].Value));
+        body.ShouldContain("Otomatik düzeltme: gerekmedi");
+        (await File.ReadAllTextAsync(Path.Combine(_out, "2026-W47.tr.md"))).ShouldNotContain("pioneering");
+    }
+
+    [Fact]
+    public async Task RunAsync_keeps_the_draft_and_notes_it_when_the_repair_request_fails()
+    {
+        var handler = new QueueHandler(StockPhrase, _ => new HttpResponseMessage(HttpStatusCode.Forbidden), EchoKeys);
+
+        (await RunAsync(handler)).ShouldBe(0, _error.ToString());
+
+        handler.Requests.Count.ShouldBe(3);
+        _error.ToString().ShouldContain("Self-repair of the Turkish draft failed");
+        var body = await File.ReadAllTextAsync(Path.Combine(_out, "review", "2026-W47.pr-body.md"));
+        body.ShouldContain("düzeltme isteği başarısız");
+        body.ShouldContain("ilk taslak korundu");
+        (await File.ReadAllTextAsync(Path.Combine(_out, "2026-W47.tr.md"))).ShouldContain("pioneering");
+    }
+
+    [Fact]
+    public async Task RunAsync_never_makes_more_than_one_repair_request_per_language()
+    {
+        // The repair answer is as bad as the draft: rejected, and no second repair follows.
+        var handler = new QueueHandler(StockPhrase);
+
+        (await RunAsync(handler)).ShouldBe(0, _error.ToString());
+
+        handler.Requests.Count.ShouldBe(4);
+        handler.Requests.Count(request => Prompt(request.Body).Contains("PROBLEMS:", StringComparison.Ordinal)).ShouldBe(2);
+        (await File.ReadAllTextAsync(Path.Combine(_out, "review", "2026-W47.pr-body.md"))).ShouldContain("ilk taslak korundu");
+    }
+
+    [Fact]
     public async Task RunAsync_asks_once_more_after_a_malformed_answer()
     {
         var handler = new QueueHandler(_ => Ok("{\"not\":\"a draft\"}"), EchoKeys, EchoKeys);
@@ -236,6 +283,14 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
         return Ok(FakeAnswer(keys));
     }
 
+    /// <summary>A valid answer whose why-it-matters lines use a stock phrase, so the validator asks for a repair.</summary>
+    private static HttpResponseMessage StockPhrase(HttpRequestMessage request)
+    {
+        var body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+        var keys = StoryKey().Matches(Prompt(body)).Select(match => match.Groups[1].Value).ToList();
+        return Ok(FakeAnswer(keys).Replace("It matters.", "It is pioneering.", StringComparison.Ordinal));
+    }
+
     private static string Prompt(string requestBody) =>
         JsonDocument.Parse(requestBody).RootElement.GetProperty("contents")[0].GetProperty("parts")[0].GetProperty("text").GetString()!;
 
@@ -243,4 +298,7 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
 
     [GeneratedRegex(@"Story key: (s-\d+) ")]
     private static partial Regex StoryKey();
+
+    [GeneratedRegex(@"Otomatik düzeltme: (?<before>\d+) uyarı → (?<after>\d+) uyarı")]
+    private static partial Regex TurkishRepairLine();
 }

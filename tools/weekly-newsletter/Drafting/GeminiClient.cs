@@ -28,7 +28,10 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
 
     public const double FallbackTemperature = 0.2;
 
-    private const int MaxAttempts = 4;
+    public const int MaxAttempts = 4;
+
+    /// <summary>The repair pass is optional: one retry at most, so a busy model costs little quota and time.</summary>
+    public const int RepairMaxAttempts = 2;
     private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromMinutes(1);
     private readonly TimeSpan _retryDelay = retryDelay ?? TimeSpan.FromSeconds(5);
 
@@ -38,7 +41,8 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
     public static bool IsUnavailable(HttpRequestException exception) =>
         exception.StatusCode is HttpStatusCode.ServiceUnavailable or HttpStatusCode.TooManyRequests;
 
-    public async Task<string> GenerateJsonAsync(string prompt, object responseSchema, CancellationToken cancellationToken)
+    /// <param name="maxAttempts">HTTP attempts for transient failures; the optional repair pass passes fewer than <see cref="MaxAttempts"/> to spare quota.</param>
+    public async Task<string> GenerateJsonAsync(string prompt, object responseSchema, CancellationToken cancellationToken, int maxAttempts = MaxAttempts)
     {
         for (var attempt = 1; ; attempt++)
         {
@@ -57,7 +61,7 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
             {
                 response = await httpClient.SendAsync(request, cancellationToken);
             }
-            catch (Exception ex) when (attempt < MaxAttempts
+            catch (Exception ex) when (attempt < maxAttempts
                 && (ex is HttpRequestException || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested)))
             {
                 // Connection reset, DNS hiccup or a slow answer hitting the HttpClient timeout
@@ -85,12 +89,12 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
                         : throw new DraftFormatException("Gemini's answer contained no text.");
                 }
 
-                if (!IsTransient(response.StatusCode) || attempt >= MaxAttempts)
+                if (!IsTransient(response.StatusCode) || attempt >= maxAttempts)
                 {
                     // Gemini's error body says why (overloaded, unknown model, quota); it never echoes the key.
                     var detail = await ErrorDetailAsync(response, cancellationToken);
                     throw new HttpRequestException(
-                        $"Gemini request failed with {(int)response.StatusCode} {response.StatusCode} (attempt {attempt} of {MaxAttempts}){detail}.",
+                        $"Gemini request failed with {(int)response.StatusCode} {response.StatusCode} (attempt {attempt} of {maxAttempts}){detail}.",
                         null,
                         response.StatusCode);
                 }

@@ -8,7 +8,8 @@ namespace TheBluesland.WeeklyNewsletter.Drafting;
 
 /// <summary>
 /// The <c>draft</c> subcommand (issue-drafting spec, Design section 5): window → clusters → pick →
-/// fact card → one Gemini call per language → checks → issue files, plus backups and the PR body in
+/// fact card → one Gemini call per language → checks → at most one self-repair call per language
+/// (<see cref="DraftRepair"/>) → issue files, plus backups and the PR body in
 /// a review/ folder that is never merged (issue-review spec) → job summary.
 /// Writes only files; never the database, never a branch. Exit 0 when both languages were written
 /// (warnings included); 1 on bad configuration, too few stories, a database or Gemini failure, or
@@ -156,7 +157,24 @@ public static class DraftCommand
                 return 1;
             }
 
-            var (clean, warnings) = DraftValidator.Validate(response, card, language, week.SendDate, DraftPromptBuilder.SampleText(voiceGuide));
+            var sampleText = DraftPromptBuilder.SampleText(voiceGuide);
+            var (validated, firstWarnings) = DraftValidator.Validate(response, card, language, week.SendDate, sampleText);
+
+            // One optional repair request per language, with the model that wrote the draft; it can never fail the run.
+            var (clean, warnings, repair) = await DraftRepair.RunAsync(
+                (repairPrompt, token) => gemini.GenerateJsonAsync(repairPrompt, DraftPromptBuilder.ResponseSchema, token, GeminiClient.RepairMaxAttempts),
+                validated,
+                firstWarnings,
+                card,
+                language,
+                week.SendDate,
+                sampleText,
+                cancellationToken);
+            if (repair.Status == RepairStatus.Failed)
+            {
+                await error.WriteLineAsync($"Self-repair of the {language.Name} draft failed ({repair.Failure}); keeping the original draft.");
+            }
+
             drafts.Add(new LanguageDraft(
                 language,
                 IssueMarkdownWriter.Issue(week, language, clean, card),
@@ -164,7 +182,8 @@ public static class DraftCommand
                 clean,
                 warnings,
                 gemini.Model,
-                fellBackFrom));
+                fellBackFrom,
+                repair));
         }
 
         drafts = DraftValidator.AddParity(drafts, card);

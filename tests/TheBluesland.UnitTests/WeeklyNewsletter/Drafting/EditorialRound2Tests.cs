@@ -25,9 +25,9 @@ public sealed class EditorialRound2Tests
         prompt.ShouldContain("who (with identity: band, role, \"two surviving");
         prompt.ShouldContain("\"co-invented\" stays \"co-inventor\" / \"mucitlerinden\"");
         prompt.ShouldContain("If two articles in the card disagree on a date or number, leave that detail out.");
-        prompt.ShouldContain("must add one fact that the headline and body do not already contain");
+        prompt.ShouldContain("must add context that is NOT in the headline or body");
         prompt.ShouldContain("Write every backup too; a missing backup is an error.");
-        prompt.ShouldContain("If the subject runs over, drop the second hook; never abbreviate.");
+        prompt.ShouldContain("If it runs over, drop the second hook; never abbreviate");
         prompt.ShouldContain("headlines may use the short");
         prompt.ShouldContain("Örnekteki hiçbir ifade, cümle parçası ya da olgu taslağa taşınmaz.");
         prompt.ShouldContain("kurgusal örnek");

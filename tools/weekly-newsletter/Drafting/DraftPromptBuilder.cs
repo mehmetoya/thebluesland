@@ -9,6 +9,9 @@ public static class DraftPromptBuilder
 {
     private const string SampleHeading = "## Örnek sayı";
 
+    /// <summary>Characters left for the story hooks once the brand tag is counted into the subject limit.</summary>
+    private static readonly int SubjectRoom = DraftLanguage.MaxSubject - DraftLanguage.SubjectTag.Length;
+
     /// <summary>
     /// The prompt for one language. <paramref name="lite"/> is the variant for the lighter fallback
     /// model: no sample issue (it copies it), the guide's tone and language sections only, and the rules
@@ -70,10 +73,13 @@ public static class DraftPromptBuilder
            articles disagree on a date or number, leave it out.
         6. headline: at most 70 characters, who + what happened, no institution abbreviations ("Rock Hall" is allowed; the body uses the full name).
         7. body: 2-3 sentences, one verb per event, no sentence copied from a summary, no "X grubundan" / "the band X" filler.
-        8. whyItMatters: 1-2 short sentences with no label and one new fact that the headline and body do not contain
-           (else the next step: date, place, who is affected). No stock phrases ("pioneering", "geniş kitle", "pek çok müzisyen", "a favorite of").
+        8. whyItMatters: 1-2 short sentences, no label. It adds context NOT in the body: history, a consequence, or what to
+           listen to / watch for - taken only from the fact card. Never restate the headline or body, never say the obvious
+           (who appears, what happens), no claim of significance, influence or legacy the card does not state. No stock phrases
+           ("pioneering", "geniş kitle", "pek çok müzisyen", "a favorite of"). If the card has nothing more, give the next step (date, place, who is affected).
         9. intro: 1-2 sentences about at most three picks, ending with "{language.IntroTagline}". outro: 1-2 short sentences, no AI, no signature.
-        10. subject: at most {DraftLanguage.MaxSubject} characters, two hooks, ending with "{DraftLanguage.SubjectTag}"; if it runs over, drop the second hook.
+        10. subject: at most {DraftLanguage.MaxSubject} characters in total, counting the ending "{DraftLanguage.SubjectTag}" ({DraftLanguage.SubjectTag.Length} characters),
+            so the hooks get at most {SubjectRoom} characters. Two short hooks; if it runs over, drop the second hook and never cut a phrase in half.
             preview: at most {DraftLanguage.MaxPreview} characters, adds something, does not repeat the subject.
         11. Write every story in the card, picks and backups, each under its exact story key. A missing backup is an error.
         """;
@@ -126,23 +132,62 @@ public static class DraftPromptBuilder
           a second phrase for the same event). Subject at the start of the sentence. Two sentences must
           not repeat each other. No filler like "X grubundan" / "the band X".
         - whyItMatters: 1-2 short sentences, without a "Why it matters" / "Neden önemli" label. It states
-          a concrete consequence or comparison: who it changes what for, using only facts in the card. It
-          must add one fact that the headline and body do not already contain; restating them is wrong. If
-          the card offers no such fact, give the concrete next step (date, place, who is affected). No
-          claims about influence, attitude, legacy or trends that the card does not state. Avoid stock
-          phrases such as "pioneering", "reach well beyond", "proving", "coveted", "öncü bir grup",
-          "geniş kitle", "doğrudan belirliyor", "kendine yer buluyor", "pek çok müzisyen", "birçok müzisyen",
-          "many musicians", "a favorite of", "yeniden yer alacak".
+          a concrete consequence or comparison and must add context that is NOT in the headline or body:
+          history, a consequence, or what to listen to / watch for, taken only from the fact card. Never
+          restate the headline or body in other words, and never say the obvious (who appears, what
+          happens). If the card offers no such context, give the concrete next step (date, place, who is
+          affected). No claims about influence, attitude, legacy, importance or trends that the card does
+          not state. Avoid stock phrases such as "pioneering", "reach well beyond", "proving", "coveted",
+          "öncü bir grup", "geniş kitle", "doğrudan belirliyor", "kendine yer buluyor", "pek çok müzisyen",
+          "birçok müzisyen", "many musicians", "a favorite of", "yeniden yer alacak".
         - intro: 1-2 sentences referring only to the picks, ending with the sentence "{language.IntroTagline}".
         - outro: 1-2 short sentences. Do not mention AI or write a signature.
-        - subject: at most {DraftLanguage.MaxSubject} characters, two story hooks from the picks, ending with
-          "{DraftLanguage.SubjectTag}". If the subject runs over, drop the second hook; never abbreviate.
+        - subject: at most {DraftLanguage.MaxSubject} characters in total, counting the ending
+          "{DraftLanguage.SubjectTag}" ({DraftLanguage.SubjectTag.Length} characters), so the story hooks get at most {SubjectRoom}
+          characters. Two story hooks from the picks. If it runs over, drop the second hook; never abbreviate
+          and never end in the middle of a phrase.
           preview: at most {DraftLanguage.MaxPreview} characters, adds something and
           does not repeat the subject.
 
         === FACT CARD ===
         {card.ToPromptText()}=== END FACT CARD ===
         """;
+
+    /// <summary>
+    /// The one repair request per language (issue-drafting spec, Design section 3a): the model's own JSON
+    /// answer, the fact card and the plain list of warnings to fix. No voice-guide sample, so nothing
+    /// is there to copy. Same data boundary as <see cref="Build"/> (ADR-0006 madde 1).
+    /// </summary>
+    public static string BuildRepair(DraftLanguage language, FactCard card, DateOnly sendDate, string currentJson, IReadOnlyList<DraftWarning> warnings)
+    {
+        var list = string.Join('\n', warnings.Select(warning => $"- [{warning.Where}] {warning.Message}"));
+        return $"""
+            You edit a draft of TheBluesland Weekly, a Monday music-news newsletter, written in {language.Name}.
+            An automatic check found the problems listed below in the draft answer. Return the corrected full answer
+            as JSON in the same schema. Change only the fields the problems point to; copy every other field word for word.
+
+            PROBLEMS:
+            {list}
+
+            Rules for the rewrite:
+            - Use only facts from the fact card. Keep every number and proper name the text already has; add no URLs, Markdown, emoji or "!".
+            - whyItMatters (1-2 short sentences, no label) must add context NOT in the headline or body: history, a consequence, or what to
+              listen to / watch for, taken only from the fact card. Never restate the body, never say the obvious, no stock phrases and no claim of
+              significance the card does not state. If the card has nothing more, give the next step (date, place, who is affected).
+            - The issue is sent on {sendDate:yyyy-MM-dd}. Events before that date are past: past tense. Never "this week", weekdays or time spans the card does not state.
+            - subject: at most {DraftLanguage.MaxSubject} characters in total, counting the ending "{DraftLanguage.SubjectTag}" ({DraftLanguage.SubjectTag.Length} characters),
+              so the hooks get at most {SubjectRoom} characters; one or two short hooks, never cut in the middle of a phrase.
+              preview: at most {DraftLanguage.MaxPreview} characters, does not repeat the subject.
+            - Keep every story key and the same stories.
+
+            === DRAFT ANSWER (JSON) ===
+            {currentJson}
+            === END DRAFT ANSWER ===
+
+            === FACT CARD ===
+            {card.ToPromptText()}=== END FACT CARD ===
+            """;
+    }
 
     /// <summary>Gemini <c>responseSchema</c> for <see cref="DraftResponse"/>.</summary>
     public static object ResponseSchema { get; } = new

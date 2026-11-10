@@ -40,6 +40,7 @@ public static class PullRequestBodyFormatter
             head.Append(CultureInfo.InvariantCulture,
                 $"#### {draft.Language.Code.ToUpperInvariant()} · {(count == 0 ? "✅ uyarı yok" : $"⚠️ {count} uyarı")} · `{draft.Model}`");
             head.Append(draft.FellBackFrom is { } busy ? $" (`{busy}` yanıt vermedi)\n\n" : "\n\n");
+            head.Append(DraftReportFormatter.RepairLine(draft.Repair, turkish: true));
             head.Append(DraftReportFormatter.WarningsTable(card, draft.Warnings));
         }
 
