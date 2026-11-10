@@ -48,7 +48,7 @@ Haber × 5    Başlık (≤ 70 karakter): kim + ne oldu. Okurun tanımayabilece�
              Neden önemli: 1–2 kısa cümle, somut sonuç
              Kaynaklar: (kod ekler)
 Kapanış      1–2 kısa cümle. YZ notu ya da imza yazılmaz; kod ekler.
-Not          Bu sayı yapay zekâ yardımıyla yazıldı; TheBluesland editörü seçti ve onayladı.
+Not          Yok. Sayının altına AI notu konmaz (ADR-0006 madde 4, 2026-11-10).
 ```
 
 ## Türkçe
@@ -124,7 +124,6 @@ Konu: `Richard Lloyd öldü, YouTube Billboard'a dönüyor · TBL Weekly`
 >
 > Haftaya pazartesi yine buradayız. İyi dinlemeler.
 >
-> *Bu sayı yapay zekâ yardımıyla yazıldı; TheBluesland editörü seçti ve onayladı.*
 
 ### English
 
@@ -169,4 +168,3 @@ Preview: `Oasis skip the Rock Hall ceremony; a GTA VI festival lands in Miami.`
 >
 > See you next Monday. Happy listening.
 >
-> *Written with AI assistance; selected and approved by TheBluesland's editor.*

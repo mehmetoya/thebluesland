@@ -47,13 +47,13 @@ public sealed class IssueMarkdownWriterTests
     }
 
     [Fact]
-    public void Issue_body_has_code_owned_headings_labels_links_and_ai_note()
+    public void Issue_body_has_code_owned_headings_labels_and_links_and_no_ai_note()
     {
         var markdown = IssueMarkdownWriter.Issue(Week46, DraftLanguage.English, Draft(), Card);
 
         markdown.ShouldContain("\nFive stories, five minutes.\n");
         markdown.ShouldContain($"## Say \"{Card.Picks.First().Key}\" \\ now\n\nBody text.\n\n*Why it matters:* It matters.\n\nSources: [Pitchfork](https://pitchfork.com/");
-        markdown.TrimEnd().ShouldEndWith("*Written with AI assistance; selected and approved by TheBluesland's editor.*");
+        markdown.ShouldNotContain("AI assistance");
         Card.Backups.ShouldAllBe(backup => !markdown.Contains($"key: {backup.Key}\n", StringComparison.Ordinal));
     }
 
@@ -67,5 +67,19 @@ public sealed class IssueMarkdownWriterTests
         markdown.ShouldContain("## Yedek 3 · ");
         markdown.ShouldContain("Kaynaklar: [");
         IssueMarkdownWriter.BackupsFileName(Week46, DraftLanguage.Turkish).ShouldBe(Path.Combine("review", "2026-W46.backups.tr.md"));
+    }
+
+    [Fact]
+    public void An_over_long_subject_or_preview_is_cut_to_the_validate_weekly_limits()
+    {
+        // Regression 2026-11-10: a 94-character preview would have failed validate-weekly on the PR.
+        var preview = IssueMarkdownWriter.Fit("Vince Neil's partner arrested, Sabaton drop a new track and Type O Negative pass on a reunion.", DraftLanguage.MaxPreview);
+        var subject = IssueMarkdownWriter.FitSubject("Richard Lloyd dies, Murderdolls return and much much more news" + DraftLanguage.SubjectTag);
+
+        preview.Length.ShouldBeLessThanOrEqualTo(DraftLanguage.MaxPreview);
+        preview.ShouldEndWith("…");
+        subject.Length.ShouldBeLessThanOrEqualTo(DraftLanguage.MaxSubject);
+        subject.ShouldEndWith(DraftLanguage.SubjectTag);
+        IssueMarkdownWriter.Fit("Short.", DraftLanguage.MaxPreview).ShouldBe("Short.");
     }
 }
