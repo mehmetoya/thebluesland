@@ -19,7 +19,7 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
     // Same free-tier default as suggest-curator-note.yml (verified there against the live API).
     public const string DefaultModel = "gemini-3.8-flash";
 
-    private const int MaxAttempts = 3;
+    private const int MaxAttempts = 4;
     private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromMinutes(1);
     private readonly TimeSpan _retryDelay = retryDelay ?? TimeSpan.FromSeconds(5);
 
@@ -72,13 +72,15 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
 
                 if (!IsTransient(response.StatusCode) || attempt >= MaxAttempts)
                 {
+                    // Gemini's error body says why (overloaded, unknown model, quota); it never echoes the key.
+                    var detail = await ErrorDetailAsync(response, cancellationToken);
                     throw new HttpRequestException(
-                        $"Gemini request failed with {(int)response.StatusCode} {response.StatusCode} (attempt {attempt} of {MaxAttempts}).",
+                        $"Gemini request failed with {(int)response.StatusCode} {response.StatusCode} (attempt {attempt} of {MaxAttempts}){detail}.",
                         null,
                         response.StatusCode);
                 }
 
-                await Task.Delay(RetryDelay(response), cancellationToken);
+                await Task.Delay(RetryDelay(response, attempt), cancellationToken);
             }
         }
     }
@@ -87,11 +89,34 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
     public static bool IsValidModel(string model) =>
         model.Length is > 0 and <= 64 && model.All(character => character is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '.' or '-');
 
-    /// <summary>Gemini's own Retry-After when it sends one (free-tier 429s), capped at a minute.</summary>
-    private TimeSpan RetryDelay(HttpResponseMessage response)
+    /// <summary>
+    /// Gemini's own Retry-After when it sends one (free-tier 429s); otherwise the base delay doubled
+    /// per attempt, because an overloaded model (503) rarely recovers within seconds. Capped at a minute.
+    /// </summary>
+    private TimeSpan RetryDelay(HttpResponseMessage response, int attempt)
     {
-        var suggested = response.Headers.RetryAfter?.Delta;
-        return suggested is { } delta && delta > _retryDelay ? (delta < MaxRetryDelay ? delta : MaxRetryDelay) : _retryDelay;
+        var backoff = _retryDelay * Math.Pow(2, attempt - 1);
+        var delay = response.Headers.RetryAfter?.Delta is { } suggested && suggested > backoff ? suggested : backoff;
+        return delay < MaxRetryDelay ? delay : MaxRetryDelay;
+    }
+
+    private static async Task<string> ErrorDetailAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+    {
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            if (document.RootElement.TryGetProperty("error", out var error) && error.TryGetProperty("message", out var message) && message.GetString() is { Length: > 0 } text)
+            {
+                var flat = string.Join(' ', text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+                return $": {(flat.Length > 300 ? flat[..300] + "…" : flat)}";
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        return string.Empty;
     }
 
     private static bool IsTransient(HttpStatusCode status) =>

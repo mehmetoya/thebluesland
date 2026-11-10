@@ -88,4 +88,17 @@ public sealed class GeminiClientTests
         error.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         handler.Requests.Count.ShouldBe(1);
     }
+
+    [Fact]
+    public async Task GenerateJsonAsync_includes_geminis_error_message()
+    {
+        var handler = new QueueHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)
+        {
+            Content = new StringContent("{\"error\":{\"code\":404,\"message\":\"models/x is not found for API version v1beta.\"}}"),
+        });
+
+        var error = await Should.ThrowAsync<HttpRequestException>(() => new GeminiClient(new HttpClient(handler), "k", "x", TimeSpan.Zero).GenerateJsonAsync("p", new { }, CancellationToken.None));
+
+        error.Message.ShouldBe("Gemini request failed with 404 NotFound (attempt 1 of 4): models/x is not found for API version v1beta..");
+    }
 }

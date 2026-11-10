@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     # A full answer took over 90 s on the first production run (2026-11-10); each call may take up
     # to 3 min and is retried, so give the job room. Typical runs take a few minutes.
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
