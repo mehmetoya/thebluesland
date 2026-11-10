@@ -99,7 +99,7 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
   - Dependencies: T5
   - Files: `src/TheBluesland.Data/Scripts/create-newsletter-role.sql`, `tests/.../NewsletterRoleTests.cs`
 
-- [ ] **T7: `NewsIngestService` — paralel çekim, hata izolasyonu, idempotent insert** — M
+- [x] **T7: `NewsIngestService` — paralel çekim, hata izolasyonu, idempotent insert** — M
   - Description: Etkin feed'leri en fazla 4 paralel çeker; her feed'in hatası (`HttpRequestException`,
     `TimeoutException`, `XmlException` — T3 sözleşmesi) yalnız o feed'i `Failed` yapar; öğeleri normalize edip
     `ON CONFLICT (normalized_url) DO NOTHING` ile yazar; `fetched_at` `TimeProvider`'dan.
@@ -114,8 +114,8 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
     `tests/.../WeeklyNewsletter/NewsIngestServiceTests.cs`
 
 ### Checkpoint B
-- [ ] `FOCUSED` yeşil; fixture → DB uçtan uca çalışıyor
-- [ ] Değişiklikler task başına commit'lendi
+- [x] `FOCUSED` yeşil; fixture → DB uçtan uca çalışıyor (9 Testcontainers testi, 7 gerçek fixture → 28 satır, ikinci çalışma 0)
+- [x] Değişiklikler task başına commit'lendi
 
 ## Phase 3: Çalıştırma ve teslim
 
