@@ -148,7 +148,7 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
     `tests/.../Workflows/NewsletterIngestWorkflowSecretIsolationTests.cs`,
     `tests/.../Workflows/CiWorkflowSecretIsolationTests.cs`, `DeployWorkflowSecretIsolationTests.cs`
 
-- [ ] **T10: Kurulum dokümanı** — XS
+- [x] **T10: Kurulum dokümanı** — XS
   - Description: README'ye (mevcut secret/rol bölümünün yanına) Mehmet'in tek seferlik adımları:
     migration uygula → rol script'i → parola rotate → connection string'i secret olarak ekle ve bu
     workflow'a scope et → `workflow_dispatch` ile ilk çalışma.
@@ -159,8 +159,8 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
   - Files: `README.md`
 
 ### Checkpoint C: Complete
-- [ ] Tam `dotnet build TheBluesland.slnx` + `dotnet test` bir kez yeşil
-- [ ] Spec Success Criteria tek tek işaretlendi
+- [x] Tam `dotnet build TheBluesland.slnx` + `dotnet test` bir kez yeşil (576/576, Release, audit açık)
+- [x] Spec Success Criteria tek tek işaretlendi
 - [ ] `/review` tamamlandı, bulgular kapandı
 - [ ] PR açıldı; Mehmet T10 adımlarını uyguladı ve ilk gerçek çalışma yeşil
 
