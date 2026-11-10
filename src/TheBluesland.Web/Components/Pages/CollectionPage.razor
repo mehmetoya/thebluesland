@@ -13,7 +13,7 @@
     <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="@Site.Url("/")">@Site.T.Home</a> / <a href="@Site.Url("/collections")">@Site.T.NavCollections</a> / <span aria-current="page" lang="@Site.EnglishContentLang">@_collection.Title</span>
     </nav>
-    <section class="brand-intro">
+    <section class="brand-intro page-intro">
         @* Collection copy is English-only (docs/specs/site-i18n.md): marked lang="en" on a Turkish page. *@
         <h1 lang="@Site.EnglishContentLang">@_collection.Title</h1>
         <p lang="@Site.EnglishContentLang">@_collection.Introduction</p>

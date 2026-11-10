@@ -151,10 +151,10 @@ public sealed partial class SiteText
     // Not found / error (each "body" is text before a link, the link text and text after it).
     public required string NotFoundTitle { get; init; }
     public required string NotFoundHeading { get; init; }
-    public required string NotFoundBodyBefore { get; init; }
-    public required string BrowseThePlaylistsLink { get; init; }
+    public required string NotFoundBody { get; init; }
+    public required string BackToHome { get; init; }
     public required string FailedTitle { get; init; }
-    public required string FailedBodyBefore { get; init; }
+    public required string FailedBody { get; init; }
     public required string WeeklyNotFoundTitle { get; init; }
     public required string WeeklyNotFoundHeading { get; init; }
     public required string WeeklyNotFoundBodyBefore { get; init; }

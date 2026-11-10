@@ -306,6 +306,7 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
         body.ShouldContain("<h1>Bu sayı bulunamadı</h1>");
         body.ShouldContain("Adres yanlış olabilir ya da sayı henüz yayımlanmadı.");
         body.ShouldContain("href=\"/tr/weekly\">Tüm sayılara göz at</a>");
+        body.ShouldContain("<a href=\"/tr\">Ana sayfaya dön</a>");
         body.ShouldNotContain("We couldn't find this issue");
         body.ShouldContain("<title>Sayı bulunamadı - TheBluesland</title>");
         body.ShouldContain("class=\"site-header\"");
@@ -340,7 +341,7 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
         body.ShouldContain("class=\"site-header\"");
         body.ShouldContain("<h1>Page not found</h1>");
         body.ShouldContain("<title>Page not found - TheBluesland</title>");
-        body.ShouldContain("<a href=\"/en\">browse the playlists</a>");
+        body.ShouldContain("<a href=\"/en\">Back to home</a>");
         body.ShouldContain("class=\"site-footer\"");
     }
 
@@ -357,7 +358,7 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
         body.ShouldContain("<html lang=\"tr\">");
         body.ShouldContain("<title>Sayfa bulunamadı - TheBluesland</title>");
         body.ShouldContain("<h1>Sayfa bulunamadı</h1>");
-        body.ShouldContain("<a href=\"/tr\">çalma listelerine göz at</a>");
+        body.ShouldContain("<a href=\"/tr\">Ana sayfaya dön</a>");
         body.ShouldContain("class=\"site-footer\"");
     }
 

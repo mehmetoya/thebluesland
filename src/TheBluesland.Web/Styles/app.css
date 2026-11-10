@@ -429,19 +429,28 @@
 }
 
 /* Home page */
+/* The container is full width so a long title ("TheBluesland Weekly") is never squeezed onto two
+   lines by the reading measure; only the paragraphs keep the 42rem line length. */
 .brand-intro {
-  max-width: 42rem;
   margin-bottom: var(--space-8);
 }
 
 .brand-intro h1 {
+  max-width: none;
   font-size: var(--font-size-display);
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: var(--space-4);
 }
 
+/* Inner pages (collections, collection, weekly hub) use the same page-heading size as every other
+   content page; only the home page keeps the display size. */
+.brand-intro.page-intro h1 {
+  font-size: var(--font-size-2xl);
+}
+
 .brand-intro p {
+  max-width: 42rem;
   color: var(--color-text-muted);
   font-size: 1.0625rem;
 }
@@ -1159,8 +1168,26 @@ body:has(.filter-mobile-toggle:checked) {
 .about h1,
 .privacy h1,
 .terms h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-3);
+}
+
+/* Section rhythm: a clear gap above each heading, the heading tied to the text it introduces. */
+.about h2,
+.privacy h2,
+.terms h2 {
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-2);
+}
+
+.about h3,
+.privacy h3,
+.terms h3 {
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-md);
 }
 
 .about p,
@@ -1169,6 +1196,12 @@ body:has(.filter-mobile-toggle:checked) {
   color: var(--color-text-muted);
   margin-bottom: 1.1em;
   font-size: 1.0625rem;
+}
+
+/* The intro paragraph of a page (About): one step larger than the body, still muted. */
+.about p.lede {
+  font-size: var(--font-size-lg);
+  line-height: 1.5;
 }
 
 /* Permanent collection entry points share the catalogue's visual language, grouped by dimension
@@ -1574,21 +1607,7 @@ body:has(.filter-mobile-toggle:checked) {
   color: var(--color-text-muted);
 }
 
-.weekly-notfound {
-  max-width: 38rem;
-}
-
-.weekly-notfound h1 {
-  font-size: var(--font-size-xl);
-  margin-bottom: var(--space-2);
-}
-
-.weekly-notfound p {
-  margin-bottom: 1.1em;
-  font-size: var(--font-size-md);
-  color: var(--color-text-muted);
-}
-
+/* The weekly 404 reuses the generic 404 look (.about); it only adds the gap between two languages. */
 .weekly-notfound div + div {
   margin-top: var(--space-5);
 }
