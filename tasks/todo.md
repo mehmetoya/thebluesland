@@ -134,7 +134,7 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
   - Files: `tools/weekly-newsletter/Program.cs`, `Ingest/IngestReportFormatter.cs`,
     `Ingest/ArticleRetention.cs`, `tests/.../WeeklyNewsletter/IngestCommandTests.cs`
 
-- [ ] **T9: `newsletter-ingest.yml` + secret izolasyon testleri** — S
+- [x] **T9: `newsletter-ingest.yml` + secret izolasyon testleri** — S
   - Description: `cron "17 */2 * * *"` + `workflow_dispatch`, `contents: read`,
     `concurrency: newsletter-db` (cancel-in-progress: false), restore/build/run, summary'ye `tee`.
     Başlık yorumu `sync-spotify.yml` desenini izler (secret scope'u elle kısıtlama notu).
