@@ -80,7 +80,7 @@ public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeo
                 continue;
             }
 
-            var summary = CleanSummary(entry.Summary?.Text ?? (entry.Content as TextSyndicationContent)?.Text);
+            var summary = CleanSummary(entry.Summary?.Text ?? (entry.Content as TextSyndicationContent)?.Text, title);
             items.Add(new FeedItem(source, title, url, PublishedAt(entry), summary, Categories(entry)));
         }
 
@@ -189,7 +189,37 @@ public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeo
             .Distinct(StringComparer.Ordinal)
             .ToList();
 
-    private static string? CleanSummary(string? html)
+    /// <summary>
+    /// Some feeds start the summary with the headline or end it with the headline and the author's name
+    /// ("... ceremony. Oasis to Skip Induction Paolo Ragusa"). Both are noise to the drafting prompt: the
+    /// headline is already shown, and a byline reads as a name that belongs to the story.
+    /// </summary>
+    private static string WithoutHeadlineRepeat(string text, string title)
+    {
+        if (title.Length < 8)
+        {
+            return text;
+        }
+
+        if (text.StartsWith(title, StringComparison.OrdinalIgnoreCase))
+        {
+            text = text[title.Length..].TrimStart(' ', ':', '-', '–', '—', '.', '|');
+        }
+
+        var index = text.LastIndexOf(title, StringComparison.OrdinalIgnoreCase);
+        if (index > 0)
+        {
+            var words = text[(index + title.Length)..].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length <= 4 && words.All(word => char.IsUpper(word[0])))
+            {
+                text = text[..index].TrimEnd();
+            }
+        }
+
+        return text;
+    }
+
+    private static string? CleanSummary(string? html, string title)
     {
         var text = CleanText(html);
         if (text is null)
@@ -199,6 +229,7 @@ public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeo
 
         text = WordPressSuffix().Replace(text, string.Empty);
         text = TrailingSourceLink().Replace(text, string.Empty).Trim();
+        text = WithoutHeadlineRepeat(text, title);
         if (text.Length == 0)
         {
             return null;

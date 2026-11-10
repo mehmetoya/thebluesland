@@ -16,12 +16,13 @@ public sealed class DraftValidatorTests(ITestOutputHelper output)
     [InlineData("English")]
     public void The_approved_sample_issue_passes_with_no_warning(string language)
     {
-        var sample = SampleIssue(language, Card);
+        var card = SampleCard();
+        var sample = SampleIssue(language, card);
         sample.Stories.Count.ShouldBe(5);
 
         var (clean, warnings) = DraftValidator.Validate(
             sample,
-            Card,
+            card,
             language == "English" ? DraftLanguage.English : DraftLanguage.Turkish,
             Week46.SendDate);
 
@@ -245,9 +246,7 @@ public sealed class DraftValidatorTests(ITestOutputHelper output)
 
         result[0].Warnings.Where(warning => warning.Message.Contains("parity", StringComparison.Ordinal)).Select(warning => warning.Message).ToList().ShouldBeEmpty();
         var parity = result[1].Warnings.Where(warning => warning.Message.Contains("parity", StringComparison.Ordinal)).Select(warning => warning.Message).ToList();
-        parity.ShouldContain("EN/TR parity: “75” is in the TR story but not in the EN story.");
-        parity.ShouldContain("EN/TR parity: “Winter” is in the TR story but not in the EN story.");
-        parity.ShouldNotContain(message => message.Contains("Geese", StringComparison.Ordinal));
+        parity.ShouldBe(["EN/TR parity: “75”, “Winter” are in the TR story but not in the EN story."]);
     }
 
     [Theory]

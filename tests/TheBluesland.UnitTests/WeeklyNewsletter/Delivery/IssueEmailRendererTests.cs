@@ -20,11 +20,11 @@ public sealed partial class IssueEmailRendererTests
 
         var email = IssueEmailRenderer.Render(issue);
 
-        email.Subject.ShouldBe("Richard Lloyd öldü, YouTube Billboard'a dönüyor · TBL Weekly");
-        email.PreviewText.ShouldBe("Oasis Rock Hall törenine gitmiyor, GTA VI için Miami'de festival var.");
+        email.Subject.ShouldBe("Tessaly Brand öldü, Maren Sloane solo çıkıyor · TBL Weekly");
+        email.PreviewText.ShouldBe("Port Alder'daki Saltwater Ballroom 5 Aralık'ta yeniden açılıyor.");
         email.Html.ShouldContain(">46. hafta</h1>");
         email.Html.ShouldContain("<h2 ");
-        email.Html.ShouldContain(">Television'ın kurucularından Richard Lloyd hayatını kaybetti</h2>");
+        email.Html.ShouldContain(">Orchard Kids'in basçısı Tessaly Brand 68 yaşında öldü</h2>");
         email.Html.ShouldContain("Neden önemli:</em>");
         var firstLink = Card.Picks.First().Links[0];
         Hrefs(email.Html).ShouldContain(firstLink.Url);

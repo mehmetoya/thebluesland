@@ -1,0 +1,114 @@
+{
+ "tr": {
+  "intro": "Richard Lloyd ile Del Casher'a veda ettik, Paul McCartney ve Ringo Starr buluşuyor, Oasis törene gitmiyor ve YouTube listelere dönüyor. Beş haber, beş dakika.",
+  "outro": "Haftaya pazartesi yine buradayız. İyi dinlemeler.",
+  "subject": "Richard Lloyd ve Del Casher öldü, YouTube… · TBL Weekly",
+  "preview": "Paul McCartney ve Ringo Starr buluşuyor; Oasis Rock Hall törenine katılmıyor.",
+  "stories": [
+   {
+    "key": "s-20",
+    "headline": "Television'ın gitaristi Richard Lloyd öldü",
+    "body": "Television'ın kurucularından gitarist Richard Lloyd 75 yaşında hayatını kaybetti. Geese, grubun şarkısını çalarak müzisyene saygısını gösterdi.",
+    "whyItMatters": "Geese daha önce de Television'la karşılaştırılmış ve grubun başka bir şarkısını da çalmıştı."
+   },
+   {
+    "key": "s-41",
+    "headline": "Paul McCartney ve Ringo Starr buluşuyor",
+    "body": "Paul McCartney ve Ringo Starr, Joe Walsh'un yardım konserinde sahneye çıkacak. Konser Las Vegas'ta yapılacak.",
+    "whyItMatters": "İki Beatles üyesi sahneye birlikte çıkacak."
+   },
+   {
+    "key": "s-46",
+    "headline": "Oasis Rock Hall törenine katılmıyor",
+    "body": "Oasis ödülü almasına rağmen Noel ve Liam Gallagher törene gitmeyecek. Grup törende sahneye de çıkmayacak.",
+    "whyItMatters": "Noel ve Liam Gallagher törende yer almayacak."
+   },
+   {
+    "key": "s-8",
+    "headline": "Wah-wah pedalını bulan Del Casher öldü",
+    "body": "Wah-wah pedalını icat eden Del Casher 88 yaşında öldü. Casher aynı zamanda stüdyo gitaristi olarak çalışmıştı.",
+    "whyItMatters": "İcadı pek çok müzisyen tarafından kullanıldı."
+   },
+   {
+    "key": "s-13",
+    "headline": "YouTube listelere geri dönüyor",
+    "body": "YouTube verilerini yeniden listelere göndermeye başladı. Billboard dinleme hesaplama biçimini değiştirdi ve YouTube dönüşünü doğruladı.",
+    "whyItMatters": "YouTube verileri listelerde yeniden yer alacak."
+   },
+   {
+    "key": "s-77",
+    "headline": "This is the epic setlist and all the surprise guests from Sepultura’s emotional final show",
+    "body": "Sepultura were joined by some old friends and new ones during their 30-song set at their last ever gig",
+    "whyItMatters": "(Model bu yedek haberi yazmadı / the model skipped this backup; card text shown.)"
+   },
+   {
+    "key": "s-15",
+    "headline": "New Order Announce 2027 US Tour Dates",
+    "body": "The band's first US tour since 2023 will feature support from Future Islands on select dates. New Order Announce 2027 US Tour Dates Paolo Ragusa",
+    "whyItMatters": "(Model bu yedek haberi yazmadı / the model skipped this backup; card text shown.)"
+   },
+   {
+    "key": "s-42",
+    "headline": "Judge Sets Steven Tyler Sex Assault Trial Date",
+    "body": "A California judge said Monday he would toss out and reconsider any rulings by a previous judge if either side requests it in the long-running case",
+    "whyItMatters": "(Model bu yedek haberi yazmadı / the model skipped this backup; card text shown.)"
+   }
+  ]
+ },
+ "en": {
+  "intro": "Television's guitarist is gone, Paul McCartney and Ringo Starr are set to reunite, and Oasis are skipping their induction. Five stories, five minutes.",
+  "outro": "See you next Monday. Happy listening.",
+  "subject": "Richard Lloyd dies, McCartney and Starr reunite · TBL Weekly",
+  "preview": "Oasis skip their Rock Hall induction; YouTube returns to the Billboard charts.",
+  "stories": [
+   {
+    "key": "s-20",
+    "headline": "Television Guitarist Richard Lloyd Dies at 75",
+    "body": "Television guitarist Richard Lloyd died at the age of 75. Geese marked the loss with a cover of the band's song \"Ain't That Nothin'\".",
+    "whyItMatters": "Geese had already been compared to Television and covered another of its songs previously."
+   },
+   {
+    "key": "s-41",
+    "headline": "Paul McCartney and Ringo Starr to Reunite at VetsAid",
+    "body": "Paul McCartney and Ringo Starr will make a rare onstage appearance together at Joe Walsh's VetsAid music festival. The star-studded benefit concert is headed to Las Vegas.",
+    "whyItMatters": "The benefit concert lineup also features The Killers, St. Vincent, and The War on Drugs."
+   },
+   {
+    "key": "s-46",
+    "headline": "Oasis to Skip Rock and Roll Hall of Fame Ceremony",
+    "body": "Noel and Liam Gallagher will not attend, perform, or accept the honor at the ceremony. The band is finally in the Rock and Roll Hall of Fame after months of silence.",
+    "whyItMatters": "Noel and Liam Gallagher will not be in Los Angeles for the event."
+   },
+   {
+    "key": "s-8",
+    "headline": "Wah-Wah Pedal Inventor Del Casher Dies at 88",
+    "body": "Guitar wah-wah pedal inventor Del Casher died at 88. He also worked as a session guitarist, playing with Elvis Presley and Sonny & Cher.",
+    "whyItMatters": "Casher's invention was a favorite of Frank Zappa, Jimi Hendrix, Eric Clapton, Jimmy Page, and Tony Iommi."
+   },
+   {
+    "key": "s-13",
+    "headline": "YouTube Streams to Count Toward Billboard Charts Again",
+    "body": "YouTube is bringing its data back to the charts after a year of withholding numbers. Billboard announced a change to its free and paid streaming formula, and YouTube confirmed its return on the same day.",
+    "whyItMatters": "Billboard changed how it weighs free and paid streaming on the charts."
+   },
+   {
+    "key": "s-77",
+    "headline": "Sepultura Play Final Concert in Brazil",
+    "body": "Sepultura ended their farewell tour with a final concert in Brazil. The setlist featured tunes from across the band's discography.",
+    "whyItMatters": "The band was joined by a number of guests during their last ever gig."
+   },
+   {
+    "key": "s-15",
+    "headline": "New Order Announce 2027 US Tour Dates",
+    "body": "New Order announced new US tour dates for 2027. The band has not played a stateside tour since 2023.",
+    "whyItMatters": "Future Islands will support the synth-pop group on select dates."
+   },
+   {
+    "key": "s-42",
+    "headline": "Judge Sets Steven Tyler Sex Assault Trial Date",
+    "body": "A California judge set a trial date for Steven Tyler in a long-running case. The judge stated he would reconsider earlier rulings if either side requests it.",
+    "whyItMatters": "Plaintiff's lawyers are left free to revisit charges that have previously been dismissed."
+   }
+  ]
+ }
+}
