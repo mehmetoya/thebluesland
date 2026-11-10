@@ -17,6 +17,9 @@ public sealed record KitBroadcast(
     long? EmailTemplateId,
     long? TagId);
 
+/// <summary>A Kit tag; the delivery lists are the tags "weekly-tr" and "weekly-en".</summary>
+public sealed record KitTag(long Id, string Name);
+
 /// <summary>What we ask Kit to send: one issue, to one tag, at one instant.</summary>
 public sealed record KitBroadcastRequest(string Description, IssueEmail Email, DateTimeOffset SendAt, long TagId, bool Public);
 
@@ -34,6 +37,7 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
 {
     public const string ApiKeyVariable = "KIT_API_KEY";
     private const string BaseUrl = "https://api.kit.com/v4/broadcasts";
+    private const string TagsUrl = "https://api.kit.com/v4/tags";
     private const int MaxAttempts = 4;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -59,6 +63,31 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
         while (after is not null);
 
         return broadcasts;
+    }
+
+    public async Task<IReadOnlyList<KitTag>> ListTagsAsync(CancellationToken cancellationToken)
+    {
+        var tags = new List<KitTag>();
+        string? after = null;
+        do
+        {
+            var url = after is null ? $"{TagsUrl}?per_page=1000" : $"{TagsUrl}?per_page=1000&after={Uri.EscapeDataString(after)}";
+            using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, url), cancellationToken);
+            var page = await response.Content.ReadFromJsonAsync<TagListResponse>(Json, cancellationToken)
+                ?? throw new KitException("Kit's tag list was empty.");
+            tags.AddRange((page.Tags ?? []).Where(tag => tag.Name is not null).Select(tag => new KitTag(tag.Id, tag.Name!)));
+            after = page.Pagination is { HasNextPage: true, EndCursor: { Length: > 0 } cursor } ? cursor : null;
+        }
+        while (after is not null);
+
+        return tags;
+    }
+
+    public async Task<KitTag> CreateTagAsync(string name, CancellationToken cancellationToken)
+    {
+        using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, TagsUrl) { Content = JsonContent.Create(new { name }) }, cancellationToken);
+        var created = await response.Content.ReadFromJsonAsync<TagResponse>(Json, cancellationToken);
+        return created?.Tag is { Name: not null } tag ? new KitTag(tag.Id, tag.Name) : throw new KitException($"Kit did not return the tag '{name}'.");
     }
 
     public async Task<long> CreateAsync(KitBroadcastRequest request, CancellationToken cancellationToken)
@@ -186,6 +215,12 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
     private sealed record SingleResponse(BroadcastDto? Broadcast);
 
     private sealed record ErrorResponse(List<string>? Errors);
+
+    private sealed record TagDto(long Id, string? Name);
+
+    private sealed record TagListResponse(List<TagDto>? Tags, Pagination? Pagination);
+
+    private sealed record TagResponse(TagDto? Tag);
 
     private sealed record BroadcastDto(
         long Id,
