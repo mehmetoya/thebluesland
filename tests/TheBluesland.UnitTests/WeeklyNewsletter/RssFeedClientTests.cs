@@ -229,9 +229,75 @@ public sealed class RssFeedClientTests
         var client = new RssFeedClient(httpClient, TimeSpan.FromSeconds(30));
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
 
-        var exception = await Should.ThrowAsync<OperationCanceledException>(() => client.FetchAsync(Feed("consequence"), cts.Token));
+        await Should.ThrowAsync<OperationCanceledException>(() => client.FetchAsync(Feed("consequence"), cts.Token));
+    }
 
-        exception.ShouldNotBeOfType<TimeoutException>();
+    [Fact]
+    public async Task FetchAsync_response_larger_than_the_limit_is_rejected_as_unreadable()
+    {
+        var oversized = new byte[RssFeedClient.MaxResponseBytes + 1];
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(oversized),
+        }));
+
+        await Should.ThrowAsync<XmlException>(() => new RssFeedClient(httpClient).FetchAsync(Feed("huge"), CancellationToken.None));
+    }
+
+    [Fact]
+    public void Parse_removes_control_characters_and_lone_surrogates_that_postgres_jsonb_rejects()
+    {
+        // XML forbids &#0; outright, so hostile feeds carry it HTML-encoded inside the XML text
+        // (&amp;#0;) - it only becomes a real NUL after our own HtmlDecode, which is the case to cover.
+        var item = ParseItem("Null&amp;#0;Byte Title", "Bell&amp;#7; and &amp;#xD800;lone surrogate");
+
+        item.Title.ShouldBe("Null Byte Title");
+        item.Summary.ShouldNotBeNull();
+        item.Summary.ShouldStartWith("Bell and");
+        (item.Title + item.Summary).ShouldAllBe(c => !char.IsControl(c) && !char.IsSurrogate(c));
+    }
+
+    [Fact]
+    public void Parse_truncation_never_splits_a_surrogate_pair()
+    {
+        var text = new string('a', RssFeedClient.MaxSummaryLength - 2) + string.Concat(Enumerable.Repeat("🎸", 50));
+
+        var summary = ParseItem("Title", text).Summary!;
+
+        summary.ShouldEndWith("…");
+        summary.ShouldAllBe(c => !char.IsSurrogate(c) || summary.Contains("🎸"));
+        char.IsHighSurrogate(summary[^2]).ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Parse_skips_an_item_whose_link_is_longer_than_the_limit()
+    {
+        var longLink = "https://x.example.com/" + new string('a', RssFeedClient.MaxUrlLength);
+
+        var items = RssFeedClient.Parse("long-url", ToStream(Rss($"<item><title>Long link</title><link>{longLink}</link></item>")));
+
+        items.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Parse_does_not_use_an_enclosure_as_the_article_link()
+    {
+        var items = RssFeedClient.Parse("enclosure", ToStream(Rss(
+            "<item><title>Podcast</title><enclosure url=\"https://cdn.example.com/episode.mp3\" length=\"1\" type=\"audio/mpeg\"/></item>")));
+
+        items.ShouldBeEmpty();
+    }
+
+    [Theory]
+    [InlineData("Mon, 09 Nov 2026 10:00:00 -0500", 15)]
+    [InlineData("Fri, 09 Nov 2026 10:00:00 +0000", 10)]
+    [InlineData("09 Nov 2026 10:00:00 +0200", 8)]
+    public void Parse_reads_offsets_and_tolerates_a_wrong_day_name(string pubDate, int expectedUtcHour)
+    {
+        var items = RssFeedClient.Parse("dates", ToStream(Rss(
+            $"<item><title>t</title><link>https://x.example.com/a</link><pubDate>{pubDate}</pubDate></item>")));
+
+        items.Single().PublishedAt.ShouldBe(new DateTimeOffset(2026, 11, 9, expectedUtcHour, 0, 0, TimeSpan.Zero));
     }
 
     private static IReadOnlyList<FeedItem> ParseFixture(string feedId) => ParseFile($"{feedId}.xml", feedId);
@@ -254,6 +320,13 @@ public sealed class RssFeedClientTests
             return [];
         }
     }
+
+    private static FeedItem ParseItem(string title, string description) =>
+        RssFeedClient.Parse("clean", ToStream(Rss(
+            $"<item><title>{title}</title><link>https://x.example.com/a</link><description>{description}</description></item>"))).Single();
+
+    private static string Rss(string items) =>
+        $"<rss version=\"2.0\"><channel><title>t</title><link>https://x.example.com</link><description>d</description>{items}</channel></rss>";
 
     private static MemoryStream ToStream(string xml) => new(System.Text.Encoding.UTF8.GetBytes(xml));
 

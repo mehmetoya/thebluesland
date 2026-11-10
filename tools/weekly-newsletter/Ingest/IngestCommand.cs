@@ -1,3 +1,4 @@
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using TheBluesland.Data;
 
@@ -6,15 +7,14 @@ namespace TheBluesland.WeeklyNewsletter.Ingest;
 /// <summary>
 /// The <c>ingest</c> subcommand end to end (news-ingest spec, Design section 4): validate
 /// feeds.yml and the connection string before any network call, fetch and store, apply the 8-week
-/// retention, print the job-summary table. Exit code: 0 when at least one feed succeeded, 1 when
-/// every feed failed or the configuration is unusable - a single broken feed must not turn the
+/// retention, print the job-summary table. The summary is printed even when the database fails,
+/// because it is the only place ingest health is visible. Exit code: 0 when at least one feed
+/// succeeded and the database writes worked; 1 otherwise - a single broken feed must not turn the
 /// two-hourly workflow red.
 /// </summary>
 public static class IngestCommand
 {
     public const string ConnectionStringVariable = "NEON_NEWSLETTER_CONNECTION_STRING";
-
-    public static readonly TimeSpan Retention = TimeSpan.FromDays(7 * 8);
 
     public static async Task<int> RunAsync(
         string feedsPath,
@@ -48,10 +48,28 @@ public static class IngestCommand
 
         var service = new NewsIngestService(new RssFeedClient(httpClient), CreateContext, clock);
         var report = await service.RunAsync(config.EnabledFeeds, cancellationToken);
-        var removed = await RemoveExpiredAsync(CreateContext, clock.GetUtcNow() - Retention, cancellationToken);
+
+        int? removed = null;
+        if (report.DatabaseError is null)
+        {
+            try
+            {
+                removed = await RemoveExpiredAsync(CreateContext, clock.GetUtcNow() - NewsIngestService.Retention, cancellationToken);
+            }
+            catch (DbException ex)
+            {
+                report = report with { DatabaseError = $"Retention delete failed: {ex.GetType().Name}: {ex.Message}" };
+            }
+        }
 
         await output.WriteAsync(IngestReportFormatter.ToMarkdown(report, removed, clock.GetUtcNow()));
-        return report.AnySucceeded ? 0 : 1;
+        if (report.DatabaseError is not null)
+        {
+            // Type and message only - no stack trace in the public Actions log.
+            await error.WriteLineAsync($"Database error: {report.DatabaseError}");
+        }
+
+        return report.Healthy ? 0 : 1;
     }
 
     /// <summary>

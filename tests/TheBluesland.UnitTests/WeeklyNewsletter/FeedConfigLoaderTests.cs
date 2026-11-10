@@ -164,6 +164,51 @@ public sealed class FeedConfigLoaderTests
     }
 
     [Fact]
+    public void Parse_misspelled_field_is_rejected_instead_of_silently_ignored()
+    {
+        var result = FeedConfigLoader.Parse("""
+            feeds:
+              - id: nme
+                name: NME
+                url: https://www.nme.com/news/music/feed
+                enabeld: false
+            """);
+
+        result.IsValid.ShouldBeFalse();
+        result.Errors.ShouldContain(error => error.Contains("enabeld", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Parse_file_with_every_feed_disabled_is_rejected()
+    {
+        var result = FeedConfigLoader.Parse("""
+            feeds:
+              - id: nme
+                name: NME
+                url: https://www.nme.com/news/music/feed
+                enabled: false
+            """);
+
+        result.IsValid.ShouldBeFalse();
+        result.Errors.ShouldContain(error => error.Contains("no enabled feed", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Parse_empty_list_item_is_rejected_without_throwing()
+    {
+        var result = FeedConfigLoader.Parse("""
+            feeds:
+              -
+              - id: nme
+                name: NME
+                url: https://www.nme.com/news/music/feed
+            """);
+
+        result.IsValid.ShouldBeFalse();
+        result.Errors.ShouldContain(error => error.Contains("empty list item", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task LoadAsync_missing_file_is_rejected_without_throwing()
     {
         var missingPath = Path.Combine(AppContext.BaseDirectory, "does-not-exist", "feeds.yml");

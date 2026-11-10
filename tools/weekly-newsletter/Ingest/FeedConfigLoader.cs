@@ -14,7 +14,8 @@ public static partial class FeedConfigLoader
 {
     private static readonly IDeserializer Deserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
-        .IgnoreUnmatchedProperties()
+        // No IgnoreUnmatchedProperties: a typo such as "enabeld: false" must fail the file, not
+        // silently leave the feed enabled.
         .Build();
 
     public static async Task<FeedConfigLoadResult> LoadAsync(string path, CancellationToken cancellationToken)
@@ -52,7 +53,12 @@ public static partial class FeedConfigLoader
 
         for (var index = 0; index < entries.Count; index++)
         {
-            var entry = entries[index];
+            if (entries[index] is not { } entry)
+            {
+                errors.Add($"feed #{index + 1}: empty list item.");
+                continue;
+            }
+
             var label = string.IsNullOrWhiteSpace(entry.Id) ? $"feed #{index + 1}" : $"feed '{entry.Id}'";
 
             if (string.IsNullOrWhiteSpace(entry.Id))
@@ -84,6 +90,11 @@ public static partial class FeedConfigLoader
             }
         }
 
+        if (errors.Count == 0 && !feeds.Any(feed => feed.Enabled))
+        {
+            errors.Add("feeds.yml has no enabled feed (every entry is enabled: false).");
+        }
+
         return errors.Count == 0 ? new FeedConfigLoadResult(feeds, []) : FeedConfigLoadResult.Invalid(errors);
     }
 
@@ -92,7 +103,7 @@ public static partial class FeedConfigLoader
 
     private sealed class FeedsDocument
     {
-        public List<FeedEntry>? Feeds { get; set; }
+        public List<FeedEntry?>? Feeds { get; set; }
     }
 
     private sealed class FeedEntry

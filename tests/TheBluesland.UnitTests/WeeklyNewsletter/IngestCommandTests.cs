@@ -115,6 +115,25 @@ public sealed class IngestCommandTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task RunAsync_unreachable_database_returns_one_and_still_prints_the_summary_without_a_stack_trace()
+    {
+        var exitCode = await IngestCommand.RunAsync(
+            _feedsPath,
+            "Host=127.0.0.1;Port=1;Username=x;Password=x;Database=x;Timeout=2",
+            new HttpClient(Serve(("pitchfork", Fixture("pitchfork")), ("nme", Fixture("nme")))),
+            _clock,
+            _output,
+            _error,
+            CancellationToken.None);
+
+        exitCode.ShouldBe(1);
+        _output.ToString().ShouldContain("Database error");
+        _output.ToString().ShouldContain("| Pitchfork | ✅ OK | 4 | – |");
+        _error.ToString().ShouldContain("Database error");
+        _error.ToString().ShouldNotContain("   at ");
+    }
+
+    [Fact]
     public async Task RunAsync_removes_articles_older_than_eight_weeks_and_keeps_newer_ones()
     {
         var now = _clock.GetUtcNow();

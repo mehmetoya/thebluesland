@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
+using System.Data.Common;
 using System.Text.Json;
-using System.Xml;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using NpgsqlTypes;
@@ -12,13 +12,18 @@ namespace TheBluesland.WeeklyNewsletter.Ingest;
 /// One ingest run (news-ingest spec, Design section 4): fetch every enabled feed with bounded
 /// parallelism, isolate each feed's failure, normalize URLs, and write all new items in a single
 /// <c>INSERT ... ON CONFLICT (normalized_url) DO NOTHING</c>, so re-runs are idempotent and an
-/// existing row is never rewritten. Caller cancellation is not a feed failure and propagates.
+/// existing row is never rewritten. Items already older than the retention window are not
+/// inserted (they would be deleted again in the same run and re-reported as "new" every time).
+/// Caller cancellation is not a feed failure and propagates; a database failure is reported, not
+/// thrown, so the job summary is still written.
 /// </summary>
 public sealed class NewsIngestService(
     RssFeedClient feedClient,
     Func<NewsletterDbContext> createContext,
     TimeProvider clock)
 {
+    public static readonly TimeSpan Retention = TimeSpan.FromDays(7 * 8);
+
     private const int MaxParallelFeeds = 4;
 
     // jsonb_to_recordset turns one JSON parameter into rows, so the whole batch is one statement
@@ -33,6 +38,8 @@ public sealed class NewsIngestService(
         returning source
         """;
 
+    private static readonly JsonSerializerOptions RowJson = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
+
     public async Task<IngestReport> RunAsync(IReadOnlyList<FeedConfig> feeds, CancellationToken cancellationToken)
     {
         var fetched = new ConcurrentDictionary<string, FeedFetch>(StringComparer.Ordinal);
@@ -43,11 +50,13 @@ public sealed class NewsIngestService(
             async (feed, token) => fetched[feed.Id] = await FetchOneAsync(feed, token));
 
         var fetchedAt = clock.GetUtcNow();
+        var cutoff = fetchedAt - Retention;
 
         // feeds.yml order, not completion order: when two feeds carry the same story, the
         // earlier-listed source deterministically owns the row.
         var rows = feeds
             .SelectMany(feed => fetched[feed.Id].Items)
+            .Where(item => (item.PublishedAt ?? fetchedAt) >= cutoff)
             .Select(item => new ArticleRow(
                 item.Source,
                 item.Title,
@@ -59,22 +68,39 @@ public sealed class NewsIngestService(
             .DistinctBy(row => row.NormalizedUrl, StringComparer.Ordinal)
             .ToList();
 
-        var addedBySource = await InsertAsync(rows, fetchedAt, cancellationToken);
+        Dictionary<string, int> addedBySource;
+        string? databaseError = null;
+        try
+        {
+            addedBySource = await InsertAsync(rows, fetchedAt, cancellationToken);
+        }
+        catch (DbException ex)
+        {
+            addedBySource = [];
+            databaseError = $"{ex.GetType().Name}: {ex.Message}";
+        }
 
-        return new IngestReport(feeds
+        var results = feeds
             .Select(feed => fetched[feed.Id] is { Error: null } ok
                 ? new FeedRunResult(feed.Id, feed.Name, FeedRunStatus.Succeeded, ok.Items.Count, addedBySource.GetValueOrDefault(feed.Id), null)
                 : new FeedRunResult(feed.Id, feed.Name, FeedRunStatus.Failed, 0, 0, fetched[feed.Id].Error))
-            .ToList());
+            .ToList();
+
+        return new IngestReport(results, databaseError);
     }
 
+    /// <summary>
+    /// Anything that goes wrong with one feed - HTTP status, timeout, unreadable XML, a connection
+    /// dropped mid-body, a regex timeout on hostile content - fails only that feed. Only the
+    /// caller's own cancellation escapes.
+    /// </summary>
     private async Task<FeedFetch> FetchOneAsync(FeedConfig feed, CancellationToken cancellationToken)
     {
         try
         {
             return new FeedFetch(await feedClient.FetchAsync(feed, cancellationToken), null);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TimeoutException or XmlException)
+        catch (Exception ex) when (!(ex is OperationCanceledException && cancellationToken.IsCancellationRequested))
         {
             return new FeedFetch([], Describe(ex));
         }
@@ -85,7 +111,9 @@ public sealed class NewsIngestService(
         HttpRequestException { StatusCode: { } status } => $"HTTP {(int)status} {status}",
         HttpRequestException http => $"HTTP error: {http.Message}",
         TimeoutException timeout => timeout.Message,
-        _ => $"Unreadable feed: {ex.Message}",
+        System.Xml.XmlException xml => $"Unreadable feed: {xml.Message}",
+        IOException io => $"Connection dropped: {io.Message}",
+        _ => $"{ex.GetType().Name}: {ex.Message}",
     };
 
     private async Task<Dictionary<string, int>> InsertAsync(
@@ -116,8 +144,6 @@ public sealed class NewsIngestService(
 
         return added;
     }
-
-    private static readonly JsonSerializerOptions RowJson = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
 
     private sealed record FeedFetch(IReadOnlyList<FeedItem> Items, string? Error);
 

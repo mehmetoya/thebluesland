@@ -63,6 +63,33 @@ public sealed class IngestReportFormatterTests
     }
 
     [Fact]
+    public void ToMarkdown_escapes_html_and_backticks_and_caps_long_notes()
+    {
+        var report = new IngestReport([new FeedRunResult("x", "X", FeedRunStatus.Failed, 0, 0,
+            "Unsupported feed root element <html>; `code` " + new string('z', 500))]);
+
+        var row = IngestReportFormatter.ToMarkdown(report, removed: 0, RunAt).Split('\n').Single(line => line.StartsWith("| X |", StringComparison.Ordinal));
+
+        row.ShouldContain("&lt;html&gt;");
+        row.ShouldContain("\\`code\\`");
+        row.Length.ShouldBeLessThan(300);
+    }
+
+    [Fact]
+    public void ToMarkdown_database_error_is_called_out_and_new_counts_are_not_claimed()
+    {
+        var report = new IngestReport(
+            [new FeedRunResult("billboard", "Billboard", FeedRunStatus.Succeeded, 10, 0, null)],
+            DatabaseError: "NpgsqlException: Failed to connect");
+
+        var markdown = IngestReportFormatter.ToMarkdown(report, removed: null, RunAt);
+
+        markdown.ShouldContain("❌ 1/1 feeds OK · – new · – removed");
+        markdown.ShouldContain("**Database error — nothing was stored this run:** NpgsqlException: Failed to connect");
+        markdown.ShouldContain("| Billboard | ✅ OK | 10 | – |");
+    }
+
+    [Fact]
     public void ToMarkdown_escapes_pipes_and_flattens_newlines_in_error_text()
     {
         var report = new IngestReport([new FeedRunResult("x", "X | Y", FeedRunStatus.Failed, 0, 0, "bad\nthing | here")]);

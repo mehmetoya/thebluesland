@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using System.ServiceModel.Syndication;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 
@@ -8,24 +9,28 @@ namespace TheBluesland.WeeklyNewsletter.Ingest;
 
 /// <summary>
 /// Fetches one RSS 2.0 or Atom 1.0 feed and turns it into <see cref="FeedItem"/>s (news-ingest spec,
-/// Design section 4). Failure contract, relied on by the ingest service to fail only this feed:
-/// non-success HTTP status → <see cref="HttpRequestException"/>; slower than the per-feed timeout →
-/// <see cref="TimeoutException"/>; unparseable XML → <see cref="XmlException"/>. Cancellation by the
-/// caller surfaces as a plain <see cref="OperationCanceledException"/>.
-/// A single bad item (no title, no absolute link) is skipped; an unparseable date only nulls that
-/// item's <see cref="FeedItem.PublishedAt"/>.
+/// Design section 4). Failure contract: non-success HTTP status → <see cref="HttpRequestException"/>;
+/// slower than the per-feed timeout → <see cref="TimeoutException"/>; unparseable or oversized feed
+/// → <see cref="XmlException"/>. Cancellation by the caller surfaces as a plain
+/// <see cref="OperationCanceledException"/>. A single bad item (no title, no usable link) is
+/// skipped; an unparseable date only nulls that item's <see cref="FeedItem.PublishedAt"/>.
+/// Every stored string is cleaned so one hostile item cannot break the batch insert: no control
+/// characters (Postgres jsonb rejects \u0000), no lone surrogates, bounded lengths.
 /// </summary>
 public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeout = null)
 {
     public const string UserAgent = "TheBlueslandWeekly/1.0 (+https://thebluesland.com)";
     public const int MaxSummaryLength = 2000;
+    public const int MaxUrlLength = 2000;
+
+    // The largest feed captured on 2026-11-10 was ~160 KB; anything past this is not a news feed.
+    public const int MaxResponseBytes = 10 * 1024 * 1024;
 
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(20);
 
-    // Feeds are small (the largest captured on 2026-11-10 was ~160 KB); this only stops a
-    // misbehaving server from streaming an unbounded document into memory.
-    private const long MaxDocumentCharacters = 10_000_000;
-
+    // Bounds regex work per field so a hostile feed cannot make cleaning quadratic.
+    private const int MaxFieldInputLength = 20_000;
+    private const int RegexTimeoutMilliseconds = 1000;
     private const string Ellipsis = "…";
 
     private readonly TimeSpan _timeout = timeout ?? DefaultTimeout;
@@ -44,10 +49,7 @@ public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeo
             response.EnsureSuccessStatusCode();
 
             await using var stream = await response.Content.ReadAsStreamAsync(timeoutSource.Token);
-            using var buffer = new MemoryStream();
-            await stream.CopyToAsync(buffer, timeoutSource.Token);
-            buffer.Position = 0;
-
+            using var buffer = await ReadBoundedAsync(feed, stream, timeoutSource.Token);
             return Parse(feed.Id, buffer);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
@@ -63,7 +65,6 @@ public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeo
             // Feeds never need a DTD; ignoring it means entities are never expanded or fetched.
             DtdProcessing = DtdProcessing.Ignore,
             XmlResolver = null,
-            MaxCharactersInDocument = MaxDocumentCharacters,
         };
 
         using var reader = XmlReader.Create(xml, settings);
@@ -84,6 +85,26 @@ public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeo
         }
 
         return items;
+    }
+
+    private static async Task<MemoryStream> ReadBoundedAsync(FeedConfig feed, Stream stream, CancellationToken cancellationToken)
+    {
+        var buffer = new MemoryStream();
+        var chunk = new byte[81_920];
+        int read;
+        while ((read = await stream.ReadAsync(chunk, cancellationToken)) > 0)
+        {
+            if (buffer.Length + read > MaxResponseBytes)
+            {
+                await buffer.DisposeAsync();
+                throw new XmlException($"Feed '{feed.Id}' is larger than {MaxResponseBytes / 1024 / 1024} MB; not a news feed.");
+            }
+
+            buffer.Write(chunk, 0, read);
+        }
+
+        buffer.Position = 0;
+        return buffer;
     }
 
     private static SyndicationFeed LoadFeed(XmlReader reader)
@@ -124,7 +145,9 @@ public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeo
     {
         var text = data.DateTimeString?.Trim() ?? string.Empty;
 
-        // RFC 822 numeric offsets ("+0000") are not understood by DateTimeOffset.TryParse; "+00:00" is.
+        // RFC 822: drop the optional day name (feeds get it wrong, and .NET rejects a mismatch),
+        // and turn "+0000" into "+00:00", which DateTimeOffset.TryParse understands.
+        text = LeadingDayName().Replace(text, string.Empty);
         text = NumericOffset().Replace(text, "$1$2:$3");
         text = text.Replace(" GMT", " +00:00", StringComparison.OrdinalIgnoreCase)
             .Replace(" UTC", " +00:00", StringComparison.OrdinalIgnoreCase);
@@ -141,18 +164,20 @@ public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeo
 
     private static DateTimeOffset? PublishedAt(SyndicationItem entry)
     {
-        var date = entry.PublishDate != default && entry.PublishDate != DateTimeOffset.MinValue
-            ? entry.PublishDate
-            : entry.LastUpdatedTime;
-
-        return date == default || date == DateTimeOffset.MinValue ? null : date.ToUniversalTime();
+        var date = entry.PublishDate != DateTimeOffset.MinValue ? entry.PublishDate : entry.LastUpdatedTime;
+        return date == DateTimeOffset.MinValue ? null : date.ToUniversalTime();
     }
 
+    /// <summary>
+    /// Only the article link itself (RSS &lt;link&gt; / Atom rel="alternate") - never an enclosure,
+    /// image or "self" link standing in for it.
+    /// </summary>
     private static Uri? FindLink(SyndicationItem entry)
     {
-        var link = entry.Links.FirstOrDefault(l => l.RelationshipType is null or "alternate") ?? entry.Links.FirstOrDefault();
-        var uri = link?.Uri;
-        return uri is { IsAbsoluteUri: true } && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
+        var uri = entry.Links.FirstOrDefault(l => l.RelationshipType is null or "alternate")?.Uri;
+        return uri is { IsAbsoluteUri: true }
+            && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp)
+            && uri.AbsoluteUri.Length <= MaxUrlLength
             ? uri
             : null;
     }
@@ -179,12 +204,24 @@ public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeo
             return null;
         }
 
-        return text.Length <= MaxSummaryLength
-            ? text
-            : text[..(MaxSummaryLength - Ellipsis.Length)].TrimEnd() + Ellipsis;
+        if (text.Length <= MaxSummaryLength)
+        {
+            return text;
+        }
+
+        var cut = MaxSummaryLength - Ellipsis.Length;
+        if (char.IsHighSurrogate(text[cut - 1]))
+        {
+            cut--;
+        }
+
+        return text[..cut].TrimEnd() + Ellipsis;
     }
 
-    /// <summary>Strips tags, decodes entities, collapses whitespace; empty → null.</summary>
+    /// <summary>
+    /// Strips tags, decodes entities, removes control characters and lone surrogates, collapses
+    /// whitespace; empty → null.
+    /// </summary>
     private static string? CleanText(string? html)
     {
         if (string.IsNullOrWhiteSpace(html))
@@ -192,26 +229,60 @@ public sealed partial class RssFeedClient(HttpClient httpClient, TimeSpan? timeo
             return null;
         }
 
-        var text = HtmlTag().Replace(html, " ");
+        var text = html.Length > MaxFieldInputLength ? html[..MaxFieldInputLength] : html;
+        text = HtmlTag().Replace(text, " ");
         text = WebUtility.HtmlDecode(text);
+        text = ControlCharacter().Replace(text, " ");
+        text = RemoveLoneSurrogates(text);
         text = Whitespace().Replace(text, " ").Trim();
         return text.Length == 0 ? null : text;
     }
 
-    [GeneratedRegex(@"([+-])(\d{2})(\d{2})$", RegexOptions.CultureInvariant)]
+    private static string RemoveLoneSurrogates(string text)
+    {
+        if (!text.Any(char.IsSurrogate))
+        {
+            return text;
+        }
+
+        var builder = new StringBuilder(text.Length);
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (char.IsHighSurrogate(text[i]) && i + 1 < text.Length && char.IsLowSurrogate(text[i + 1]))
+            {
+                builder.Append(text[i]).Append(text[i + 1]);
+                i++;
+            }
+            else if (!char.IsSurrogate(text[i]))
+            {
+                builder.Append(text[i]);
+            }
+        }
+
+        return builder.ToString();
+    }
+
+    [GeneratedRegex(@"^[A-Za-z]{3,9},\s*", RegexOptions.CultureInvariant, RegexTimeoutMilliseconds)]
+    private static partial Regex LeadingDayName();
+
+    [GeneratedRegex(@"([+-])(\d{2})(\d{2})$", RegexOptions.CultureInvariant, RegexTimeoutMilliseconds)]
     private static partial Regex NumericOffset();
 
-    [GeneratedRegex("<[^>]*>", RegexOptions.CultureInvariant)]
+    [GeneratedRegex("<[^>]*>", RegexOptions.CultureInvariant, RegexTimeoutMilliseconds)]
     private static partial Regex HtmlTag();
 
-    [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"\p{Cc}", RegexOptions.CultureInvariant, RegexTimeoutMilliseconds)]
+    private static partial Regex ControlCharacter();
+
+    [GeneratedRegex(@"\s+", RegexOptions.CultureInvariant, RegexTimeoutMilliseconds)]
     private static partial Regex Whitespace();
 
-    // WordPress appends "The post <title> appeared first on <site>." to every excerpt (NME, Stereogum).
-    [GeneratedRegex(@"\s*The post .*? appeared first on .*?\.?$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    // WordPress appends "The post <title> appeared first on <site>." to every excerpt (NME,
+    // Stereogum). Bounded so it cannot swallow real text or backtrack over a whole document.
+    [GeneratedRegex(@"\s*The post .{1,500}? appeared first on [^.]{1,100}\.?$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Singleline, RegexTimeoutMilliseconds)]
     private static partial Regex WordPressSuffix();
 
     // Music Business Worldwide ends each excerpt with a bare "Source" link.
-    [GeneratedRegex(@"\s+Source$", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"\s+Source$", RegexOptions.CultureInvariant, RegexTimeoutMilliseconds)]
     private static partial Regex TrailingSourceLink();
 }

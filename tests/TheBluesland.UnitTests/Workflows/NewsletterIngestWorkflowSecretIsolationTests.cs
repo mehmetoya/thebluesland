@@ -18,6 +18,7 @@ public sealed partial class NewsletterIngestWorkflowSecretIsolationTests
     public void Only_newsletter_workflows_reference_the_newsletter_connection_string()
     {
         var offenders = Directory.GetFiles(WorkflowsDirectory(), "*.yml")
+            .Concat(Directory.GetFiles(WorkflowsDirectory(), "*.yaml"))
             .Where(path => !Path.GetFileName(path).StartsWith("newsletter-", StringComparison.Ordinal))
             .Where(path => File.ReadAllText(path).Contains($"secrets.{NewsletterSecret}", StringComparison.Ordinal))
             .Select(Path.GetFileName)

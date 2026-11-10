@@ -106,7 +106,8 @@ public sealed class NewsIngestServiceTests : IAsyncLifetime
                 [Host("server-error")] = () => new HttpResponseMessage(HttpStatusCode.InternalServerError),
                 [Host("pitchfork")] = FixtureResponse("pitchfork"),
             },
-            hangingHosts: [Host("slow")]);
+            hangingHosts: [Host("slow")],
+            feedTimeout: TimeSpan.FromMilliseconds(300));
 
         var report = await service.RunAsync(
             [Feed("nme"), Feed("broken-xml"), Feed("server-error"), Feed("slow"), Feed("pitchfork")],
@@ -171,6 +172,64 @@ public sealed class NewsIngestServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task RunAsync_connection_dropped_mid_body_fails_only_that_feed()
+    {
+        var service = CreateService(new()
+        {
+            [Host("dropped")] = () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new FailingStream()) },
+            [Host("pitchfork")] = FixtureResponse("pitchfork"),
+        });
+
+        var report = await service.RunAsync([Feed("dropped"), Feed("pitchfork")], CancellationToken.None);
+
+        report.Feeds[0].Status.ShouldBe(FeedRunStatus.Failed);
+        report.Feeds[0].Error!.ShouldContain("Connection dropped");
+        report.Feeds[1].Status.ShouldBe(FeedRunStatus.Succeeded);
+        (await CountArticlesAsync()).ShouldBe(4);
+    }
+
+    [Fact]
+    public async Task RunAsync_does_not_insert_items_already_older_than_the_retention_window()
+    {
+        var stale = _clock.GetUtcNow().AddDays(-60).ToString("r");
+        var fresh = _clock.GetUtcNow().AddDays(-1).ToString("r");
+        var service = CreateService(new()
+        {
+            [Host("a")] = () => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    "<rss version=\"2.0\"><channel><title>t</title><link>https://x.test</link><description>d</description>" +
+                    $"<item><title>Stale</title><link>https://news.example.com/stale</link><pubDate>{stale}</pubDate></item>" +
+                    $"<item><title>Fresh</title><link>https://news.example.com/fresh</link><pubDate>{fresh}</pubDate></item>" +
+                    "</channel></rss>"),
+            },
+        });
+
+        var report = await service.RunAsync([Feed("a")], CancellationToken.None);
+
+        report.Feeds.Single().Fetched.ShouldBe(2);
+        report.Feeds.Single().Added.ShouldBe(1);
+        (await CountArticlesAsync()).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task RunAsync_unreachable_database_is_reported_not_thrown()
+    {
+        var httpClient = new HttpClient(new RoutingHandler(new() { [Host("pitchfork")] = FixtureResponse("pitchfork") }, []));
+        var service = new NewsIngestService(
+            new RssFeedClient(httpClient, TimeSpan.FromSeconds(10)),
+            () => NewsletterDbContext.Create("Host=127.0.0.1;Port=1;Username=x;Password=x;Database=x;Timeout=2"),
+            _clock);
+
+        var report = await service.RunAsync([Feed("pitchfork")], CancellationToken.None);
+
+        report.DatabaseError.ShouldNotBeNull();
+        report.Healthy.ShouldBeFalse();
+        report.Feeds.Single().Status.ShouldBe(FeedRunStatus.Succeeded);
+        report.Feeds.Single().Added.ShouldBe(0);
+    }
+
+    [Fact]
     public async Task RunAsync_caller_cancellation_is_not_swallowed_as_a_feed_failure()
     {
         var service = CreateService([], hangingHosts: [Host("slow")], feedTimeout: TimeSpan.FromSeconds(30));
@@ -185,7 +244,9 @@ public sealed class NewsIngestServiceTests : IAsyncLifetime
         TimeSpan? feedTimeout = null)
     {
         var httpClient = new HttpClient(new RoutingHandler(responses, hangingHosts ?? []));
-        var feedClient = new RssFeedClient(httpClient, feedTimeout ?? TimeSpan.FromMilliseconds(300));
+        // Generous default so healthy feeds never time out on a loaded CI runner; only the
+        // hanging-host tests rely on a timeout firing, and they hang until cancelled.
+        var feedClient = new RssFeedClient(httpClient, feedTimeout ?? TimeSpan.FromSeconds(10));
         return new NewsIngestService(feedClient, () => NewsletterDbContext.Create(_postgres.GetConnectionString()), _clock);
     }
 
@@ -226,6 +287,34 @@ public sealed class NewsIngestServiceTests : IAsyncLifetime
 
             return responses.TryGetValue(host, out var respond) ? respond() : new HttpResponseMessage(HttpStatusCode.NotFound);
         }
+    }
+
+    private sealed class FailingStream : Stream
+    {
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw new NotSupportedException();
+
+        public override long Position { get => 0; set => throw new NotSupportedException(); }
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new IOException("The response ended prematurely.");
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+            ValueTask.FromException<int>(new IOException("The response ended prematurely."));
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
     private sealed class MutableTimeProvider(DateTimeOffset start) : TimeProvider

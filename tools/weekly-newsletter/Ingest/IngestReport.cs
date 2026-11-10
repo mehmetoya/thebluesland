@@ -15,10 +15,16 @@ public sealed record FeedRunResult(
     int Added,
     string? Error);
 
-/// <summary>Outcome of one ingest run, in feeds.yml order.</summary>
-public sealed record IngestReport(IReadOnlyList<FeedRunResult> Feeds)
+/// <summary>
+/// Outcome of one ingest run, in feeds.yml order. <see cref="DatabaseError"/> is set when the
+/// batch insert (or the retention delete) failed: the fetch results are still reported so the job
+/// summary is never lost, but nothing new was stored.
+/// </summary>
+public sealed record IngestReport(IReadOnlyList<FeedRunResult> Feeds, string? DatabaseError = null)
 {
     public bool AnySucceeded => Feeds.Any(feed => feed.Status == FeedRunStatus.Succeeded);
+
+    public bool Healthy => AnySucceeded && DatabaseError is null;
 
     public int TotalAdded => Feeds.Sum(feed => feed.Added);
 }
