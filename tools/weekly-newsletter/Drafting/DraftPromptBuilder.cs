@@ -189,6 +189,35 @@ public static class DraftPromptBuilder
             """;
     }
 
+    /// <summary>
+    /// The final checker's prompt (issue-drafting spec, Design section 3b): reviewer role, the fact card and the
+    /// issue's published text. No voice-guide sample and no URL; the same data boundary as <see cref="Build"/>.
+    /// </summary>
+    public static string BuildCheck(DraftLanguage language, FactCard card, DateOnly sendDate, string issueText) =>
+        $"""
+        You are the final fact-checker and copy editor of TheBluesland Weekly, a Monday music-news newsletter.
+        The issue below is written in {language.Name}. It goes to subscribers automatically and no person reads it
+        after you, so be strict: when in doubt, fail it. The issue is sent on {sendDate:yyyy-MM-dd}.
+
+        Check, using only the fact card:
+        1. Every claim (who, what, when, where, number, name, role, quote) is stated in the fact card. Anything the card does not say is invented.
+        2. No date, number or name is wrong or mixed up between stories; where sources disagree the text leaves the detail out.
+        3. Tense matches the send date: events before it are past, an announcement is not reported as an outcome, nothing is "this week".
+        4. Each "{language.WhyLabel}" line adds context that is not already in its headline and body, is not obvious, and claims no significance, influence or legacy the card does not state.
+        5. The language is natural {language.Name} that a native reader would not take for a translation; no stock phrases, no hype.
+        6. Subject is at most {DraftLanguage.MaxSubject} characters and ends with "{DraftLanguage.SubjectTag}"; preview is at most {DraftLanguage.MaxPreview} characters and does not repeat the subject; neither is cut mid-phrase.
+        7. Nothing is copied word for word from a card summary, and no sentence reads like a template.
+
+        Answer as JSON with two keys: "pass" (true or false) and "problems" (a list of short plain sentences, each naming the
+        story key or field and what is wrong). "pass" is true only when you found no problem; then "problems" is empty.
+
+        === ISSUE TEXT ===
+        {issueText}=== END ISSUE TEXT ===
+
+        === FACT CARD ===
+        {card.ToPromptText()}=== END FACT CARD ===
+        """;
+
     /// <summary>Gemini <c>responseSchema</c> for <see cref="DraftResponse"/>.</summary>
     public static object ResponseSchema { get; } = new
     {

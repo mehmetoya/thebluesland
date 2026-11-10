@@ -140,11 +140,35 @@ public sealed class WeeklyIssueValidatorTests
     }
 
     [Fact]
-    public void An_issue_without_an_ai_note_is_valid()
+    public void The_writer_ends_every_issue_with_the_credit_line()
     {
-        // ADR-0006 madde 4, 2026-11-10: no AI note under the issue.
-        Turkish.ShouldNotContain(DraftLanguage.Turkish.AiNote);
-        WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), Turkish).ShouldBeEmpty();
+        // ADR-0006 madde 4, 2026-11-10: the credit line is the transparency disclosure.
+        DraftLanguage.Turkish.AiNote.ShouldBe("Bu sayı TheBluesland ve Gemini'nin elinden.");
+        DraftLanguage.English.AiNote.ShouldBe("This issue comes from TheBluesland and Gemini.");
+        Turkish.TrimEnd().ShouldEndWith($"\n\n*{DraftLanguage.Turkish.AiNote}*");
+        Draft(DraftLanguage.English).IssueMarkdown.TrimEnd().ShouldEndWith($"\n\n*{DraftLanguage.English.AiNote}*");
+    }
+
+    [Fact]
+    public void An_earlier_issue_without_any_note_stays_valid()
+    {
+        var noNote = Turkish.Replace($"\n*{DraftLanguage.Turkish.AiNote}*\n", string.Empty, StringComparison.Ordinal);
+
+        noNote.ShouldNotContain(DraftLanguage.Turkish.AiNote);
+        WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), noNote).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void An_issue_sent_from_w47_on_must_carry_the_credit_line()
+    {
+        string W47(string markdown) => markdown.Replace("2026-W46", "2026-W47", StringComparison.Ordinal).Replace("sendDate: 2026-11-09", "sendDate: 2026-11-16", StringComparison.Ordinal);
+        var name = "2026-W47.tr.md";
+        var noNote = W47(Turkish.Replace($"\n*{DraftLanguage.Turkish.AiNote}*\n", string.Empty, StringComparison.Ordinal));
+        var legacy = noNote.TrimEnd() + $"\n\n*{DraftLanguage.Turkish.LegacyAiNote}*\n";
+
+        WeeklyIssueValidator.Validate(name, W47(Turkish)).ShouldBeEmpty();
+        WeeklyIssueValidator.Validate(name, noNote).ShouldHaveSingleItem().ShouldContain("credit line");
+        WeeklyIssueValidator.Validate(name, legacy).ShouldHaveSingleItem().ShouldContain("credit line");
     }
 
     [Fact]

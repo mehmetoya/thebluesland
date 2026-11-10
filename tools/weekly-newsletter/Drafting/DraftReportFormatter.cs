@@ -6,6 +6,8 @@ namespace TheBluesland.WeeklyNewsletter.Drafting;
 
 /// <param name="FellBackFrom">The default model that was unavailable, when <paramref name="Model"/> is the fallback.</param>
 /// <param name="Repair">What the self-repair pass did; null when it was not part of the run.</param>
+/// <param name="Check">The final checker's verdict; null when no checker ran.</param>
+/// <param name="Regenerated">True when the first draft failed the checks and one regenerate + repair + check cycle was tried.</param>
 public sealed record LanguageDraft(
     DraftLanguage Language,
     string IssueMarkdown,
@@ -14,7 +16,9 @@ public sealed record LanguageDraft(
     IReadOnlyList<DraftWarning> Warnings,
     string Model,
     string? FellBackFrom = null,
-    RepairReport? Repair = null);
+    RepairReport? Repair = null,
+    CheckVerdict? Check = null,
+    bool Regenerated = false);
 
 /// <summary>
 /// The job summary for a draft run: which issue, the warnings Mehmet should check (story by
@@ -59,6 +63,8 @@ public static class DraftReportFormatter
                 ? string.Create(CultureInfo.InvariantCulture, $" because `{busy}` was unavailable (busy or out of free quota).\n\n")
                 : ".\n\n");
             markdown.Append(RepairLine(draft.Repair, turkish: false));
+            markdown.Append(draft.Regenerated ? "The first draft failed the checks; this is the result of one regenerate + repair + check cycle.\n\n" : string.Empty);
+            markdown.Append(DraftChecker.ToMarkdown(draft.Check));
             markdown.Append(WarningsTable(card, draft.Warnings));
 
             markdown.Append(CultureInfo.InvariantCulture, $"<details><summary>{draft.Language.Code.ToUpperInvariant()} issue</summary>\n\n");

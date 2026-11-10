@@ -20,6 +20,9 @@ public static class IssueMarkdownWriter
 
     public static string PullRequestBodyFileName(IssueWeek week) => Path.Combine(ReviewDirectory, $"{week.Id}.pr-body.md");
 
+    /// <summary>The auto-merge decision the draft workflow's second job reads (never committed).</summary>
+    public static string PublishDecisionFileName(IssueWeek week) => Path.Combine(ReviewDirectory, $"{week.Id}.publish.json");
+
     public static string Title(IssueWeek week, DraftLanguage language) =>
         string.Format(CultureInfo.InvariantCulture, language.TitleFormat, week.Week);
 
@@ -59,9 +62,9 @@ public static class IssueMarkdownWriter
             markdown.Append(Section(language, draft.For(story.Key), story, heading: draft.For(story.Key).Headline));
         }
 
-        // No AI note under the issue (Mehmet, 2026-11-10; ADR-0006 madde 4): aiAssisted stays in the
-        // front matter as the internal record, and the editor's review is the human control.
-        markdown.Append(draft.Outro).Append('\n');
+        // The credit line is the transparency disclosure (ADR-0006 madde 4, 2026-11-10): code-owned, one
+        // emphasis-only last paragraph, which the site and the e-mail render as the closing note.
+        markdown.Append(draft.Outro).Append("\n\n*").Append(language.AiNote).Append("*\n");
         return markdown.ToString();
     }
 
