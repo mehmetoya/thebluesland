@@ -37,7 +37,7 @@ public static class StoryRanker
         foreach (var story in stories)
         {
             var type = StoryTypeClassifier.Classify(story, ranking.Types);
-            var brandBonus = !type.Excluded && StoryTypeClassifier.FitsBrand(story, ranking.BrandKeywords, ranking.CoreSources) ? ranking.BrandBonus : 0;
+            var brandBonus = !type.Excluded && story.SourceCount >= ranking.BrandMinSources && StoryTypeClassifier.FitsBrand(story, ranking.BrandKeywords, ranking.CoreSources) ? ranking.BrandBonus : 0;
             var ranked = new RankedStory(
                 story,
                 (story.SourceCount * ranking.CoverageWeight) + type.Bonus + brandBonus,

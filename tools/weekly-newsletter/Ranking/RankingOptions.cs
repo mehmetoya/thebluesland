@@ -10,6 +10,7 @@ public sealed record RankingOptions(
     IReadOnlyList<string> GenreKeywords,
     double GenreSwapMinRatio,
     double BrandBonus,
+    int BrandMinSources,
     IReadOnlyList<string> BrandKeywords,
     IReadOnlyList<string> CoreSources,
     IReadOnlyList<StoryTypeRule> Types);
