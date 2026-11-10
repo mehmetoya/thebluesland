@@ -120,6 +120,17 @@ internal static class IssueEmailLayout
             }
         }
 
+        if (issue.Playlist is { Length: > 0 } playlist)
+        {
+            // "This week's listen" (optional front matter `playlist`): a simple linked block before the footer.
+            var heading = turkish ? "Bu haftanın dinlemesi" : "This week's listen";
+            var linkText = turkish ? "Çalma listesini aç" : "Open the playlist";
+            html.Append($"<div style=\"margin:24px 0 0;padding:12px 16px;border:1px solid {Rule};background:{Soft};\">");
+            html.Append($"<p style=\"margin:0 0 4px;font-size:12px;font-weight:bold;letter-spacing:0.06em;text-transform:uppercase;color:{Label};\">{heading}</p>");
+            html.Append($"<p style=\"margin:0;font-size:15px;line-height:1.55;\"><a href=\"{SiteOrigin}/{issue.Language.Code}/playlists/{playlist}\" style=\"{LinkStyle}\">{linkText}</a></p>");
+            html.Append("</div>\n");
+        }
+
         var otherCode = turkish ? "en" : "tr";
         html.Append($"<p style=\"margin:24px 0 0;padding-top:16px;border-top:1px solid {Rule};font-size:13px;line-height:1.5;color:{Muted};\">");
         html.Append(turkish

@@ -131,6 +131,7 @@ public sealed partial class SiteText
     public required string WeeklyIssueDescription { get; init; }
     public required string WeeklyMinutes { get; init; }
     public required string WeeklyOnlyInThisLanguage { get; init; }
+    public required string WeeklyThisWeeksListen { get; init; }
     public required string WeeklyIssuesNavLabel { get; init; }
     public required string WeeklyPreviousIssue { get; init; }
     public required string WeeklyNextIssue { get; init; }

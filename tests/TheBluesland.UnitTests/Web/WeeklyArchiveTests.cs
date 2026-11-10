@@ -243,6 +243,38 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
         }
     }
 
+    // DD-14: optional front matter `playlist: <slug>` shows a "This week's listen" card.
+    [Theory]
+    [InlineData("tr", "Bu haftanın dinlemesi")]
+    [InlineData("en", "This week's listen")]
+    public async Task An_issue_with_a_playlist_slug_links_the_playlist_and_an_unknown_slug_shows_nothing(string language, string label)
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "weekly-listen-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var source = await File.ReadAllTextAsync(Path.Combine(Fixtures, $"2026-W46.{language}.md"));
+            await File.WriteAllTextAsync(
+                Path.Combine(directory, $"2026-W46.{language}.md"),
+                source.Replace("aiAssisted: true", "aiAssisted: true\nplaylist: masterpieces-of-erkin-the-father"));
+            await File.WriteAllTextAsync(
+                Path.Combine(directory, $"2026-W45.{language}.md"),
+                source.Replace("issue: 2026-W46", "issue: 2026-W45").Replace("sendDate: 2026-11-09", "sendDate: 2026-11-02")
+                    .Replace("aiAssisted: true", "aiAssisted: true\nplaylist: no-such-playlist"));
+            var (http, _) = await StartAsync(builder => builder.Configuration[WeeklyIssueRepository.ContentDirectoryConfigKey] = directory);
+
+            var body = await BodyAsync(await http.GetAsync($"/{language}/weekly/2026-W46"));
+            body.ShouldContain($"<p class=\"weekly-listen-label\">{label}</p>");
+            body.ShouldContain($"href=\"/{language}/playlists/masterpieces-of-erkin-the-father\"");
+
+            (await BodyAsync(await http.GetAsync($"/{language}/weekly/2026-W45"))).ShouldNotContain("weekly-listen");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     [Fact]
     public async Task The_english_issue_page_has_an_english_sign_up_with_the_english_button_filled()
     {

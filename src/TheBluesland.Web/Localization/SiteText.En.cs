@@ -127,6 +127,7 @@ public sealed partial class SiteText
         WeeklyIssueDescription = "The week's five music stories, in a few minutes.",
         WeeklyMinutes = "min",
         WeeklyOnlyInThisLanguage = "This issue is in English only.",
+        WeeklyThisWeeksListen = "This week's listen",
         WeeklyIssuesNavLabel = "Issues",
         WeeklyPreviousIssue = "Previous issue",
         WeeklyNextIssue = "Next issue",

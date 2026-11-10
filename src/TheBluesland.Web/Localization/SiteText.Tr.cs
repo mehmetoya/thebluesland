@@ -128,6 +128,7 @@ public sealed partial class SiteText
         WeeklyIssueDescription = "Haftanın beş müzik haberi, birkaç dakikada.",
         WeeklyMinutes = "dk",
         WeeklyOnlyInThisLanguage = "Bu sayı yalnızca Türkçe.",
+        WeeklyThisWeeksListen = "Bu haftanın dinlemesi",
         WeeklyIssuesNavLabel = "Sayılar",
         WeeklyPreviousIssue = "Önceki sayı",
         WeeklyNextIssue = "Sonraki sayı",

@@ -38,6 +38,47 @@ public sealed class WeeklyIssueValidatorTests
         WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), edited).ShouldBeEmpty();
     }
 
+    // DD-14: optional front matter `playlist: <slug>` links the issue to a playlist.
+    [Fact]
+    public void The_optional_playlist_slug_is_read_and_must_be_kebab_case()
+    {
+        var withPlaylist = Turkish.Replace("aiAssisted: true\n", "aiAssisted: true\nplaylist: anadolu-nights\n", StringComparison.Ordinal);
+
+        WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), withPlaylist).ShouldBeEmpty();
+        WeeklyIssueValidator.Read(IssueName(DraftLanguage.Turkish), withPlaylist)!.Playlist.ShouldBe("anadolu-nights");
+        WeeklyIssueValidator.Read(IssueName(DraftLanguage.Turkish), Turkish)!.Playlist.ShouldBeNull();
+
+        var bad = Turkish.Replace("aiAssisted: true\n", "aiAssisted: true\nplaylist: \"../Not A Slug\"\n", StringComparison.Ordinal);
+        WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), bad).ShouldHaveSingleItem().ShouldContain("playlist must be a kebab-case");
+    }
+
+    [Fact]
+    public void The_playlist_slug_must_name_a_file_in_content_playlists_when_that_folder_is_visible()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "weekly-playlist-" + Guid.NewGuid().ToString("N"));
+        var weekly = Path.Combine(root, "weekly");
+        var playlists = Path.Combine(root, "playlists");
+        Directory.CreateDirectory(weekly);
+        Directory.CreateDirectory(playlists);
+        try
+        {
+            File.WriteAllText(Path.Combine(playlists, "anadolu-nights.md"), "---\n---\n");
+            File.WriteAllText(
+                Path.Combine(weekly, IssueName(DraftLanguage.Turkish)),
+                Turkish.Replace("aiAssisted: true\n", "aiAssisted: true\nplaylist: anadolu-nights\n", StringComparison.Ordinal));
+            WeeklyIssueValidator.ValidateDirectory(weekly).ShouldBeEmpty();
+
+            File.WriteAllText(
+                Path.Combine(weekly, IssueName(DraftLanguage.Turkish)),
+                Turkish.Replace("aiAssisted: true\n", "aiAssisted: true\nplaylist: no-such-playlist\n", StringComparison.Ordinal));
+            WeeklyIssueValidator.ValidateDirectory(weekly).ShouldHaveSingleItem().ShouldContain("not a file in content/playlists");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Theory]
     [InlineData("review/2026-W46.backups.tr.md")]
     [InlineData("2026-W46.backups.tr.md")]

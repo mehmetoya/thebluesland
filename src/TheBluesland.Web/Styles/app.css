@@ -1302,6 +1302,20 @@ body:has(.filter-mobile-toggle:checked) {
   margin-inline: 0.35em;
 }
 
+/* "This week's listen": the issue's linked playlist, in the collection-card look. */
+.weekly-listen {
+  margin-top: var(--space-6);
+}
+
+.weekly-listen-label {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
 .weekly-lang-note {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
