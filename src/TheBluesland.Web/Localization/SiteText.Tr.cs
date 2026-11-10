@@ -31,12 +31,12 @@ public sealed partial class SiteText
         HomeIntro = "Kökleri blues'a uzanan, müziğin götürdüğü her yöne açık kişisel bir çalma listesi koleksiyonu. Yol için, sakin bir akşam için ya da daha yakından bir dinleyiş için bir şeyler bul.",
         WeeklyStripLead = "TheBluesland Weekly",
         WeeklyStripText = "her pazartesi, beş müzik haberi, birkaç dakikada",
-        SearchLabel = "Tarza ya da ruh haline göre çalma listesi bul",
+        SearchLabel = "Tarza ya da ruh hâline göre çalma listesi bul",
         SearchPlaceholder = "örn. melankolik blues",
         SearchButton = "Ara",
         FiltersLabel = "Filtreler",
         FiltersClose = "Kapat",
-        FilterMood = "Ruh hali",
+        FilterMood = "Ruh hâli",
         FilterGenre = "Tür",
         FilterOccasion = "Ortam",
         FilterEra = "Dönem",
@@ -64,7 +64,7 @@ public sealed partial class SiteText
         ModeMoreEnergeticHelp = "Daha parlak, daha doğrudan seçkilere yönel.",
         ModeRelaxedFlowHelp = "Yoğunluğu düşür, atmosferin sıcaklığını koru.",
         ModeDeeperCutsHelp = "Aynı çizgiden daha seyrek, daha niş keşiflere yönel.",
-        MixEmpty = "Bu mod için henüz yakın bir karışım bulunamadı. Mevcut seçimi koru ve farklı bir ruh hali dene.",
+        MixEmpty = "Bu mod için henüz yakın bir karışım bulunamadı. Mevcut seçimi koru ve farklı bir ruh hâli dene.",
         UseThisMixLabel = title => $"{title} için seçilen karışımı kullan",
         UseThisMix = "Bu karışımı kullan",
         KeepCurrentList = "Mevcut listeyi koru",
@@ -82,7 +82,7 @@ public sealed partial class SiteText
         ShareMessageUnavailable = "Cihazla paylaşım kullanılamıyor. Twitter / X, WhatsApp'ı kullan ya da bağlantıyı kopyala.",
 
         CollectionsTitle = "Spotify Çalma Listesi Koleksiyonları - TheBluesland",
-        CollectionsDescription = "Anadolu rock, blues ve gece geç saat dinlemeleri için Spotify çalma listelerini keşfet. TheBluesland'de başlamak için bir ses ya da ruh hali bul.",
+        CollectionsDescription = "Anadolu rock, blues ve gece geç saat dinlemeleri için Spotify çalma listelerini keşfet. TheBluesland'de başlamak için bir ses ya da ruh hâli bul.",
         CollectionsHeading = "Çalma listesi koleksiyonları",
         CollectionsIntro = "Başlamak için birkaç yer. Sevdiğin bir sesin peşinden git ya da günün saatine uyan bir şey bul.",
         PlaylistsInCollectionLabel = "Bu koleksiyondaki çalma listeleri",
@@ -103,8 +103,8 @@ public sealed partial class SiteText
              "Hayır. TheBluesland bağımsız, kişisel bir projedir. Spotify'da barındırılan çalma " +
              "listelerine bağlantı verir; ancak Spotify ile bağlantılı değildir, Spotify tarafından " +
              "onaylanmamıştır ve Spotify tarafından işletilmez."),
-            ("Ruh hali, tür, ortam ve dönem etiketleri nasıl seçiliyor?",
-             "Ruh hali, tür ve ortam etiketleri her çalma listesi için elle seçilir. Dönem etiketleri " +
+            ("Ruh hâli, tür, ortam ve dönem etiketleri nasıl seçiliyor?",
+             "Ruh hâli, tür ve ortam etiketleri her çalma listesi için elle seçilir. Dönem etiketleri " +
              "de genellikle elle seçilir; birçok dönemi karıştıran çalma listeleri için dönem tahmini " +
              "Spotify'ın yayın tarihi verilerinden hesaplanır ve otomatik olarak güncel tutulur."),
             ("Site ne sıklıkla güncelleniyor?",

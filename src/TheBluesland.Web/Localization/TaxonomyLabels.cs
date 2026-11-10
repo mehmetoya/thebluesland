@@ -54,6 +54,21 @@ public static class TaxonomyLabels
         ["mixed-era"] = "karma dönem",
     };
 
+    public static bool HasTurkishLabel(string value) => TurkishLabels.ContainsKey(value);
+
+    /// <summary>The label with its first letter upper-cased (Turkish i becomes İ), for use at the start of a title.</summary>
+    public static string CapitalizedLabel(string value, string languageCode)
+    {
+        var label = Label(value, languageCode);
+        if (label.Length == 0)
+        {
+            return label;
+        }
+
+        var first = label[0] == 'i' && languageCode == SiteLanguage.Turkish ? 'İ' : char.ToUpperInvariant(label[0]);
+        return first + label[1..];
+    }
+
     public static string Label(string value, string languageCode) =>
         languageCode == SiteLanguage.Turkish && TurkishLabels.TryGetValue(value, out var label) ? label : value;
 }

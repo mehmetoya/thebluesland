@@ -21,8 +21,10 @@
                 @foreach (var collection in collections)
                 {
                     <a class="collection-link" href="@Site.Url($"/collections/{collection.Slug}")">
-                        <h3 lang="@Site.EnglishContentLang">@collection.Title</h3>
-                        <p lang="@Site.EnglishContentLang">@collection.Description</p>
+                        @* Turkish titles/descriptions come from the taxonomy label; only a collection
+                           without one stays English and is marked lang="en". *@
+                        <h3 lang="@(collection.HasTitleIn(Site.Code) ? null : Site.EnglishContentLang)">@collection.TitleIn(Site.Code)</h3>
+                        <p lang="@(collection.HasTitleIn(Site.Code) ? null : Site.EnglishContentLang)">@collection.DescriptionIn(Site.Code)</p>
                     </a>
                 }
             </div>
