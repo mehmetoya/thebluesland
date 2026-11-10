@@ -20,8 +20,11 @@ public sealed record KitBroadcast(
 /// <summary>A Kit tag; the delivery lists are the tags "weekly-tr" and "weekly-en".</summary>
 public sealed record KitTag(long Id, string Name);
 
-/// <summary>What we ask Kit to send: one issue, to one tag, at one instant.</summary>
-public sealed record KitBroadcastRequest(string Description, IssueEmail Email, DateTimeOffset SendAt, long TagId, bool Public);
+/// <summary>What we ask Kit to send: one issue, to one tag, at one instant. No <c>SendAt</c> makes a draft that never sends (kit-smoke).</summary>
+public sealed record KitBroadcastRequest(string Description, IssueEmail Email, DateTimeOffset? SendAt, long TagId, bool Public);
+
+/// <summary>The non-secret facts of the Kit account that kit-smoke prints; any may be missing.</summary>
+public sealed record KitAccount(string? Name, string? Plan, string? PrimaryEmail);
 
 public sealed class KitException(string message, HttpStatusCode? status = null) : Exception(message)
 {
@@ -41,6 +44,7 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
     private const string BaseUrl = "https://api.kit.com/v4/broadcasts";
     private const string TagsUrl = "https://api.kit.com/v4/tags";
     private const string FormsUrl = "https://api.kit.com/v4/forms";
+    private const string AccountUrl = "https://api.kit.com/v4/account";
     private const int MaxAttempts = 4;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -159,6 +163,21 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
         }
     }
 
+    public async Task<KitBroadcast> GetAsync(long id, CancellationToken cancellationToken)
+    {
+        using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, $"{BaseUrl}/{id}"), cancellationToken);
+        var single = await response.Content.ReadFromJsonAsync<SingleResponse>(Json, cancellationToken);
+        return single?.Broadcast is { } dto ? Map(dto) : throw new KitException($"Kit did not return broadcast {id}.");
+    }
+
+    /// <summary>The account's name, plan and primary e-mail (the default sender); only these fields are read.</summary>
+    public async Task<KitAccount> GetAccountAsync(CancellationToken cancellationToken)
+    {
+        using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, AccountUrl), cancellationToken);
+        var account = await response.Content.ReadFromJsonAsync<AccountResponse>(Json, cancellationToken);
+        return new KitAccount(account?.Account?.Name, account?.Account?.PlanType, account?.Account?.PrimaryEmailAddress ?? account?.User?.Email);
+    }
+
     public async Task UpdateAsync(long id, KitBroadcastRequest request, long? emailTemplateId, CancellationToken cancellationToken)
     {
         using var _ = await SendAsync(() => new HttpRequestMessage(HttpMethod.Put, $"{BaseUrl}/{id}") { Content = Body(request, emailTemplateId) }, cancellationToken);
@@ -176,8 +195,8 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
             ["content"] = request.Email.Html,
             ["description"] = request.Description,
             ["public"] = request.Public,
-            ["published_at"] = request.SendAt.ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture),
-            ["send_at"] = request.SendAt.ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture),
+            ["published_at"] = request.SendAt?.ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture),
+            ["send_at"] = request.SendAt?.ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture),
             ["preview_text"] = request.Email.PreviewText,
             ["subject"] = request.Email.Subject,
             ["email_address"] = null,
@@ -295,6 +314,12 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
     private sealed record ListResponse(List<BroadcastDto>? Broadcasts, Pagination? Pagination);
 
     private sealed record Pagination(bool HasNextPage, string? EndCursor);
+
+    private sealed record AccountDto(string? Name, string? PlanType, string? PrimaryEmailAddress);
+
+    private sealed record AccountUserDto(string? Email);
+
+    private sealed record AccountResponse(AccountDto? Account, AccountUserDto? User);
 
     private sealed record SingleResponse(BroadcastDto? Broadcast);
 
