@@ -5,6 +5,7 @@
          role script via Assembly.GetManifestResourceStream instead of a fragile relative path. -->
     <EmbeddedResource Include="Scripts/create-spotify-cache-roles.sql" />
     <EmbeddedResource Include="Scripts/create-analytics-role.sql" />
+    <EmbeddedResource Include="Scripts/create-newsletter-role.sql" />
   </ItemGroup>
 
   <ItemGroup>

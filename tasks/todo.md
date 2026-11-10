@@ -88,7 +88,7 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
     `Entities/NewsArticle.cs`, `Entities/NewsArticleConfiguration.cs`, `Migrations/NewsletterDb/*`,
     `tests/.../NewsArticleSchemaTests.cs`
 
-- [ ] **T6: `create-newsletter-role.sql` + `NewsletterRoleTests`** — S
+- [x] **T6: `create-newsletter-role.sql` + `NewsletterRoleTests`** — S
   - Description: `newsletter_writer` rolü — yalnız `newsletter` şemasında USAGE, SELECT/INSERT/DELETE,
     sequence kullanımı; başlık `create-analytics-role.sql` desenini izler (parola placeholder + rotate).
   - Acceptance:
