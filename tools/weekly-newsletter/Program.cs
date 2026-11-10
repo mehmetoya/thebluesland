@@ -25,48 +25,48 @@ var connectionString = Environment.GetEnvironmentVariable(IngestCommand.Connecti
 switch (args.FirstOrDefault())
 {
     case "ingest":
-    {
-        var feedsPath = args.Length > 1 && args[1].Length > 0 ? args[1] : Path.Combine(toolDirectory, "feeds.yml");
-        using var httpClient = new HttpClient();
-        return await IngestCommand.RunAsync(feedsPath, connectionString, httpClient, TimeProvider.System, Console.Out, Console.Error, cts.Token);
-    }
-
-    case "cluster":
-    {
-        DateTimeOffset? from = null, to = null;
-        for (var i = 1; i < args.Length; i++)
         {
-            if (args[i] is "--from" or "--to" && i + 1 < args.Length && TryParseUtc(args[i + 1], out var value))
-            {
-                if (args[i] == "--from")
-                {
-                    from = value;
-                }
-                else
-                {
-                    to = value;
-                }
-
-                i++;
-                continue;
-            }
-
-            Console.Error.WriteLine($"Unrecognized or invalid argument '{args[i]}'.");
-            Console.Error.WriteLine(Usage);
-            return 1;
+            var feedsPath = args.Length > 1 && args[1].Length > 0 ? args[1] : Path.Combine(toolDirectory, "feeds.yml");
+            using var httpClient = new HttpClient();
+            return await IngestCommand.RunAsync(feedsPath, connectionString, httpClient, TimeProvider.System, Console.Out, Console.Error, cts.Token);
         }
 
-        return await ClusterCommand.RunAsync(
-            Path.Combine(toolDirectory, "clustering.yml"),
-            Path.Combine(toolDirectory, "feeds.yml"),
-            connectionString,
-            from,
-            to,
-            TimeProvider.System,
-            Console.Out,
-            Console.Error,
-            cts.Token);
-    }
+    case "cluster":
+        {
+            DateTimeOffset? from = null, to = null;
+            for (var i = 1; i < args.Length; i++)
+            {
+                if (args[i] is "--from" or "--to" && i + 1 < args.Length && TryParseUtc(args[i + 1], out var value))
+                {
+                    if (args[i] == "--from")
+                    {
+                        from = value;
+                    }
+                    else
+                    {
+                        to = value;
+                    }
+
+                    i++;
+                    continue;
+                }
+
+                Console.Error.WriteLine($"Unrecognized or invalid argument '{args[i]}'.");
+                Console.Error.WriteLine(Usage);
+                return 1;
+            }
+
+            return await ClusterCommand.RunAsync(
+                Path.Combine(toolDirectory, "clustering.yml"),
+                Path.Combine(toolDirectory, "feeds.yml"),
+                connectionString,
+                from,
+                to,
+                TimeProvider.System,
+                Console.Out,
+                Console.Error,
+                cts.Token);
+        }
 
     default:
         Console.Error.WriteLine(Usage);
