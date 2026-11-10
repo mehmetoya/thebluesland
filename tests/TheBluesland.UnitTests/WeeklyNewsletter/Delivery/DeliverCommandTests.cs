@@ -82,7 +82,7 @@ public sealed class DeliverCommandTests : IDisposable
     [Fact]
     public async Task Missing_tag_ids_or_key_stop_everything()
     {
-        File.WriteAllText(Path.Combine(Tool, "delivery.yml"), File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/delivery.yml")));
+        File.WriteAllText(Path.Combine(Tool, "delivery.yml"), ValidYaml.Replace("kitTagId: 111", "kitTagId: null", StringComparison.Ordinal));
         var handler = new QueueHandler(EmptyList);
 
         (await RunAsync(handler, apiKey: null)).ShouldBe(1);

@@ -1112,3 +1112,86 @@ body:has(.filter-mobile-toggle:checked) {
   color: var(--color-text-muted);
   margin-bottom: 0;
 }
+
+/* weekly-archive: /weekly and /weekly/{issue}/{lang} */
+.weekly {
+  max-width: 40rem;
+}
+
+.weekly h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.weekly-lede,
+.weekly-issue-date {
+  color: var(--color-text-muted);
+}
+
+.weekly-issues {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.weekly-issues li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+
+.weekly-body h2 {
+  font-size: 1.3rem;
+  margin: 1.75rem 0 0.5rem;
+}
+
+.weekly-body p {
+  margin-bottom: 0.9em;
+  line-height: 1.6;
+}
+
+.weekly-subscribe {
+  margin: 2rem 0;
+  padding: 1.25rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 0.75rem;
+  background: var(--color-bg-elevated);
+}
+
+.weekly-subscribe-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.weekly-subscribe-form label {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1 1 14rem;
+}
+
+.weekly-subscribe-form input {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 0.5rem;
+  background: var(--color-bg);
+  color: inherit;
+}
+
+.weekly-subscribe-form button {
+  padding: 0.6rem 1.1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.weekly-subscribe-note {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}

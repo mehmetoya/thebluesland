@@ -1,0 +1,41 @@
+@inject IConfiguration Configuration
+
+@* weekly-archive: a plain HTML form that posts straight to the subscriber's chosen Kit form (no
+   third-party script; CSP only grants form-action to app.kit.com). Kit runs double opt-in, so the
+   address is never seen or stored by this site. Hidden until the Kit form ids are configured. *@
+@if (_forms.Count > 0)
+{
+    <section class="weekly-subscribe" aria-labelledby="weekly-subscribe-title">
+        <h2 id="weekly-subscribe-title">Get it every Monday</h2>
+        <p>Five music stories, five minutes. Pick a language; you can leave with one click.</p>
+        @foreach (var (label, formId) in _forms)
+        {
+            <form class="weekly-subscribe-form" method="post" action="@($"https://app.kit.com/forms/{formId}/subscriptions")">
+                <label>
+                    <span>@label</span>
+                    <input type="email" name="email_address" required autocomplete="email" placeholder="you@example.com" />
+                </label>
+                <button type="submit">Subscribe</button>
+            </form>
+        }
+        <p class="weekly-subscribe-note">
+            Sign-ups are handled by Kit (kit.com), which sends a confirmation e-mail first.
+            See <a href="/privacy">Privacy</a>.
+        </p>
+    </section>
+}
+
+@code {
+    private List<(string Label, long FormId)> _forms = [];
+
+    protected override void OnInitialized()
+    {
+        foreach (var (key, label) in new[] { ("Weekly:KitFormIdTr", "Türkçe"), ("Weekly:KitFormIdEn", "English") })
+        {
+            if (long.TryParse(Configuration[key], out var id) && id > 0)
+            {
+                _forms.Add((label, id));
+            }
+        }
+    }
+}

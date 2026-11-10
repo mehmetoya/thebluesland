@@ -1,0 +1,43 @@
+@page "/weekly"
+@inject WeeklyIssueRepository Issues
+
+<PageTitle>TheBluesland Weekly - TheBluesland</PageTitle>
+<PageMetadata
+    Title="TheBluesland Weekly - TheBluesland"
+    Description="Every Monday, five music stories in five minutes, in Turkish and English. Read past issues of TheBluesland Weekly."
+    CanonicalPath="/weekly"
+    ImagePath="/og-image.png" />
+
+<article class="weekly">
+    <h1>TheBluesland Weekly</h1>
+    <p class="weekly-lede">Every Monday: the week's five music stories and why they matter, in Turkish and English.</p>
+
+    <WeeklySubscribe />
+
+    <h2>Issues</h2>
+    @if (_issues.Count == 0)
+    {
+        <p>The first issue is on its way. Check back on Monday.</p>
+    }
+    else
+    {
+        <ul class="weekly-issues">
+            @foreach (var issue in _issues.GroupBy(issue => issue.Id))
+            {
+                <li>
+                    <span class="weekly-issue-date">@issue.First().SendDate.ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</span>
+                    @foreach (var language in issue)
+                    {
+                        <a href="@language.Path" hreflang="@language.Language">@language.Title</a>
+                    }
+                </li>
+            }
+        </ul>
+    }
+</article>
+
+@code {
+    private IReadOnlyList<WeeklyIssue> _issues = [];
+
+    protected override void OnInitialized() => _issues = Issues.Published();
+}
