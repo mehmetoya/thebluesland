@@ -42,9 +42,11 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
             {
                 response = await httpClient.SendAsync(request, cancellationToken);
             }
-            catch (HttpRequestException) when (attempt < MaxAttempts)
+            catch (Exception ex) when (attempt < MaxAttempts
+                && (ex is HttpRequestException || (ex is TaskCanceledException && !cancellationToken.IsCancellationRequested)))
             {
-                // Connection reset or DNS hiccup: worth another try, like a 5xx.
+                // Connection reset, DNS hiccup or a slow answer hitting the HttpClient timeout
+                // (first production run, 2026-11-10): worth another try, like a 5xx.
                 await Task.Delay(_retryDelay, cancellationToken);
                 continue;
             }

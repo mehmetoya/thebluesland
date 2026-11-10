@@ -71,7 +71,7 @@ switch (args.FirstOrDefault())
 
             if (args[0] == "draft")
             {
-                using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(90) };
+                using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(3) };
                 return await DraftCommand.RunAsync(
                     toolDirectory,
                     Path.Combine(Directory.GetCurrentDirectory(), "docs", "weekly", "ses-rehberi.md"),
