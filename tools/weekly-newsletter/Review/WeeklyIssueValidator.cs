@@ -14,6 +14,9 @@ namespace TheBluesland.WeeklyNewsletter.Review;
 /// shows its source links, the AI note closes the issue, and no backups or review file is present.
 /// Deterministic, no network. Messages never quote the issue's prose.
 /// </summary>
+/// <summary>A valid issue file as issue-delivery reads it.</summary>
+public sealed record WeeklyIssue(string Id, DraftLanguage Language, string Title, DateOnly SendDate, string Body);
+
 public static partial class WeeklyIssueValidator
 {
     public const int Stories = 5;
@@ -44,8 +47,15 @@ public static partial class WeeklyIssueValidator
     }
 
     /// <summary>The problems in one file, named relative to content/weekly.</summary>
-    public static IReadOnlyList<string> Validate(string name, string markdown)
+    public static IReadOnlyList<string> Validate(string name, string markdown) => Check(name, markdown, out _);
+
+    /// <summary>The issue in a valid file; null when <see cref="Validate"/> reports any problem.</summary>
+    public static WeeklyIssue? Read(string name, string markdown) =>
+        Check(name, markdown, out var issue).Count == 0 ? issue : null;
+
+    private static IReadOnlyList<string> Check(string name, string markdown, out WeeklyIssue? issue)
     {
+        issue = null;
         var fileName = FileName().Match(name);
         if (!fileName.Success)
         {
@@ -53,13 +63,13 @@ public static partial class WeeklyIssueValidator
         }
 
         var problems = new List<string>();
-        var issue = $"{fileName.Groups[1].Value}-W{fileName.Groups[2].Value}";
+        var issueId = $"{fileName.Groups[1].Value}-W{fileName.Groups[2].Value}";
         var year = int.Parse(fileName.Groups[1].Value, CultureInfo.InvariantCulture);
         var week = int.Parse(fileName.Groups[2].Value, CultureInfo.InvariantCulture);
         var language = DraftLanguage.All.Single(candidate => candidate.Code == fileName.Groups[3].Value);
         if (week < 1 || week > ISOWeek.GetWeeksInYear(year))
         {
-            return [$"{issue} is not an ISO week."];
+            return [$"{issueId} is not an ISO week."];
         }
 
         var text = markdown.Replace("\r\n", "\n", StringComparison.Ordinal);
@@ -85,10 +95,10 @@ public static partial class WeeklyIssueValidator
         }
 
         var monday = DateOnly.FromDateTime(ISOWeek.ToDateTime(year, week, DayOfWeek.Monday)).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-        Require(problems, front.Issue == issue, $"issue must be {issue}, like the file name.");
+        Require(problems, front.Issue == issueId, $"issue must be {issueId}, like the file name.");
         Require(problems, front.Language == language.Code, $"language must be {language.Code}, like the file name.");
         Require(problems, !string.IsNullOrWhiteSpace(front.Title), "title is missing.");
-        Require(problems, front.SendDate == monday, $"sendDate must be {monday}, the Monday of {issue}.");
+        Require(problems, front.SendDate == monday, $"sendDate must be {monday}, the Monday of {issueId}.");
         Require(problems, front.AiAssisted == true, "aiAssisted must be true (ADR-0006 madde 4).");
 
         var stories = front.Stories ?? [];
@@ -130,6 +140,11 @@ public static partial class WeeklyIssueValidator
 
         var lastLine = body.Split('\n').LastOrDefault(line => line.Trim().Length > 0)?.Trim();
         Require(problems, lastLine == $"*{language.AiNote}*", "the issue must end with the AI note, word for word (ADR-0006 madde 4).");
+        if (problems.Count == 0)
+        {
+            issue = new WeeklyIssue(issueId, language, front.Title!.Trim(), DateOnly.ParseExact(monday, "yyyy-MM-dd", CultureInfo.InvariantCulture), body.TrimStart('\n'));
+        }
+
         return problems;
     }
 

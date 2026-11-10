@@ -37,7 +37,7 @@ koddan önce kendi onaylı spec'ini (`docs/specs/weekly-newsletter-<modül>.md`)
 
 | # | İş | Bağımlı olduğu | Geçmesi gereken kapı |
 | --- | --- | --- | --- |
-| 1a | **issue-delivery** — onaylı sayıyı bir kez gönder; TR pazartesi 08:00, EN pazartesi 15:00; saatine kadar merge yoksa o dil o hafta gitmez | issue-review | E-posta sağlayıcısı seçimi (ücretsiz katman, TR + EN iki liste); onaylı spec |
+| 1a | **issue-delivery** — kod hazır (`deliver`, `newsletter-deliver.yml`, Kit ücretsiz planı); TR pazartesi 08:00, EN 15:00, Kit'in zamanlayıcısıyla | issue-review | Mehmet'in Kit kurulumu: hesap, DNS (SPF/DKIM), `weekly-tr`/`weekly-en` etiketleri, double opt-in'li iki form, `KIT_API_KEY`, TR formunda KVKK rıza metni; sonra dry-run ve test aboneyle ilk gönderim |
 | 1b | **weekly-archive** — `/weekly` TR/EN sayı sayfaları (`content/weekly/`'den) + sağlayıcının abone formu | issue-review (1a ile paralel) | UI/UX tasarım çalışması; abone formu için sağlayıcı seçimi ve CSP uyumu |
 
 Hattın değişmez kısıtları: $0 maliyet; Spotify verisi hiçbir AI prompt'una girmez; AI yalnız GitHub

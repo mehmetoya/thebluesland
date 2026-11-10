@@ -2,7 +2,7 @@
 
 Modül: `issue-delivery` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Önceki modül:
 [issue-review](weekly-newsletter-issue-review.md) · Sınır: [ADR-0006](../adr/0006-weekly-newsletter-ai-metin-siniri.md)
-madde 2 · Durum: TASLAK — 2026-11-10 (onay bekliyor)
+madde 2 · Durum: KOD HAZIR — 2026-11-10 (Mehmet: beş kararın hepsi onaylı; gerçek gönderim Kit kurulumunu (T0) bekliyor)
 
 ## Assumptions
 
@@ -102,7 +102,12 @@ languages:
 minimumLeadMinutes: 2
 ```
 
-- Tek secret `KIT_API_KEY`'dir (Kit v4 API anahtarı, `X-Kit-Api-Key` header'ı). Yalnızca
+- Tek secret `KIT_API_KEY`'dir (Kit v4 API anahtarı, `X-Kit-Api-Key` header'ı). Kit API'sinin
+  biçimi developers.kit.com'dan okundu (2026-11-10): broadcast `status` değerleri draft,
+  scheduled, sending, completed, aborted. Yalnızca draft ve scheduled değiştirilebilir ya da
+  silinebilir. 429 yanıtında `Retry-After` yoktur, istemci bekleme süresini katlayarak dener.
+  Belirsiz kalan tek nokta: Kit'in güncelleme sayfası zamanlama için `public: true` istiyor
+  gibi okunuyor. İlk dry-run veya test gönderimde bu doğrulanır; gerekirse `kitPublic` açılır. Yalnızca
   `newsletter-deliver.yml`'in Deliver adımına verilir. Render'a ve web uygulamasına hiç girmez.
 - `newsletter-deliver.yml`: `contents: read`. Gemini ve Neon secret'ı yoktur, repoya yazmaz.
   `concurrency: newsletter-deliver` ile çalışmalar sırayla koşar. Komut çıktısı stop-commands
@@ -189,10 +194,10 @@ Gerçek Kit çağrısı testte **yapılmaz**; `HttpMessageHandler` sahte yanıt 
       gitti.
 - [ ] Merge'den sonra `main`'de yapılan bir düzeltme gönderimden önce broadcast'e yansıdı (deneme
       haftasında `--dry-run` ve test aboneyle).
-- [ ] İzolasyon testleri `KIT_API_KEY`'in yalnızca deliver workflow'unda olduğunu kanıtlıyor.
+- [x] İzolasyon testleri `KIT_API_KEY`'in yalnızca deliver workflow'unda olduğunu kanıtlıyor.
 - [ ] Tam build ve test yeşil; yeni paket ve migration yok.
 
-## Karar önerileri (onay bekliyor)
+## Kararlar (onaylandı, 2026-11-10)
 
 1. **Sağlayıcı: Kit ücretsiz planı** (§1). Bedeli Kit markasıdır. Yedek aday Brevo'dur; bugün
    doğrulanamadı.

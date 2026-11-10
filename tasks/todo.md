@@ -1,18 +1,18 @@
-# Todo — issue-review (TheBluesland Weekly)
+# Todo — issue-delivery (TheBluesland Weekly)
 
-Plan: [tasks/plan.md](plan.md) · Spec: [docs/specs/weekly-newsletter-issue-review.md](../docs/specs/weekly-newsletter-issue-review.md)
+Plan: [tasks/plan.md](plan.md) · Spec: [docs/specs/weekly-newsletter-issue-delivery.md](../docs/specs/weekly-newsletter-issue-delivery.md)
 
-- [x] **T1: Yazıcı parçaları public; yedekler ve PR gövdesi `<out>/review/`'a** — S
-- [x] **T2: `PullRequestBodyFormatter`** — M
-- [x] **T3: `WeeklyIssueValidator`, `validate-weekly` ve `issue-week` alt komutları, `ci.yml`** — M
-- [x] **T4: `newsletter-draft.yml` (schedule, `open_pr`, `open-pr` job'u) ve workflow testleri** — M
-- [x] **T5: Doküman ve uçtan uca deneme** — S
-- [x] Checkpoint: tam build, test ve format; PR ve merge; gerçek draft PR; Ready for review ile CI
+- [ ] **T0: Kit kurulumu (Mehmet)** — hesap, posta adresi, DNS (SPF/DKIM), `weekly-tr`/`weekly-en` etiketleri, double opt-in'li iki form, `KIT_API_KEY` secret'ı, TR formunda rıza metni
+- [x] **T1: `delivery.yml` + `DeliveryOptionsLoader`** — S
+- [x] **T2: `IssueEmailRenderer`** — S
+- [x] **T3: `DeliveryPlanner`** — M
+- [x] **T4: `KitClient`** — S
+- [x] **T5: `DeliverCommand`, rapor, `deliver` alt komutu** — M
+- [x] **T6: `newsletter-deliver.yml`, izolasyon testleri, doküman** — S
+- [ ] Checkpoint: build, test, format; PR ve merge; T0 sonrası dry-run ve test aboneyle gerçek gönderim
 
 ## Takip
 
-- [ ] 2026-11-15 pazar: ilk zamanlanmış çalışmanın draft PR'ı açtığını ve 10:00 UTC denemesinin hiçbir şey yapmadığını doğrula.
-
+- [ ] 2026-11-15 pazar: ilk zamanlanmış taslak çalışmasının draft PR açtığını ve 10:00 UTC denemesinin hiçbir şey yapmadığını doğrula.
 - [ ] 2026-W47 tam haftası etiketlenip ikinci clustering gold set'i olarak eklenecek.
-- [ ] İlk 4 haftadan sonra: Mehmet ayda birden fazla yedekle değiştirdiyse `swap` workflow'u (ayrı spec).
-- [ ] İlk 4 haftadan sonra: Mehmet'in düzeltme miktarını otomatik ölçmek (issue-review §7).
+- [ ] İlk 4 haftadan sonra: yedekle değiştirme sıklığına göre `swap` workflow'u; düzeltme miktarını otomatik ölçmek.
