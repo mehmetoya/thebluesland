@@ -60,8 +60,14 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
         var exitCode = await RunAsync(handler);
 
         exitCode.ShouldBe(0, _error.ToString());
-        Directory.GetFiles(_out).Select(Path.GetFileName).Order().ShouldBe(
-            ["2026-W47.backups.en.md", "2026-W47.backups.tr.md", "2026-W47.en.md", "2026-W47.tr.md"]);
+        Directory.GetFiles(_out).Select(Path.GetFileName).Order().ShouldBe(["2026-W47.en.md", "2026-W47.tr.md"]);
+        Directory.GetFiles(Path.Combine(_out, "review")).Select(Path.GetFileName).Order().ShouldBe(
+            ["2026-W47.backups.en.md", "2026-W47.backups.tr.md", "2026-W47.pr-body.md"]);
+        (await File.ReadAllTextAsync(Path.Combine(_out, "review", "2026-W47.pr-body.md"))).ShouldStartWith("## TheBluesland Weekly · 2026-W47");
+        TheBluesland.WeeklyNewsletter.Review.WeeklyIssueValidator.ValidateDirectory(_out)
+            .ShouldBe(["review/2026-W47.backups.en.md: not an issue file (<year>-W<week>.<tr|en>.md); backups and review files are never merged.",
+                       "review/2026-W47.backups.tr.md: not an issue file (<year>-W<week>.<tr|en>.md); backups and review files are never merged.",
+                       "review/2026-W47.pr-body.md: not an issue file (<year>-W<week>.<tr|en>.md); backups and review files are never merged."]);
         (await File.ReadAllTextAsync(Path.Combine(_out, "2026-W47.tr.md"))).ShouldContain("Kaynaklar: [Pitchfork](");
         handler.Requests.Count.ShouldBe(2);
         handler.Requests[0].Body.ShouldContain("Write the issue in Turkish");

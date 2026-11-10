@@ -31,6 +31,26 @@ public sealed class IssueWeekTests
     }
 
     [Fact]
+    public void Resolve_names_the_issue_the_sunday_schedule_and_its_safety_retry_draft()
+    {
+        // newsletter-draft.yml: cron 07:00 UTC and 10:00 UTC on Sunday 2026-11-15.
+        IssueWeek.Resolve(null, null, new DateTimeOffset(2026, 11, 15, 7, 0, 30, TimeSpan.Zero)).Id.ShouldBe("2026-W47");
+        IssueWeek.Resolve(null, null, new DateTimeOffset(2026, 11, 15, 10, 4, 0, TimeSpan.Zero)).Id.ShouldBe("2026-W47");
+    }
+
+    [Fact]
+    public void Resolve_with_an_explicit_window_uses_it_and_defaults_to_seven_days()
+    {
+        var to = new DateTimeOffset(2026, 11, 10, 10, 0, 0, TimeSpan.Zero);
+
+        var week = IssueWeek.Resolve(null, to, DateTimeOffset.UnixEpoch);
+
+        week.Id.ShouldBe("2026-W47");
+        week.From.ShouldBe(to.AddDays(-7));
+        IssueWeek.Resolve(to.AddDays(-2), to, DateTimeOffset.UnixEpoch).From.ShouldBe(to.AddDays(-2));
+    }
+
+    [Fact]
     public void ForDraftAt_on_Sunday_morning_before_10_00_still_uses_the_previous_window()
     {
         IssueWeek.ForDraftAt(new DateTimeOffset(2026, 11, 15, 6, 59, 0, TimeSpan.Zero)).Id.ShouldBe("2026-W46");
