@@ -51,6 +51,17 @@ public sealed class GeminiClientTests
     }
 
     [Fact]
+    public async Task GenerateJsonAsync_retries_a_request_that_timed_out()
+    {
+        var handler = new QueueHandler(
+            _ => throw new TaskCanceledException("HttpClient.Timeout elapsed", new TimeoutException()),
+            _ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(GeminiEnvelope("{}")) });
+
+        (await new GeminiClient(new HttpClient(handler), "k", "m", TimeSpan.Zero).GenerateJsonAsync("p", new { }, CancellationToken.None)).ShouldBe("{}");
+        handler.Requests.Count.ShouldBe(2);
+    }
+
+    [Fact]
     public async Task GenerateJsonAsync_reports_a_non_json_success_body_as_a_format_problem()
     {
         var handler = new QueueHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("<html>oops</html>") });
