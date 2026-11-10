@@ -112,7 +112,7 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_returns_200_with_editorial_content_when_the_database_is_unreachable()
     {
-        var response = await _httpClient.GetAsync("/playlists/masterpieces-of-erkin-the-father");
+        var response = await _httpClient.GetAsync("/en/playlists/masterpieces-of-erkin-the-father");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -129,7 +129,7 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_returns_404_for_an_unknown_slug()
     {
-        var response = await _httpClient.GetAsync("/playlists/does-not-exist");
+        var response = await _httpClient.GetAsync("/en/playlists/does-not-exist");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -138,7 +138,7 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_returns_200_with_published_playlist_content()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -147,9 +147,9 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData("/about")]
-    [InlineData("/privacy")]
-    [InlineData("/terms")]
+    [InlineData("/en/about")]
+    [InlineData("/en/privacy")]
+    [InlineData("/en/terms")]
     public async Task StaticPage_returns_200_with_readable_content(string path)
     {
         var response = await _httpClient.GetAsync(path);
@@ -174,7 +174,7 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_response_includes_the_required_security_headers()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
 
         response.Headers.TryGetValues("X-Content-Type-Options", out var contentTypeOptions).ShouldBeTrue();
         contentTypeOptions!.ShouldContain("nosniff");
@@ -202,7 +202,7 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_csp_allows_every_current_spotify_cover_art_cdn_host()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
 
         response.Headers.TryGetValues("Content-Security-Policy", out var csp).ShouldBeTrue();
         var cspValue = csp!.Single();
@@ -228,7 +228,7 @@ public sealed class WebHostIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_loads_theme_script_synchronously_before_the_stylesheet()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
         var body = await response.Content.ReadAsStringAsync();
 
         var themeScriptIndex = body.IndexOf("/js/theme.js", StringComparison.Ordinal);

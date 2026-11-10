@@ -59,7 +59,7 @@ public sealed class AnalyticsWriteFailureIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_renders_normally_when_the_analytics_database_is_unreachable()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);

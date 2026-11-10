@@ -82,7 +82,7 @@ public sealed class PageViewAnalyticsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_request_records_exactly_one_page_view_row()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var rows = await WaitForRowsAsync(row => row.Path == "/");
@@ -95,7 +95,7 @@ public sealed class PageViewAnalyticsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task Known_playlist_detail_page_records_exactly_one_page_view_row_with_the_slug()
     {
-        var response = await _httpClient.GetAsync($"/playlists/{KnownSlug}");
+        var response = await _httpClient.GetAsync($"/en/playlists/{KnownSlug}");
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var rows = await WaitForRowsAsync(row => row.Path == $"/playlists/{KnownSlug}");
@@ -124,7 +124,7 @@ public sealed class PageViewAnalyticsIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task Unknown_playlist_slug_404_records_no_row()
     {
-        var response = await _httpClient.GetAsync("/playlists/does-not-exist");
+        var response = await _httpClient.GetAsync("/en/playlists/does-not-exist");
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
 
         await Task.Delay(TimeSpan.FromMilliseconds(300));

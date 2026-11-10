@@ -102,7 +102,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_with_a_current_slug_still_returns_200_with_editorial_content()
     {
-        var response = await _httpClient.GetAsync("/playlists/primary-playlist");
+        var response = await _httpClient.GetAsync("/en/playlists/primary-playlist");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -113,7 +113,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_with_an_old_previousSlugs_entry_redirects_permanently_to_the_current_slug()
     {
-        var response = await _httpClient.GetAsync("/playlists/legacy-primary-slug");
+        var response = await _httpClient.GetAsync("/en/playlists/legacy-primary-slug");
 
         response.StatusCode.ShouldBe(HttpStatusCode.MovedPermanently);
         response.Headers.Location.ShouldNotBeNull();
@@ -123,7 +123,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_with_an_unknown_slug_that_is_also_not_a_previous_slug_still_404s()
     {
-        var response = await _httpClient.GetAsync("/playlists/does-not-exist-anywhere");
+        var response = await _httpClient.GetAsync("/en/playlists/does-not-exist-anywhere");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
@@ -132,7 +132,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_does_not_offer_embedded_playback()
     {
-        var response = await _httpClient.GetAsync("/playlists/primary-playlist");
+        var response = await _httpClient.GetAsync("/en/playlists/primary-playlist");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -143,7 +143,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_ignores_legacy_listen_query_flag()
     {
-        var response = await _httpClient.GetAsync("/playlists/primary-playlist?listen=true");
+        var response = await _httpClient.GetAsync("/en/playlists/primary-playlist?listen=true");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -161,7 +161,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_open_in_spotify_link_points_through_the_out_redirect_not_the_embed_url()
     {
-        var response = await _httpClient.GetAsync("/playlists/primary-playlist");
+        var response = await _httpClient.GetAsync("/en/playlists/primary-playlist");
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("href=\"/out/primary-playlist\"");
@@ -171,7 +171,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_shows_related_playlists_by_shared_tag_overlap_and_excludes_unrelated_ones()
     {
-        var response = await _httpClient.GetAsync("/playlists/primary-playlist");
+        var response = await _httpClient.GetAsync("/en/playlists/primary-playlist");
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("Related Strong Fixture");
@@ -183,7 +183,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_renders_the_curator_note_as_sanitized_markdown()
     {
-        var response = await _httpClient.GetAsync("/playlists/primary-playlist");
+        var response = await _httpClient.GetAsync("/en/playlists/primary-playlist");
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("<strong>bold</strong>");
@@ -200,7 +200,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_includes_structured_data_with_no_track_level_content()
     {
-        var response = await _httpClient.GetAsync("/playlists/primary-playlist");
+        var response = await _httpClient.GetAsync("/en/playlists/primary-playlist");
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("\"@type\":\"CollectionPage\"");
@@ -235,7 +235,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_never_builds_an_embed_or_open_in_spotify_url_from_an_invalid_spotifyPlaylistId()
     {
-        var response = await _httpClient.GetAsync("/playlists/invalid-spotify-id-fixture?listen=true");
+        var response = await _httpClient.GetAsync("/en/playlists/invalid-spotify-id-fixture?listen=true");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -248,7 +248,7 @@ public sealed class PlaylistDetailPageIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_includes_visible_breadcrumb_navigation()
     {
-        var response = await _httpClient.GetAsync("/playlists/primary-playlist");
+        var response = await _httpClient.GetAsync("/en/playlists/primary-playlist");
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("aria-label=\"Breadcrumb\"");

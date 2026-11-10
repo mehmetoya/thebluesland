@@ -93,13 +93,13 @@ public sealed partial class IssueEmailRendererTests
         image.ShouldContain("alt=\"TheBluesland Weekly\"");
         image.ShouldContain("width=\"160\"");
         Regex.Matches(html, "<img ").Count.ShouldBe(1);
-        Hrefs(html).ShouldContain("https://thebluesland.com/weekly/2026-W46/tr");
+        Hrefs(html).ShouldContain("https://thebluesland.com/tr/weekly/2026-W46");
         html.ShouldContain(">Web'de oku</a>");
         Regex.Matches(html, @">0[1-5]</p>").Count.ShouldBe(5);
         Regex.Matches(html, "border-top:1px solid #e8eff9").Count.ShouldBeGreaterThanOrEqualTo(5);
         html.ShouldContain("border-left:4px solid #ff904b");
         html.ShouldContain("color:#004aad;text-decoration:underline;");
-        html.ShouldContain(">Arşiv</a> · <a href=\"https://thebluesland.com/weekly/2026-W46/en\" lang=\"en\"");
+        html.ShouldContain(">Arşiv</a> · <a href=\"https://thebluesland.com/en/weekly/2026-W46\" lang=\"en\"");
         html.ShouldContain(">Read in English</a>");
     }
 
@@ -114,7 +114,7 @@ public sealed partial class IssueEmailRendererTests
         html.ShouldContain(">Week 46</h1>");
         html.ShouldContain("Issue 46 · 9 November 2026 · ");
         html.ShouldContain(">Read on the web</a>");
-        html.ShouldContain(">Archive</a> · <a href=\"https://thebluesland.com/weekly/2026-W46/tr\" lang=\"tr\"");
+        html.ShouldContain(">Archive</a> · <a href=\"https://thebluesland.com/tr/weekly/2026-W46\" lang=\"tr\"");
         html.ShouldContain(">Türkçe oku</a>");
     }
 

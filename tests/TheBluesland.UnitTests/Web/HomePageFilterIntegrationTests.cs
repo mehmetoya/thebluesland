@@ -54,7 +54,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_with_no_query_string_lists_every_published_playlist_sorted_by_displayOrder()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -77,7 +77,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_with_a_query_string_restores_the_same_filtered_set_a_fresh_navigation_would_produce()
     {
-        var response = await _httpClient.GetAsync("/?mood=warm&occasion=road-trip");
+        var response = await _httpClient.GetAsync("/en?mood=warm&occasion=road-trip");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -91,7 +91,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     {
         // mood=warm matches Energetic Headphones and Warm Road Trip; occasion=late-night matches
         // only Moody Blues Night - AND-ing the two active dimensions leaves zero playlists.
-        var response = await _httpClient.GetAsync("/?mood=warm&occasion=late-night");
+        var response = await _httpClient.GetAsync("/en?mood=warm&occasion=late-night");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -105,7 +105,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_with_a_search_query_shows_ranked_matching_playlists_only()
     {
-        var response = await _httpClient.GetAsync("/?q=melancholic");
+        var response = await _httpClient.GetAsync("/en?q=melancholic");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -119,7 +119,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_search_composes_with_existing_taxonomy_filters()
     {
-        var response = await _httpClient.GetAsync("/?q=melancholic&genre=rock");
+        var response = await _httpClient.GetAsync("/en?q=melancholic&genre=rock");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -134,7 +134,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_with_an_unmatched_search_query_shows_search_specific_empty_state()
     {
-        var response = await _httpClient.GetAsync("/?q=shoegaze");
+        var response = await _httpClient.GetAsync("/en?q=shoegaze");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -146,7 +146,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_empty_state_includes_a_one_click_clear_filters_link_back_to_an_unfiltered_home_page()
     {
-        var response = await _httpClient.GetAsync("/?mood=warm&occasion=late-night");
+        var response = await _httpClient.GetAsync("/en?mood=warm&occasion=late-night");
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("href=\"/\" class=\"clear-filters\"");
@@ -161,7 +161,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_renders_each_filter_dimension_as_an_independent_details_dropdown_in_the_navbar()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -181,7 +181,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_shows_an_active_filter_count_next_to_the_dimension_name_it_belongs_to()
     {
-        var response = await _httpClient.GetAsync("/?mood=warm&occasion=road-trip");
+        var response = await _httpClient.GetAsync("/en?mood=warm&occasion=road-trip");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -201,7 +201,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_has_a_mobile_filter_toggle_with_a_combined_active_count()
     {
-        var response = await _httpClient.GetAsync("/?mood=warm&occasion=road-trip");
+        var response = await _httpClient.GetAsync("/en?mood=warm&occasion=road-trip");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -217,7 +217,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_filter_form_includes_a_clear_filters_link_alongside_apply()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("<button type=\"submit\" class=\"filter-apply\">Apply filters</button>");
@@ -232,7 +232,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_filter_dropdowns_share_the_same_details_group_name_for_exclusivity()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
         var body = await response.Content.ReadAsStringAsync();
 
         body.Split("name=\"filter-dropdown-group\"").Length.ShouldBe(5); // 4 dropdowns -> 5 split parts
@@ -249,7 +249,7 @@ public sealed class HomePageFilterIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_mobile_panel_renders_each_dimension_a_second_time_with_matching_checked_state()
     {
-        var response = await _httpClient.GetAsync("/?mood=warm");
+        var response = await _httpClient.GetAsync("/en?mood=warm");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);

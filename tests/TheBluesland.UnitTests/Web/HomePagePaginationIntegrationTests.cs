@@ -64,7 +64,7 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_with_no_page_query_shows_only_the_first_PageSize_playlists_with_a_show_more_link()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -83,7 +83,7 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_with_page_2_shows_every_remaining_playlist_and_hides_the_show_more_link()
     {
-        var response = await _httpClient.GetAsync("/?page=2");
+        var response = await _httpClient.GetAsync("/en?page=2");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -96,7 +96,7 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_show_more_link_points_to_page_2()
     {
-        var response = await _httpClient.GetAsync("/");
+        var response = await _httpClient.GetAsync("/en");
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("href=\"/?page=2\" class=\"load-more\"");
@@ -105,7 +105,7 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_show_more_link_preserves_the_search_query()
     {
-        var response = await _httpClient.GetAsync("/?q=pagination&page=1");
+        var response = await _httpClient.GetAsync("/en?q=pagination&page=1");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -122,7 +122,7 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_references_the_infinite_scroll_script_and_it_is_actually_served()
     {
-        var pageResponse = await _httpClient.GetAsync("/");
+        var pageResponse = await _httpClient.GetAsync("/en");
         var pageBody = await pageResponse.Content.ReadAsStringAsync();
 
         // 2026-09-06: the "?v=<hash>" suffix is StaticAssetVersion's cache-busting - a fixed
@@ -152,7 +152,7 @@ public sealed class HomePagePaginationIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_stylesheet_link_is_cache_busted_and_served_with_a_long_lived_cache_header()
     {
-        var pageResponse = await _httpClient.GetAsync("/");
+        var pageResponse = await _httpClient.GetAsync("/en");
         var pageBody = await pageResponse.Content.ReadAsStringAsync();
 
         var linkTagStart = pageBody.IndexOf("<link rel=\"stylesheet\" href=\"/css/app.css", StringComparison.Ordinal);

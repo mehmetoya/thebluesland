@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using TheBluesland.Web.Cache;
 using TheBluesland.Web.Components.Shared;
 using TheBluesland.Web.Content;
+using TheBluesland.Web.Localization;
 using Xunit;
 
 namespace TheBluesland.UnitTests.Web;
@@ -49,6 +50,40 @@ public sealed class PlaylistRenderSurfaceTests
         html.ShouldContain(SamplePlaylist.Title);
         html.ShouldContain(SamplePlaylist.Summary);
         html.ShouldNotContain("track-count");
+    }
+
+    [Fact]
+    public async Task Turkish_page_translates_the_chrome_and_marks_untranslated_editorial_text_as_english()
+    {
+        var html = await RenderAsync<PlaylistDetailView>(
+            new Dictionary<string, object?>
+            {
+                [nameof(PlaylistDetailView.Content)] = SamplePlaylist,
+                [nameof(PlaylistDetailView.CacheSnapshot)] = PlaylistCacheSnapshot.Unavailable,
+            },
+            languageCode: SiteLanguage.Turkish);
+
+        html.ShouldContain("Spotify&#x27;da aç");
+        html.ShouldContain("<h1 lang=\"en\">" + SamplePlaylist.Title + "</h1>");
+        html.ShouldContain("<div class=\"curator-note\" lang=\"en\">");
+        html.ShouldContain("enerjik"); // translated tag label
+    }
+
+    [Fact]
+    public async Task Turkish_editorial_fields_win_on_a_turkish_page_and_need_no_lang_attribute()
+    {
+        var translated = SamplePlaylist with { TitleTr = "Erkin Koray Başyapıtları", SummaryTr = "Anadolu rock enerjisi." };
+
+        var html = await RenderAsync<PlaylistCard>(
+            new Dictionary<string, object?>
+            {
+                [nameof(PlaylistCard.Content)] = translated,
+                [nameof(PlaylistCard.CacheSnapshot)] = PlaylistCacheSnapshot.Unavailable,
+            },
+            languageCode: SiteLanguage.Turkish);
+
+        html.ShouldContain("<h2>Erkin Koray Başyapıtları</h2>");
+        html.ShouldNotContain(SamplePlaylist.Title);
     }
 
     [Fact]
@@ -155,7 +190,7 @@ public sealed class PlaylistRenderSurfaceTests
         });
 
         html.ShouldContain("A Related Playlist");
-        html.ShouldContain("href=\"/playlists/related-slug\"");
+        html.ShouldContain("href=\"/en/playlists/related-slug\"");
     }
 
     [Fact]
@@ -269,8 +304,8 @@ public sealed class PlaylistRenderSurfaceTests
             [nameof(PlaylistDetailView.MixHiddenQuery)] = "1",
         });
 
-        html.IndexOf("href=\"/playlists/relaxed-choice\"", StringComparison.Ordinal)
-            .ShouldBeLessThan(html.IndexOf("href=\"/playlists/energetic-choice\"", StringComparison.Ordinal));
+        html.IndexOf("href=\"/en/playlists/relaxed-choice\"", StringComparison.Ordinal)
+            .ShouldBeLessThan(html.IndexOf("href=\"/en/playlists/energetic-choice\"", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -392,11 +427,13 @@ public sealed class PlaylistRenderSurfaceTests
     }
     private static async Task<string> RenderAsync<TComponent>(
         Dictionary<string, object?> parameters,
-        string navigationUri = "http://localhost/")
+        string navigationUri = "http://localhost/",
+        string languageCode = SiteLanguage.English)
         where TComponent : IComponent
     {
         var services = new ServiceCollection();
         services.AddLogging();
+        services.AddSingleton(new SiteLanguage(languageCode, "/" + languageCode));
         services.AddSingleton<NavigationManager>(_ => new TestNavigationManager(navigationUri));
         await using var serviceProvider = services.BuildServiceProvider();
         await using var htmlRenderer = new HtmlRenderer(serviceProvider, NullLoggerFactory.Instance);
