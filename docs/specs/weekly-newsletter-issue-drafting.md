@@ -2,7 +2,7 @@
 
 Modül: `issue-drafting` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Önceki modül:
 [story-ranking](weekly-newsletter-story-ranking.md) · Sınır: [ADR-0006](../adr/0006-weekly-newsletter-ai-metin-siniri.md)
-· Ses: [docs/weekly/ses-rehberi.md](../weekly/ses-rehberi.md) · Durum: ONAY BEKLİYOR — 2026-11-10
+· Ses: [docs/weekly/ses-rehberi.md](../weekly/ses-rehberi.md) · Durum: ONAYLANDI — Mehmet, 2026-11-10 (4 karar)
 
 ## Assumptions
 
@@ -53,7 +53,7 @@ yazmayacak. 8 hikâye girer (5 seçim + 3 yedek).
 | Denetim | Kural | Sonuç |
 |---|---|---|
 | Şema | 8 hikâyenin her key'i tam bir kez | Bozuksa bir kez yeniden iste, yine bozuksa çalışma başarısız |
-| Uzunluk | başlık ≤ 70 karakter, gövde ≤ 3 cümle ve ≤ 450 karakter, "neden önemli" tek cümle | Uyarı |
+| Uzunluk | başlık ≤ 70 karakter, gövde ≤ 3 cümle ve ≤ 450 karakter, "neden önemli" ≤ 2 cümle ve ≤ 260 karakter (onaylı örnek sayı 2 kısa cümle kullanıyor) | Uyarı |
 | Link/biçim | URL, `[`, `]`, `<`, emoji, `!` yok | Temizlenir ve uyarı verilir |
 | **Rakam** | Metindeki her sayı (yıl, yaş, tarih, tutar) olgu kartında geçmeli | Uyarı, cümle işaretlenir |
 | **Özel ad** | Büyük harfle başlayan her ad (ilk kelime hariç) olgu kartında geçmeli | Uyarı |
@@ -164,7 +164,7 @@ Gerçek Gemini çağrısı testte **yapılmaz**; `HttpMessageHandler` sahte yan�
 - [ ] Ses rehberindeki örnek sayı denetçiden sıfır uyarıyla geçer.
 - [ ] Tam build ve test yeşil; yeni paket yok.
 
-## Kararlar (onay bekliyor)
+## Kararlar (onaylandı, 2026-11-10)
 
 1. **Ses rehberi ve örnek sayı** ([docs/weekly/ses-rehberi.md](../weekly/ses-rehberi.md)) tonun
    referansıdır.
