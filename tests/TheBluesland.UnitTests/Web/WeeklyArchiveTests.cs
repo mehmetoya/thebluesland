@@ -276,6 +276,34 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task An_unreadable_playlist_catalogue_does_not_take_the_issue_page_down()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "weekly-nocatalogue-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var source = await File.ReadAllTextAsync(Path.Combine(Fixtures, "2026-W46.tr.md"));
+            await File.WriteAllTextAsync(
+                Path.Combine(directory, "2026-W46.tr.md"),
+                source.Replace("aiAssisted: true", "aiAssisted: true\nplaylist: masterpieces-of-erkin-the-father"));
+            var (http, _) = await StartAsync(builder =>
+            {
+                builder.Configuration[WeeklyIssueRepository.ContentDirectoryConfigKey] = directory;
+                builder.Configuration[PlaylistContentRepository.ContentDirectoryConfigKey] = Path.Combine(directory, "missing");
+            });
+
+            var response = await http.GetAsync("/tr/weekly/2026-W46");
+
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+            (await BodyAsync(response)).ShouldNotContain("weekly-listen");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task The_english_issue_page_has_an_english_sign_up_with_the_english_button_filled()
     {
         var body = await BodyAsync(await _http.GetAsync("/en/weekly/2026-W46"));

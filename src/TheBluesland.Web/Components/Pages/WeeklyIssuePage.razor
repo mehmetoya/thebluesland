@@ -95,9 +95,19 @@ else if (!_redirected)
     protected override async Task OnParametersSetAsync()
     {
         _issue = Issues.Find(Id, Site.Code);
-        _playlist = _issue?.Playlist is { } slug
-            ? await Playlists.FindBySlugAsync(slug, HttpContext?.RequestAborted ?? CancellationToken.None)
-            : null;
+        _playlist = null;
+        if (_issue?.Playlist is { } slug)
+        {
+            // The linked playlist is a nicety: an unreadable catalogue must never take the issue down.
+            try
+            {
+                _playlist = await Playlists.FindBySlugAsync(slug, HttpContext?.RequestAborted ?? CancellationToken.None);
+            }
+            catch (IOException)
+            {
+            }
+        }
+
         _other = _issue is null ? null : Issues.Find(Id, Site.OtherCode);
         _languages = _other is null ? [Site.Code] : SiteLanguage.Supported;
         (_previous, _next) = _issue is null ? (null, null) : Issues.Neighbours(_issue);
