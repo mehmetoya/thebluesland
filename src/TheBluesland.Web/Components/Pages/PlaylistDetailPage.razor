@@ -1,21 +1,22 @@
-@page "/playlists/{Slug}"
+@page "/tr/playlists/{Slug}"
+@page "/en/playlists/{Slug}"
 @inject PlaylistContentRepository ContentRepository
 @inject PlaylistCacheLookup CacheLookup
 
 @if (_content is not null)
 {
-    <PageTitle>@($"{_content.Title} - TheBluesland")</PageTitle>
+    <PageTitle>@($"{_title} - TheBluesland")</PageTitle>
     @* US-011 AC1/AC3: ImagePath is the per-playlist generated card, never the cache's Spotify
        cover_image_url (FR-031) - see WebHostFactory's "/playlists/{slug}/og-image.png" mapping. *@
     <PageMetadata
-        Title="@($"{_content.Title} - TheBluesland")"
-        Description="@_content.Summary"
+        Title="@($"{_title} - TheBluesland")"
+        Description="@_summary"
         CanonicalPath="@($"/playlists/{_content.Slug}")"
         ImagePath="@($"/playlists/{_content.Slug}/og-image.png")"
         StructuredDataJson="@(new[] { CollectionPageJsonLd, BreadcrumbJsonLd })" />
     <PlaylistDetailView
         Content="_content"
-        ShareUrl="@BuildAbsoluteUrl($"/playlists/{_content.Slug}")"
+        ShareUrl="@BuildAbsoluteUrl(Site.Url($"/playlists/{_content.Slug}"))"
         CacheSnapshot="_cacheSnapshot"
         RelatedPlaylists="_relatedPlaylists"
         RelatedCacheSnapshots="_relatedCacheSnapshots"
@@ -36,9 +37,9 @@ else if (_hasLoaded && !_redirected)
        entry (AC5): without it, ResponseStatusCode below would overwrite the 301 already set on
        HttpContext.Response with a 404, stepping on the redirect. *@
     <ResponseStatusCode Code="StatusCodes.Status404NotFound" />
-    <PageTitle>Playlist not found - TheBluesland</PageTitle>
-    <h1>Playlist not found</h1>
-    <p>We couldn't find this playlist. <a href="/">Browse all playlists</a> to find another.</p>
+    <PageTitle>@Site.T.PlaylistNotFoundTitle - TheBluesland</PageTitle>
+    <h1>@Site.T.PlaylistNotFoundTitle</h1>
+    <p>@Site.T.PlaylistNotFoundBodyBefore<a href="@Site.Url("/")">@Site.T.PlaylistNotFoundLink</a>@Site.T.PlaylistNotFoundBodyAfter</p>
 }
 
 @code {
@@ -64,6 +65,8 @@ else if (_hasLoaded && !_redirected)
     private HttpContext? HttpContext { get; set; }
 
     private PlaylistContent? _content;
+    private string _title = string.Empty;
+    private string _summary = string.Empty;
     private PlaylistCacheSnapshot _cacheSnapshot = PlaylistCacheSnapshot.Unavailable;
     private IReadOnlyList<PlaylistContent> _relatedPlaylists = [];
     private IReadOnlyDictionary<string, PlaylistCacheSnapshot> _relatedCacheSnapshots =
@@ -86,13 +89,17 @@ else if (_hasLoaded && !_redirected)
             var redirectTarget = await ContentRepository.FindByPreviousSlugAsync(Slug, cancellationToken);
             if (redirectTarget is not null && HttpContext is not null)
             {
-                HttpContext.Response.Redirect($"/playlists/{redirectTarget.Slug}", permanent: true);
+                HttpContext.Response.Redirect(Site.Url($"/playlists/{redirectTarget.Slug}"), permanent: true);
                 _redirected = true;
             }
 
             _hasLoaded = true;
             return;
         }
+
+        // The head/meta text follows the same Turkish-with-English-fallback rule as the visible page.
+        _title = _content.TitleIn(Site.Code).Text;
+        _summary = _content.SummaryIn(Site.Code).Text;
 
         // Never throws (spec 16.1): a DB outage must still yield a 200 with editorial content.
         _cacheSnapshot = await CacheLookup.GetSnapshotAsync(_content.SpotifyPlaylistId, cancellationToken);
@@ -108,13 +115,19 @@ else if (_hasLoaded && !_redirected)
     }
 
     private string CollectionPageJsonLd =>
-        StructuredDataBuilder.BuildCollectionPage(_content!, _cacheSnapshot, BuildAbsoluteUrl($"/playlists/{_content!.Slug}"));
+        StructuredDataBuilder.BuildCollectionPage(
+            _content!,
+            _cacheSnapshot,
+            BuildAbsoluteUrl(Site.Url($"/playlists/{_content!.Slug}")),
+            SiteLanguage.English, // the editorial text is English until a Turkish field exists
+            BuildAbsoluteUrl($"/playlists/{_content!.Slug}/og-image.png"));
 
     private string BreadcrumbJsonLd =>
         StructuredDataBuilder.BuildBreadcrumbList(
-            BuildAbsoluteUrl("/"),
+            BuildAbsoluteUrl(Site.Url("/")),
             _content!.Title,
-            BuildAbsoluteUrl($"/playlists/{_content!.Slug}"));
+            BuildAbsoluteUrl(Site.Url($"/playlists/{_content!.Slug}")),
+            Site.T.Home);
 
     private string BuildAbsoluteUrl(string path) =>
         HttpContext is null ? path : SiteUrl.BuildAbsolute(HttpContext, path);

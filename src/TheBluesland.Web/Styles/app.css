@@ -275,6 +275,32 @@
   color: var(--color-accent);
 }
 
+/* "TR | EN" language switcher (docs/specs/site-i18n.md): quiet by default, the current language is
+   the accent-coloured, non-underlined one (aria-current="true"). */
+.lang-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.lang-switcher a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.lang-switcher a:hover {
+  color: var(--color-accent);
+}
+
+.lang-switcher a[aria-current="true"] {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
 /* Dark/light toggle button (docs/specs/dark-light-mode-toggle.md section 3): the two SVG icons are
    always both in the DOM (see SiteHeader.razor's hand-authored-SVG comment, matching App.razor's
    favicon convention) and toggled purely by which `[data-theme]` state is active on <html> - no

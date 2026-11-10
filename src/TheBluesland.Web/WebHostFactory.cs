@@ -10,6 +10,7 @@ using TheBluesland.Web.Components;
 using TheBluesland.Web.Content;
 using TheBluesland.Web.Feed;
 using TheBluesland.Web.HealthChecks;
+using TheBluesland.Web.Localization;
 using TheBluesland.Web.Seo;
 
 namespace TheBluesland.Web;
@@ -111,6 +112,12 @@ public static class WebHostFactory
         // request-scoped state - so it is safe to use from a detached fire-and-forget task that may
         // still be running after the request that started it has ended.
         builder.Services.AddSingleton<PageViewRecorder>();
+
+        // docs/specs/site-i18n.md: the page language is derived per request from the URL prefix (or the
+        // lang cookie / Accept-Language where a URL has none), and injected into every component.
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped(services =>
+            SiteLanguage.FromHttpContext(services.GetRequiredService<IHttpContextAccessor>().HttpContext));
 
         builder.Services.AddSingleton<StaticAssetVersion>();
         builder.Services.AddSingleton<PlaylistContentReader>();
@@ -253,6 +260,37 @@ public static class WebHostFactory
         {
             OnPrepareResponse = context =>
                 context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable",
+        });
+
+        // docs/specs/site-i18n.md: visiting a /tr or /en page remembers the language in a small `lang`
+        // cookie (the home redirect below reads it). Only on successful GET/HEAD page requests, and only
+        // when the cookie is missing or different, so a normal visit sends no Set-Cookie at all.
+        app.Use(async (context, next) =>
+        {
+            if ((HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))
+                && SiteLanguage.TrySplit(context.Request.Path.Value ?? string.Empty, out var pageLanguage, out _))
+            {
+                context.Response.OnStarting(() =>
+                {
+                    if (context.Response.StatusCode < StatusCodes.Status400BadRequest
+                        && !string.Equals(context.Request.Cookies[SiteLanguage.CookieName], pageLanguage, StringComparison.Ordinal))
+                    {
+                        context.Response.Cookies.Append(SiteLanguage.CookieName, pageLanguage, new CookieOptions
+                        {
+                            Path = "/",
+                            MaxAge = TimeSpan.FromDays(365),
+                            HttpOnly = true,
+                            SameSite = SameSiteMode.Lax,
+                            Secure = context.Request.IsHttps,
+                            IsEssential = true,
+                        });
+                    }
+
+                    return Task.CompletedTask;
+                });
+            }
+
+            await next();
         });
 
         // UX-1/A11Y-6: a 404 that ends up with an empty body (an unknown route, /weekly/{issue}/{lang}
@@ -482,7 +520,7 @@ public static class WebHostFactory
             var feed = PlaylistsFeedBuilder.Build(
                 published,
                 snapshots,
-                slug => SiteUrl.BuildAbsolute(context, $"/playlists/{slug}"),
+                slug => SiteUrl.BuildAbsolute(context, SiteLanguage.UrlFor(SiteLanguage.English, $"/playlists/{slug}")),
                 DateTimeOffset.UtcNow);
 
             context.Response.Headers.CacheControl = "public, max-age=300";
@@ -538,19 +576,67 @@ public static class WebHostFactory
             return Results.Redirect($"https://open.spotify.com/playlist/{content.SpotifyPlaylistId}");
         });
 
-        // UX-10: /weekly/2026-W47 (no language) goes to the Turkish issue, or the English one when it
-        // is the only one published; a lower-case id is accepted. Anything else is a plain 404.
-        app.MapGet("/weekly/{id}", (string id, WeeklyIssueRepository issues) =>
-        {
-            var canonicalId = id.ToUpperInvariant();
-            var issue = issues.Find(canonicalId, "tr") ?? issues.Find(canonicalId, "en");
-            return issue is null ? Results.NotFound() : Results.Redirect(issue.Path);
-        });
+        MapLanguageRedirects(app);
 
         app.MapRazorComponents<App>();
 
         return app;
     }
+
+    // docs/specs/site-i18n.md, "Redirects": "/" picks a language; every pre-localization URL moves to
+    // its /en twin (the site's language until then), except the weekly URLs that already named a
+    // language. Query strings are kept so old filtered/shared links keep their state. Not routes of
+    // their own: /sitemap.xml, /robots.txt, /llms.txt, /playlists.json, /og-image.png,
+    // /playlists/{slug}/og-image.png, /out/{slug}, /health/*, /dashboard and static files stay
+    // unprefixed - they are not pages.
+    private static void MapLanguageRedirects(WebApplication app)
+    {
+        string[] readMethods = [HttpMethods.Get, HttpMethods.Head];
+
+        // 302, never cached: the answer depends on the visitor (cookie, then Accept-Language).
+        app.MapMethods("/", readMethods, (HttpContext context) =>
+        {
+            context.Response.Headers.Vary = "Accept-Language, Cookie";
+            context.Response.Headers.CacheControl = "no-store";
+            var language = SiteLanguage.Preferred(context.Request);
+            return Results.Redirect(SiteLanguage.UrlFor(language, "/") + context.Request.QueryString, permanent: false);
+        });
+
+        foreach (var path in new[] { "/about", "/privacy", "/terms", "/collections", "/weekly" })
+        {
+            app.MapMethods(path, readMethods, (HttpContext context) => MovedToEnglish(context, path));
+        }
+
+        app.MapMethods("/collections/{slug}", readMethods, (string slug, HttpContext context) =>
+            MovedToEnglish(context, $"/collections/{Uri.EscapeDataString(slug)}"));
+        app.MapMethods("/playlists/{slug}", readMethods, (string slug, HttpContext context) =>
+            MovedToEnglish(context, $"/playlists/{Uri.EscapeDataString(slug)}"));
+
+        // Kit's sign-up forms still redirect to /weekly/thanks?lang=tr|en.
+        app.MapMethods("/weekly/thanks", readMethods, (HttpContext context) =>
+        {
+            var language = SiteLanguage.Normalize(context.Request.Query["lang"].ToString()) ?? SiteLanguage.English;
+            return Results.Redirect(SiteLanguage.UrlFor(language, "/weekly/thanks"), permanent: true);
+        });
+
+        // The old issue URL named the language last: /weekly/2026-W47/tr -> /tr/weekly/2026-W47.
+        app.MapMethods("/weekly/{id}/{language}", readMethods, (string id, string language) =>
+            SiteLanguage.Normalize(language) is { } code
+                ? Results.Redirect(SiteLanguage.UrlFor(code, $"/weekly/{Uri.EscapeDataString(id.ToUpperInvariant())}"), permanent: true)
+                : Results.NotFound());
+
+        // UX-10: /weekly/2026-W47 (no language) goes to the Turkish issue, or the English one when it
+        // is the only one published; a lower-case id is accepted. Anything else is a plain 404.
+        app.MapMethods("/weekly/{id}", readMethods, (string id, WeeklyIssueRepository issues) =>
+        {
+            var canonicalId = id.ToUpperInvariant();
+            var issue = issues.Find(canonicalId, SiteLanguage.Turkish) ?? issues.Find(canonicalId, SiteLanguage.English);
+            return issue is null ? Results.NotFound() : Results.Redirect(issue.Path);
+        });
+    }
+
+    private static IResult MovedToEnglish(HttpContext context, string path) =>
+        Results.Redirect(SiteLanguage.UrlFor(SiteLanguage.English, path) + context.Request.QueryString, permanent: true);
 
     // Length-checked before FixedTimeEquals (which requires equal-length spans) so an unconfigured
     // or wrong-length key still compares in a way that reveals nothing timing-wise beyond "no".

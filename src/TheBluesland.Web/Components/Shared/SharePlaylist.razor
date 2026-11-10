@@ -1,11 +1,12 @@
-<details class="playlist-share" data-share-title="@Title" data-share-url="@Url">
-    <summary>Share playlist</summary>
+<details class="playlist-share" data-share-title="@Title" data-share-url="@Url"
+         data-msg-select="@Site.T.ShareMessageSelect" data-msg-copied="@Site.T.ShareMessageCopied" data-msg-unavailable="@Site.T.ShareMessageUnavailable">
+    <summary>@Site.T.SharePlaylist</summary>
     <div class="share-options">
-        <button type="button" data-native-share hidden>Share via device</button>
+        <button type="button" data-native-share hidden>@Site.T.ShareViaDevice</button>
         <a href="@($"https://twitter.com/intent/tweet?text={Uri.EscapeDataString(Title)}&url={Uri.EscapeDataString(Url)}")" target="_blank" rel="noopener noreferrer">Twitter / X</a>
         <a href="@($"https://wa.me/?text={Uri.EscapeDataString($"{Title} {Url}")}")" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-        <button type="button" data-copy-share hidden>Copy link</button>
-        <label>Playlist link <input type="url" value="@Url" readonly /></label>
+        <button type="button" data-copy-share hidden>@Site.T.CopyLink</button>
+        <label>@Site.T.ShareLinkLabel <input type="url" value="@Url" readonly /></label>
         <p role="status" aria-live="polite" data-share-status></p>
     </div>
 </details>

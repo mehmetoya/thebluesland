@@ -19,6 +19,8 @@ public sealed class PlaylistFrontMatter
     public string? SpotifyPlaylistId { get; set; }
     public string? Title { get; set; }
     public string? Summary { get; set; }
+    public string? TitleTr { get; set; }
+    public string? SummaryTr { get; set; }
     public string[]? Moods { get; set; }
     public string[]? Genres { get; set; }
     public string[]? Occasions { get; set; }

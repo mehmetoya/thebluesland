@@ -31,7 +31,7 @@ public sealed partial class PlaylistsFeedIntegrationTests : IAsyncLifetime
     private WebApplication _app = null!;
     private HttpClient _httpClient = null!;
 
-    [GeneratedRegex("<loc>[^<]*/playlists/[^<]*</loc>")]
+    [GeneratedRegex("<loc>[^<]*/en/playlists/[^<]*</loc>")]
     private static partial Regex SitemapPlaylistLocation();
 
     public async Task InitializeAsync()
@@ -88,9 +88,9 @@ public sealed partial class PlaylistsFeedIntegrationTests : IAsyncLifetime
         items.Select(item => item.GetProperty("addedAt").GetString()).ShouldBe(["2026-03-01", "2026-03-01", "2025-12-24"]);
         items.Select(item => item.GetProperty("url").GetString()).ShouldBe(
         [
-            $"{PublicOrigin}/playlists/alpha-blues",
-            $"{PublicOrigin}/playlists/bravo-warm",
-            $"{PublicOrigin}/playlists/charlie-old",
+            $"{PublicOrigin}/en/playlists/alpha-blues",
+            $"{PublicOrigin}/en/playlists/bravo-warm",
+            $"{PublicOrigin}/en/playlists/charlie-old",
         ]);
         items.Select(item => item.GetProperty("title").GetString()).ShouldContain("Charlie's Old Ones");
     }

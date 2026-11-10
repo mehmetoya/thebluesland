@@ -1,4 +1,5 @@
-@page "/collections/{Slug}"
+@page "/tr/collections/{Slug}"
+@page "/en/collections/{Slug}"
 @inject PlaylistContentRepository ContentRepository
 @inject PlaylistCacheLookup CacheLookup
 
@@ -10,28 +11,29 @@
                   CanonicalPath="@($"/collections/{_collection.Slug}")" ImagePath="/og-image.png"
                   StructuredDataJson="@(new[] { CollectionPageJsonLd })" />
     <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a href="/">Home</a> / <a href="/collections">Collections</a> / <span aria-current="page">@_collection.Title</span>
+        <a href="@Site.Url("/")">@Site.T.Home</a> / <a href="@Site.Url("/collections")">@Site.T.NavCollections</a> / <span aria-current="page" lang="@Site.EnglishContentLang">@_collection.Title</span>
     </nav>
     <section class="brand-intro">
-        <h1>@_collection.Title</h1>
-        <p>@_collection.Introduction</p>
+        @* Collection copy is English-only (docs/specs/site-i18n.md): marked lang="en" on a Turkish page. *@
+        <h1 lang="@Site.EnglishContentLang">@_collection.Title</h1>
+        <p lang="@Site.EnglishContentLang">@_collection.Introduction</p>
     </section>
-    <section class="catalogue" aria-label="Playlists in this collection">
+    <section class="catalogue" aria-label="@Site.T.PlaylistsInCollectionLabel">
         @foreach (var playlist in _playlists)
         {
-            <a class="playlist-card-link" href="@($"/playlists/{playlist.Slug}")">
+            <a class="playlist-card-link" href="@Site.Url($"/playlists/{playlist.Slug}")">
                 <PlaylistCard Content="playlist" CacheSnapshot="@_snapshots.GetValueOrDefault(playlist.SpotifyPlaylistId, PlaylistCacheSnapshot.Unavailable)" />
             </a>
         }
     </section>
-    <p><a href="/collections">Explore other collections</a> · <a href="/">Browse all playlists</a></p>
+    <p><a href="@Site.Url("/collections")">@Site.T.ExploreOtherCollections</a> · <a href="@Site.Url("/")">@Site.T.BrowseAllPlaylists</a></p>
 }
 else
 {
     <ResponseStatusCode Code="StatusCodes.Status404NotFound" />
-    <PageTitle>Collection not found - TheBluesland</PageTitle>
-    <h1>Collection not found</h1>
-    <p>We couldn't find this collection. <a href="/collections">Explore the collections</a> for another place to start.</p>
+    <PageTitle>@Site.T.CollectionNotFoundTitle - TheBluesland</PageTitle>
+    <h1>@Site.T.CollectionNotFoundTitle</h1>
+    <p>@Site.T.CollectionNotFoundBodyBefore<a href="@Site.Url("/collections")">@Site.T.CollectionNotFoundLink</a>@Site.T.CollectionNotFoundBodyAfter</p>
 }
 
 @code {
@@ -64,8 +66,9 @@ else
         StructuredDataBuilder.BuildCollectionPageForPlaylists(
             _collection!,
             _playlists,
-            BuildAbsoluteUrl($"/collections/{_collection!.Slug}"),
-            BuildAbsoluteUrl(string.Empty));
+            BuildAbsoluteUrl(Site.Url($"/collections/{_collection!.Slug}")),
+            BuildAbsoluteUrl(Site.Url("/")).TrimEnd('/'),
+            SiteLanguage.English); // collection copy is English-only today
 
     private string BuildAbsoluteUrl(string path) =>
         HttpContext is null ? path : SiteUrl.BuildAbsolute(HttpContext, path);

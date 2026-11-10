@@ -1,4 +1,5 @@
 using System.Text;
+using TheBluesland.Web.Localization;
 
 namespace TheBluesland.Web.Content;
 
@@ -10,7 +11,8 @@ public static class PlaylistSearch
 {
     public static IReadOnlyList<PlaylistContent> Apply(
         IReadOnlyList<PlaylistContent> playlists,
-        string? query)
+        string? query,
+        string languageCode = "en")
     {
         var queryTerms = Tokenize(query);
         if (queryTerms.Count == 0)
@@ -22,7 +24,7 @@ public static class PlaylistSearch
             .Select((playlist, index) => (
                 Playlist: playlist,
                 Index: index,
-                Score: Tokenize(SearchableText(playlist)).Count(queryTerms.Contains)))
+                Score: Tokenize(SearchableText(playlist, languageCode)).Count(queryTerms.Contains)))
             .Where(candidate => candidate.Score > 0)
             .OrderByDescending(candidate => candidate.Score)
             .ThenBy(candidate => candidate.Index)
@@ -30,14 +32,19 @@ public static class PlaylistSearch
             .ToList();
     }
 
-    private static string SearchableText(PlaylistContent playlist) =>
-        string.Join(
+    // On a Turkish page the Turkish tag labels are searchable too ("melankolik", "caz"), next to the
+    // raw tag values and the English title/summary that every language searches.
+    private static string SearchableText(PlaylistContent playlist, string languageCode)
+    {
+        var tags = PlaylistTags.All(playlist);
+        return string.Join(
             ' ',
             new[] { playlist.Title, playlist.Summary }
-                .Concat(playlist.Moods)
-                .Concat(playlist.Genres)
-                .Concat(playlist.Occasions)
-                .Concat(playlist.Eras));
+                .Concat(tags)
+                .Concat(languageCode == SiteLanguage.Turkish
+                    ? tags.Select(tag => TaxonomyLabels.Label(tag, languageCode))
+                    : []));
+    }
 
     private static HashSet<string> Tokenize(string? value)
     {

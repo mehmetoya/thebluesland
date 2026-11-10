@@ -1,30 +1,28 @@
-@page "/"
+@page "/tr"
+@page "/en"
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.Extensions.Primitives
 @inject PlaylistContentRepository ContentRepository
 @inject PlaylistCacheLookup CacheLookup
 
-<PageTitle>TheBluesland</PageTitle>
+<PageTitle>@Site.T.HomeTitle</PageTitle>
 @* US-011 AC1: CanonicalPath is the fixed "/" - never the current request's own query string, which
    is what canonicalises every ?mood=/?genre=/?occasion=/?era= filtered view back to the base
    catalogue (spec 14) regardless of which filters are active on this particular request. *@
 <PageMetadata
-    Title="TheBluesland"
-    Description="Explore Mehmet's personal collection of Spotify playlists, from blues and rock to folk, jazz and electronic music. Find something for your next listen."
+    Title="@Site.T.HomeTitle"
+    Description="@Site.T.HomeDescription"
     CanonicalPath="/"
     ImagePath="/og-image.png"
     StructuredDataJson="@(new[] { WebSiteJsonLd })" />
 
 <section class="brand-intro">
     <h1>TheBluesland</h1>
-    <p>
-        A personal collection of playlists, rooted in blues and open to wherever the music leads.
-        Find something for the road, a quiet evening, or a closer listen.
-    </p>
-    <p class="weekly-strip"><a href="/weekly"><strong>TheBluesland Weekly</strong> — every Monday, five music stories in five minutes <span aria-hidden="true">→</span></a></p>
+    <p>@Site.T.HomeIntro</p>
+    <p class="weekly-strip"><a href="@Site.Url("/weekly")"><strong>@Site.T.WeeklyStripLead</strong> — @Site.T.WeeklyStripText <span aria-hidden="true">→</span></a></p>
 </section>
 
-<form method="get" action="/" class="playlist-search">
+<form method="get" action="@Site.Url("/")" class="playlist-search">
     @foreach (var mood in MoodQuery ?? [])
     {
         <input type="hidden" name="mood" value="@mood" />
@@ -41,16 +39,16 @@
     {
         <input type="hidden" name="era" value="@era" />
     }
-    <label for="playlist-search-query">Find a playlist by style or mood</label>
+    <label for="playlist-search-query">@Site.T.SearchLabel</label>
     <div class="playlist-search-controls">
         <input
             id="playlist-search-query"
             type="search"
             name="q"
             value="@SearchQuery"
-            placeholder="e.g. melancholic blues"
+            placeholder="@Site.T.SearchPlaceholder"
             autocomplete="off" />
-        <button type="submit" class="filter-apply">Search</button>
+        <button type="submit" class="filter-apply">@Site.T.SearchButton</button>
     </div>
 </form>
 
@@ -95,85 +93,85 @@
     `body:has(.filter-mobile-toggle:checked)` locks background scroll (AC2) - if a browser lacks
     `:has()` the fixed, full-viewport panel still covers the list visually.
 *@
-<nav aria-label="Filters" class="filter-navbar">
+<nav aria-label="@Site.T.FiltersLabel" class="filter-navbar">
     <input type="checkbox" id="filter-mobile-toggle" class="filter-mobile-toggle" />
     <label for="filter-mobile-toggle" class="filter-mobile-trigger">
-        <span class="filter-mobile-trigger-label">@DimensionLabel("Filters", _criteria.ActiveCount)</span>
-        <span class="filter-mobile-trigger-close">Close</span>
+        <span class="filter-mobile-trigger-label">@DimensionLabel(Site.T.FiltersLabel, _criteria.ActiveCount)</span>
+        <span class="filter-mobile-trigger-close">@Site.T.FiltersClose</span>
     </label>
-    <form method="get" action="/" class="filter-navbar-form">
+    <form method="get" action="@Site.Url("/")" class="filter-navbar-form">
         @if (!string.IsNullOrWhiteSpace(SearchQuery))
         {
             <input type="hidden" name="q" value="@SearchQuery" />
         }
         <details class="filter-dropdown" name="filter-dropdown-group">
-            <summary>@DimensionLabel("Mood", _criteria.Moods.Count)</summary>
+            <summary>@DimensionLabel(Site.T.FilterMood, _criteria.Moods.Count)</summary>
             <div class="filter-dropdown-panel">
                 <FilterDimensionOptions FieldName="mood" Values="PlaylistTaxonomy.Moods" Selected="_criteria.Moods" />
             </div>
         </details>
         <details class="filter-dropdown" name="filter-dropdown-group">
-            <summary>@DimensionLabel("Genre", _criteria.Genres.Count)</summary>
+            <summary>@DimensionLabel(Site.T.FilterGenre, _criteria.Genres.Count)</summary>
             <div class="filter-dropdown-panel">
                 <FilterDimensionOptions FieldName="genre" Values="PlaylistTaxonomy.Genres" Selected="_criteria.Genres" />
             </div>
         </details>
         <details class="filter-dropdown" name="filter-dropdown-group">
-            <summary>@DimensionLabel("Occasion", _criteria.Occasions.Count)</summary>
+            <summary>@DimensionLabel(Site.T.FilterOccasion, _criteria.Occasions.Count)</summary>
             <div class="filter-dropdown-panel">
                 <FilterDimensionOptions FieldName="occasion" Values="PlaylistTaxonomy.Occasions" Selected="_criteria.Occasions" />
             </div>
         </details>
         <details class="filter-dropdown" name="filter-dropdown-group">
-            <summary>@DimensionLabel("Era", _criteria.Eras.Count)</summary>
+            <summary>@DimensionLabel(Site.T.FilterEra, _criteria.Eras.Count)</summary>
             <div class="filter-dropdown-panel">
                 <FilterDimensionOptions FieldName="era" Values="PlaylistTaxonomy.Eras" Selected="_criteria.Eras" />
             </div>
         </details>
 
         <div class="filter-mobile-dimension">
-            <h3>@DimensionLabel("Mood", _criteria.Moods.Count)</h3>
+            <h3>@DimensionLabel(Site.T.FilterMood, _criteria.Moods.Count)</h3>
             <FilterDimensionOptions FieldName="mood" Values="PlaylistTaxonomy.Moods" Selected="_criteria.Moods" />
         </div>
         <div class="filter-mobile-dimension">
-            <h3>@DimensionLabel("Genre", _criteria.Genres.Count)</h3>
+            <h3>@DimensionLabel(Site.T.FilterGenre, _criteria.Genres.Count)</h3>
             <FilterDimensionOptions FieldName="genre" Values="PlaylistTaxonomy.Genres" Selected="_criteria.Genres" />
         </div>
         <div class="filter-mobile-dimension">
-            <h3>@DimensionLabel("Occasion", _criteria.Occasions.Count)</h3>
+            <h3>@DimensionLabel(Site.T.FilterOccasion, _criteria.Occasions.Count)</h3>
             <FilterDimensionOptions FieldName="occasion" Values="PlaylistTaxonomy.Occasions" Selected="_criteria.Occasions" />
         </div>
         <div class="filter-mobile-dimension">
-            <h3>@DimensionLabel("Era", _criteria.Eras.Count)</h3>
+            <h3>@DimensionLabel(Site.T.FilterEra, _criteria.Eras.Count)</h3>
             <FilterDimensionOptions FieldName="era" Values="PlaylistTaxonomy.Eras" Selected="_criteria.Eras" />
         </div>
 
-        <button type="submit" class="filter-apply">Apply filters</button>
-        <a href="/" class="filter-clear">Clear filters</a>
+        <button type="submit" class="filter-apply">@Site.T.ApplyFilters</button>
+        <a href="@Site.Url("/")" class="filter-clear">@Site.T.ClearFilters</a>
     </form>
 </nav>
 
 <section class="catalogue">
-    <h2>Playlists</h2>
+    <h2>@Site.T.PlaylistsHeading</h2>
     @if (_filteredPlaylists.Count == 0)
     {
         @if (_criteria.IsActive || !string.IsNullOrWhiteSpace(SearchQuery))
         {
             <p class="no-results">@GetNoResultsMessage()</p>
-            <a href="/" class="clear-filters">
-                @(string.IsNullOrWhiteSpace(SearchQuery) ? "Clear filters" : "Clear search and filters")
+            <a href="@Site.Url("/")" class="clear-filters">
+                @(string.IsNullOrWhiteSpace(SearchQuery) ? Site.T.ClearFilters : Site.T.ClearSearchAndFilters)
             </a>
         }
         else
         {
-            <p>No playlists are published yet. Check back soon.</p>
+            <p>@Site.T.NoPlaylistsYet</p>
         }
     }
     else
     {
         @foreach (var playlist in _visiblePlaylists)
         {
-            <a href="@($"/playlists/{playlist.Slug}")" class="playlist-card-link">
+            <a href="@Site.Url($"/playlists/{playlist.Slug}")" class="playlist-card-link">
                 <PlaylistCard Content="playlist" CacheSnapshot="GetSnapshot(playlist)" />
             </a>
         }
@@ -185,7 +183,7 @@
            afterward. *@
         @if (PlaylistCataloguePage.HasMore(_filteredPlaylists, PageQuery))
         {
-            <a href="@BuildLoadMoreUrl()" class="load-more">Show more playlists</a>
+            <a href="@BuildLoadMoreUrl()" class="load-more">@Site.T.ShowMore</a>
         }
     }
 </section>
@@ -245,7 +243,7 @@
         // Already sorted by displayOrder, then publishedAt descending (US-009 AC1/FR-001).
         var allPublished = await ContentRepository.FindAllPublishedAsync(cancellationToken);
         _filteredPlaylists = PlaylistFilter.Apply(allPublished, _criteria);
-        _filteredPlaylists = PlaylistSearch.Apply(_filteredPlaylists, SearchQuery);
+        _filteredPlaylists = PlaylistSearch.Apply(_filteredPlaylists, SearchQuery, Site.Code);
         _visiblePlaylists = PlaylistCataloguePage.Take(_filteredPlaylists, PageQuery);
 
         // Never throws (spec 16.1): a DB outage must still yield a 200 with editorial content.
@@ -285,22 +283,22 @@
             query["q"] = SearchQuery;
         }
 
-        return QueryHelpers.AddQueryString("/", query);
+        return QueryHelpers.AddQueryString(Site.Url("/"), query);
     }
 
     private string GetNoResultsMessage() =>
         !string.IsNullOrWhiteSpace(SearchQuery) && _criteria.IsActive
-            ? "No playlists match your search and filters."
+            ? Site.T.NoResultsSearchAndFilters
             : !string.IsNullOrWhiteSpace(SearchQuery)
-                ? "No playlists match your search."
-                : "No playlists match the selected filters.";
+                ? Site.T.NoResultsSearch
+                : Site.T.NoResultsFilters;
 
     // US-018 AC4: "Genre (2)" - the active-count indicator shown in each dropdown's <summary>.
     private static string DimensionLabel(string name, int activeCount) =>
         activeCount > 0 ? $"{name} ({activeCount})" : name;
 
     private string WebSiteJsonLd =>
-        StructuredDataBuilder.BuildWebSite(BuildAbsoluteUrl("/"));
+        StructuredDataBuilder.BuildWebSite(BuildAbsoluteUrl(Site.Url("/")), Site.Code);
 
     private string BuildAbsoluteUrl(string path) =>
         HttpContext is null ? path : SiteUrl.BuildAbsolute(HttpContext, path);

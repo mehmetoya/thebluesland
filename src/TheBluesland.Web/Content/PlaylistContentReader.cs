@@ -63,6 +63,7 @@ public sealed class PlaylistContentReader
             return null;
         }
 
+        var (englishNote, turkishNote) = SplitTurkishNote(body);
         return new PlaylistContent(
             slug,
             spotifyPlaylistId,
@@ -72,13 +73,36 @@ public sealed class PlaylistContentReader
             frontMatter.Genres ?? [],
             frontMatter.Occasions ?? [],
             frontMatter.Eras ?? [],
-            body.Trim(),
+            englishNote,
             string.Equals(frontMatter.Status, PublishedStatus, StringComparison.OrdinalIgnoreCase),
             frontMatter.FeaturedOrder,
             frontMatter.DisplayOrder ?? 0,
             ParsePublishedAt(frontMatter.PublishedAt),
-            frontMatter.PreviousSlugs ?? []);
+            frontMatter.PreviousSlugs ?? [])
+        {
+            TitleTr = NullIfBlank(frontMatter.TitleTr),
+            SummaryTr = NullIfBlank(frontMatter.SummaryTr),
+            CuratorNoteTr = turkishNote,
+        };
     }
+
+    // Optional Turkish curator note: everything after a line that is exactly the marker. The English
+    // note is what comes before it (or the whole body when there is no marker).
+    private static (string English, string? Turkish) SplitTurkishNote(string body)
+    {
+        var lines = body.ReplaceLineEndings("\n").Split('\n');
+        var markerIndex = Array.FindIndex(lines, line => line.Trim() == PlaylistContent.TurkishNoteMarker);
+        if (markerIndex < 0)
+        {
+            return (body.Trim(), null);
+        }
+
+        return (
+            string.Join('\n', lines[..markerIndex]).Trim(),
+            NullIfBlank(string.Join('\n', lines[(markerIndex + 1)..]).Trim()));
+    }
+
+    private static string? NullIfBlank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     // Draft content may omit publishedAt entirely (US-006); an unparsable value degrades to null
     // rather than throwing, matching this reader's "malformed content must not crash render"

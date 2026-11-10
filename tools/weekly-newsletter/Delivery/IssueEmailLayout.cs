@@ -52,11 +52,12 @@ internal static class IssueEmailLayout
 
         var html = new StringBuilder();
         html.Append($"<div lang=\"{issue.Language.Code}\" dir=\"ltr\" style=\"max-width:600px;margin:0 auto;background:#ffffff;color:{Ink};font-family:{FontFamily};font-size:16px;line-height:1.6;\">\n");
-        html.Append($"<div style=\"background:{Brand};padding:16px 24px;text-align:center;\"><a href=\"{SiteOrigin}/weekly\" style=\"text-decoration:none;\"><img src=\"{SiteOrigin}/images/logo-blue.png\" alt=\"TheBluesland Weekly\" width=\"160\" style=\"display:block;width:160px;max-width:100%;height:auto;margin:0 auto;border:0;\"></a></div>\n");
+        html.Append($"<div style=\"background:{Brand};padding:16px 24px;text-align:center;\"><a href=\"{SiteOrigin}/{issue.Language.Code}/weekly\" style=\"text-decoration:none;\"><img src=\"{SiteOrigin}/images/logo-blue.png\" alt=\"TheBluesland Weekly\" width=\"160\" style=\"display:block;width:160px;max-width:100%;height:auto;margin:0 auto;border:0;\"></a></div>\n");
         html.Append("<div style=\"padding:0 24px 24px;\">\n");
 
         var number = IssueNumber(issue.Id);
-        var webUrl = $"{SiteOrigin}/weekly/{issue.Id}/{issue.Language.Code}";
+        // The site puts the language first: /tr/weekly/2026-W47 (the old /weekly/2026-W47/tr redirects there).
+        var webUrl = $"{SiteOrigin}/{issue.Language.Code}/weekly/{issue.Id}";
         html.Append($"<p style=\"margin:16px 0 0;font-size:13px;line-height:1.5;color:{Muted};\">{(turkish ? "Sayı" : "Issue")} {number} · {FormatDate(issue.SendDate, turkish)} · <a href=\"{webUrl}\" style=\"{LinkStyle}\">{(turkish ? "Web'de oku" : "Read on the web")}</a></p>\n");
         html.Append($"<h1 style=\"margin:8px 0 20px;font-size:28px;line-height:1.2;font-weight:bold;color:{Ink};\">{Escape(DisplayTitle(issue.Title))}</h1>\n");
 
@@ -123,8 +124,8 @@ internal static class IssueEmailLayout
         var otherCode = turkish ? "en" : "tr";
         html.Append($"<p style=\"margin:24px 0 0;padding-top:16px;border-top:1px solid {Rule};font-size:13px;line-height:1.5;color:{Muted};\">");
         html.Append(turkish
-            ? $"<a href=\"{SiteOrigin}/weekly\" style=\"{LinkStyle}\">Arşiv</a> · <a href=\"{SiteOrigin}/weekly/{issue.Id}/{otherCode}\" lang=\"en\" style=\"{LinkStyle}\">Read in English</a>"
-            : $"<a href=\"{SiteOrigin}/weekly\" style=\"{LinkStyle}\">Archive</a> · <a href=\"{SiteOrigin}/weekly/{issue.Id}/{otherCode}\" lang=\"tr\" style=\"{LinkStyle}\">Türkçe oku</a>");
+            ? $"<a href=\"{SiteOrigin}/tr/weekly\" style=\"{LinkStyle}\">Arşiv</a> · <a href=\"{SiteOrigin}/{otherCode}/weekly/{issue.Id}\" lang=\"en\" style=\"{LinkStyle}\">Read in English</a>"
+            : $"<a href=\"{SiteOrigin}/en/weekly\" style=\"{LinkStyle}\">Archive</a> · <a href=\"{SiteOrigin}/{otherCode}/weekly/{issue.Id}\" lang=\"tr\" style=\"{LinkStyle}\">Türkçe oku</a>");
         html.Append("</p>\n</div>\n</div>\n");
         return html.ToString();
     }

@@ -51,11 +51,11 @@ public sealed class PageMetadataIntegrationTests : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData("/", "<title>TheBluesland</title>")]
-    [InlineData("/playlists/masterpieces-of-erkin-the-father", "<title>Masterpieces of Erkin the Father - TheBluesland</title>")]
-    [InlineData("/about", "<title>About - TheBluesland</title>")]
-    [InlineData("/privacy", "<title>Privacy - TheBluesland</title>")]
-    [InlineData("/terms", "<title>Terms - TheBluesland</title>")]
+    [InlineData("/en", "<title>TheBluesland</title>")]
+    [InlineData("/en/playlists/masterpieces-of-erkin-the-father", "<title>Masterpieces of Erkin the Father - TheBluesland</title>")]
+    [InlineData("/en/about", "<title>About - TheBluesland</title>")]
+    [InlineData("/en/privacy", "<title>Privacy - TheBluesland</title>")]
+    [InlineData("/en/terms", "<title>Terms - TheBluesland</title>")]
     public async Task IndexablePage_returns_its_own_unique_title_description_canonical_and_social_tags(
         string path, string expectedTitleTag)
     {
@@ -81,7 +81,7 @@ public sealed class PageMetadataIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task PlaylistDetailPage_social_image_is_a_TheBluesland_owned_endpoint_not_a_spotify_url()
     {
-        var response = await _httpClient.GetAsync("/playlists/masterpieces-of-erkin-the-father");
+        var response = await _httpClient.GetAsync("/en/playlists/masterpieces-of-erkin-the-father");
         var body = await response.Content.ReadAsStringAsync();
 
         body.ShouldContain("property=\"og:image\" content=\"https://thebluesland.onrender.com");
@@ -98,7 +98,7 @@ public sealed class PageMetadataIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task IndexablePage_renders_exactly_one_title_element()
     {
-        var response = await _httpClient.GetAsync("/about");
+        var response = await _httpClient.GetAsync("/en/about");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -110,11 +110,11 @@ public sealed class PageMetadataIntegrationTests : IAsyncLifetime
     [Fact]
     public async Task HomePage_canonical_link_stays_the_bare_home_page_even_with_active_filter_query_params()
     {
-        var response = await _httpClient.GetAsync("/?mood=warm&genre=blues&occasion=late-night&era=1970s");
+        var response = await _httpClient.GetAsync("/en?mood=warm&genre=blues&occasion=late-night&era=1970s");
         var body = await response.Content.ReadAsStringAsync();
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
-        var expectedCanonical = "<link rel=\"canonical\" href=\"https://thebluesland.onrender.com/\" />";
+        var expectedCanonical = "<link rel=\"canonical\" href=\"https://thebluesland.onrender.com/en\" />";
         body.ShouldContain(expectedCanonical);
     }
 }

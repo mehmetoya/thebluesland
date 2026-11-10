@@ -1,3 +1,7 @@
+@{
+    var title = Content.TitleIn(Site.Code);
+    var summary = Content.SummaryIn(Site.Code);
+}
 <article class="playlist-card">
     @if (CacheSnapshot is { IsPlayable: true, CoverImageUrl: { } coverImageUrl })
     {
@@ -8,8 +12,9 @@
         <div class="playlist-card-cover playlist-card-cover-placeholder" aria-hidden="true"></div>
     }
     <div class="playlist-card-body">
-        <h2>@Content.Title</h2>
-        <p class="summary">@Content.Summary</p>
+        @* Editorial text is English-only today: on a Turkish page it carries lang="en" (see PlaylistContent.TitleIn). *@
+        <h2 lang="@title.Lang">@title.Text</h2>
+        <p class="summary" lang="@summary.Lang">@summary.Text</p>
         @if (CacheSnapshot is { IsPlayable: true, TrackCount: { } trackCount })
         {
             <p class="track-count">
@@ -18,7 +23,7 @@
                     <circle cx="12" cy="12" r="2.5" />
                     <path d="M6 12a6 6 0 0 1 6-6m6 6a6 6 0 0 1-6 6" />
                 </svg>
-                <span>@trackCount tracks</span>
+                <span>@Site.T.TrackCount(trackCount)</span>
             </p>
         }
     </div>

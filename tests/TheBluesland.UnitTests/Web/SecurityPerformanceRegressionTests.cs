@@ -16,7 +16,7 @@ public sealed class SecurityPerformanceRegressionTests
     private const string PublicOrigin = "https://catalogue.example";
 
     [Theory]
-    [InlineData("/playlists/dear-mr-fantasy")]
+    [InlineData("/en/playlists/dear-mr-fantasy")]
     [InlineData("/playlists/dear-mr-fantasy/og-image.png")]
     public async Task Draft_content_is_not_served(string path)
     {

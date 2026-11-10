@@ -1,40 +1,96 @@
-@page "/privacy"
+@page "/tr/privacy"
+@page "/en/privacy"
 
-<PageTitle>Privacy - TheBluesland</PageTitle>
+<PageTitle>@Site.T.PrivacyTitle</PageTitle>
 <PageMetadata
-    Title="Privacy - TheBluesland"
-    Description="How browsing TheBluesland works, including hosting requests, Spotify cover images and links to other services."
+    Title="@Site.T.PrivacyTitle"
+    Description="@Site.T.PrivacyDescription"
     CanonicalPath="/privacy"
     ImagePath="/og-image.png" />
 
-<article class="privacy">
-    <h1>Privacy</h1>
-    <h2>Browsing the site</h2>
-    <p>
-        You can browse TheBluesland without creating an account or signing in to Spotify.
-        The site does not use advertising or analytics trackers. Your browser sends technical
-        information, such as your IP address and browser details, when it requests a page or image.
-        The hosting provider may process this information to serve and operate the site.
-    </p>
-    <h2>Spotify images and links</h2>
-    <p>
-        Playlist cover images load directly from Spotify's image servers, so your browser contacts
-        those servers when it displays an image. Music playback takes place on Spotify, through
-        the links on each playlist page. Spotify explains how it handles data in its
-        <a href="https://www.spotify.com/legal/privacy-policy/">privacy policy</a>.
-    </p>
-    <h2>Sharing a playlist</h2>
-    <p>
-        Sharing is optional. Twitter / X and WhatsApp links open those services when you select
-        them, and their privacy policies apply there. Device sharing uses your browser's share
-        menu. Copying a link places the playlist address on your clipboard.
-    </p>
+@* The Turkish text translates the English text sentence by sentence; neither adds nor drops an
+   obligation, right or claim. The one addition is the "Language preference" section, which only
+   discloses the lang cookie the site itself now sets (docs/specs/site-i18n.md). *@
+@if (Site.IsTurkish)
+{
+    <article class="privacy">
+        <h1>Gizlilik</h1>
+        <h2>Siteye göz atma</h2>
+        <p>
+            TheBluesland'e hesap oluşturmadan ya da Spotify'a giriş yapmadan göz atabilirsin.
+            Site reklam veya analitik izleyicileri kullanmaz. Tarayıcın bir sayfa ya da görsel
+            istediğinde IP adresin ve tarayıcı ayrıntıların gibi teknik bilgileri gönderir.
+            Barındırma sağlayıcısı bu bilgileri siteyi sunmak ve işletmek için işleyebilir.
+        </p>
+        <h2>Dil tercihi</h2>
+        <p>
+            Siteyi bir dilde açtığında, tercihini hatırlamak için tarayıcında <code>lang</code> adlı
+            küçük bir çerez saklanır. Çerez yalnızca "tr" ya da "en" değerini içerir, bir yıl saklanır
+            ve yalnızca ana sayfadan seni doğru dile yönlendirmek için kullanılır.
+        </p>
+        <h2>Spotify görselleri ve bağlantıları</h2>
+        <p>
+            Çalma listesi kapak görselleri doğrudan Spotify'ın görsel sunucularından yüklenir; bu
+            yüzden tarayıcın bir görseli gösterirken o sunuculara bağlanır. Müzik çalma Spotify'da,
+            her çalma listesi sayfasındaki bağlantılar üzerinden gerçekleşir. Spotify'ın verileri nasıl
+            işlediğini
+            <a href="https://www.spotify.com/legal/privacy-policy/">gizlilik politikasında</a>
+            açıklar.
+        </p>
+        <h2>Bir çalma listesini paylaşma</h2>
+        <p>
+            Paylaşım isteğe bağlıdır. Twitter / X ve WhatsApp bağlantıları, seçtiğinde o hizmetleri
+            açar ve orada kendi gizlilik politikaları geçerlidir. Cihazla paylaşım tarayıcının
+            paylaşım menüsünü kullanır. Bağlantıyı kopyalamak, çalma listesinin adresini panona
+            yerleştirir.
+        </p>
 
-    <h2>TheBluesland Weekly</h2>
-    <p>
-        If you subscribe to TheBluesland Weekly, your e-mail address goes straight to Kit (kit.com),
-        the e-mail service that sends the newsletter; this site never sees or stores it. Kit is based
-        in the United States and processes your address there under its own privacy policy. You first
-        receive a confirmation e-mail, and every issue has a one-click unsubscribe link.
-    </p>
-</article>
+        <h2>TheBluesland Weekly</h2>
+        <p>
+            TheBluesland Weekly'ye abone olursan e-posta adresin doğrudan bülteni gönderen e-posta
+            hizmeti Kit'e (kit.com) gider; bu site onu ne görür ne de saklar. Kit Amerika Birleşik
+            Devletleri merkezlidir ve adresini orada kendi gizlilik politikası kapsamında işler. Önce
+            bir onay e-postası alırsın ve her sayıda tek tıkla abonelikten çıkma bağlantısı bulunur.
+        </p>
+    </article>
+}
+else
+{
+    <article class="privacy">
+        <h1>Privacy</h1>
+        <h2>Browsing the site</h2>
+        <p>
+            You can browse TheBluesland without creating an account or signing in to Spotify.
+            The site does not use advertising or analytics trackers. Your browser sends technical
+            information, such as your IP address and browser details, when it requests a page or image.
+            The hosting provider may process this information to serve and operate the site.
+        </p>
+        <h2>Language preference</h2>
+        <p>
+            When you open the site in one language, a small cookie called <code>lang</code> is saved in
+            your browser to remember your choice. It holds only "tr" or "en", is kept for one year, and
+            is used only to send you to the right language from the home page.
+        </p>
+        <h2>Spotify images and links</h2>
+        <p>
+            Playlist cover images load directly from Spotify's image servers, so your browser contacts
+            those servers when it displays an image. Music playback takes place on Spotify, through
+            the links on each playlist page. Spotify explains how it handles data in its
+            <a href="https://www.spotify.com/legal/privacy-policy/">privacy policy</a>.
+        </p>
+        <h2>Sharing a playlist</h2>
+        <p>
+            Sharing is optional. Twitter / X and WhatsApp links open those services when you select
+            them, and their privacy policies apply there. Device sharing uses your browser's share
+            menu. Copying a link places the playlist address on your clipboard.
+        </p>
+
+        <h2>TheBluesland Weekly</h2>
+        <p>
+            If you subscribe to TheBluesland Weekly, your e-mail address goes straight to Kit (kit.com),
+            the e-mail service that sends the newsletter; this site never sees or stores it. Kit is based
+            in the United States and processes your address there under its own privacy policy. You first
+            receive a confirmation e-mail, and every issue has a one-click unsubscribe link.
+        </p>
+    </article>
+}
