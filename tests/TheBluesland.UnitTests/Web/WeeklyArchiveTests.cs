@@ -468,6 +468,21 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
         body.ShouldNotContain("rel=\"canonical\"");
     }
 
+    [Theory]
+    [InlineData("tr", "Aboneliğin onaylandı", "her pazartesi sabah 08:00")]
+    [InlineData("en", "Subscription confirmed", "every Monday at 12:00 UTC")]
+    public async Task The_confirmed_page_welcomes_the_subscriber_and_is_not_indexed(string language, string heading, string text)
+    {
+        // Kit sends a subscriber here after the double opt-in click.
+        var response = await _http.GetAsync($"/{language}/weekly/confirmed");
+        var body = await BodyAsync(response);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain($"<h1>{heading}</h1>");
+        body.ShouldContain(text);
+        body.ShouldContain("<meta name=\"robots\" content=\"noindex\"");
+    }
+
     // Kit's forms still redirect to the pre-localization thanks URL; it must keep landing on the right page.
     [Theory]
     [InlineData("/weekly/thanks?lang=tr", "/tr/weekly/thanks")]

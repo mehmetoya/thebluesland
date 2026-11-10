@@ -135,6 +135,8 @@ public sealed partial class SiteText
         WeeklyStories = count => count == 1 ? "1 story" : $"{count} stories",
         WeeklyThanksTitle = "Almost there",
         WeeklyThanksBody = "Check your inbox (and your spam folder) for an e-mail from Kit and click the confirmation link. Your subscription starts when you confirm.",
+        WeeklyConfirmedTitle = "Subscription confirmed",
+        WeeklyConfirmedBody = "Welcome. TheBluesland Weekly lands in your inbox every Monday at 12:00 UTC. You can unsubscribe with one click from any e-mail.",
         WeeklyBackToWeekly = "Back to TheBluesland Weekly",
         SubscribeHeading = "Get it every Monday",
         SubscribeIntro = "Five stories, a few minutes. Choose Turkish, English or both. Unsubscribe anytime with one click.",

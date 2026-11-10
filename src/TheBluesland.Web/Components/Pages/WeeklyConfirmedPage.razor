@@ -1,0 +1,15 @@
+@page "/tr/weekly/confirmed"
+@page "/en/weekly/confirmed"
+
+@* Where Kit sends a subscriber after they click the confirmation link in the double opt-in e-mail
+   (form setting: after confirming, redirect to this URL). Static, not indexed, own <HeadContent>. *@
+<PageTitle>@Site.T.WeeklyConfirmedTitle - TheBluesland</PageTitle>
+<HeadContent>
+    <meta name="robots" content="noindex" />
+</HeadContent>
+
+<article class="weekly weekly-thanks" lang="@Site.Code">
+    <h1>@Site.T.WeeklyConfirmedTitle</h1>
+    <p>@Site.T.WeeklyConfirmedBody</p>
+    <p><a href="@Site.Url("/weekly")">@Site.T.WeeklyBackToWeekly</a></p>
+</article>

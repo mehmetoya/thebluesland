@@ -136,6 +136,8 @@ public sealed partial class SiteText
         WeeklyStories = count => $"{count} haber",
         WeeklyThanksTitle = "Neredeyse tamam",
         WeeklyThanksBody = "Gelen kutunu (ve spam klasörünü) kontrol et. Kit'ten gelen e-postadaki onay bağlantısına tıkla; aboneliğin onayladığında başlar.",
+        WeeklyConfirmedTitle = "Aboneliğin onaylandı",
+        WeeklyConfirmedBody = "Hoş geldin. TheBluesland Weekly her pazartesi sabah 08:00'de (TSİ) gelen kutunda olacak. Her e-postanın altındaki bağlantıyla tek tıkla ayrılabilirsin.",
         WeeklyBackToWeekly = "TheBluesland Weekly'ye dön",
         SubscribeHeading = "Her pazartesi e-postanda",
         SubscribeIntro = "Beş haber, birkaç dakika. Türkçe, İngilizce ya da ikisini birden seç. Aboneliği tek tıkla bırakabilirsin.",
