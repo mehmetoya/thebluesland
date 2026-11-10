@@ -33,3 +33,6 @@ era-report.md
 
 # Personal Claude Code MCP server config (per-developer; may hold auth state)
 .mcp.json
+
+# Claude Code agent worktrees
+.claude/worktrees/
