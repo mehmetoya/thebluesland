@@ -9,6 +9,7 @@ public sealed record LanguageDraft(
     DraftLanguage Language,
     string IssueMarkdown,
     string BackupsMarkdown,
+    DraftResponse Text,
     IReadOnlyList<DraftWarning> Warnings,
     string Model,
     string? FellBackFrom = null);
@@ -27,7 +28,6 @@ public static class DraftReportFormatter
         markdown.Append(CultureInfo.InvariantCulture,
             $"Window {week.From.UtcDateTime:yyyy-MM-dd HH:mm} → {week.To.UtcDateTime:yyyy-MM-dd HH:mm} UTC · {card.Picks.Count()} stories + {card.Backups.Count()} backups · {string.Join(" + ", drafts.Select(draft => draft.Language.Code.ToUpperInvariant()))}\n\n");
 
-        var headline = card.Stories.ToDictionary(story => story.Key, story => story.Articles[0].Title);
         foreach (var draft in drafts)
         {
             var count = draft.Warnings.Count;
@@ -37,17 +37,7 @@ public static class DraftReportFormatter
             markdown.Append(draft.FellBackFrom is { } busy
                 ? string.Create(CultureInfo.InvariantCulture, $" because `{busy}` was unavailable (busy or out of free quota).\n\n")
                 : ".\n\n");
-            if (count > 0)
-            {
-                markdown.Append("| Where | What to check |\n|---|---|\n");
-                foreach (var warning in draft.Warnings)
-                {
-                    var where = headline.TryGetValue(warning.Where, out var title) ? title : warning.Where;
-                    markdown.Append(CultureInfo.InvariantCulture, $"| {MarkdownText.Cell(where)} | {MarkdownText.Cell(warning.Message)} |\n");
-                }
-
-                markdown.Append('\n');
-            }
+            markdown.Append(WarningsTable(card, draft.Warnings));
 
             markdown.Append(CultureInfo.InvariantCulture, $"<details><summary>{draft.Language.Code.ToUpperInvariant()} issue</summary>\n\n");
             markdown.Append(StripFrontMatter(draft.IssueMarkdown)).Append("\n</details>\n\n");
@@ -56,6 +46,25 @@ public static class DraftReportFormatter
         }
 
         return markdown.ToString();
+    }
+
+    /// <summary>The warnings as a "where / what to check" table, the story named by its lead headline; empty when there are none.</summary>
+    public static string WarningsTable(FactCard card, IReadOnlyList<DraftWarning> warnings)
+    {
+        if (warnings.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var headline = card.Stories.ToDictionary(story => story.Key, story => story.Articles[0].Title);
+        var markdown = new StringBuilder("| Where | What to check |\n|---|---|\n");
+        foreach (var warning in warnings)
+        {
+            var where = headline.TryGetValue(warning.Where, out var title) ? title : warning.Where;
+            markdown.Append(CultureInfo.InvariantCulture, $"| {MarkdownText.Cell(where)} | {MarkdownText.Cell(warning.Message)} |\n");
+        }
+
+        return markdown.Append('\n').ToString();
     }
 
     private static string StripFrontMatter(string markdown)

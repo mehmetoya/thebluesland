@@ -22,8 +22,13 @@ name: CI
 # in-process. `CiWorkflowSecretIsolationTests` (tests/TheBluesland.UnitTests/Workflows) pins this as
 # a regression test.
 
+# ready_for_review (issue-review spec, Design section 3): the weekly bot PR is opened with
+# GITHUB_TOKEN, which never triggers pull_request workflows. A draft PR cannot be merged, so Mehmet
+# must mark it ready first - that event is his, and it runs this whole pipeline. The first four
+# types are GitHub's defaults, kept explicitly.
 on:
-  pull_request: {}
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 
@@ -59,6 +64,11 @@ jobs:
         # silently treats a missing directory as valid (US-006), so a wrong relative path here would
         # make this job falsely report success instead of failing loudly.
         run: dotnet run --project src/TheBluesland.Web/TheBluesland.Web.csproj -- validate-content ${{ github.workspace }}/content/playlists
+
+      - name: Validate weekly issues
+        # docs/specs/weekly-newsletter-issue-review.md, Design section 4: front matter, five sourced
+        # stories, headings matching the front matter, the AI note, and no backups/review files.
+        run: dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj -- validate-weekly ${{ github.workspace }}/content/weekly
 
   build-and-test:
     runs-on: ubuntu-latest

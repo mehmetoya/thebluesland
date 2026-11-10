@@ -14,6 +14,22 @@ public sealed record IssueWeek(int Year, int Week, DateOnly SendDate, DateTimeOf
 
     public string Id => string.Create(CultureInfo.InvariantCulture, $"{Year}-W{Week:00}");
 
+    /// <summary>
+    /// The issue a run drafts: an explicit window when <paramref name="to"/> is given (seven days
+    /// long unless <paramref name="from"/> says otherwise), otherwise the week that ended at the last
+    /// Sunday 10:00. Shared by <c>draft</c> and <c>issue-week</c> so both name the same issue.
+    /// </summary>
+    public static IssueWeek Resolve(DateTimeOffset? from, DateTimeOffset? to, DateTimeOffset now)
+    {
+        if (to is { } end)
+        {
+            return ForWindow(from ?? end - TimeSpan.FromDays(7), end);
+        }
+
+        var week = ForDraftAt(now);
+        return from is { } start ? week with { From = start } : week;
+    }
+
     /// <summary>The issue whose window ended at the most recent Sunday 10:00 Istanbul time at or before <paramref name="now"/>.</summary>
     public static IssueWeek ForDraftAt(DateTimeOffset now)
     {

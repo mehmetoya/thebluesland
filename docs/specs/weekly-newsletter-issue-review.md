@@ -2,7 +2,7 @@
 
 Modül: `issue-review` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Önceki modül:
 [issue-drafting](weekly-newsletter-issue-drafting.md) · Sınır: [ADR-0006](../adr/0006-weekly-newsletter-ai-metin-siniri.md)
-madde 2 ve 5 · Durum: TASLAK — 2026-11-10 (onay bekliyor)
+madde 2 ve 5 · Durum: ONAYLANDI — 2026-11-10 (Mehmet: beş kararın hepsi)
 
 ## Assumptions
 
@@ -185,7 +185,7 @@ tests/TheBluesland.UnitTests/Workflows/NewsletterDraftWorkflowTests.cs
 - [ ] İzolasyon testleri iki job'un ayrımını kanıtlar.
 - [ ] Tam build ve test yeşil; yeni paket ve secret yok.
 
-## Karar önerileri (onay bekliyor)
+## Kararlar (onaylandı, 2026-11-10)
 
 1. **CI tetikleme: "Ready for review" + bot tarafında ön doğrulama** (§3). Yeni credential yok.
 2. **Yetki ayrımı: iki job** (§2). AI anahtarı ve yazma yetkisi asla aynı yerde bulunmaz.

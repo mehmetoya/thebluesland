@@ -2,12 +2,14 @@ using TheBluesland.WeeklyNewsletter.Clustering;
 using TheBluesland.WeeklyNewsletter.Ingest;
 using TheBluesland.WeeklyNewsletter.Ranking;
 using TheBluesland.WeeklyNewsletter.Reporting;
+using TheBluesland.WeeklyNewsletter.Review;
 
 namespace TheBluesland.WeeklyNewsletter.Drafting;
 
 /// <summary>
 /// The <c>draft</c> subcommand (issue-drafting spec, Design section 5): window → clusters → pick →
-/// fact card → one Gemini call per language → checks → issue and backups files → job summary.
+/// fact card → one Gemini call per language → checks → issue files, plus backups and the PR body in
+/// a review/ folder that is never merged (issue-review spec) → job summary.
 /// Writes only files; never the database, never a branch. Exit 0 when both languages were written
 /// (warnings included); 1 on bad configuration, too few stories, a database or Gemini failure, or
 /// a model answer that is malformed twice, or an issue file that already exists (never overwritten).
@@ -70,16 +72,7 @@ public static class DraftCommand
             return 1;
         }
 
-        IssueWeek week;
-        if (to is { } end)
-        {
-            week = IssueWeek.ForWindow(from ?? end - ClusterCommand.DefaultWindow, end);
-        }
-        else
-        {
-            week = IssueWeek.ForDraftAt(clock.GetUtcNow());
-            week = from is { } start ? week with { From = start } : week;
-        }
+        var week = IssueWeek.Resolve(from, to, clock.GetUtcNow());
 
         List<ClusterInput> articles;
         try
@@ -94,6 +87,7 @@ public static class DraftCommand
 
         var targets = DraftLanguage.All
             .SelectMany(language => new[] { IssueMarkdownWriter.IssueFileName(week, language), IssueMarkdownWriter.BackupsFileName(week, language) })
+            .Append(IssueMarkdownWriter.PullRequestBodyFileName(week))
             .Select(name => Path.Combine(outputDirectory, name))
             .ToList();
         if (targets.FirstOrDefault(File.Exists) is { } existing)
@@ -103,7 +97,8 @@ public static class DraftCommand
             return 1;
         }
 
-        var result = StoryRanker.Rank(StoryClusterer.Cluster(articles, clustering.Options!), ranking.Options!, clustering.Options!);
+        var stories = StoryClusterer.Cluster(articles, clustering.Options!);
+        var result = StoryRanker.Rank(stories, ranking.Options!, clustering.Options!);
         if (result.Picks.Count < ranking.Options!.Picks)
         {
             await error.WriteLineAsync($"Only {result.Picks.Count} stories in {week.Id}'s window ({articles.Count} articles); an issue needs {ranking.Options.Picks}. Nothing was written.");
@@ -149,17 +144,24 @@ public static class DraftCommand
                 language,
                 IssueMarkdownWriter.Issue(week, language, clean, card),
                 IssueMarkdownWriter.Backups(week, language, clean, card),
+                clean,
                 warnings,
                 gemini.Model,
                 fellBackFrom));
         }
 
-        Directory.CreateDirectory(outputDirectory);
+        Directory.CreateDirectory(Path.Combine(outputDirectory, IssueMarkdownWriter.ReviewDirectory));
         foreach (var draft in drafts)
         {
             await File.WriteAllTextAsync(Path.Combine(outputDirectory, IssueMarkdownWriter.IssueFileName(week, draft.Language)), draft.IssueMarkdown, cancellationToken);
             await File.WriteAllTextAsync(Path.Combine(outputDirectory, IssueMarkdownWriter.BackupsFileName(week, draft.Language)), draft.BackupsMarkdown, cancellationToken);
         }
+
+        var rankReport = RankReportFormatter.ToMarkdown(result, stories.Count, week.From, week.To, names);
+        await File.WriteAllTextAsync(
+            Path.Combine(outputDirectory, IssueMarkdownWriter.PullRequestBodyFileName(week)),
+            PullRequestBodyFormatter.ToMarkdown(week, card, drafts, rankReport),
+            cancellationToken);
 
         await output.WriteAsync(DraftReportFormatter.ToMarkdown(week, card, drafts));
         return 0;

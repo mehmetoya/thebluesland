@@ -21,7 +21,8 @@ Refactor / redesign planı (ayrı doküman): [`docs/plans/refactor-redesign.md`]
 | Weekly: news-ingest | 2026-11-10'dan beri production'da; 2 saatte bir 7 RSS kaynağı `newsletter` şemasına, 8 hafta saklama. İlk çalışma: 7/7 kaynak başarılı, 124 haber | `newsletter-ingest.yml`, `tools/weekly-newsletter/`, `docs/specs/weekly-newsletter-news-ingest.md` |
 | Weekly: story-clustering | Deterministik TF-IDF kümeleme (ağ çağrısı yok, DB'ye yazmaz); elle etiketlenmiş gerçek haftada precision 1.00, recall 0.96. Kümeler elle tetiklenen `newsletter-preview.yml` ile job summary'de görülür | `tools/weekly-newsletter/Clustering/`, `clustering.yml`, `docs/specs/weekly-newsletter-story-clustering.md` |
 | Weekly: story-ranking | Kurallı, AI'sız seçim: kapsam + tür ağırlığı, tür başına en fazla 2, ilişkili hikâyeden tek biri, isteğe bağlı blues/rock/soul/indie slotu; 5 seçim + 3 yedek, her biri gerekçesiyle. W46'da Mehmet'in seçimiyle 5/5 aynı | `tools/weekly-newsletter/Ranking/`, `ranking.yml`, `docs/specs/weekly-newsletter-story-ranking.md`, `newsletter-preview.yml` (`stage: rank`) |
-| Weekly: issue-drafting | Gemini (ücretsiz katman) seçilen 5 hikâye + 3 yedek için TR ve EN metni ayrı ayrı yazar; linkler, yapı ve AI notu kodda; rakam/özel ad/kopya denetimi uyarı olarak görünür. Elle tetiklenen `newsletter-draft.yml` taslağı job summary'de ve artifact olarak verir, PR açmaz | `tools/weekly-newsletter/Drafting/`, `docs/weekly/ses-rehberi.md`, `docs/specs/weekly-newsletter-issue-drafting.md`, ADR-0006 |
+| Weekly: issue-drafting | Gemini (ücretsiz katman) seçilen 5 hikâye + 3 yedek için TR ve EN metni ayrı ayrı yazar; linkler, yapı ve AI notu kodda; rakam/özel ad/kopya denetimi uyarı olarak görünür. Varsayılan model yoğunsa lite modele düşer | `tools/weekly-newsletter/Drafting/`, `docs/weekly/ses-rehberi.md`, `docs/specs/weekly-newsletter-issue-drafting.md`, ADR-0006 |
+| Weekly: issue-review | Her pazar 10:00 (İstanbul) `newsletter-draft.yml` taslağı `newsletter/<hafta>` dalında draft PR olarak açar (13:00'te emniyet denemesi). PR açıklamasında uyarılar, seçim nedenleri, paragraf kaynakları ve yapıştırılmaya hazır yedekler var. AI anahtarı ile yazma yetkisi ayrı job'larda; Mehmet "Ready for review" deyince CI (yeni `validate-weekly` dahil) çalışır; merge = onay | `tools/weekly-newsletter/Review/`, `docs/specs/weekly-newsletter-issue-review.md` |
 
 ## Devam eden
 
@@ -36,9 +37,8 @@ koddan önce kendi onaylı spec'ini (`docs/specs/weekly-newsletter-<modül>.md`)
 
 | # | İş | Bağımlı olduğu | Geçmesi gereken kapı |
 | --- | --- | --- | --- |
-| 1 | **issue-review** — bot draft PR `content/weekly/<yıl>-W<hafta>.{tr,en}.md`, yedekler PR açıklamasında; pazar 10:00 (Europe/Istanbul) | issue-drafting | Onaylı spec; repoya yazabilen ikinci workflow olacağı için secret/izin izolasyon testlerinin genişletilmesi |
-| 2a | **issue-delivery** — onaylı sayıyı bir kez gönder; TR pazartesi 08:00, EN pazartesi 15:00; saatine kadar merge yoksa o dil o hafta gitmez | issue-review | E-posta sağlayıcısı seçimi (ücretsiz katman, TR + EN iki liste); onaylı spec |
-| 2b | **weekly-archive** — `/weekly` TR/EN sayı sayfaları (`content/weekly/`'den) + sağlayıcının abone formu | issue-review (2a ile paralel) | UI/UX tasarım çalışması; abone formu için sağlayıcı seçimi ve CSP uyumu |
+| 1a | **issue-delivery** — onaylı sayıyı bir kez gönder; TR pazartesi 08:00, EN pazartesi 15:00; saatine kadar merge yoksa o dil o hafta gitmez | issue-review | E-posta sağlayıcısı seçimi (ücretsiz katman, TR + EN iki liste); onaylı spec |
+| 1b | **weekly-archive** — `/weekly` TR/EN sayı sayfaları (`content/weekly/`'den) + sağlayıcının abone formu | issue-review (1a ile paralel) | UI/UX tasarım çalışması; abone formu için sağlayıcı seçimi ve CSP uyumu |
 
 Hattın değişmez kısıtları: $0 maliyet; Spotify verisi hiçbir AI prompt'una girmez; AI yalnız GitHub
 Actions'ta (Render'a hiç girmez); tek insan adımı Mehmet'in PR'ı düzeltip merge etmesi; abone
@@ -58,8 +58,8 @@ listesi bizde değil, sağlayıcıda; Web `newsletter` şemasını okumaz.
 | E-posta sağlayıcısı | Seçilmedi. TR + EN iki liste, double opt-in ve ücretsiz katman şart; seçim 5a ve 5b'yi kilitliyor |
 | ADR-0006 | Kabul edildi (2026-11-10): AI metni yalnız Mehmet'in merge'ünden sonra dışarı çıkar; olgu kartı dışı iddia yok; her sayıda AI notu |
 | Ses rehberi | Onaylandı (2026-11-10): `docs/weekly/ses-rehberi.md`, örnek W46 sayısıyla; denetçinin kalibrasyonu |
-| Gemini ücretsiz katmanı | Haftada 2 çağrı; ilk gerçek `newsletter-draft` çalışmasıyla doğrulanacak |
-| Bot PR'ı ve CI | `GITHUB_TOKEN` ile açılan PR'lar `pull_request` workflow'larını tetiklemez; `content/weekly/` doğrulamasının nasıl koşacağı issue-review spec'inde çözülmeli |
+| Gemini ücretsiz katmanı | Haftada 2 çağrı; ilk production çalışmasında varsayılan model 503 verdi, lite model yazdı. Varsayılan yoğunsa otomatik lite'a düşülüyor |
+| Bot PR'ı ve CI | Çözüldü (issue-review §3): CI `ready_for_review` ile tetiklenir; draft PR bu adım olmadan merge edilemez, bot da PR'dan önce `validate-weekly` çalıştırır |
 | Zamanlama güvenilirliği | GitHub cron dakikalarca gecikebilir ("o sabah" garantisi, "tam saatinde" değil); zamanlanmış workflow'lar 60 gün repo hareketsizliğinde duraklar |
 | Kaynak kullanım koşulları | RSS özetleri yalnız iç kullanım; yayınlanmaz. Yeni kaynak eklenirse koşullar yeniden kontrol edilir |
 | Başarı ölçütleri | Abone sayısı, açılma oranı gibi hedefler tanımlı değil — bilinmiyor |

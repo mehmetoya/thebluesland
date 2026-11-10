@@ -103,8 +103,9 @@ Haftaya pazartesi yine buradayız. İyi dinlemeler.
 - **Hafta numarası** gönderim pazartesisinin ISO haftasıdır. Pencere varsayılan olarak o
   pazartesiden önceki pazar 10:00 (Europe/Istanbul) ile ondan 7 gün öncesi arasıdır. Elle
   çalıştırmada `--from/--to` ile verilebilir.
-- **Yedeklerin metni** dosyaya girmez; `<hafta>.backups.{tr,en}.md` yan dosyasına yazılır.
-  issue-review bunları PR açıklamasına taşır, merge'de yan dosya silinir.
+- **Yedeklerin metni** dosyaya girmez; `review/<hafta>.backups.{tr,en}.md` yan dosyasına yazılır.
+  issue-review bunları PR açıklamasına taşır; `review/` klasörü dala hiç commit'lenmez
+  (issue-review spec §5, `validate-weekly` bunu zorlar).
 - Bu biçim weekly-archive ve issue-delivery için sözleşmedir: front matter alanları onların
   spec'lerinde yalnızca eklenerek değişebilir.
 
@@ -118,7 +119,8 @@ dotnet run --project tools/weekly-newsletter -- draft [--from …] [--to …] [-
   denetimler çalışır → dosyalar yazılır → rapor basılır.
 - Çıkış kodları: dosyalar yazıldıysa 0 (uyarı olsa bile). Model iki kez bozuk yanıt verdiyse,
   kota dolduysa veya yapılandırma eksikse 1.
-- **`newsletter-draft.yml`:** yalnızca elle tetiklenir, `contents: read`. Dosyaları artifact
+- **`newsletter-draft.yml`:** (ilk sürüm; issue-review buna pazar zamanlamasını ve PR açan ikinci
+  job'u ekledi) yalnızca elle tetiklenir, `contents: read`. Dosyaları artifact
   olarak yükler ve job summary'ye basar. `GEMINI_API_KEY` ve `NEON_NEWSLETTER_CONNECTION_STRING`
   yalnızca çalıştırma adımına verilir. Secret izolasyon testleri `GEMINI_API_KEY`'in yalnızca
   `suggest-curator-note.yml` ve `newsletter-draft.yml`'de geçmesine izin verecek şekilde

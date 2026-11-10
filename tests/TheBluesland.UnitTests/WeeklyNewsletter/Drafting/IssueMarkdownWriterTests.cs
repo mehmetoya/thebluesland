@@ -55,6 +55,6 @@ public sealed class IssueMarkdownWriterTests
         markdown.ShouldContain("## Yedek 1 · ");
         markdown.ShouldContain("## Yedek 3 · ");
         markdown.ShouldContain("Kaynaklar: [");
-        IssueMarkdownWriter.BackupsFileName(Week46, DraftLanguage.Turkish).ShouldBe("2026-W46.backups.tr.md");
+        IssueMarkdownWriter.BackupsFileName(Week46, DraftLanguage.Turkish).ShouldBe(Path.Combine("review", "2026-W46.backups.tr.md"));
     }
 }

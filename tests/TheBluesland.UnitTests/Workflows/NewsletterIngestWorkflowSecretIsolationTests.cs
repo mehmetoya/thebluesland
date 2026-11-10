@@ -14,7 +14,6 @@ public sealed partial class NewsletterIngestWorkflowSecretIsolationTests
     private const string NewsletterSecret = "NEON_NEWSLETTER_CONNECTION_STRING";
     private const string IngestWorkflow = ".github/workflows/newsletter-ingest.yml";
     private const string PreviewWorkflow = ".github/workflows/newsletter-preview.yml";
-    private const string DraftWorkflow = ".github/workflows/newsletter-draft.yml";
 
     [Fact]
     public void Only_newsletter_workflows_reference_the_newsletter_connection_string()
@@ -73,24 +72,6 @@ public sealed partial class NewsletterIngestWorkflowSecretIsolationTests
         yaml.ShouldNotContain("contents: write");
         yaml.ShouldContain("set -euo pipefail");
         var script = yaml[yaml.IndexOf("run: |", StringComparison.Ordinal)..];
-        script.ShouldNotContain("${{");
-    }
-
-    [Fact]
-    public void DraftWorkflow_holds_only_the_newsletter_and_gemini_secrets_on_one_step_and_is_dispatch_only_and_read_only()
-    {
-        var yaml = File.ReadAllText(FindRepoFile(DraftWorkflow));
-
-        SecretReference().Matches(yaml).Select(match => match.Groups[1].Value).Distinct().Order().ShouldBe(["GEMINI_API_KEY", NewsletterSecret]);
-        SecretReference().Matches(yaml).Count.ShouldBe(2);
-        yaml.ShouldContain("workflow_dispatch:");
-        yaml.ShouldNotContain("schedule:");
-        yaml.ShouldNotContain("pull_request");
-        yaml.ShouldContain("contents: read");
-        yaml.ShouldNotContain("contents: write");
-        yaml.ShouldNotContain("pull-requests: write");
-        yaml.ShouldContain("set -euo pipefail");
-        var script = yaml[yaml.IndexOf("run: |", StringComparison.Ordinal)..yaml.IndexOf("- name: Upload draft", StringComparison.Ordinal)];
         script.ShouldNotContain("${{");
     }
 

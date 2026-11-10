@@ -1,16 +1,16 @@
-# Todo — issue-drafting (TheBluesland Weekly)
+# Todo — issue-review (TheBluesland Weekly)
 
-Plan: [tasks/plan.md](plan.md) · Spec: [docs/specs/weekly-newsletter-issue-drafting.md](../docs/specs/weekly-newsletter-issue-drafting.md)
+Plan: [tasks/plan.md](plan.md) · Spec: [docs/specs/weekly-newsletter-issue-review.md](../docs/specs/weekly-newsletter-issue-review.md)
 
-- [x] **T1: `IssueWeek` (ISO hafta, pazar 10:00 Europe/Istanbul penceresi) + `FactCard`** — S
-- [x] **T2: `DraftPromptBuilder` + `DraftResponse` ayrıştırma (şema, key bütünlüğü)** — S
-- [x] **T3: `DraftValidator`** — M (rakam, özel ad, kopya, uzunluk, link/emoji temizliği; ses rehberindeki örnek sayı sıfır uyarı)
-- [x] **T4: `GeminiClient` (JSON şema, header'da anahtar, geçici hatada yeniden deneme)** — S
-- [x] **T5: `IssueMarkdownWriter` (sayı + yedek dosyası, front matter)** — S
-- [x] **T6: `DraftCommand` + `DraftReportFormatter` + `draft` alt komutu** — M
-- [x] **T7: `newsletter-draft.yml`, secret izolasyon testleri, README/roadmap** — S
-- [ ] Checkpoint: tam build + test + format, review, PR, merge, production'da ilk taslak
+- [x] **T1: Yazıcı parçaları public; yedekler ve PR gövdesi `<out>/review/`'a** — S
+- [x] **T2: `PullRequestBodyFormatter`** — M
+- [x] **T3: `WeeklyIssueValidator`, `validate-weekly` ve `issue-week` alt komutları, `ci.yml`** — M
+- [x] **T4: `newsletter-draft.yml` (schedule, `open_pr`, `open-pr` job'u) ve workflow testleri** — M
+- [ ] **T5: Doküman ve uçtan uca deneme** — S
+- [ ] Checkpoint: tam build, test ve format; PR ve merge; gerçek draft PR; Ready for review ile CI
 
 ## Takip
 
 - [ ] 2026-W47 tam haftası etiketlenip ikinci clustering gold set'i olarak eklenecek.
+- [ ] İlk 4 haftadan sonra: Mehmet ayda birden fazla yedekle değiştirdiyse `swap` workflow'u (ayrı spec).
+- [ ] İlk 4 haftadan sonra: Mehmet'in düzeltme miktarını otomatik ölçmek (issue-review §7).
