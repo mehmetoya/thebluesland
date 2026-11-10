@@ -45,16 +45,33 @@ public sealed record DraftResponse(string Intro, string Outro, IReadOnlyList<Dra
             stories.Add(new DraftStory(story.Key.Trim(), story.Headline.Trim(), story.Body.Trim(), story.WhyItMatters.Trim()));
         }
 
-        var expected = card.Stories.Select(story => story.Key).Order(StringComparer.Ordinal).ToList();
-        var actual = stories.Select(story => story.Key).Order(StringComparer.Ordinal).ToList();
-        if (!expected.SequenceEqual(actual, StringComparer.Ordinal))
+        // Every pick must be written exactly once and nothing outside the card may appear. A backup
+        // the model skipped (weaker fallback models do) is filled from the card itself and marked,
+        // so one missing backup no longer throws the whole draft away.
+        var known = card.Stories.Select(story => story.Key).ToHashSet(StringComparer.Ordinal);
+        var written = stories.Select(story => story.Key).ToList();
+        var picks = card.Picks.Select(story => story.Key).ToList();
+        if (written.Count != written.Distinct(StringComparer.Ordinal).Count()
+            || written.Any(key => !known.Contains(key))
+            || picks.Any(key => !written.Contains(key, StringComparer.Ordinal)))
         {
+            var expected = card.Stories.Select(story => story.Key).Order(StringComparer.Ordinal);
+            var actual = written.Order(StringComparer.Ordinal);
             throw new DraftFormatException(
-                $"The model's answer must cover each story key once. Expected [{string.Join(", ", expected)}], got [{string.Join(", ", actual)}].");
+                $"The model's answer must cover each pick once and only card stories. Expected [{string.Join(", ", expected)}], got [{string.Join(", ", actual)}].");
+        }
+
+        foreach (var backup in card.Backups.Where(story => !written.Contains(story.Key, StringComparer.Ordinal)))
+        {
+            var lead = backup.Articles[0];
+            stories.Add(new DraftStory(backup.Key, lead.Title, string.IsNullOrWhiteSpace(lead.Summary) ? lead.Title : lead.Summary.Trim(), MissingBackupNote));
         }
 
         return new DraftResponse(document.Intro.Trim(), document.Outro.Trim(), stories, Blank(document.Subject), Blank(document.Preview));
     }
+
+    /// <summary>Marks a backup the model did not write; the editor sees the card's own text instead.</summary>
+    public const string MissingBackupNote = "(Model bu yedek haberi yazmadı / the model skipped this backup; card text shown.)";
 
     public DraftStory For(string key) => Stories.Single(story => story.Key == key);
 

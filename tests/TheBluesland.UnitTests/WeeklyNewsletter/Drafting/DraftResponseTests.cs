@@ -40,6 +40,20 @@ public sealed class DraftResponseTests
         Should.Throw<DraftFormatException>(() => DraftResponse.Parse(FakeAnswer([.. keys.Skip(1), "s-999999"]), Card));
     }
 
+    [Fact]
+    public void A_skipped_backup_is_filled_from_the_card_and_marked()
+    {
+        // Regression: 2026-11-10 the fallback model wrote only the five picks and the whole draft failed.
+        var picks = Card.Picks.Select(story => story.Key).ToList();
+        var skipped = Card.Backups.First();
+
+        var draft = DraftResponse.Parse(FakeAnswer(picks), Card);
+
+        draft.Stories.Count.ShouldBe(8);
+        draft.For(skipped.Key).Headline.ShouldBe(skipped.Articles[0].Title);
+        draft.For(skipped.Key).WhyItMatters.ShouldBe(DraftResponse.MissingBackupNote);
+    }
+
     [Theory]
     [InlineData("not json")]
     [InlineData("{}")]
