@@ -31,6 +31,16 @@ public static class IssueMarkdownWriter
         markdown.Append(CultureInfo.InvariantCulture, $"issue: {week.Id}\n");
         markdown.Append(CultureInfo.InvariantCulture, $"language: {language.Code}\n");
         markdown.Append(CultureInfo.InvariantCulture, $"title: {Quote(Title(week, language))}\n");
+        if (draft.Subject is { Length: > 0 } subject)
+        {
+            markdown.Append(CultureInfo.InvariantCulture, $"subject: {Quote(subject)}\n");
+        }
+
+        if (draft.Preview is { Length: > 0 } preview)
+        {
+            markdown.Append(CultureInfo.InvariantCulture, $"preview: {Quote(preview)}\n");
+        }
+
         markdown.Append(CultureInfo.InvariantCulture, $"sendDate: {week.SendDate:yyyy-MM-dd}\n");
         markdown.Append("window:\n");
         markdown.Append(CultureInfo.InvariantCulture, $"  from: {week.From.UtcDateTime:yyyy-MM-ddTHH:mm:ssZ}\n");

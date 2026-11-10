@@ -5,7 +5,9 @@ namespace TheBluesland.WeeklyNewsletter.Drafting;
 public sealed record DraftStory(string Key, string Headline, string Body, string WhyItMatters);
 
 /// <summary>What the model writes for one language: text only, no structure the code owns.</summary>
-public sealed record DraftResponse(string Intro, string Outro, IReadOnlyList<DraftStory> Stories)
+/// <param name="Subject">E-mail subject line (at most 60 characters); null when the model left it out.</param>
+/// <param name="Preview">Inbox preview line (at most 90 characters); null when the model left it out.</param>
+public sealed record DraftResponse(string Intro, string Outro, IReadOnlyList<DraftStory> Stories, string? Subject = null, string? Preview = null)
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -51,12 +53,14 @@ public sealed record DraftResponse(string Intro, string Outro, IReadOnlyList<Dra
                 $"The model's answer must cover each story key once. Expected [{string.Join(", ", expected)}], got [{string.Join(", ", actual)}].");
         }
 
-        return new DraftResponse(document.Intro.Trim(), document.Outro.Trim(), stories);
+        return new DraftResponse(document.Intro.Trim(), document.Outro.Trim(), stories, Blank(document.Subject), Blank(document.Preview));
     }
 
     public DraftStory For(string key) => Stories.Single(story => story.Key == key);
 
-    private sealed record Document(string? Intro, string? Outro, List<DocumentStory?>? Stories);
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private sealed record Document(string? Intro, string? Outro, List<DocumentStory?>? Stories, string? Subject = null, string? Preview = null);
 
     private sealed record DocumentStory(string? Key, string? Headline, string? Body, string? WhyItMatters);
 }

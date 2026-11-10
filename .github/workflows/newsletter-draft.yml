@@ -181,6 +181,9 @@ jobs:
           git push origin "HEAD:refs/heads/$branch"
           body="$RUNNER_TEMP/weekly/review/$WEEK.pr-body.md"
           printf '\n---\n\nTaslak çalışması ve artifact: %s\n' "$RUN_URL" >> "$body"
-          url="$(gh pr create --draft --base main --head "$branch" --title "TheBluesland Weekly $WEEK" --body-file "$body")"
+          title="TheBluesland Weekly $WEEK"
+          # The draft tool marks a fallback-model draft in the PR body; surface it in the title too.
+          if grep -qF '[DÜŞÜK MODEL]' "$body"; then title="[DÜŞÜK MODEL] $title"; fi
+          url="$(gh pr create --draft --base main --head "$branch" --title "$title" --body-file "$body")"
           gh pr edit "$url" --add-assignee "$OWNER" || echo "::warning::Could not assign the PR to $OWNER."
           echo "Draft PR: $url" >> "$GITHUB_STEP_SUMMARY"

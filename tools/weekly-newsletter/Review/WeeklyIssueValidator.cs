@@ -15,7 +15,7 @@ namespace TheBluesland.WeeklyNewsletter.Review;
 /// Deterministic, no network. Messages never quote the issue's prose.
 /// </summary>
 /// <summary>A valid issue file as issue-delivery reads it.</summary>
-public sealed record WeeklyIssue(string Id, DraftLanguage Language, string Title, DateOnly SendDate, string Body);
+public sealed record WeeklyIssue(string Id, DraftLanguage Language, string Title, DateOnly SendDate, string Body, string? Subject = null, string? Preview = null);
 
 public static partial class WeeklyIssueValidator
 {
@@ -100,6 +100,8 @@ public static partial class WeeklyIssueValidator
         Require(problems, !string.IsNullOrWhiteSpace(front.Title), "title is missing.");
         Require(problems, front.SendDate == monday, $"sendDate must be {monday}, the Monday of {issueId}.");
         Require(problems, front.AiAssisted == true, "aiAssisted must be true (ADR-0006 madde 4).");
+        Require(problems, front.Subject is null || (front.Subject.Trim().Length > 0 && front.Subject.Trim().Length <= DraftLanguage.MaxSubject), $"subject must be 1-{DraftLanguage.MaxSubject} characters when present.");
+        Require(problems, front.Preview is null || (front.Preview.Trim().Length > 0 && front.Preview.Trim().Length <= DraftLanguage.MaxPreview), $"preview must be 1-{DraftLanguage.MaxPreview} characters when present.");
 
         var stories = front.Stories ?? [];
         Require(problems, stories.Count == Stories, $"stories lists {stories.Count} stories; an issue has {Stories}.");
@@ -139,14 +141,19 @@ public static partial class WeeklyIssueValidator
         }
 
         var lastLine = body.Split('\n').LastOrDefault(line => line.Trim().Length > 0)?.Trim();
-        Require(problems, lastLine == $"*{language.AiNote}*", "the issue must end with the AI note, word for word (ADR-0006 madde 4).");
+        Require(
+            problems,
+            lastLine == $"*{language.AiNote}*" || lastLine == $"*{language.LegacyAiNote}*",
+            "the issue must end with the AI note, word for word (ADR-0006 madde 4).");
         if (problems.Count == 0)
         {
-            issue = new WeeklyIssue(issueId, language, front.Title!.Trim(), DateOnly.ParseExact(monday, "yyyy-MM-dd", CultureInfo.InvariantCulture), body.TrimStart('\n'));
+            issue = new WeeklyIssue(issueId, language, front.Title!.Trim(), DateOnly.ParseExact(monday, "yyyy-MM-dd", CultureInfo.InvariantCulture), body.TrimStart('\n'), Clean(front.Subject), Clean(front.Preview));
         }
 
         return problems;
     }
+
+    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static void Require(List<string> problems, bool condition, string problem)
     {
@@ -169,6 +176,10 @@ public static partial class WeeklyIssueValidator
         public string? Language { get; set; }
 
         public string? Title { get; set; }
+
+        public string? Subject { get; set; }
+
+        public string? Preview { get; set; }
 
         public string? SendDate { get; set; }
 

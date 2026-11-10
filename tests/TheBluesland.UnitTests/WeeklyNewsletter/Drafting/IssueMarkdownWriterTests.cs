@@ -36,13 +36,24 @@ public sealed class IssueMarkdownWriterTests
     }
 
     [Fact]
+    public void Subject_and_preview_go_into_the_front_matter_only_when_the_model_wrote_them()
+    {
+        var with = IssueMarkdownWriter.Issue(Week46, DraftLanguage.English, Draft() with { Subject = "Say \"hi\" · TBL Weekly", Preview = "A line." }, Card);
+        var front = new DeserializerBuilder().Build().Deserialize<Dictionary<string, object>>(with.Split("---\n")[1]);
+
+        front["subject"].ShouldBe("Say \"hi\" · TBL Weekly");
+        front["preview"].ShouldBe("A line.");
+        IssueMarkdownWriter.Issue(Week46, DraftLanguage.English, Draft() with { Subject = null, Preview = null }, Card).ShouldNotContain("subject:");
+    }
+
+    [Fact]
     public void Issue_body_has_code_owned_headings_labels_links_and_ai_note()
     {
         var markdown = IssueMarkdownWriter.Issue(Week46, DraftLanguage.English, Draft(), Card);
 
-        markdown.ShouldContain("\nFive stories this week.\n");
+        markdown.ShouldContain("\nFive stories, five minutes.\n");
         markdown.ShouldContain($"## Say \"{Card.Picks.First().Key}\" \\ now\n\nBody text.\n\n*Why it matters:* It matters.\n\nSources: [Pitchfork](https://pitchfork.com/");
-        markdown.TrimEnd().ShouldEndWith("*This issue was prepared with AI assistance and edited by TheBluesland's editor.*");
+        markdown.TrimEnd().ShouldEndWith("*Written with AI assistance; selected and approved by TheBluesland's editor.*");
         Card.Backups.ShouldAllBe(backup => !markdown.Contains($"key: {backup.Key}\n", StringComparison.Ordinal));
     }
 
