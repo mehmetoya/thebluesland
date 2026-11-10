@@ -41,8 +41,8 @@ public sealed class SocialCardGenerator
     private const float LineSpacing = 1.25f;
     private const string Ellipsis = "…";
 
-    private static readonly SKColor BackgroundColor = SKColor.Parse("12141c");
-    private static readonly SKColor AccentColor = SKColor.Parse("e8b34a");
+    private static readonly SKColor BackgroundColor = SKColor.Parse("004aad");
+    private static readonly SKColor AccentColor = SKColor.Parse("ff904b");
     private static readonly SKColor TextColor = SKColors.White;
 
     private static readonly SKTypeface RegularTypeface = LoadEmbeddedTypeface("Inter-Regular.ttf");
