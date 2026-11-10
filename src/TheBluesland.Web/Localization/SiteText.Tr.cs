@@ -92,6 +92,7 @@ public sealed partial class SiteText
         AboutDescription = "TheBluesland ile tanış: Mehmet'in kökleri blues'a uzanan, caza, folka, rock'a ve elektronik müziğe de yer açan kişisel Spotify çalma listesi koleksiyonu.",
         AboutHeading = "TheBluesland Hakkında",
         AboutFaqHeading = "Sık sorulan sorular",
+        WebSiteDescription = "Mehmet'in kişisel Spotify çalma listesi koleksiyonu: kökleri blues'ta, rock, folk, caz, soul ve elektronik müziğe uzanıyor. Her çalma listesinin kısa bir dinleme notu var.",
         AboutCuratorDescription = "Kökleri blues'a uzanan kişisel bir Spotify çalma listesi koleksiyonu olan TheBluesland'in küratörü.",
         AboutFaq =
         [

@@ -223,6 +223,15 @@ public sealed class SiteLocalizationTests : IAsyncLifetime
         using var switched = await _http.SendAsync(otherLanguage);
         switched.Headers.GetValues("Set-Cookie").Single().ShouldStartWith("lang=en");
 
+        // QA-01: plain HTTP is not Secure; behind the TLS-terminating proxy (X-Forwarded-Proto) it is.
+        // (The client kept the lang=en cookie from above, so a /tr page sets the cookie again.)
+        cookie.ShouldNotContain("secure", Case.Insensitive); // (the client keeps the previous lang=en cookie, so a /tr page sets it again)
+        using var proxied = new HttpRequestMessage(HttpMethod.Get, "/tr/about");
+        proxied.Headers.Add("X-Forwarded-Proto", "https");
+        using var proxiedResponse = await _http.SendAsync(proxied);
+        proxiedResponse.StatusCode.ShouldBe(HttpStatusCode.OK, proxiedResponse.Headers.ToString());
+        proxiedResponse.Headers.GetValues("Set-Cookie").Single().ShouldContain("secure", Case.Insensitive);
+
         // Errors and non-page URLs never set it.
         using var missing = await _http.GetAsync("/tr/no-such-page");
         missing.Headers.Contains("Set-Cookie").ShouldBeFalse();
@@ -251,6 +260,11 @@ public sealed class SiteLocalizationTests : IAsyncLifetime
     {
         (await GetOkAsync("/tr/about")).ShouldContain("\"inLanguage\":\"tr\"");
         (await GetOkAsync("/en/about")).ShouldContain("\"inLanguage\":\"en\"");
+        // QA-06: the WebSite description is in the page language too, not English under inLanguage "tr".
+        var turkishHome = await GetOkAsync("/tr");
+        turkishHome.ShouldContain("\"inLanguage\":\"tr\"");
+        turkishHome.ShouldNotContain("personal collection of Spotify playlists, rooted in blues");
+        (await GetOkAsync("/en")).ShouldContain("personal collection of Spotify playlists, rooted in blues");
         // The playlist's own text is English until a Turkish field exists.
         (await GetOkAsync("/tr/playlists/" + Slug)).ShouldContain("\"inLanguage\":\"en\"");
     }

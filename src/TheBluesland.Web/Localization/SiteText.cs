@@ -111,6 +111,7 @@ public sealed partial class SiteText
     public required string AboutHeading { get; init; }
     public required string AboutFaqHeading { get; init; }
     public required string AboutCuratorDescription { get; init; }
+    public required string WebSiteDescription { get; init; }
     public required IReadOnlyList<(string Question, string Answer)> AboutFaq { get; init; }
 
     // Privacy and terms (the prose itself is in the pages).

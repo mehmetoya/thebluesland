@@ -92,6 +92,7 @@ public sealed partial class SiteText
         AboutDescription = "Meet TheBluesland: Mehmet's personal collection of Spotify playlists, with roots in blues and room for jazz, folk, rock and electronic music.",
         AboutHeading = "About TheBluesland",
         AboutFaqHeading = "Frequently asked questions",
+        WebSiteDescription = "Mehmet's personal collection of Spotify playlists, rooted in blues and spanning rock, folk, jazz, soul and electronic music. Each playlist has a short listening note.",
         AboutCuratorDescription = "Curator of TheBluesland, a personal collection of Spotify playlists rooted in blues.",
         AboutFaq =
         [
