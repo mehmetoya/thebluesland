@@ -26,6 +26,13 @@ public static class StoryTypeClassifier
         return new StoryTypeRule(DefaultType, 0, false, [], []);
     }
 
+    /// <summary>
+    /// Brand fit (story-ranking spec, Design section 1): a brand keyword appears in any article's
+    /// headline or summary, or a core source carried the story.
+    /// </summary>
+    public static bool FitsBrand(Story story, IReadOnlyList<string> keywords, IReadOnlyList<string> coreSources) =>
+        story.Sources.Any(coreSources.Contains) || MatchesGenre(story, keywords);
+
     /// <summary>Whether any genre keyword appears in the story's headlines or summaries.</summary>
     public static bool MatchesGenre(Story story, IReadOnlyList<string> keywords)
     {

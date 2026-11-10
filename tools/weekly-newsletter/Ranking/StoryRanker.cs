@@ -4,7 +4,7 @@ using TheBluesland.WeeklyNewsletter.Clustering;
 namespace TheBluesland.WeeklyNewsletter.Ranking;
 
 /// <summary>A story with its score and the reasons behind it.</summary>
-public sealed record RankedStory(Story Story, double Score, string Type, double Bonus, bool GenreMatch);
+public sealed record RankedStory(Story Story, double Score, string Type, double Bonus, bool GenreMatch, double BrandBonus = 0);
 
 /// <summary>A story passed over by a diversity rule, with the rule that skipped it.</summary>
 public sealed record SkippedStory(RankedStory Story, string Reason);
@@ -17,7 +17,8 @@ public sealed record RankingResult(
 
 /// <summary>
 /// Chooses the issue's stories (story-ranking spec, Design sections 1–2). Pure and deterministic.
-/// Score = distinct sources × coverage weight + type bonus; ties go to more articles, then the
+/// Score = distinct sources × coverage weight + type bonus + brand bonus (a story that carries a
+/// brand keyword or comes from a core source); ties go to more articles, then the
 /// more recent story, then the key. Picks are taken greedily in score order, skipping a story when
 /// its type already has <see cref="RankingOptions.MaxPerType"/> picks or when it is related
 /// (TF-IDF centroid cosine ≥ <see cref="RankingOptions.RelatedThreshold"/>) to a story already
@@ -36,12 +37,14 @@ public static class StoryRanker
         foreach (var story in stories)
         {
             var type = StoryTypeClassifier.Classify(story, ranking.Types);
+            var brandBonus = !type.Excluded && StoryTypeClassifier.FitsBrand(story, ranking.BrandKeywords, ranking.CoreSources) ? ranking.BrandBonus : 0;
             var ranked = new RankedStory(
                 story,
-                (story.SourceCount * ranking.CoverageWeight) + type.Bonus,
+                (story.SourceCount * ranking.CoverageWeight) + type.Bonus + brandBonus,
                 type.Name,
                 type.Bonus,
-                StoryTypeClassifier.MatchesGenre(story, ranking.GenreKeywords));
+                StoryTypeClassifier.MatchesGenre(story, ranking.GenreKeywords),
+                brandBonus);
             if (type.Excluded)
             {
                 skipped.Add(new SkippedStory(ranked, $"{type.Name}: not a news story"));

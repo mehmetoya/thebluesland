@@ -14,8 +14,8 @@ internal static class RankingTestData
         new("live", 0.25, false, ["tour", "residency"], []),
     ];
 
-    public static RankingOptions Settings(int picks = 5, int backups = 3, int maxPerType = 2, double related = 0.15, double genreRatio = 0.7) =>
-        new(picks, backups, 1.0, maxPerType, related, ["rock", "blues", "soul", "indie", "guitarist"], genreRatio, Types);
+    public static RankingOptions Settings(int picks = 5, int backups = 3, int maxPerType = 2, double related = 0.15, double genreRatio = 0.7, double brandBonus = 0, string[]? brandKeywords = null, string[]? coreSources = null) =>
+        new(picks, backups, 1.0, maxPerType, related, ["rock", "blues", "soul", "indie", "guitarist"], genreRatio, brandBonus, brandKeywords ?? [], coreSources ?? [], Types);
 
     private static long _nextId = 10_000;
 

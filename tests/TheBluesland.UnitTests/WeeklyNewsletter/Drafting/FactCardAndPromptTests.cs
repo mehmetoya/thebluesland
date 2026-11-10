@@ -17,7 +17,7 @@ public sealed class FactCardAndPromptTests
         Card.Backups.Count().ShouldBe(3);
         Card.Picks.First().Articles[0].Title.ShouldBe("Richard Lloyd, Television Guitarist, Dies at 75");
         Card.Picks.First().Links.Select(link => link.Name).ShouldBe(["Pitchfork", "Stereogum", "NME"]);
-        Card.Picks.First().Why.ShouldBe("3 sources · obituary +1.5 = 4.50");
+        Card.Picks.First().Why.ShouldBe("3 sources · obituary +1.5 · brand +1.25 = 5.75");
     }
 
     [Fact]

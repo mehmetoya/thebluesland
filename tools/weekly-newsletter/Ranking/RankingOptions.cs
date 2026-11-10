@@ -9,6 +9,9 @@ public sealed record RankingOptions(
     double RelatedThreshold,
     IReadOnlyList<string> GenreKeywords,
     double GenreSwapMinRatio,
+    double BrandBonus,
+    IReadOnlyList<string> BrandKeywords,
+    IReadOnlyList<string> CoreSources,
     IReadOnlyList<StoryTypeRule> Types);
 
 /// <summary>One story type, tried in file order; the first whose phrases match wins.</summary>
