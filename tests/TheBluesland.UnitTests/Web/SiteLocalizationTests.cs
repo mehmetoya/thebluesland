@@ -225,7 +225,7 @@ public sealed class SiteLocalizationTests : IAsyncLifetime
 
         // QA-01: plain HTTP is not Secure; behind the TLS-terminating proxy (X-Forwarded-Proto) it is.
         // (The client kept the lang=en cookie from above, so a /tr page sets the cookie again.)
-        cookie.ShouldNotContain("secure", Case.Insensitive); // (the client keeps the previous lang=en cookie, so a /tr page sets it again)
+        cookie.ShouldNotContain("secure", Case.Insensitive);
         using var proxied = new HttpRequestMessage(HttpMethod.Get, "/tr/about");
         proxied.Headers.Add("X-Forwarded-Proto", "https");
         using var proxiedResponse = await _http.SendAsync(proxied);

@@ -204,6 +204,12 @@ dotnet test                                  # spins up a real, disposable Postg
 cd src/TheBluesland.Web && npm ci && npm run build:css
 ```
 
+To preview the site, run `scripts/dev.sh`: it runs `npm ci` when `node_modules` is missing, always
+rebuilds the stylesheet (the generated `wwwroot/css/app.css` is not checked in, and a stale copy
+makes the page look broken), then starts `dotnet run --project src/TheBluesland.Web
+--no-launch-profile`. Extra arguments and environment variables pass straight through, for example
+`ASPNETCORE_URLS=http://localhost:5699 scripts/dev.sh`.
+
 There is no local `appsettings` database connection by default — most of the app renders from
 editorial Markdown alone. To exercise the cache-backed code paths locally, set the
 `ConnectionStrings:SpotifyPlaylistCache` configuration key (environment variable:
