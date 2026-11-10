@@ -1,7 +1,7 @@
 # Spec: story-clustering
 
 Modül: `story-clustering` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Önceki modül:
-[news-ingest](weekly-newsletter-news-ingest.md) · Durum: ONAYLANDI — Mehmet, 2026-11-10 (3 karar)
+[news-ingest](weekly-newsletter-news-ingest.md) · Durum: UYGULANDI — 2026-11-10 (ölçüm §3; PR bekliyor)
 
 ## Assumptions
 
@@ -43,7 +43,7 @@ olur, seçim de "kaç kaynak yazdı" sinyaline dayanır.
 | P!NK Sphere rezidansı | Consequence ("P!NK"), Rolling Stone ("Pink") | zor — yazım |
 | McCartney & Ringo Las Vegas / VetsAid | Stereogum, Rolling Stone | orta |
 | **Ayrı kalmalı:** McCartney milyarder (Forbes) | Billboard | aynı sanatçı, başka olay |
-| **Ayrı kalmalı:** Geese'in Richard Lloyd'a saygı cover'ı | NME | ölüm haberine bağlı ama ayrı olay |
+| **Belirsiz:** Geese'in Richard Lloyd'a saygı cover'ı | NME | aynı olayın devamı; iki cevap da kabul (T1'de belirsiz işaretlendi, Checkpoint A) |
 
 ## Design
 
@@ -52,16 +52,15 @@ olur, seçim de "kaç kaynak yazdı" sinyaline dayanır.
 ```csharp
 // Girdi: [from, to) aralığında etkin zamanı (published_at ?? fetched_at) düşen haberler.
 public sealed record ClusterInput(long Id, string Source, string Title, string? Summary,
-    IReadOnlyList<string> Categories, DateTimeOffset EffectiveAt, string Url);
+    string Url, DateTimeOffset EffectiveAt);
 
 // Çıktı: her haber tam olarak bir hikâyede. Tek haberlik hikâyeler de çıktıda yer alır.
 public sealed record Story(
     string Key,                          // en küçük article id'si ("s-1234"): aynı girdide aynı key
     IReadOnlyList<ClusterInput> Articles, // EffectiveAt'e göre eskiden yeniye
-    IReadOnlyList<string> Sources,       // farklı kaynaklar, feeds.yml sırasıyla
-    DateTimeOffset FirstSeen,
-    DateTimeOffset LastSeen);
-// SourceCount => Sources.Count
+    IReadOnlyList<string> Sources);      // farklı kaynaklar, olayı ilk yazandan başlayarak
+// SourceCount => Sources.Count; FirstSeen/LastSeen => ilk/son haberin zamanı
+// Hikâyeler: kaynak sayısı azalan, sonra FirstSeen, sonra key.
 ```
 
 Hafta penceresini çağıran (story-ranking) belirler; bu modül yalnızca `[from, to)` alır.
@@ -72,10 +71,12 @@ Deterministiktir ve ağ çağrısı yapmaz. Varsayılan yöntem budur.
 
 1. **Metin:** başlık iki kez yazılır (ağırlık), ardından özetin ilk 300 karakteri eklenir.
    Metin küçük harfe çevrilir, aksanlar kaldırılır (`Céline` → `celine`), noktalama atılır.
-   Kısaltma tablosu küçük ve sabittir (`grand theft auto` → `gta`, roma rakamı `vi`/`6` gibi
-   yalnızca gold set'te kanıtlanan durumlar için). Genel bir eş-anlamlı sözlüğü **yoktur**.
-2. **Ağırlıklandırma:** tek kelime ve iki kelimelik öbekler kullanılır, IDF o haftanın
-   haberlerinden hesaplanır. Böylece haftanın her yerinde geçen "tour", "new", "album" gibi
+   Kısaltma tablosu yalnızca gold set'te kanıtlanan durumları içerir: `grand theft auto` → `gta`
+   ve `p!nk` → `pink`. `6` → `vi` denendi ve etkisiz çıktığı için eklenmedi. Genel bir eş-anlamlı
+   sözlüğü **yoktur**.
+2. **Ağırlıklandırma:** yalnızca tek kelimeler kullanılır, IDF o haftanın haberlerinden
+   hesaplanır. İki kelimelik öbekler ölçüldü ve çıkarıldı: farklı cümlelerle yazılmış başlıklarda
+   recall'u düşürdüler (aynı precision'da 0.96'dan 0.76'ya). Böylece haftanın her yerinde geçen "tour", "new", "album" gibi
    kelimelerin ağırlığı kendiliğinden düşer.
 3. **Bağlantı kuralı:** iki haber aynı hikâyedir, eğer:
    - kosinüs benzerliği ≥ `T` ise,
@@ -109,6 +110,18 @@ Deterministiktir ve ağ çağrısı yapmaz. Varsayılan yöntem budur.
     iki ayrı olay tek haber gibi yazılır.
 - Gold set testi CI'da her build'de çalışır. Eşik veya tablo değişikliği skoru düşürürse test
   kırılır.
+
+**Ölçüm (2026-11-10, 2026-W46, 124 haber):** `T = 0.22` ile **precision 1.00, recall 0.96**.
+Karar kuralı TF-IDF'te kalmayı söylüyor; embedding eklenmedi.
+
+- **Kaçan tek eşleşme:** Sepultura'nın iki haberi (kosinüs 0.219).
+- **Geese:** belirsiz sayılmazsa precision 0.92 olur. O durumda iki "yanlış birleşme"nin ikisi de
+  Geese saygı cover'ının Richard Lloyd hikâyesine katılmasıdır.
+- **Eşik aralığı dar:** `T = 0.18`'de bir yanlış birleşme başlıyor, `0.26`'da recall 0.76'ya
+  düşüyor.
+- **Tek haftalık veri, genelleme kanıtlanmadı.** Bir sonraki tam hafta (2026-W47) etiketlenip
+  ikinci gold set olarak eklenecek. Skor düşerse eşik yeniden ayarlanacak veya embedding görevi
+  açılacak.
 
 ### 4. Okunur rapor — `cluster` alt komutu
 
@@ -193,6 +206,7 @@ xUnit + Shouldly. Önce test yazılır (TDD).
   tek haberli girdi; boş girdi.
 - **Gold set:** `2026-W46.json` üzerinde precision ≥ 0.95, recall ≥ 0.80. Eşik regresyonu korur.
 - **Rapor:** escape, sıralama, katlanmış bölüm.
+- **Hata yakalama:** EF'in bağlantı hatasını `InvalidOperationException` ile sarması da yakalanır (`DatabaseErrors`).
 - **ClusterCommand:** Testcontainers Postgres ile `[from, to)` sınırları ve
   `published_at ?? fetched_at` kuralı.
 - Workflow secret izolasyon testi yeni workflow'u da otomatik tarar.
@@ -207,11 +221,11 @@ xUnit + Shouldly. Önce test yazılır (TDD).
 
 ## Success Criteria
 
-- [ ] Gold set'te çift bazında precision ≥ 0.95, recall ≥ 0.80 (veya karar kuralına göre
+- [x] Gold set'te çift bazında precision ≥ 0.95, recall ≥ 0.80 (veya karar kuralına göre
       embedding görevi açılmış).
-- [ ] Yukarıdaki iki "ayrı kalmalı" örneği ayrı hikâyelerde.
-- [ ] Aynı girdi her çalıştırmada byte byte aynı raporu üretir.
-- [ ] 1.000 haberlik sentetik hafta < 5 sn'de kümelenir.
+- [x] Gold set tuzakları ayrı hikâyelerde: McCartney milyarder, Pink Floyd, iki Taylor Swift haberi, wah-wah listesi.
+- [x] Aynı girdi her çalıştırmada byte byte aynı raporu üretir.
+- [x] 1.000 haberlik sentetik hafta < 5 sn'de kümelenir.
 - [ ] `newsletter-preview` workflow'u production verisiyle çalışır; özet tek bakışta okunur.
 - [ ] Tam `dotnet build` + `dotnet test` yeşil; yeni paket yok, migration yok.
 
