@@ -5,32 +5,47 @@
    for the brief this is built from. */
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/fredoka-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fredoka";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/fredoka-700.woff2") format("woff2");
+}
+
 @theme {
-  /* Deep navy/charcoal foundation (10.2) - no pure black, so elevated surfaces can read as
-     lighter without ever approaching white. */
-  --color-bg: #12141b;
-  --color-bg-elevated: #1a1d27;
-  --color-bg-elevated-hover: #212533;
-  --color-border: rgb(233 224 210 / 12%);
-  --color-border-strong: rgb(233 224 210 / 22%);
+  /* Brand: the Bluesland playlist cover (docs/brand/README.md) - royal blue #004aad, guitar orange
+     #ff904b, white. Dark theme is a deep "night blue" built from the same blue, so elevated
+     surfaces read lighter without ever approaching the cover's saturated blue. */
+  --color-bg: #071a3d;
+  --color-bg-elevated: #0e2754;
+  --color-bg-elevated-hover: #143266;
+  --color-border: rgb(242 245 251 / 12%);
+  --color-border-strong: rgb(242 245 251 / 22%);
 
-  /* Warm off-white text (10.2) - never pure white, which would read as cold/clinical against
-     the navy background. */
-  --color-text: #ece5d8;
-  --color-text-muted: #a79f92;
+  --color-text: #f2f5fb;
+  --color-text-muted: #a9b9d4;
 
-  /* One warm accent (10.2: amber/rust/aged gold) - used sparingly for links, focus states and
-     the one primary action (Open in Spotify). Never green (10.2: "no Spotify-green-dominated
-     visual identity"). */
-  --color-accent: #d99a4e;
-  --color-accent-strong: #e8ac66;
-  --color-accent-contrast: #1a1206;
+  /* The guitar orange is the one action colour (links, focus, the primary button). */
+  --color-accent: #ff904b;
+  --color-accent-strong: #ffab78;
+  --color-accent-contrast: #1b1b1d;
 
-  /* Muted electric-blue (10.2) - a quiet secondary accent for tags/breadcrumbs, distinct enough
-     from the amber accent to signal "metadata" rather than "action". */
-  --color-secondary: #6f93b8;
+  /* Light blue for metadata (tags, breadcrumbs). */
+  --color-secondary: #7fb2ff;
 
-  --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+  /* Headings and the wordmark use Fredoka (SIL OFL, self-hosted in wwwroot/fonts, Latin + Turkish
+     subset), the rounded face of the Bluesland cover; the name stays --font-serif so every
+     existing heading rule picks it up. */
+  --font-serif: "Fredoka", ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
   --font-sans: -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, "Segoe UI", Roboto,
     Helvetica, Arial, sans-serif;
 
@@ -83,20 +98,20 @@
    text/bg-elevated 12.65:1, text-muted/bg-elevated 5.02:1, text/bg-elevated-hover 11.33:1 - every
    pair clears WCAG AA (4.5:1 normal text / 3:1 large text-UI) with margin. */
 :root[data-theme="light"] {
-  --color-bg: #f7f1e6;
-  --color-bg-elevated: #efe6d4;
-  --color-bg-elevated-hover: #e6dac2;
-  --color-border: rgb(42 34 22 / 10%);
-  --color-border-strong: rgb(42 34 22 / 20%);
+  --color-bg: #f5f8fd;
+  --color-bg-elevated: #e8eff9;
+  --color-bg-elevated-hover: #d9e5f6;
+  --color-border: rgb(0 42 99 / 10%);
+  --color-border-strong: rgb(0 42 99 / 20%);
 
-  --color-text: #2a2216;
-  --color-text-muted: #6b5f4e;
+  --color-text: #0d1f3c;
+  --color-text-muted: #45597a;
 
-  --color-accent: #8a5220;
-  --color-accent-strong: #743f19;
-  --color-accent-contrast: #fdf8ef;
+  --color-accent: #004aad;
+  --color-accent-strong: #003a8a;
+  --color-accent-contrast: #ffffff;
 
-  --color-secondary: #3f6386;
+  --color-secondary: #a8501c;
 }
 
 @layer base {
@@ -193,6 +208,17 @@
   color: var(--color-text);
   text-decoration: none;
   transition: color 0.15s ease;
+}
+
+.site-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.site-wordmark img {
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .site-wordmark:hover {
@@ -1126,6 +1152,12 @@ body:has(.filter-mobile-toggle:checked) {
 .weekly-lede,
 .weekly-issue-date {
   color: var(--color-text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.weekly h2 {
+  font-size: 1.35rem;
+  margin: 1.5rem 0 0.5rem;
 }
 
 .weekly-issues {

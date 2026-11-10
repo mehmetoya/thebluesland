@@ -13,7 +13,7 @@ namespace TheBluesland.UnitTests.Web;
 /// </summary>
 public sealed class SocialCardGeneratorTests
 {
-    private static readonly SKColor Background = SKColor.Parse("12141c");
+    private static readonly SKColor Background = SKColor.Parse("004aad");
 
     private readonly SocialCardGenerator _generator = new();
 

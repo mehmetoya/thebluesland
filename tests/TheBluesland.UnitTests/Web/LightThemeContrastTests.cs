@@ -15,15 +15,15 @@ public sealed class LightThemeContrastTests
 {
     private const double MinimumNormalTextRatio = 4.5;
 
-    private const string Bg = "#f7f1e6";
-    private const string BgElevated = "#efe6d4";
-    private const string BgElevatedHover = "#e6dac2";
-    private const string Text = "#2a2216";
-    private const string TextMuted = "#6b5f4e";
-    private const string Accent = "#8a5220";
-    private const string AccentStrong = "#743f19";
-    private const string AccentContrast = "#fdf8ef";
-    private const string Secondary = "#3f6386";
+    private const string Bg = "#f5f8fd";
+    private const string BgElevated = "#e8eff9";
+    private const string BgElevatedHover = "#d9e5f6";
+    private const string Text = "#0d1f3c";
+    private const string TextMuted = "#45597a";
+    private const string Accent = "#004aad";
+    private const string AccentStrong = "#003a8a";
+    private const string AccentContrast = "#ffffff";
+    private const string Secondary = "#a8501c";
 
     public static TheoryData<string, string, string> ForegroundBackgroundPairs => new()
     {

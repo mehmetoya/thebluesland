@@ -38,7 +38,7 @@ koddan önce kendi onaylı spec'ini (`docs/specs/weekly-newsletter-<modül>.md`)
 | # | İş | Bağımlı olduğu | Geçmesi gereken kapı |
 | --- | --- | --- | --- |
 | 1a | **issue-delivery** — kod hazır (`deliver`, `newsletter-deliver.yml`, Kit ücretsiz planı); TR pazartesi 08:00, EN 15:00, Kit'in zamanlayıcısıyla | issue-review | Mehmet'in Kit kurulumu: hesap, DNS (SPF/DKIM), `weekly-tr`/`weekly-en` etiketleri, double opt-in'li iki form, `KIT_API_KEY`, TR formunda KVKK rıza metni; sonra dry-run ve test aboneyle ilk gönderim |
-| 1b | **weekly-archive** — `/weekly` TR/EN sayı sayfaları (`content/weekly/`'den) + sağlayıcının abone formu | issue-review (1a ile paralel) | UI/UX tasarım çalışması; abone formu için sağlayıcı seçimi ve CSP uyumu |
+| 1b | **weekly-archive** — yayında: `/weekly`, `/weekly/{sayı}/{dil}`, Kit kayıt formu (form id'leri `Weekly:KitFormIdTr/En` ayarıyla açılır) | issue-review | Kit'te iki form + Render'da form id ayarları |
 
 Hattın değişmez kısıtları: $0 maliyet; Spotify verisi hiçbir AI prompt'una girmez; AI yalnız GitHub
 Actions'ta (Render'a hiç girmez); tek insan adımı Mehmet'in PR'ı düzeltip merge etmesi; abone
