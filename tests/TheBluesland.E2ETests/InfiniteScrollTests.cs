@@ -70,7 +70,7 @@ public sealed class InfiniteScrollTests : IAsyncLifetime
     public async Task Scrolling_the_show_more_link_into_view_loads_the_rest_with_no_click()
     {
         var page = await _browser.NewPageAsync();
-        await page.GotoAsync(_baseAddress);
+        await page.GotoAsync(_baseAddress + "/en");
 
         (await page.GetByText("Infinite Scroll Fixture 25").CountAsync()).ShouldBe(0);
         (await page.Locator(".playlist-card-link").CountAsync()).ShouldBe(24);
@@ -96,7 +96,7 @@ public sealed class InfiniteScrollTests : IAsyncLifetime
     {
         await using var context = await _browser.NewContextAsync(new BrowserNewContextOptions { JavaScriptEnabled = false });
         var page = await context.NewPageAsync();
-        await page.GotoAsync(_baseAddress);
+        await page.GotoAsync(_baseAddress + "/en");
 
         (await page.Locator(".playlist-card-link").CountAsync()).ShouldBe(24);
 

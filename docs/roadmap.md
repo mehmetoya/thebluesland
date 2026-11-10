@@ -17,6 +17,7 @@ Refactor / redesign planı (ayrı doküman): [`docs/plans/refactor-redesign.md`]
 | Barındırma ve teslim | Render (Docker) + Neon Postgres, $0; her PR'da 6 zorunlu kontrol, `main`'e push'ta GHCR imajı + Render deploy | `ci.yml`, `deploy.yml`, `.github/render.yaml`, ADR-0001/0003 |
 | Spotify senkronu | Aylık cache senkronu, rate-limit sonrası otomatik yeniden deneme, gizli playlist'i otomatik yayından kaldırma, `mixed-era` için otomatik dönem | `sync-spotify.yml`, `retry-rate-limited-sync.yml`, `report-eras.yml`, ADR-0002, `docs/automatic-eras.md` |
 | AI kürator notu | Elle tetiklenen Gemini taslağı; içeriğe yazmaz, Mehmet PR ile uygular | `suggest-curator-note.yml`, ADR-0005 |
+| Çok dillilik (TR/EN) | Her sayfa `/tr/...` ve `/en/...` altında; arayüz, Gizlilik, Koşullar ve Weekly tam Türkçe/İngilizce; dil değiştirici, hreflang, sitemap alternates. Editoryal içerik (playlist notları, koleksiyon metinleri) şimdilik İngilizce | `docs/specs/site-i18n.md` |
 | Analytics | Kendi barındırdığımız ziyaret/tıklama kaydı (ham IP yok) + korumalı `/dashboard` | `docs/specs/visitor-and-playlist-click-analytics.md`, `analytics-dashboard.md` |
 | Weekly: news-ingest | 2026-11-10'dan beri production'da; 2 saatte bir 7 RSS kaynağı `newsletter` şemasına, 8 hafta saklama. İlk çalışma: 7/7 kaynak başarılı, 124 haber | `newsletter-ingest.yml`, `tools/weekly-newsletter/`, `docs/specs/weekly-newsletter-news-ingest.md` |
 | Weekly: story-clustering | Deterministik TF-IDF kümeleme (ağ çağrısı yok, DB'ye yazmaz); elle etiketlenmiş gerçek haftada precision 1.00, recall 0.96. Kümeler elle tetiklenen `newsletter-preview.yml` ile job summary'de görülür | `tools/weekly-newsletter/Clustering/`, `clustering.yml`, `docs/specs/weekly-newsletter-story-clustering.md` |
@@ -38,7 +39,7 @@ koddan önce kendi onaylı spec'ini (`docs/specs/weekly-newsletter-<modül>.md`)
 | # | İş | Bağımlı olduğu | Geçmesi gereken kapı |
 | --- | --- | --- | --- |
 | 1a | **issue-delivery** — kod hazır (`deliver`, `newsletter-deliver.yml`, Kit ücretsiz planı); TR pazartesi 08:00, EN 15:00, Kit'in zamanlayıcısıyla | issue-review | Mehmet'in Kit kurulumu: hesap, DNS (SPF/DKIM), `weekly-tr`/`weekly-en` etiketleri, double opt-in'li iki form, `KIT_API_KEY`, TR formunda KVKK rıza metni; sonra dry-run ve test aboneyle ilk gönderim |
-| 1b | **weekly-archive** — yayında: `/weekly`, `/weekly/{sayı}/{dil}`, Kit kayıt formu (form id'leri `Weekly:KitFormIdTr/En` ayarıyla açılır) | issue-review | Kit'te iki form + Render'da form id ayarları |
+| 1b | **weekly-archive** — yayında: `/{dil}/weekly`, `/{dil}/weekly/{sayı}`, Kit kayıt formu (form id'leri `Weekly:KitFormIdTr/En` ayarıyla açılır) | issue-review | Kit'te iki form + Render'da form id ayarları |
 
 Hattın değişmez kısıtları: $0 maliyet; Spotify verisi hiçbir AI prompt'una girmez; AI yalnız GitHub
 Actions'ta (Render'a hiç girmez); tek insan adımı Mehmet'in PR'ı düzeltip merge etmesi; abone

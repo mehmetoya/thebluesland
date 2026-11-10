@@ -84,7 +84,7 @@ public sealed class SmokeTests : IAsyncLifetime
         {
             ViewportSize = new ViewportSize { Width = width, Height = 900 },
         });
-        await page.GotoAsync(_baseAddress + "/collections");
+        await page.GotoAsync(_baseAddress + "/en/collections");
         (await page.Locator(".collection-link").CountAsync()).ShouldBe(PlaylistCollections.All.Count);
         (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= window.innerWidth")).ShouldBeTrue();
         var screenshots = Path.Combine(AppContext.BaseDirectory, "Screenshots");
@@ -94,7 +94,7 @@ public sealed class SmokeTests : IAsyncLifetime
             Path = Path.Combine(screenshots, $"collections-{width}.png"),
             FullPage = true,
         });
-        await page.Locator(".collection-link[href='/collections/anadolu-rock']").ClickAsync();
+        await page.Locator(".collection-link[href='/en/collections/anadolu-rock']").ClickAsync();
         await page.GetByRole(AriaRole.Heading, new() { Name = "Anadolu Rock Playlists", Exact = true }).WaitForAsync();
         (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= window.innerWidth")).ShouldBeTrue();
     }
@@ -104,8 +104,8 @@ public sealed class SmokeTests : IAsyncLifetime
     {
         var page = await _browser.NewPageAsync();
         await page.AddInitScriptAsync("Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => { throw new Error('Denied'); } } });");
-        const string url = "https://thebluesland.onrender.com/playlists/masterpieces-of-erkin-the-father";
-        await page.GotoAsync(_baseAddress + "/playlists/masterpieces-of-erkin-the-father?utm_source=test");
+        const string url = "https://thebluesland.onrender.com/en/playlists/masterpieces-of-erkin-the-father";
+        await page.GotoAsync(_baseAddress + "/en/playlists/masterpieces-of-erkin-the-father?utm_source=test");
         await page.GetByText("Share playlist", new() { Exact = true }).ClickAsync();
         var share = page.Locator(".playlist-share");
         (await share.Locator("a").First.GetAttributeAsync("href") ?? string.Empty).ShouldContain(Uri.EscapeDataString(url));
@@ -127,8 +127,8 @@ public sealed class SmokeTests : IAsyncLifetime
             } });
             Object.defineProperty(navigator, 'clipboard', { value: { writeText: async text => { window.copiedPlaylist = text; } } });
             """);
-        const string url = "https://thebluesland.onrender.com/playlists/masterpieces-of-erkin-the-father";
-        await page.GotoAsync(_baseAddress + "/playlists/masterpieces-of-erkin-the-father");
+        const string url = "https://thebluesland.onrender.com/en/playlists/masterpieces-of-erkin-the-father";
+        await page.GotoAsync(_baseAddress + "/en/playlists/masterpieces-of-erkin-the-father");
         await page.GetByText("Share playlist", new() { Exact = true }).ClickAsync();
         await page.GetByRole(AriaRole.Button, new() { Name = "Share via device" }).ClickAsync();
         (await page.EvaluateAsync<string>("window.sharedPlaylist.url")).ShouldBe(url);
@@ -143,10 +143,12 @@ public sealed class SmokeTests : IAsyncLifetime
     {
         var page = await _browser.NewPageAsync();
 
+        // "/" redirects to the visitor's language (Playwright's default locale is en-US).
         var response = await page.GotoAsync(_baseAddress);
 
         response.ShouldNotBeNull();
         response!.Status.ShouldBe(200);
+        page.Url.ShouldEndWith("/en");
         (await page.Locator("h1").TextContentAsync()).ShouldBe("TheBluesland");
         (await page.TextContentAsync("body") ?? string.Empty).ShouldContain("Masterpieces of Erkin the Father");
     }
@@ -155,11 +157,28 @@ public sealed class SmokeTests : IAsyncLifetime
     public async Task Visitor_can_click_from_the_home_page_into_a_playlist_detail_page()
     {
         var page = await _browser.NewPageAsync();
-        await page.GotoAsync(_baseAddress);
+        await page.GotoAsync(_baseAddress + "/en");
 
         await page.GetByText("Masterpieces of Erkin the Father").ClickAsync();
 
-        page.Url.ShouldEndWith("/playlists/masterpieces-of-erkin-the-father");
+        page.Url.ShouldEndWith("/en/playlists/masterpieces-of-erkin-the-father");
         (await page.TextContentAsync("body") ?? string.Empty).ShouldContain("Curator note body");
+    }
+
+    [Fact]
+    public async Task Language_switcher_moves_to_the_same_page_in_turkish_and_keeps_it_there()
+    {
+        var page = await _browser.NewPageAsync();
+        await page.GotoAsync(_baseAddress + "/en/about");
+
+        await page.Locator(".lang-switcher a[hreflang='tr']").ClickAsync();
+
+        page.Url.ShouldEndWith("/tr/about");
+        (await page.GetAttributeAsync("html", "lang")).ShouldBe("tr");
+        (await page.Locator("h1").TextContentAsync()).ShouldBe("TheBluesland Hakkında");
+
+        // The visit saved the choice: "/" now goes to the Turkish home page, whatever the browser says.
+        await page.GotoAsync(_baseAddress);
+        page.Url.ShouldEndWith("/tr");
     }
 }
