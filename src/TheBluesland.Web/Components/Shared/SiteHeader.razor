@@ -1,7 +1,7 @@
 @inject NavigationManager Navigation
 <header class="site-header">
     <div class="site-header-inner">
-        <a href="/" class="site-wordmark"><img src="/images/guitar.svg" alt="" width="28" height="28" />TheBluesland</a>
+        <a href="@Site.Url("/")" class="site-wordmark"><img src="/images/guitar.svg" alt="" width="28" height="28" />TheBluesland</a>
         @* nav + toggle share one flex-wrap unit (.site-header-controls) instead of each being its
            own direct child of .site-header-inner's space-between row: with three independent
            space-between children, a narrow viewport that fits wordmark+nav on one line still wraps
@@ -9,11 +9,27 @@
            screenshot (2026-09-11). Grouping them means the whole nav+toggle cluster wraps together,
            so the toggle always stays visually attached to "About", never orphaned. *@
         <div class="site-header-controls">
-            <nav aria-label="Primary" class="site-nav">
-                <a href="/" aria-current="@Current("")">Playlists</a>
-                <a href="/collections" aria-current="@Current("collections")">Collections</a>
-                <a href="/weekly" aria-current="@Current("weekly")">Weekly</a>
-                <a href="/about" aria-current="@Current("about")">About</a>
+            <nav aria-label="@Site.T.NavPrimaryLabel" class="site-nav">
+                <a href="@Site.Url("/")" aria-current="@Current("")">@Site.T.NavPlaylists</a>
+                <a href="@Site.Url("/collections")" aria-current="@Current("collections")">@Site.T.NavCollections</a>
+                <a href="@Site.Url("/weekly")" aria-current="@Current("weekly")">@Site.T.NavWeekly</a>
+                <a href="@Site.Url("/about")" aria-current="@Current("about")">@Site.T.NavAbout</a>
+            </nav>
+            @* docs/specs/site-i18n.md: "TR | EN" links to the same page in the other language. Each
+               link carries its own lang/hreflang; the current language is aria-current="true" (not
+               "page": the item is a language choice, not a site section). Visiting a prefixed page
+               is what saves the visitor's choice (the lang cookie, set server-side). *@
+            <nav aria-label="@Site.T.SwitcherLabel" class="lang-switcher">
+                @for (var i = 0; i < SiteLanguage.Supported.Count; i++)
+                {
+                    var code = SiteLanguage.Supported[i];
+                    if (i > 0)
+                    {
+                        <span aria-hidden="true">|</span>
+                    }
+                    <a href="@Site.SwitchUrl(code)" lang="@code" hreflang="@code" title="@SiteText.For(code).LanguageName"
+                       aria-current="@(code == Site.Code ? "true" : null)">@code.ToUpperInvariant()</a>
+                }
             </nav>
             @* docs/specs/dark-light-mode-toggle.md section 3: hand-authored inline SVGs (no icon
                font/package, matching App.razor's favicon-comment convention). Both icons always
@@ -21,7 +37,8 @@
                each one via the app.css [data-theme] selectors - no JS-driven icon swap.
                aria-pressed/aria-label start matching the dark default and are kept in sync by that
                same script on every click. *@
-            <button type="button" class="theme-toggle" aria-label="Switch to light theme" aria-pressed="false">
+            <button type="button" class="theme-toggle" aria-label="@Site.T.ThemeToLight" aria-pressed="false"
+                    data-label-to-light="@Site.T.ThemeToLight" data-label-to-dark="@Site.T.ThemeToDark">
                 <svg class="icon-moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M20.742 13.045a8.088 8.088 0 0 1-2.077.273c-4.508 0-8.166-3.658-8.166-8.166 0-1.202.267-2.373.766-3.44a.75.75 0 0 0-.929-1.029A10.502 10.502 0 0 0 12 21.5c4.887 0 9.05-3.14 10.559-7.512a.75.75 0 0 0-1.817-.943Z" />
                 </svg>
@@ -38,7 +55,13 @@
     // a null attribute value is omitted). Home counts for "/" and the playlist detail pages.
     private string? Current(string section)
     {
+        // The language prefix is not a section: "tr/about" is the "about" section, "tr" is home.
         var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+        if (SiteLanguage.TrySplit("/" + path, out _, out var rest))
+        {
+            path = rest.Trim('/');
+        }
+
         var first = path.Split('/')[0];
         var active = section.Length == 0
             ? path.Length == 0 || first == "playlists"

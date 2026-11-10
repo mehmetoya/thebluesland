@@ -23,11 +23,16 @@ public static class StructuredDataBuilder
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
     };
 
-    public static string BuildWebSite(string siteUrl) =>
+    // inLanguage (BCP 47, "tr"/"en") is optional everywhere: null omits the property, which is what
+    // the pre-localization callers and tests get. Pages pass their own language for site chrome
+    // (WebSite/AboutPage/FAQPage) and the content language ("en" until a Turkish field exists, see
+    // docs/specs/site-i18n.md) for playlist and collection pages.
+    public static string BuildWebSite(string siteUrl, string? inLanguage = null) =>
         JsonSerializer.Serialize(
             new WebSiteSchema("https://schema.org", "WebSite", "TheBluesland", siteUrl)
             {
                 Id = siteUrl + "#website",
+                InLanguage = inLanguage,
                 Description = "Mehmet's personal collection of Spotify playlists, rooted in blues and spanning rock, folk, jazz, soul and electronic music. Each playlist has a short listening note.",
             },
             Options);
@@ -41,14 +46,25 @@ public static class StructuredDataBuilder
     /// (<see cref="JsonIgnoreCondition.WhenWritingNull"/>) when the cache is unavailable, matching
     /// this page's own graceful-degradation rule (spec 16.1) - never a stale or zero placeholder.
     /// </param>
-    public static string BuildCollectionPage(PlaylistContent content, PlaylistCacheSnapshot cacheSnapshot, string canonicalUrl) =>
+    /// <param name="imageUrl">
+    /// The social card URL. Defaults to <c>canonicalUrl + "/og-image.png"</c> (the unprefixed
+    /// pre-localization shape); localized pages must pass the language-neutral card URL because
+    /// <c>/tr/playlists/{slug}/og-image.png</c> does not exist.
+    /// </param>
+    public static string BuildCollectionPage(
+        PlaylistContent content,
+        PlaylistCacheSnapshot cacheSnapshot,
+        string canonicalUrl,
+        string? inLanguage = null,
+        string? imageUrl = null) =>
         JsonSerializer.Serialize(
             new CollectionPageSchema("https://schema.org", "CollectionPage", content.Title, content.Summary, canonicalUrl)
             {
                 Id = canonicalUrl + "#webpage",
+                InLanguage = inLanguage,
                 DatePublished = content.PublishedAt,
                 Keywords = PlaylistTags.All(content),
-                Image = canonicalUrl + "/og-image.png",
+                Image = imageUrl ?? canonicalUrl + "/og-image.png",
                 MainEntity = new MusicPlaylistSchema("MusicPlaylist", content.Title, content.Summary, canonicalUrl + "#playlist")
                 {
                     Genre = content.Genres,
@@ -70,11 +86,13 @@ public static class StructuredDataBuilder
         PlaylistCollection collection,
         IReadOnlyList<PlaylistContent> playlists,
         string canonicalUrl,
-        string siteUrl) =>
+        string siteUrl,
+        string? inLanguage = null) =>
         JsonSerializer.Serialize(
             new CollectionListPageSchema("https://schema.org", "CollectionPage", collection.Title, collection.Description, canonicalUrl)
             {
                 Id = canonicalUrl + "#webpage",
+                InLanguage = inLanguage,
                 MainEntity = new ItemListSchema(
                     "ItemList",
                     [.. playlists.Select((playlist, index) => new ListItemSchema(
@@ -96,13 +114,16 @@ public static class StructuredDataBuilder
     /// visible text exactly (Google's FAQPage guidance) - <see cref="AboutPage"/>'s markup and this
     /// method's caller share one array literal for that reason, so the two cannot drift apart.
     /// </summary>
-    public static string BuildFaqPage(IReadOnlyList<(string Question, string Answer)> items) =>
+    public static string BuildFaqPage(IReadOnlyList<(string Question, string Answer)> items, string? inLanguage = null) =>
         JsonSerializer.Serialize(
             new FaqPageSchema("https://schema.org", "FAQPage",
                 [.. items.Select(item => new QuestionSchema(
                     "Question",
                     item.Question,
-                    new AnswerSchema("Answer", item.Answer)))]),
+                    new AnswerSchema("Answer", item.Answer)))])
+            {
+                InLanguage = inLanguage,
+            },
             Options);
 
     /// <summary>
@@ -112,20 +133,21 @@ public static class StructuredDataBuilder
     /// says in visible prose - no new personal disclosure, no <c>sameAs</c> profile links (that is
     /// a separate, deliberate choice left to Mehmet).
     /// </summary>
-    public static string BuildAboutPage(string personName, string personDescription, string canonicalUrl) =>
+    public static string BuildAboutPage(string personName, string personDescription, string canonicalUrl, string? inLanguage = null) =>
         JsonSerializer.Serialize(
             new AboutPageSchema("https://schema.org", "AboutPage", canonicalUrl)
             {
                 Id = canonicalUrl + "#webpage",
+                InLanguage = inLanguage,
                 MainEntity = new PersonSchema("Person", personName, personDescription),
             },
             Options);
 
-    public static string BuildBreadcrumbList(string homeUrl, string playlistTitle, string canonicalUrl) =>
+    public static string BuildBreadcrumbList(string homeUrl, string playlistTitle, string canonicalUrl, string homeName = "Home") =>
         JsonSerializer.Serialize(
             new BreadcrumbListSchema("https://schema.org", "BreadcrumbList",
             [
-                new BreadcrumbItem("ListItem", 1, "Home", homeUrl),
+                new BreadcrumbItem("ListItem", 1, homeName, homeUrl),
                 new BreadcrumbItem("ListItem", 2, playlistTitle, canonicalUrl),
             ]),
             Options);
@@ -138,6 +160,7 @@ public static class StructuredDataBuilder
     {
         [JsonPropertyName("@id")]
         public string? Id { get; init; }
+        public string? InLanguage { get; init; }
         public string? Description { get; init; }
     }
 
@@ -150,6 +173,7 @@ public static class StructuredDataBuilder
     {
         [JsonPropertyName("@id")]
         public string? Id { get; init; }
+        public string? InLanguage { get; init; }
         public DateOnly? DatePublished { get; init; }
         public IReadOnlyList<string>? Keywords { get; init; }
         public string? Image { get; init; }
@@ -165,6 +189,7 @@ public static class StructuredDataBuilder
     {
         [JsonPropertyName("@id")]
         public string? Id { get; init; }
+        public string? InLanguage { get; init; }
         public ItemListSchema? MainEntity { get; init; }
     }
 
@@ -197,7 +222,10 @@ public static class StructuredDataBuilder
     private sealed record FaqPageSchema(
         [property: JsonPropertyName("@context")] string Context,
         [property: JsonPropertyName("@type")] string Type,
-        IReadOnlyList<QuestionSchema> MainEntity);
+        IReadOnlyList<QuestionSchema> MainEntity)
+    {
+        public string? InLanguage { get; init; }
+    }
 
     private sealed record QuestionSchema(
         [property: JsonPropertyName("@type")] string Type,
@@ -215,6 +243,7 @@ public static class StructuredDataBuilder
     {
         [JsonPropertyName("@id")]
         public string? Id { get; init; }
+        public string? InLanguage { get; init; }
         public PersonSchema? MainEntity { get; init; }
     }
 

@@ -16,10 +16,25 @@
     the current request's raw path/query string. That is what satisfies spec 14's "canonicalise
     filtered catalogue views to the base catalogue" rule: HomePage.razor always passes "/" here
     regardless of any active ?mood=/?genre=/?occasion=/?era= query string on the actual request.
+    Since the i18n pass the path is language-neutral and this component adds the /tr or /en prefix.
 *@
 <HeadContent>
     <meta name="description" content="@Description" />
     <link rel="canonical" href="@CanonicalUrl" />
+    @* docs/specs/site-i18n.md: every page names itself and its other-language twin, plus
+       x-default -> the English URL (a concrete content page rather than the "/" redirector: no
+       redirect hop for crawlers, and Googlebot sends no Accept-Language, so "/" would land on
+       English anyway). A page that exists in one language only passes AlternateLanguages. *@
+    @foreach (var code in Alternates)
+    {
+        <link rel="alternate" hreflang="@code" href="@BuildAbsolute(SiteLanguage.UrlFor(code, CanonicalPath))" />
+    }
+    <link rel="alternate" hreflang="x-default" href="@BuildAbsolute(SiteLanguage.UrlFor(DefaultAlternate, CanonicalPath))" />
+    <meta property="og:locale" content="@Site.OpenGraphLocale" />
+    @foreach (var code in Alternates.Where(code => code != Site.Code))
+    {
+        <meta property="og:locale:alternate" content="@SiteLanguage.OpenGraphLocaleFor(code)" />
+    }
     <meta property="og:title" content="@Title" />
     <meta property="og:description" content="@Description" />
     <meta property="og:type" content="website" />
@@ -45,7 +60,10 @@
     [Parameter, EditorRequired]
     public required string Description { get; set; }
 
-    /// <summary>Site-relative path, e.g. "/", "/about", "/playlists/{slug}".</summary>
+    /// <summary>
+    /// Language-neutral site-relative path, e.g. "/", "/about", "/playlists/{slug}" - the language
+    /// prefix is added here (canonical) and for every hreflang alternate.
+    /// </summary>
     [Parameter, EditorRequired]
     public required string CanonicalPath { get; set; }
 
@@ -62,10 +80,18 @@
     [Parameter]
     public IReadOnlyList<string> StructuredDataJson { get; set; } = [];
 
+    /// <summary>The languages this page exists in; null means both site languages.</summary>
+    [Parameter]
+    public IReadOnlyList<string>? AlternateLanguages { get; set; }
+
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 
-    private string CanonicalUrl => BuildAbsolute(CanonicalPath);
+    private IReadOnlyList<string> Alternates => AlternateLanguages ?? SiteLanguage.Supported;
+
+    private string DefaultAlternate => Alternates.Contains(SiteLanguage.DefaultCode) ? SiteLanguage.DefaultCode : Alternates[0];
+
+    private string CanonicalUrl => BuildAbsolute(Site.Url(CanonicalPath));
 
     private string ImageUrl => BuildAbsolute(ImagePath);
 

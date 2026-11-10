@@ -36,4 +36,32 @@ public sealed record PlaylistContent(
     int? FeaturedOrder,
     int DisplayOrder,
     DateOnly? PublishedAt,
-    IReadOnlyList<string> PreviousSlugs);
+    IReadOnlyList<string> PreviousSlugs)
+{
+    /// <summary>The marker line that starts the optional Turkish curator note in a playlist file's body.</summary>
+    public const string TurkishNoteMarker = "<!-- lang:tr -->";
+
+    /// <summary>Optional Turkish title/summary/curator note (docs/specs/site-i18n.md, "Content fallback").
+    /// Nothing sets them today: all editorial content is English, so every Turkish page falls back.</summary>
+    public string? TitleTr { get; init; }
+
+    public string? SummaryTr { get; init; }
+
+    public string? CuratorNoteTr { get; init; }
+
+    /// <summary>
+    /// The title to show on a page in <paramref name="languageCode"/> and the <c>lang</c> attribute its
+    /// element needs: null when the text already matches the page language, "en" when a Turkish page
+    /// shows the English original because no Turkish text exists.
+    /// </summary>
+    public (string Text, string? Lang) TitleIn(string languageCode) => Pick(languageCode, Title, TitleTr);
+
+    public (string Text, string? Lang) SummaryIn(string languageCode) => Pick(languageCode, Summary, SummaryTr);
+
+    public (string Text, string? Lang) CuratorNoteIn(string languageCode) => Pick(languageCode, CuratorNote, CuratorNoteTr);
+
+    private static (string Text, string? Lang) Pick(string languageCode, string english, string? turkish) =>
+        languageCode != "tr" ? (english, null)
+        : string.IsNullOrWhiteSpace(turkish) ? (english, "en")
+        : (turkish, null);
+}
