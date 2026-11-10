@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- TheBluesland Weekly pipeline tool (docs/specs/weekly-newsletter.md). Runs only from GitHub
+       Actions or Mehmet's own machine, never inside the production web app. Deliberately has no
+       reference to TheBluesland.SpotifyFetcher or TheBluesland.Web: newsletter code never touches
+       Spotify data, and the web app never touches the newsletter schema. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>TheBluesland.WeeklyNewsletter</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Parses feeds.yml (news-ingest spec, Design section 3). -->
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/TheBluesland.Data/TheBluesland.Data.csproj" />
+  </ItemGroup>
+
+</Project>
