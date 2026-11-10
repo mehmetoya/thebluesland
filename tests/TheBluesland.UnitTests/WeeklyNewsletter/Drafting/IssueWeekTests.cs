@@ -33,9 +33,25 @@ public sealed class IssueWeekTests
     [Fact]
     public void Resolve_names_the_issue_the_sunday_schedule_and_its_safety_retry_draft()
     {
-        // newsletter-draft.yml: cron 07:00 UTC and 10:00 UTC on Sunday 2026-11-15.
-        IssueWeek.Resolve(null, null, new DateTimeOffset(2026, 11, 15, 7, 0, 30, TimeSpan.Zero)).Id.ShouldBe("2026-W47");
-        IssueWeek.Resolve(null, null, new DateTimeOffset(2026, 11, 15, 10, 4, 0, TimeSpan.Zero)).Id.ShouldBe("2026-W47");
+        // newsletter-draft.yml: cron 08:15 UTC (11:15 Istanbul) and 11:00 UTC on Sunday 2026-11-15,
+        // after the Gemini quota reset at 08:00 UTC. The 10:00 Istanbul window end has passed by then.
+        var primary = IssueWeek.Resolve(null, null, new DateTimeOffset(2026, 11, 15, 8, 15, 30, TimeSpan.Zero));
+        var retry = IssueWeek.Resolve(null, null, new DateTimeOffset(2026, 11, 15, 11, 4, 0, TimeSpan.Zero));
+
+        primary.Id.ShouldBe("2026-W47");
+        retry.Id.ShouldBe("2026-W47");
+        primary.To.ShouldBe(new DateTimeOffset(2026, 11, 15, 7, 0, 0, TimeSpan.Zero)); // window still ends at 10:00 Istanbul
+        primary.From.ShouldBe(new DateTimeOffset(2026, 11, 8, 7, 0, 0, TimeSpan.Zero));
+        retry.To.ShouldBe(primary.To);
+        primary.SendDate.ShouldBe(new DateOnly(2026, 11, 16));
+    }
+
+    [Fact]
+    public void Resolve_a_week_later_names_the_next_issue_and_a_delayed_run_after_midnight_still_belongs_to_sunday_s_window()
+    {
+        // A cron delayed past Sunday 23:59 Istanbul still drafts W47 until Monday's own run would be W48 next Sunday.
+        IssueWeek.Resolve(null, null, new DateTimeOffset(2026, 11, 15, 20, 59, 0, TimeSpan.Zero)).Id.ShouldBe("2026-W47");
+        IssueWeek.Resolve(null, null, new DateTimeOffset(2026, 11, 22, 8, 15, 0, TimeSpan.Zero)).Id.ShouldBe("2026-W48");
     }
 
     [Fact]

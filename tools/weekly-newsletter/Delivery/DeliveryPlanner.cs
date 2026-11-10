@@ -28,8 +28,11 @@ public enum DeliveryActionKind
     /// <summary>A scheduled broadcast whose issue file left main (revert): delete it.</summary>
     Cancel,
 
-    /// <summary>Two broadcasts carry the same marker: do nothing at all, a human must look.</summary>
+    /// <summary>Two broadcasts carry the same marker and a human must look (one is already sending or sent): nothing is changed.</summary>
     Conflict,
+
+    /// <summary>Two unsent broadcasts carry the same marker: the newer one is deleted, the older one carries on.</summary>
+    DeleteDuplicate,
 }
 
 public sealed record DeliveryAction(DeliveryActionKind Kind, string Marker, DateTimeOffset? SendAt, long? BroadcastId, PlannedIssue? Issue, long? EmailTemplateId = null);
@@ -56,19 +59,31 @@ public static class DeliveryPlanner
         var marked = broadcasts
             .Where(broadcast => broadcast.Description?.StartsWith(MarkerPrefix, StringComparison.Ordinal) == true)
             .GroupBy(broadcast => broadcast.Description!.Trim(), StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.Ordinal);
-
-        var conflicts = marked.Where(pair => pair.Value.Count > 1).Select(pair => new DeliveryAction(DeliveryActionKind.Conflict, pair.Key, null, null, null)).ToList();
-        if (conflicts.Count > 0)
-        {
-            return conflicts.OrderBy(action => action.Marker, StringComparer.Ordinal).ToList();
-        }
+            .ToDictionary(group => group.Key, group => group.OrderBy(broadcast => broadcast.Id).ToList(), StringComparer.Ordinal);
 
         var cutOff = now + minimumLead;
         bool CanChange(KitBroadcast broadcast) =>
             broadcast.Status is { } status && Mutable.Contains(status) && (broadcast.SendAt is null || broadcast.SendAt > cutOff);
 
+        // Duplicates (a retried POST that Kit had already accepted) are only safe to remove while every
+        // copy is still unsent; if one is sending or sent, nothing is touched and a human must look.
+        var conflicts = marked.Where(pair => pair.Value.Count > 1 && !pair.Value.All(CanChange))
+            .Select(pair => new DeliveryAction(DeliveryActionKind.Conflict, pair.Key, null, null, null)).ToList();
+        if (conflicts.Count > 0)
+        {
+            return conflicts.OrderBy(action => action.Marker, StringComparer.Ordinal).ToList();
+        }
+
         var actions = new List<DeliveryAction>();
+        foreach (var (marker, copies) in marked.Where(pair => pair.Value.Count > 1))
+        {
+            // The oldest copy stays (lowest id); the newer ones go.
+            foreach (var duplicate in copies.Skip(1))
+            {
+                actions.Add(new DeliveryAction(DeliveryActionKind.DeleteDuplicate, marker, duplicate.SendAt, duplicate.Id, null));
+            }
+        }
+
         foreach (var issue in issues)
         {
             if (!marked.TryGetValue(issue.Marker, out var found))

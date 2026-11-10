@@ -93,10 +93,10 @@ public sealed class DeliverCommandTests : IDisposable
     }
 
     [Fact]
-    public async Task Duplicate_broadcasts_change_nothing_and_fail()
+    public async Task Duplicate_broadcasts_of_which_one_is_sent_change_nothing_and_fail()
     {
         const string twins = """
-            {"broadcasts":[{"id":1,"description":"thebluesland-weekly:2026-W46:tr","status":"scheduled"},
+            {"broadcasts":[{"id":1,"description":"thebluesland-weekly:2026-W46:tr","status":"completed"},
                            {"id":2,"description":"thebluesland-weekly:2026-W46:tr","status":"scheduled"}],
              "pagination":{"has_previous_page":false,"has_next_page":false,"start_cursor":"a","end_cursor":"b","per_page":2}}
             """;
@@ -106,6 +106,51 @@ public sealed class DeliverCommandTests : IDisposable
 
         handler.Requests.ShouldHaveSingleItem();
         _output.ToString().ShouldContain("two Kit broadcasts carry this marker");
+    }
+
+    [Fact]
+    public async Task Unsent_duplicate_broadcasts_are_repaired_by_deleting_the_newer_one()
+    {
+        var tr = Issue(DraftLanguage.Turkish, id: "2026-W46", sendDate: new DateOnly(2026, 11, 9));
+        var twins = $$$"""
+            {"broadcasts":[{"id":1,"description":"{{{tr.Marker}}}","status":"scheduled","send_at":"2026-11-09T08:00:00+03:00"},
+                           {"id":2,"description":"{{{tr.Marker}}}","status":"scheduled","send_at":"2026-11-09T08:00:00+03:00"}],
+             "pagination":{"has_previous_page":false,"has_next_page":false,"start_cursor":"a","end_cursor":"b","per_page":2}}
+            """;
+        var handler = new QueueHandler(request => request.Method.Method switch
+        {
+            "GET" => Json(twins),
+            "DELETE" => new HttpResponseMessage(HttpStatusCode.NoContent),
+            _ => Created(501)(request),
+        });
+
+        (await RunAsync(handler)).ShouldBe(0, _error.ToString());
+
+        handler.Requests.Where(item => item.Request.Method == HttpMethod.Delete).Select(item => item.Request.RequestUri!.AbsolutePath).ShouldBe(["/v4/broadcasts/2"]);
+        _output.ToString().ShouldContain("duplicate removed");
+    }
+
+    [Fact]
+    public async Task A_late_merge_stays_green_but_the_report_opens_with_a_late_banner()
+    {
+        // Monday 2026-11-09 09:00 Istanbul: TR (08:00) is gone, EN (15:00) is not.
+        var monday = new DateTimeOffset(2026, 11, 9, 6, 0, 0, TimeSpan.Zero);
+        var handler = new QueueHandler(EmptyList, Created(501));
+
+        var code = await DeliverCommand.RunAsync(Tool, Content, "test-key", false, new HttpClient(handler), new FixedTimeProvider(monday), _output, _error, CancellationToken.None, TimeSpan.Zero);
+
+        code.ShouldBe(0, _error.ToString());
+        _output.ToString().ShouldStartWith("**⚠️ LATE — tr will not be sent this week**");
+    }
+
+    [Fact]
+    public async Task A_run_with_nothing_late_has_no_late_banner()
+    {
+        var handler = new QueueHandler(EmptyList, Created(501), Created(502));
+
+        (await RunAsync(handler)).ShouldBe(0, _error.ToString());
+
+        _output.ToString().ShouldNotContain("LATE");
     }
 
     [Fact]

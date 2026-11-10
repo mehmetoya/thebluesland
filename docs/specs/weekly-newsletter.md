@@ -56,7 +56,7 @@ issue-delivery, weekly-archive (paralel) → (sonra) engagement-signals
    seçenek reddedilir.
 3. **Takvim — "ideal gün/saat", aşağıdaki öneri onay bekliyor.** Saatler yapılandırmada durur,
    kod değişmeden kaydırılabilir.
-   - Taslak PR: pazar 10:00 (Europe/Istanbul).
+   - Taslak PR: pazar 11:15 (Europe/Istanbul); haber penceresi pazar 10:00'da biter (Gemini kotası 08:00 UTC'de sıfırlanır).
    - TR gönderim: pazartesi 08:00 (Europe/Istanbul) — haftaya başlarken, işe yolda okuma.
    - EN gönderim: pazartesi 15:00 (Europe/Istanbul) = 12:00 Londra / 07:00 New York.
    - Kesim: gönderim saatine kadar merge yoksa o dilin sayısı o hafta gönderilmez (geç merge
