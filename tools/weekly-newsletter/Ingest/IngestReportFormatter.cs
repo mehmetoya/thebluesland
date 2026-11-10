@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using TheBluesland.WeeklyNewsletter.Reporting;
 
 namespace TheBluesland.WeeklyNewsletter.Ingest;
 
@@ -13,7 +14,6 @@ namespace TheBluesland.WeeklyNewsletter.Ingest;
 public static class IngestReportFormatter
 {
     private const string NotApplicable = "–";
-    private const int MaxCellLength = 200;
 
     public static string ToMarkdown(IngestReport report, int? removed, DateTimeOffset runAt)
     {
@@ -46,20 +46,5 @@ public static class IngestReportFormatter
         return markdown.ToString();
     }
 
-    /// <summary>Keeps arbitrary text (feed names, exception messages) inside one table cell.</summary>
-    private static string Cell(string? text)
-    {
-        var flat = string.Join(' ', (text ?? string.Empty).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
-        if (flat.Length > MaxCellLength)
-        {
-            flat = flat[..(MaxCellLength - 1)] + "…";
-        }
-
-        return flat
-            .Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("|", "\\|", StringComparison.Ordinal)
-            .Replace("`", "\\`", StringComparison.Ordinal)
-            .Replace("<", "&lt;", StringComparison.Ordinal)
-            .Replace(">", "&gt;", StringComparison.Ordinal);
-    }
+    private static string Cell(string? text) => MarkdownText.Cell(text);
 }

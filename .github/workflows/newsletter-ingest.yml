@@ -4,7 +4,7 @@ name: Newsletter ingest
 # "ingest" every two hours (feeds keep only their last 10-40 items; the narrowest, Consequence,
 # spans ~4.7 hours) and can be dispatched by hand. Writes only the newsletter schema.
 #
-# This is the ONLY workflow that may reference NEON_NEWSLETTER_CONNECTION_STRING, and it references
+# Only newsletter-* workflows may reference NEON_NEWSLETTER_CONNECTION_STRING, and this one references
 # no other secret (enforced by tests/TheBluesland.UnitTests/Workflows/
 # NewsletterIngestWorkflowSecretIsolationTests.cs, which scans every workflow file). The secret must
 # be the newsletter_writer role's connection string (src/TheBluesland.Data/Scripts/

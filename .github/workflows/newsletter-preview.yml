@@ -1,0 +1,61 @@
+name: Newsletter preview
+
+# docs/specs/weekly-newsletter-story-clustering.md, Design section 4: prints a week's story
+# clusters to the job summary so Mehmet can check them without reading code. Read-only (the
+# "cluster" subcommand never writes) and dispatch-only; once the weekly pipeline exists its own
+# workflow prints the same report.
+#
+# Like newsletter-ingest.yml it uses only NEON_NEWSLETTER_CONNECTION_STRING (newsletter_writer role),
+# scoped to the one step that runs the tool (enforced by
+# tests/TheBluesland.UnitTests/Workflows/NewsletterIngestWorkflowSecretIsolationTests.cs).
+
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: "Window start, UTC (e.g. 2026-11-03 or 2026-11-03T10:00). Empty = 7 days before 'to'."
+        required: false
+        default: ""
+      to:
+        description: "Window end, UTC, exclusive. Empty = now."
+        required: false
+        default: ""
+
+concurrency:
+  group: newsletter-db
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj
+
+      - name: Build
+        run: dotnet build tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-restore
+
+      # Inputs reach the shell only as environment variables, never interpolated into the script.
+      - name: Cluster
+        env:
+          NEON_NEWSLETTER_CONNECTION_STRING: ${{ secrets.NEON_NEWSLETTER_CONNECTION_STRING }}
+          WINDOW_FROM: ${{ inputs.from }}
+          WINDOW_TO: ${{ inputs.to }}
+        run: |
+          set -euo pipefail
+          args=(cluster)
+          if [ -n "$WINDOW_FROM" ]; then args+=(--from "$WINDOW_FROM"); fi
+          if [ -n "$WINDOW_TO" ]; then args+=(--to "$WINDOW_TO"); fi
+          dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
