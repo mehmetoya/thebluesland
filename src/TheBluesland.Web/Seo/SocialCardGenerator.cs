@@ -96,7 +96,8 @@ public sealed class SocialCardGenerator
 
     private static List<string> WrapLines(string text, SKFont font, int maxLines)
     {
-        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        // Any whitespace (newlines from multi-line YAML summaries, tabs, NBSP) is a word break.
+        var words = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
         var lines = new List<string>();
         var current = string.Empty;
 
@@ -109,7 +110,11 @@ public sealed class SocialCardGenerator
                 current = word;
                 if (lines.Count == maxLines)
                 {
-                    lines[^1] = FitWithEllipsis(lines[^1], font);
+                    // An oversized word may already have been clipped with an ellipsis above.
+                    if (!lines[^1].EndsWith(Ellipsis, StringComparison.Ordinal))
+                    {
+                        lines[^1] = FitWithEllipsis(lines[^1], font);
+                    }
                     return lines;
                 }
             }
@@ -141,6 +146,12 @@ public sealed class SocialCardGenerator
 
         var trimmed = line;
         while (trimmed.Length > 1 && font.MeasureText(trimmed + Ellipsis) > TextWidth)
+        {
+            trimmed = trimmed[..^1];
+        }
+
+        // Never leave half of a surrogate pair (e.g. an emoji) dangling before the ellipsis.
+        if (trimmed.Length > 1 && char.IsHighSurrogate(trimmed[^1]))
         {
             trimmed = trimmed[..^1];
         }

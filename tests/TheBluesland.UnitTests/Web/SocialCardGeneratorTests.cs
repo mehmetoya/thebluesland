@@ -47,9 +47,49 @@ public sealed class SocialCardGeneratorTests
             }
         }
 
-        // Brand line + a two-word title + one summary line cover well over 1% of the sampled grid;
-        // a background-only card (the old "no font found" fallback) has zero.
-        nonBackgroundPixels.ShouldBeGreaterThan(bitmap.Width * bitmap.Height / 4 / 100);
+        // A background-only card (the old "no font found" fallback) has zero non-background pixels;
+        // the bound is kept low so CoreText (macOS) vs FreeType (Linux) rasterization differences
+        // cannot make this flaky.
+        nonBackgroundPixels.ShouldBeGreaterThan(200);
+    }
+
+    [Fact]
+    public void Generate_treats_newlines_and_tabs_in_text_as_word_breaks()
+    {
+        // Long enough to need wrapping: if newline/tab-separated words were glued into one "word",
+        // the summary would be clipped with an ellipsis instead of wrapping like the spaced version.
+        var words = Enumerable.Range(1, 40).Select(i => $"word{i}").ToArray();
+        var withLineBreaks = _generator.Generate("Late\tNight\nBlues", string.Join('\n', words));
+        var withSpaces = _generator.Generate("Late Night Blues", string.Join(' ', words));
+
+        withLineBreaks.SequenceEqual(withSpaces).ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Generate_clips_a_single_word_wider_than_the_card_inside_the_right_margin()
+    {
+        var png = _generator.Generate(new string('W', 500), "x");
+
+        using var bitmap = SKBitmap.Decode(png);
+        for (var y = 220; y < 440; y += 2)
+        {
+            for (var x = bitmap.Width - 50; x < bitmap.Width; x += 2)
+            {
+                bitmap.GetPixel(x, y).ShouldBe(Background);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("   ", "")]
+    [InlineData("Çığ Öğüş İşçi Şarkıları", "Gece yarısı için ağır akan bir blues seçkisi.")]
+    [InlineData("🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸🎸", "")]
+    public void Generate_unusual_text_still_returns_a_card(string title, string summary)
+    {
+        var png = _generator.Generate(title, summary);
+
+        using var bitmap = SKBitmap.Decode(png);
+        bitmap.Width.ShouldBe(1200);
     }
 
     [Fact]
