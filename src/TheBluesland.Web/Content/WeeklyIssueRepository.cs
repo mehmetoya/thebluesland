@@ -14,7 +14,8 @@ public sealed record WeeklyIssue(
     string Html,
     string Lede,
     IReadOnlyList<string> Headlines,
-    int ReadMinutes)
+    int ReadMinutes,
+    string? Playlist = null)
 {
     private const string TitlePrefix = "TheBluesland Weekly · ";
 
@@ -155,7 +156,7 @@ public sealed partial class WeeklyIssueRepository
             var layout = WeeklyIssueLayout.Build(body);
             issues.Add(new WeeklyIssue(
                 name.Groups["id"].Value, name.Groups["lang"].Value, title, sendDate,
-                layout.Html, layout.Lede, layout.Headlines, layout.ReadMinutes));
+                layout.Html, layout.Lede, layout.Headlines, layout.ReadMinutes, PlaylistSlug(front.Playlist)));
         }
 
         return issues
@@ -163,6 +164,14 @@ public sealed partial class WeeklyIssueRepository
             .ThenByDescending(issue => issue.Language, StringComparer.Ordinal)
             .ToList();
     }
+
+    // Optional front matter `playlist: <slug>` (the editor adds it in the review PR): only a plain
+    // kebab-case slug is kept, so a typo can never become a path or markup.
+    private static string? PlaylistSlug(string? value) =>
+        value?.Trim() is { Length: > 0 } slug && PlaylistSlugShape().IsMatch(slug) ? slug : null;
+
+    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.CultureInvariant, 1000)]
+    private static partial Regex PlaylistSlugShape();
 
     [GeneratedRegex(@"^(?<id>\d{4}-W\d{2})\.(?<lang>tr|en)\.md$", RegexOptions.CultureInvariant, 1000)]
     private static partial Regex FileName();
@@ -172,5 +181,7 @@ public sealed partial class WeeklyIssueRepository
         public string? Title { get; set; }
 
         public string? SendDate { get; set; }
+
+        public string? Playlist { get; set; }
     }
 }

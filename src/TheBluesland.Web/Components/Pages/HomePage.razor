@@ -298,7 +298,7 @@
         activeCount > 0 ? $"{name} ({activeCount})" : name;
 
     private string WebSiteJsonLd =>
-        StructuredDataBuilder.BuildWebSite(BuildAbsoluteUrl(Site.Url("/")), Site.Code);
+        StructuredDataBuilder.BuildWebSite(BuildAbsoluteUrl(Site.Url("/")), Site.Code, Site.T.WebSiteDescription);
 
     private string BuildAbsoluteUrl(string path) =>
         HttpContext is null ? path : SiteUrl.BuildAbsolute(HttpContext, path);

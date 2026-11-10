@@ -82,4 +82,23 @@ public sealed class IssueMarkdownWriterTests
         subject.ShouldEndWith(DraftLanguage.SubjectTag);
         IssueMarkdownWriter.Fit("Short.", DraftLanguage.MaxPreview).ShouldBe("Short.");
     }
+
+    // Design round 2 B-7: the cut used to land mid-phrase ("... pass on a…").
+    [Theory]
+    // Prefers the last sentence end that keeps at least half the room.
+    [InlineData("Richard Lloyd dies at 71 and Murderdolls return with a new single. Sabaton announce the tour dates.", 90, "Richard Lloyd dies at 71 and Murderdolls return with a new single.")]
+    // No sentence end: cuts before the last " and " / comma, never mid-phrase.
+    [InlineData("Vince Neil's partner arrested, Sabaton drop a new track and Type O Negative pass on a reunion.", 90, "Vince Neil's partner arrested, Sabaton drop a new track…")]
+    [InlineData("Murderdolls return with a new single, Sabaton announce the tour dates for next spring and fall", 60, "Murderdolls return with a new single…")]
+    // Turkish conjunction.
+    [InlineData("Richard Lloyd hayatını kaybetti, Murderdolls geri dönüyor ve Sabaton yeni bir turne duyurdu", 80, "Richard Lloyd hayatını kaybetti, Murderdolls geri dönüyor…")]
+    // Never ends on a function word.
+    [InlineData("Sabaton announce a tour with the legends of heavy metal across the whole of Europe in a", 50, "Sabaton announce a tour with the legends…")]
+    public void The_cut_ends_on_a_sentence_or_phrase_boundary_never_on_a_function_word(string text, int max, string expected)
+    {
+        var fitted = IssueMarkdownWriter.Fit(text, max);
+
+        fitted.ShouldBe(expected);
+        fitted.Length.ShouldBeLessThanOrEqualTo(max);
+    }
 }

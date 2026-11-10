@@ -1,3 +1,5 @@
+using TheBluesland.Web.Localization;
+
 namespace TheBluesland.Web.Content;
 
 /// <summary>Small, named entry points into the existing editorial tags; not arbitrary filter URLs.</summary>
@@ -77,7 +79,28 @@ public sealed record PlaylistCollection(
     string Description,
     string Introduction,
     Dimension Dimension,
-    PlaylistFilterCriteria Criteria);
+    PlaylistFilterCriteria Criteria)
+{
+    /// <summary>
+    /// True when the title and description exist in <paramref name="languageCode"/> without
+    /// translating editorial copy: Turkish derives them from the taxonomy label of the collection's
+    /// slug (every collection slug is a taxonomy value), English is the authored text.
+    /// </summary>
+    public bool HasTitleIn(string languageCode) =>
+        languageCode != SiteLanguage.Turkish || TaxonomyLabels.HasTurkishLabel(Slug);
+
+    /// <summary>"Melankolik çalma listeleri" on a Turkish page, else the English title.</summary>
+    public string TitleIn(string languageCode) =>
+        languageCode == SiteLanguage.Turkish && TaxonomyLabels.HasTurkishLabel(Slug)
+            ? $"{TaxonomyLabels.CapitalizedLabel(Slug, languageCode)} çalma listeleri"
+            : Title;
+
+    /// <summary>"Melankolik çalma listelerini keşfet." on a Turkish page, else the English description.</summary>
+    public string DescriptionIn(string languageCode) =>
+        languageCode == SiteLanguage.Turkish && TaxonomyLabels.HasTurkishLabel(Slug)
+            ? $"{TaxonomyLabels.CapitalizedLabel(Slug, languageCode)} çalma listelerini keşfet."
+            : Description;
+}
 
 /// <summary>The taxonomy dimension a collection represents - used only by <c>CollectionsPage</c> to
 /// group the index; it carries no filtering logic, <see cref="PlaylistCollection.Criteria"/> still

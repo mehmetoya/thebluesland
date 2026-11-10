@@ -5,17 +5,18 @@
 
 @if (_collection is not null)
 {
-    <PageTitle>@(_collection.Title + " - TheBluesland")</PageTitle>
-    <PageMetadata Title="@(_collection.Title + " - TheBluesland")"
-                  Description="@_collection.Description"
+    <PageTitle>@(_collection.TitleIn(Site.Code) + " - TheBluesland")</PageTitle>
+    <PageMetadata Title="@(_collection.TitleIn(Site.Code) + " - TheBluesland")"
+                  Description="@_collection.DescriptionIn(Site.Code)"
                   CanonicalPath="@($"/collections/{_collection.Slug}")" ImagePath="/og-image.png"
                   StructuredDataJson="@(new[] { CollectionPageJsonLd })" />
     <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a href="@Site.Url("/")">@Site.T.Home</a> / <a href="@Site.Url("/collections")">@Site.T.NavCollections</a> / <span aria-current="page" lang="@Site.EnglishContentLang">@_collection.Title</span>
+        <a href="@Site.Url("/")">@Site.T.Home</a> / <a href="@Site.Url("/collections")">@Site.T.NavCollections</a> / <span aria-current="page" lang="@(_collection.HasTitleIn(Site.Code) ? null : Site.EnglishContentLang)">@_collection.TitleIn(Site.Code)</span>
     </nav>
-    <section class="brand-intro">
-        @* Collection copy is English-only (docs/specs/site-i18n.md): marked lang="en" on a Turkish page. *@
-        <h1 lang="@Site.EnglishContentLang">@_collection.Title</h1>
+    <section class="brand-intro page-intro">
+        @* Title/description follow the taxonomy label on a Turkish page; the introduction stays
+           English-only (docs/specs/site-i18n.md) and is marked lang="en". *@
+        <h1 lang="@(_collection.HasTitleIn(Site.Code) ? null : Site.EnglishContentLang)">@_collection.TitleIn(Site.Code)</h1>
         <p lang="@Site.EnglishContentLang">@_collection.Introduction</p>
     </section>
     <section class="catalogue" aria-label="@Site.T.PlaylistsInCollectionLabel">

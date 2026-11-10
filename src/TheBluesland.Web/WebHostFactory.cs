@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using TheBluesland.Data;
@@ -85,6 +86,20 @@ public static class WebHostFactory
             .ToArray();
         builder.Configuration["AllowedHosts"] = string.Join(';', allowedHosts);
         builder.Services.AddHostFiltering(options => options.AllowedHosts = allowedHosts);
+
+        // QA-01: TLS ends at Cloudflare/Render, so Kestrel sees plain HTTP and Request.IsHttps would
+        // be false in production - the `lang` cookie would never get Secure. Honour X-Forwarded-Proto
+        // only (not -For or -Host: nothing here depends on them). The default trust list is just
+        // loopback, which would ignore Render's proxy, so it is cleared: the trade-off is that any
+        // client that reaches the app directly can claim "https" - harmless, it only decides the
+        // Secure flag (and the app is reachable only through the platform's proxy anyway).
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
+
         builder.Services.AddOutputCache(options =>
         {
             options.SizeLimit = SocialCardCacheSizeBytes;
@@ -134,6 +149,7 @@ public static class WebHostFactory
             .AddCheck<PlaylistContentHealthCheck>("playlist-content", tags: ["ready"]);
 
         var app = builder.Build();
+        app.UseForwardedHeaders();
         app.UseHostFiltering();
 
         // 2026-09-09 domain migration (SPEC-custom-domain-migration.md): a request that reaches

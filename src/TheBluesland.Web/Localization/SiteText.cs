@@ -17,6 +17,7 @@ public sealed partial class SiteText
     // Language switcher.
     public required string LanguageName { get; init; }
     public required string SwitcherLabel { get; init; }
+    public required string SwitcherNoEditionTitle { get; init; }
 
     // Header and footer.
     public required string NavPrimaryLabel { get; init; }
@@ -110,6 +111,7 @@ public sealed partial class SiteText
     public required string AboutHeading { get; init; }
     public required string AboutFaqHeading { get; init; }
     public required string AboutCuratorDescription { get; init; }
+    public required string WebSiteDescription { get; init; }
     public required IReadOnlyList<(string Question, string Answer)> AboutFaq { get; init; }
 
     // Privacy and terms (the prose itself is in the pages).
@@ -128,7 +130,8 @@ public sealed partial class SiteText
     public required string WeeklyIssueWord { get; init; }
     public required string WeeklyIssueDescription { get; init; }
     public required string WeeklyMinutes { get; init; }
-    public required string WeeklyLanguageNavLabel { get; init; }
+    public required string WeeklyOnlyInThisLanguage { get; init; }
+    public required string WeeklyThisWeeksListen { get; init; }
     public required string WeeklyIssuesNavLabel { get; init; }
     public required string WeeklyPreviousIssue { get; init; }
     public required string WeeklyNextIssue { get; init; }
@@ -150,10 +153,10 @@ public sealed partial class SiteText
     // Not found / error (each "body" is text before a link, the link text and text after it).
     public required string NotFoundTitle { get; init; }
     public required string NotFoundHeading { get; init; }
-    public required string NotFoundBodyBefore { get; init; }
-    public required string BrowseThePlaylistsLink { get; init; }
+    public required string NotFoundBody { get; init; }
+    public required string BackToHome { get; init; }
     public required string FailedTitle { get; init; }
-    public required string FailedBodyBefore { get; init; }
+    public required string FailedBody { get; init; }
     public required string WeeklyNotFoundTitle { get; init; }
     public required string WeeklyNotFoundHeading { get; init; }
     public required string WeeklyNotFoundBodyBefore { get; init; }

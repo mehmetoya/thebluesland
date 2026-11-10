@@ -92,6 +92,7 @@ job'unda yeni bir adım. Kurallar:
 | 5 hikâye; front matter'daki her hikâyenin ≥ 1 kaynağı, kaynak URL'si `https://` | ADR-0006 madde 3 |
 | Gövdedeki `## ` başlık sayısı front matter'daki hikâye sayısına eşit | Değiştirmede yarım kalan düzenleme |
 | Sonda AI notu birebir var (dile göre) | ADR-0006 madde 4 |
+| İsteğe bağlı `playlist: <slug>`: kebab-case olmalı; `content/playlists` görünürken `<slug>.md` dosyası bulunmalı | Sayı sayfası ve e-posta "Bu haftanın dinlemesi" bağlantısı verir; taslak aracı alanı yazmaz, editör PR'da ekler |
 | `*.backups.*.md` dosyası yok | Yedekler `main`'e girmez |
 
 Bu denetim deterministik ve hızlıdır; Gemini veya veritabanı gerektirmez.

@@ -6,6 +6,7 @@ public sealed partial class SiteText
     {
         LanguageName = "Türkçe",
         SwitcherLabel = "Dil",
+        SwitcherNoEditionTitle = "Bu sayının İngilizce sürümü yok; İngilizce arşive git",
 
         NavPrimaryLabel = "Ana gezinme",
         NavPlaylists = "Çalma listeleri",
@@ -29,13 +30,13 @@ public sealed partial class SiteText
         HomeDescription = "Mehmet'in blues ve rock'tan folk, caz ve elektronik müziğe uzanan kişisel Spotify çalma listesi koleksiyonunu keşfet. Bir sonraki dinleyişin için bir şey bul.",
         HomeIntro = "Kökleri blues'a uzanan, müziğin götürdüğü her yöne açık kişisel bir çalma listesi koleksiyonu. Yol için, sakin bir akşam için ya da daha yakından bir dinleyiş için bir şeyler bul.",
         WeeklyStripLead = "TheBluesland Weekly",
-        WeeklyStripText = "her pazartesi, beş müzik haberi, beş dakikada",
-        SearchLabel = "Tarza ya da ruh haline göre çalma listesi bul",
+        WeeklyStripText = "her pazartesi, beş müzik haberi, birkaç dakikada",
+        SearchLabel = "Tarza ya da ruh hâline göre çalma listesi bul",
         SearchPlaceholder = "örn. melankolik blues",
         SearchButton = "Ara",
         FiltersLabel = "Filtreler",
         FiltersClose = "Kapat",
-        FilterMood = "Ruh hali",
+        FilterMood = "Ruh hâli",
         FilterGenre = "Tür",
         FilterOccasion = "Ortam",
         FilterEra = "Dönem",
@@ -63,7 +64,7 @@ public sealed partial class SiteText
         ModeMoreEnergeticHelp = "Daha parlak, daha doğrudan seçkilere yönel.",
         ModeRelaxedFlowHelp = "Yoğunluğu düşür, atmosferin sıcaklığını koru.",
         ModeDeeperCutsHelp = "Aynı çizgiden daha seyrek, daha niş keşiflere yönel.",
-        MixEmpty = "Bu mod için henüz yakın bir karışım bulunamadı. Mevcut seçimi koru ve farklı bir ruh hali dene.",
+        MixEmpty = "Bu mod için henüz yakın bir karışım bulunamadı. Mevcut seçimi koru ve farklı bir ruh hâli dene.",
         UseThisMixLabel = title => $"{title} için seçilen karışımı kullan",
         UseThisMix = "Bu karışımı kullan",
         KeepCurrentList = "Mevcut listeyi koru",
@@ -81,7 +82,7 @@ public sealed partial class SiteText
         ShareMessageUnavailable = "Cihazla paylaşım kullanılamıyor. Twitter / X, WhatsApp'ı kullan ya da bağlantıyı kopyala.",
 
         CollectionsTitle = "Spotify Çalma Listesi Koleksiyonları - TheBluesland",
-        CollectionsDescription = "Anadolu rock, blues ve gece geç saat dinlemeleri için Spotify çalma listelerini keşfet. TheBluesland'de başlamak için bir ses ya da ruh hali bul.",
+        CollectionsDescription = "Anadolu rock, blues ve gece geç saat dinlemeleri için Spotify çalma listelerini keşfet. TheBluesland'de başlamak için bir ses ya da ruh hâli bul.",
         CollectionsHeading = "Çalma listesi koleksiyonları",
         CollectionsIntro = "Başlamak için birkaç yer. Sevdiğin bir sesin peşinden git ya da günün saatine uyan bir şey bul.",
         PlaylistsInCollectionLabel = "Bu koleksiyondaki çalma listeleri",
@@ -91,6 +92,7 @@ public sealed partial class SiteText
         AboutDescription = "TheBluesland ile tanış: Mehmet'in kökleri blues'a uzanan, caza, folka, rock'a ve elektronik müziğe de yer açan kişisel Spotify çalma listesi koleksiyonu.",
         AboutHeading = "TheBluesland Hakkında",
         AboutFaqHeading = "Sık sorulan sorular",
+        WebSiteDescription = "Mehmet'in kişisel Spotify çalma listesi koleksiyonu: kökleri blues'ta, rock, folk, caz, soul ve elektronik müziğe uzanıyor. Her çalma listesinin kısa bir dinleme notu var.",
         AboutCuratorDescription = "Kökleri blues'a uzanan kişisel bir Spotify çalma listesi koleksiyonu olan TheBluesland'in küratörü.",
         AboutFaq =
         [
@@ -102,8 +104,8 @@ public sealed partial class SiteText
              "Hayır. TheBluesland bağımsız, kişisel bir projedir. Spotify'da barındırılan çalma " +
              "listelerine bağlantı verir; ancak Spotify ile bağlantılı değildir, Spotify tarafından " +
              "onaylanmamıştır ve Spotify tarafından işletilmez."),
-            ("Ruh hali, tür, ortam ve dönem etiketleri nasıl seçiliyor?",
-             "Ruh hali, tür ve ortam etiketleri her çalma listesi için elle seçilir. Dönem etiketleri " +
+            ("Ruh hâli, tür, ortam ve dönem etiketleri nasıl seçiliyor?",
+             "Ruh hâli, tür ve ortam etiketleri her çalma listesi için elle seçilir. Dönem etiketleri " +
              "de genellikle elle seçilir; birçok dönemi karıştıran çalma listeleri için dönem tahmini " +
              "Spotify'ın yayın tarihi verilerinden hesaplanır ve otomatik olarak güncel tutulur."),
             ("Site ne sıklıkla güncelleniyor?",
@@ -117,15 +119,16 @@ public sealed partial class SiteText
         TermsDescription = "TheBluesland'in editoryal içeriği, Spotify bağlantıları ve atıflar hakkında. TheBluesland bağımsız, kişisel bir projedir.",
 
         WeeklyTitle = "TheBluesland Weekly - TheBluesland",
-        WeeklyDescription = "Her pazartesi beş müzik haberi, beş dakikada; Türkçe ve İngilizce. TheBluesland Weekly'nin geçmiş sayılarını oku.",
+        WeeklyDescription = "Her pazartesi beş müzik haberi, birkaç dakikada; Türkçe ve İngilizce. TheBluesland Weekly'nin geçmiş sayılarını oku.",
         WeeklyIntro = "Her pazartesi: haftanın beş müzik haberi ve neden önemli oldukları, Türkçe ve İngilizce.",
         WeeklyPastIssues = "Geçmiş sayılar",
         WeeklyFirstIssue = "İlk sayı pazartesi günü, İstanbul saatiyle TR için 08:00, EN için 15:00'te geliyor.",
         WeeklyFirstIssueSubscribe = " İlk sen almak için yukarıdan abone ol.",
         WeeklyIssueWord = "Sayı",
-        WeeklyIssueDescription = "Haftanın beş müzik haberi, beş dakikada.",
+        WeeklyIssueDescription = "Haftanın beş müzik haberi, birkaç dakikada.",
         WeeklyMinutes = "dk",
-        WeeklyLanguageNavLabel = "Dil",
+        WeeklyOnlyInThisLanguage = "Bu sayı yalnızca Türkçe.",
+        WeeklyThisWeeksListen = "Bu haftanın dinlemesi",
         WeeklyIssuesNavLabel = "Sayılar",
         WeeklyPreviousIssue = "Önceki sayı",
         WeeklyNextIssue = "Sonraki sayı",
@@ -135,7 +138,7 @@ public sealed partial class SiteText
         WeeklyThanksBody = "Gelen kutunu (ve spam klasörünü) kontrol et. Kit'ten gelen e-postadaki onay bağlantısına tıkla; aboneliğin onayladığında başlar.",
         WeeklyBackToWeekly = "TheBluesland Weekly'ye dön",
         SubscribeHeading = "Her pazartesi e-postanda",
-        SubscribeIntro = "Beş müzik haberi, beş dakika. Türkçe, İngilizce ya da ikisini birden seç. Aboneliği tek tıkla bırakabilirsin.",
+        SubscribeIntro = "Beş haber, birkaç dakika. Türkçe, İngilizce ya da ikisini birden seç. Aboneliği tek tıkla bırakabilirsin.",
         SubscribeEmailLabel = "E-posta adresin",
         SubscribeEmailPlaceholder = "ornek@eposta.com",
         SubscribeTurkishButton = "Türkçe al",
@@ -146,10 +149,10 @@ public sealed partial class SiteText
 
         NotFoundTitle = "Sayfa bulunamadı",
         NotFoundHeading = "Sayfa bulunamadı",
-        NotFoundBodyBefore = "Bu sayfayı bulamadık. Adresi kontrol et ya da ",
-        BrowseThePlaylistsLink = "çalma listelerine göz at",
+        NotFoundBody = "Bu sayfayı bulamadık. Adresi kontrol et.",
+        BackToHome = "Ana sayfaya dön",
         FailedTitle = "Bir şeyler ters gitti",
-        FailedBodyBefore = "Bu sayfa gösterilemedi. Biraz sonra tekrar dene ya da ",
+        FailedBody = "Bu sayfa gösterilemedi. Biraz sonra tekrar dene.",
         WeeklyNotFoundTitle = "Sayı bulunamadı",
         WeeklyNotFoundHeading = "Bu sayı bulunamadı",
         WeeklyNotFoundBodyBefore = "Adres yanlış olabilir ya da sayı henüz yayımlanmadı. ",

@@ -13,8 +13,8 @@
     <h1>@Site.T.AboutHeading</h1>
     @if (Site.IsTurkish)
     {
-        <p>
-            Ben Mehmet; TheBluesland da Spotify çalma listelerimi paylaştığım bir yer.
+        <p class="lede">
+            Ben Mehmet; TheBluesland de Spotify çalma listelerimi paylaştığım bir yer.
             Koleksiyonun merkezinde blues ve rock var; yanlarında folk, caz, soul,
             elektronik müzik ve bunlar arasındaki bağlantılar yer alıyor.
         </p>
@@ -26,15 +26,19 @@
         </p>
         <p>
             Her çalma listesinin, play'e basmadan önce müziğe dair fikir veren kısa bir notu var.
-            Şimdilik çalma listesi başlıkları, özetleri ve notları İngilizce. Ruh haline, türe, ortama ya da
+            Şimdilik çalma listesi başlıkları, özetleri ve notları İngilizce. Ruh hâline, türe, ortama ya da
             döneme göre göz atabilir, <a href="@Site.Url("/collections")">koleksiyonları</a> keşfedebilir
             ya da doğrudan <a href="@Site.Url("/")">tüm çalma listelerine</a> geçebilirsin. Kulağına
             bir şey takılırsa Spotify'da aç ve dinle.
         </p>
+        <p>
+            Çalma listelerinin yanında <a href="@Site.Url("/weekly")">TheBluesland Weekly</a> de var:
+            her pazartesi haftanın beş müzik haberi, Türkçe ve İngilizce, e-postana geliyor.
+        </p>
     }
     else
     {
-        <p>
+        <p class="lede">
             I'm Mehmet, and TheBluesland is a place to share my Spotify playlists.
             Blues and rock are at the heart of the collection, alongside folk, jazz, soul,
             electronic music, and the connections between them.
@@ -49,6 +53,10 @@
             Browse by mood, genre, occasion, or era, explore the <a href="@Site.Url("/collections")">collections</a>,
             or head straight to <a href="@Site.Url("/")">all playlists</a>. When something catches your ear,
             open it in Spotify and listen.
+        </p>
+        <p>
+            Besides the playlists there is <a href="@Site.Url("/weekly")">TheBluesland Weekly</a>:
+            every Monday, the week's five music stories, in Turkish and English, in your inbox.
         </p>
     }
 
