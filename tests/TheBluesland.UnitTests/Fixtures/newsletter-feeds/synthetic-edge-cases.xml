@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic edge cases for RssFeedClient (news-ingest spec, Testing Strategy). -->
+<rss version="2.0">
+<channel>
+  <title>Edge Cases</title>
+  <link>https://edge.example.com</link>
+  <description>Edge cases</description>
+  <item>
+    <title>Good Item</title>
+    <link>https://edge.example.com/good</link>
+    <pubDate>Mon, 09 Nov 2026 22:21:35 +0000</pubDate>
+    <description><![CDATA[<p>Plain &amp; simple.</p>]]></description>
+  </item>
+  <item>
+    <title>Item Without Link</title>
+    <pubDate>Mon, 09 Nov 2026 21:00:00 +0000</pubDate>
+  </item>
+  <item>
+    <title>   </title>
+    <link>https://edge.example.com/blank-title</link>
+  </item>
+  <item>
+    <title>Item Without Date</title>
+    <link>https://edge.example.com/no-date</link>
+  </item>
+  <item>
+    <title>Item With Garbage Date</title>
+    <link>https://edge.example.com/garbage-date</link>
+    <pubDate>sometime last week</pubDate>
+  </item>
+  <item>
+    <title>Item With Relative Link</title>
+    <link>/relative/path</link>
+  </item>
+  <item>
+    <title>Item With GMT Date</title>
+    <link>https://edge.example.com/gmt-date</link>
+    <pubDate>Sun, 08 Nov 2026 07:05:00 GMT</pubDate>
+  </item>
+</channel>
+</rss>

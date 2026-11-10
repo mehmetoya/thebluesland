@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synthetic (no configured source uses Atom as of 2026-11-10): proves Atom 1.0 support. -->
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Synthetic Atom Feed</title>
+  <id>urn:uuid:7d3c0a52-0000-4000-8000-000000000001</id>
+  <updated>2026-11-09T12:00:00Z</updated>
+  <entry>
+    <title type="html">Atom &amp;amp; Friends Announce Tour</title>
+    <id>urn:uuid:7d3c0a52-0000-4000-8000-000000000002</id>
+    <link rel="alternate" href="https://atom.example.com/news/atom-and-friends-tour"/>
+    <published>2026-11-09T10:30:00+03:00</published>
+    <updated>2026-11-09T11:00:00Z</updated>
+    <summary type="html">&lt;p&gt;The band confirmed &lt;b&gt;twelve&lt;/b&gt; dates.&lt;/p&gt;</summary>
+    <category term="Tour Dates"/>
+  </entry>
+  <entry>
+    <title>Only Updated Timestamp</title>
+    <id>urn:uuid:7d3c0a52-0000-4000-8000-000000000003</id>
+    <link href="https://atom.example.com/news/only-updated"/>
+    <updated>2026-11-08T08:00:00Z</updated>
+  </entry>
+</feed>
