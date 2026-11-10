@@ -18,7 +18,7 @@ madde 2 ve 5 · Durum: UYGULANDI — 2026-11-10 (PR #97; uçtan uca deneme PR #9
 
 ## Objective
 
-Her pazar 10:00'da (Europe/Istanbul), o haftanın TR ve EN sayısını
+Her pazar 11:15'te (Europe/Istanbul; pencere 10:00'da biter), o haftanın TR ve EN sayısını
 `content/weekly/<yıl>-W<hafta>.{tr,en}.md` olarak tek bir draft PR'da Mehmet'in önüne koymak.
 Mehmet ne olduğunu, neden seçildiğini, neye bakması gerektiğini ve yedekleri aynı sayfada görür.
 
@@ -33,10 +33,14 @@ Mehmet ne olduğunu, neden seçildiğini, neye bakması gerektiğini ve yedekler
 
 ### 1. Zamanlama ve tekrar deneme
 
-- `newsletter-draft.yml`'e iki `schedule` eklenir: pazar **07:00 UTC** (10:00 İstanbul) ve
-  emniyet için pazar **10:00 UTC** (13:00 İstanbul).
-- Çalışma **idempotenttir**. O haftanın `newsletter/<yıl>-W<hafta>` dalı uzakta zaten varsa hiçbir
-  şey yapılmaz ve "zaten açık" diye özet yazılır. Böylece ikinci cron yalnızca ilki başarısız
+- `newsletter-draft.yml`'e iki `schedule` eklenir: pazar **08:15 UTC** (11:15 İstanbul) ve
+  emniyet için pazar **11:00 UTC** (14:00 İstanbul). Gemini ücretsiz kotası 00:00 Pasifik'te
+  (08:00 UTC) sıfırlanır; 07:00 UTC'deki çalışma cumartesinin kotasını harcıyordu. Haftanın
+  penceresi yine pazar 10:00 İstanbul'da biter (`issue-week` aynı kalır).
+- Çalışma **idempotenttir**. O haftanın `newsletter/<yıl>-W<hafta>` PR'ı (herhangi bir durumda)
+  varsa ya da sayı dosyaları `main`'de zaten varsa hiçbir şey yapılmaz ve "zaten açık" diye özet
+  yazılır. Yalnız dal var, PR yok ise (push sonrası `gh pr create` düştü) taslak yeniden üretilir,
+  mevcut dalın üstüne commit'lenir ve PR açılır. Böylece ikinci cron yalnızca ilki başarısız
   olduğunda iş yapar. Gemini iki modelde de düşerse ilk çalışma kırmızı biter; GitHub bunu
   e-postayla bildirir.
 - Elle tetikleme kalır. Yeni `open_pr` girdisi varsayılan olarak `false`'tur: elle çalıştırma
@@ -178,7 +182,7 @@ tests/TheBluesland.UnitTests/Workflows/NewsletterDraftWorkflowTests.cs
 
 ## Success Criteria
 
-- [ ] Pazar 07:00 UTC'de draft PR kendiliğinden açılır; ikinci cron hiçbir şey yapmaz.
+- [ ] Pazar 08:15 UTC'de draft PR kendiliğinden açılır; ikinci cron hiçbir şey yapmaz.
 - [x] "Ready for review" tüm CI job'larını tetikler; `validate-weekly` yeşil. (PR #98: 6/6 yeşil.)
 - [x] PR açıklaması Mehmet'in ihtiyacının tamamını içerir: uyarılar, seçim nedenleri, kaynaklar
       ve yapıştırılmaya hazır yedekler.
@@ -192,4 +196,4 @@ tests/TheBluesland.UnitTests/Workflows/NewsletterDraftWorkflowTests.cs
 3. **Yedekle değiştirme MVP'de kopyala-yapıştır** (§6). İlk 4 haftada Mehmet ayda birden fazla
    değiştirirse bir `swap` workflow'u ayrı bir spec ile eklenir.
 4. **Yan dosyalar dala girmez** (§5). issue-drafting spec'indeki madde buna göre güncellenir.
-5. **Emniyet cron'u 13:00 İstanbul** (§1). Gemini sabah düşerse taslak yine pazar günü gelir.
+5. **Emniyet cron'u 14:00 İstanbul** (§1). Gemini sabah düşerse taslak yine pazar günü gelir.
