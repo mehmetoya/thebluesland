@@ -139,6 +139,8 @@ public sealed partial class SiteText
     public required Func<int, string> WeeklyStories { get; init; }
     public required string WeeklyThanksTitle { get; init; }
     public required string WeeklyThanksBody { get; init; }
+    public required string WeeklyConfirmedTitle { get; init; }
+    public required string WeeklyConfirmedBody { get; init; }
     public required string WeeklyBackToWeekly { get; init; }
     public required string SubscribeHeading { get; init; }
     public required string SubscribeIntro { get; init; }
