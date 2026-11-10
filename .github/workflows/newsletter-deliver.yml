@@ -23,6 +23,11 @@ on:
     - cron: "30 11 * * 1"
   workflow_dispatch:
     inputs:
+      task:
+        description: "deliver = schedule merged issues; setup-tags = create the weekly-tr/weekly-en tags in Kit and print their ids."
+        type: choice
+        options: [deliver, setup-tags]
+        default: deliver
       apply:
         description: "Change Kit (otherwise a dry run that only shows the plan)."
         type: boolean
@@ -58,6 +63,7 @@ jobs:
           KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
           EVENT_NAME: ${{ github.event_name }}
           APPLY_INPUT: ${{ inputs.apply }}
+          TASK_INPUT: ${{ inputs.task }}
         run: |
           set -euo pipefail
           # Issue text reaches the log; stop "::" lines in it from running as workflow commands.
@@ -65,5 +71,6 @@ jobs:
           echo "::stop-commands::${stop_token}"
           args=(deliver --content "$GITHUB_WORKSPACE/content/weekly")
           if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$APPLY_INPUT" != "true" ]; then args+=(--dry-run); fi
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$TASK_INPUT" = "setup-tags" ]; then args=(kit-tags weekly-tr weekly-en); fi
           dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
           echo "::${stop_token}::"

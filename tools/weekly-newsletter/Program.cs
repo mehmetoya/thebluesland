@@ -30,6 +30,7 @@ const string Usage = """
       issue-week [--from <date>] [--to <date>]   (prints the issue id "draft" would write, e.g. 2026-W47)
       validate-weekly [path/to/content/weekly]
       deliver [--content <dir>] [--dry-run]   (schedules merged issues in Kit; default content: content/weekly)
+      kit-tags [tag ...]   (creates the delivery tags in Kit if missing and prints their ids; default: weekly-tr weekly-en)
     """;
 
 var toolDirectory = Path.Combine(Directory.GetCurrentDirectory(), "tools", "weekly-newsletter");
@@ -55,6 +56,18 @@ switch (args.FirstOrDefault())
 
             Console.WriteLine(problems.Count == 0 ? $"content/weekly is valid ({directory})." : $"{problems.Count} problem(s) in {directory}.");
             return problems.Count == 0 ? 0 : 1;
+        }
+
+    case "kit-tags":
+        {
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(1) };
+            return await KitTagsCommand.RunAsync(
+                args.Length > 1 ? args[1..] : KitTagsCommand.DefaultTags,
+                Environment.GetEnvironmentVariable(KitClient.ApiKeyVariable),
+                httpClient,
+                Console.Out,
+                Console.Error,
+                cts.Token);
         }
 
     case "deliver":

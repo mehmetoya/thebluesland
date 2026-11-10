@@ -44,6 +44,7 @@ public sealed partial class NewsletterDeliverWorkflowTests
         Yaml.ShouldContain("cron: \"30 11 * * 1\"");
         Yaml.ShouldContain("workflow_dispatch:");
         Yaml.ShouldContain("if [ \"$EVENT_NAME\" = \"workflow_dispatch\" ] && [ \"$APPLY_INPUT\" != \"true\" ]; then args+=(--dry-run); fi");
+        Yaml.ShouldContain("if [ \"$EVENT_NAME\" = \"workflow_dispatch\" ] && [ \"$TASK_INPUT\" = \"setup-tags\" ]; then args=(kit-tags weekly-tr weekly-en); fi");
         Yaml.ShouldContain("group: newsletter-deliver");
         Yaml.ShouldNotContain("pull_request");
     }
