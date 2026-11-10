@@ -16,12 +16,13 @@ public sealed class DraftValidatorTests(ITestOutputHelper output)
     [InlineData("English")]
     public void The_approved_sample_issue_passes_with_no_warning(string language)
     {
-        var sample = SampleIssue(language, Card);
+        var card = SampleCard();
+        var sample = SampleIssue(language, card);
         sample.Stories.Count.ShouldBe(5);
 
         var (clean, warnings) = DraftValidator.Validate(
             sample,
-            Card,
+            card,
             language == "English" ? DraftLanguage.English : DraftLanguage.Turkish,
             Week46.SendDate);
 

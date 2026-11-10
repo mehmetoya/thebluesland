@@ -32,19 +32,38 @@ internal static partial class DraftingTestData
     public static FactCard W46Card()
     {
         var clustering = ClusteringOptionsLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/clustering.yml"))).Options!;
-        // The approved sample issue (voice guide) is mapped onto the picks in their W46 order, which
-        // predates the brand bonus; ranking without it keeps that calibration stable.
+        // Many tests address W46 picks by position (Lloyd first, GTA fourth); that order predates the
+        // brand bonus, so ranking without it keeps them stable.
         var ranking = RankingOptionsLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/ranking.yml"))).Options! with { BrandBonus = 0 };
         var names = FeedConfigLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/feeds.yml"))).Feeds.ToDictionary(feed => feed.Id, feed => feed.Name);
         var result = StoryRanker.Rank(StoryClusterer.Cluster(W46Articles(), clustering), ranking, clustering);
         return FactCard.From(result, names, clustering.SummaryCharacters);
     }
 
+    /// <summary>
+    /// The 2026-W47 draft the lighter fallback model wrote (real output, kept as a regression fixture):
+    /// "tr" or "en", picks and backups, exactly as the model answered after the code removed links.
+    /// </summary>
+    public static DraftResponse FallbackDraft(string code)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "newsletter-drafting", "2026-W47.fallback-draft.json")));
+        var draft = document.RootElement.GetProperty(code);
+        var stories = draft.GetProperty("stories").EnumerateArray()
+            .Select(story => new DraftStory(
+                story.GetProperty("key").GetString()!,
+                story.GetProperty("headline").GetString()!,
+                story.GetProperty("body").GetString()!,
+                story.GetProperty("whyItMatters").GetString()!))
+            .ToList();
+        return new DraftResponse(draft.GetProperty("intro").GetString()!, draft.GetProperty("outro").GetString()!, stories, draft.GetProperty("subject").GetString(), draft.GetProperty("preview").GetString());
+    }
+
     public static string VoiceGuide() => File.ReadAllText(RepoFiles.Find("docs/weekly/ses-rehberi.md"));
 
     /// <summary>
-    /// The approved sample issue from the voice guide (section "Örnek sayı"), parsed into the model's
-    /// answer shape and mapped onto the W46 picks in order. The validator must pass it untouched.
+    /// The sample issue from the voice guide (section "Örnek sayı", fictional), parsed into the model's
+    /// answer shape and mapped onto the picks of <paramref name="card"/> in order. Calibration uses
+    /// <see cref="SampleCard"/>, the fictional card the sample was written from.
     /// </summary>
     public static DraftResponse SampleIssue(string languageHeading, FactCard card)
     {
