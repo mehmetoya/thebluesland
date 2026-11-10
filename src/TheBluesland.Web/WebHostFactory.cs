@@ -255,6 +255,28 @@ public static class WebHostFactory
                 context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable",
         });
 
+        // UX-1/A11Y-6: a 404 that ends up with an empty body (an unknown route, /weekly/{issue}/{lang}
+        // with no such issue, an unknown playlist slug, ...) re-runs the pipeline for /not-found, so
+        // the visitor gets the real site chrome and a way home while the status stays 404.
+        app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+
+        // The re-execution above must only ever answer a GET/HEAD 404: a re-executed POST would hit
+        // antiforgery on /not-found, and a 405 for a non-GET call must stay the bare 405 it is. An
+        // explicit empty body (Content-Length: 0) makes StatusCodePages leave the response alone.
+        app.Use(async (context, next) =>
+        {
+            await next();
+
+            var response = context.Response;
+            if (!response.HasStarted && response.ContentLength is null && response.ContentType is null
+                && response.StatusCode >= StatusCodes.Status400BadRequest
+                && (response.StatusCode != StatusCodes.Status404NotFound
+                    || !(HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))))
+            {
+                response.ContentLength = 0;
+            }
+        });
+
         app.UseOutputCache();
         app.UseAntiforgery();
 
@@ -514,6 +536,15 @@ public static class WebHostFactory
             recorder.RecordFireAndForget("spotify_click", $"/out/{slug}", slug, visitorHash, DateTimeOffset.UtcNow);
 
             return Results.Redirect($"https://open.spotify.com/playlist/{content.SpotifyPlaylistId}");
+        });
+
+        // UX-10: /weekly/2026-W47 (no language) goes to the Turkish issue, or the English one when it
+        // is the only one published; a lower-case id is accepted. Anything else is a plain 404.
+        app.MapGet("/weekly/{id}", (string id, WeeklyIssueRepository issues) =>
+        {
+            var canonicalId = id.ToUpperInvariant();
+            var issue = issues.Find(canonicalId, "tr") ?? issues.Find(canonicalId, "en");
+            return issue is null ? Results.NotFound() : Results.Redirect(issue.Path);
         });
 
         app.MapRazorComponents<App>();

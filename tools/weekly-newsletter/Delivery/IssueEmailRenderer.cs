@@ -1,5 +1,4 @@
 using Markdig;
-using Markdig.Renderers;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 using TheBluesland.WeeklyNewsletter.Review;
@@ -33,13 +32,7 @@ public static class IssueEmailRenderer
             link.ReplaceBy(new LiteralInline(link.Url), copyChildren: false);
         }
 
-        using var writer = new StringWriter();
-        var renderer = new HtmlRenderer(writer);
-        Pipeline.Setup(renderer);
-        renderer.Render(document);
-        writer.Flush();
-
-        var html = $"<h1>{Escape(issue.Title)}</h1>\n{writer}";
+        var html = IssueEmailLayout.Build(issue, document);
         return new IssueEmail(issue.Subject ?? issue.Title, issue.Preview ?? Preview(issue.Body), html);
     }
 
@@ -52,13 +45,6 @@ public static class IssueEmailRenderer
         var sentence = end > 0 ? text[..(end + 1)] : text;
         return sentence.Length <= MaxPreviewLength ? sentence : sentence[..(MaxPreviewLength - 1)] + "…";
     }
-
-    /// <summary>Only the characters HTML gives meaning; "·" and Turkish letters stay readable.</summary>
-    private static string Escape(string text) =>
-        text.Replace("&", "&amp;", StringComparison.Ordinal)
-            .Replace("<", "&lt;", StringComparison.Ordinal)
-            .Replace(">", "&gt;", StringComparison.Ordinal)
-            .Replace("\"", "&quot;", StringComparison.Ordinal);
 
     private static string PlainText(ContainerInline container) =>
         string.Concat(container.Descendants<LiteralInline>().Select(literal => literal.Content.ToString()));

@@ -1,0 +1,30 @@
+@page "/weekly/thanks"
+
+@* UX-3: Kit's "after sign-up" redirect target (/weekly/thanks?lang=tr or ?lang=en). Static, not
+   indexed, and it builds its own <HeadContent> instead of PageMetadata (one HeadContent per page). *@
+<PageTitle>@(_tr ? "Neredeyse tamam" : "Almost there") - TheBluesland</PageTitle>
+<HeadContent>
+    <meta name="robots" content="noindex" />
+</HeadContent>
+
+<article class="weekly weekly-thanks" lang="@(_tr ? "tr" : "en")">
+    @if (_tr)
+    {
+        <h1>Neredeyse tamam</h1>
+        <p>Gelen kutunu (ve spam klasörünü) kontrol et. Kit'ten gelen e-postadaki onay bağlantısına tıkla; aboneliğin onayladığında başlar.</p>
+        <p><a href="/weekly">TheBluesland Weekly'ye dön</a></p>
+    }
+    else
+    {
+        <h1>Almost there</h1>
+        <p>Check your inbox (and your spam folder) for an e-mail from Kit and click the confirmation link. Your subscription starts when you confirm.</p>
+        <p><a href="/weekly">Back to TheBluesland Weekly</a></p>
+    }
+</article>
+
+@code {
+    [SupplyParameterFromQuery(Name = "lang")]
+    public string? Lang { get; set; }
+
+    private bool _tr => string.Equals(Lang, "tr", StringComparison.OrdinalIgnoreCase);
+}

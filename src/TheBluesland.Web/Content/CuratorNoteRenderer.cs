@@ -40,7 +40,8 @@ public static class CuratorNoteRenderer
     public static string ToSanitizedHtml(string curatorNoteMarkdown) =>
         StripDangerousUrlSchemes(Markdown.ToHtml(curatorNoteMarkdown, Pipeline));
 
-    private static string StripDangerousUrlSchemes(string html) =>
+    /// <summary>The URL-scheme pass alone, for renderers that build their own Markdig output (WeeklyIssueLayout).</summary>
+    public static string StripDangerousUrlSchemes(string html) =>
         UrlAttribute.Replace(html, match =>
         {
             var scheme = ExtractScheme(WebUtility.HtmlDecode(match.Groups["value"].Value));

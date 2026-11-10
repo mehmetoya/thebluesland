@@ -1,3 +1,4 @@
+@inject NavigationManager Navigation
 <header class="site-header">
     <div class="site-header-inner">
         <a href="/" class="site-wordmark"><img src="/images/guitar.svg" alt="" width="28" height="28" />TheBluesland</a>
@@ -9,10 +10,10 @@
            so the toggle always stays visually attached to "About", never orphaned. *@
         <div class="site-header-controls">
             <nav aria-label="Primary" class="site-nav">
-                <a href="/">Playlists</a>
-                <a href="/collections">Collections</a>
-                <a href="/weekly">Weekly</a>
-                <a href="/about">About</a>
+                <a href="/" aria-current="@Current("")">Playlists</a>
+                <a href="/collections" aria-current="@Current("collections")">Collections</a>
+                <a href="/weekly" aria-current="@Current("weekly")">Weekly</a>
+                <a href="/about" aria-current="@Current("about")">About</a>
             </nav>
             @* docs/specs/dark-light-mode-toggle.md section 3: hand-authored inline SVGs (no icon
                font/package, matching App.razor's favicon-comment convention). Both icons always
@@ -31,3 +32,17 @@
         </div>
     </div>
 </header>
+
+@code {
+    // DD-12: the section the visitor is in gets aria-current="page" (rendered only when it matches -
+    // a null attribute value is omitted). Home counts for "/" and the playlist detail pages.
+    private string? Current(string section)
+    {
+        var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+        var first = path.Split('/')[0];
+        var active = section.Length == 0
+            ? path.Length == 0 || first == "playlists"
+            : string.Equals(first, section, StringComparison.OrdinalIgnoreCase);
+        return active ? "page" : null;
+    }
+}

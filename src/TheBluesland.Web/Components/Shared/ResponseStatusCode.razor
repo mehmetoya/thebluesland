@@ -13,6 +13,10 @@
     /// AC (status 404, never 500); it does not need to satisfy the "readable content" AC, which only
     /// applies to the home and playlist detail pages when the *content itself* is missing/unreadable,
     /// not to the not-found case.
+    ///
+    /// Update (design pass UX-1): WebHostFactory now re-executes every empty GET/HEAD 404 as
+    /// /not-found (UseStatusCodePagesWithReExecute), so the visitor does get a real page with the
+    /// site chrome; the status is still 404 and the framework caveat above is unchanged.
     /// </summary>
     [Parameter, EditorRequired]
     public required int Code { get; set; }

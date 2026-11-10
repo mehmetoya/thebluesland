@@ -154,15 +154,35 @@
     color: var(--color-text);
   }
 
+  /* DD-13: a base heading scale; every page that sets its own size (un-layered rules below) wins. */
+  h1 {
+    font-size: var(--font-size-2xl);
+  }
+
+  h2 {
+    font-size: var(--font-size-lg);
+  }
+
+  h3 {
+    font-size: 1.125rem;
+  }
+
+  /* A11Y-1: Tailwind's preflight strips link underlines, so a link inside text was only told apart
+     by colour. Text links are underlined (a quiet 1px line that turns solid on hover); UI links
+     (nav, header, breadcrumb, buttons, cards, footer nav) opt out with their own un-layered
+     `text-decoration: none` rules below. */
   a {
     color: var(--color-accent);
-    text-decoration-color: rgb(217 154 78 / 45%);
+    text-decoration-line: underline;
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+    text-decoration-thickness: 1px;
     text-underline-offset: 0.15em;
-    transition: color 0.15s ease;
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
   }
 
   a:hover {
     color: var(--color-accent-strong);
+    text-decoration-color: currentColor;
   }
 
   a:focus-visible,
@@ -1114,6 +1134,7 @@ body:has(.filter-mobile-toggle:checked) {
 
 .collection-link {
   display: block;
+  text-decoration: none;
   padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: 0.875rem;
@@ -1139,91 +1160,403 @@ body:has(.filter-mobile-toggle:checked) {
   margin-bottom: 0;
 }
 
-/* weekly-archive: /weekly and /weekly/{issue}/{lang} */
+/* weekly-archive: /weekly, /weekly/{issue}/{lang}, /weekly/thanks (design pass, docs/specs/weekly-newsletter.md).
+   The issue page is one centred reading column (~40rem); the hub keeps the site's left-aligned
+   .brand-intro pattern and lays the past-issue cards out in a two-column grid on wide screens. */
 .weekly {
   max-width: 40rem;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
 }
 
 .weekly h1 {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: var(--space-3);
 }
 
-.weekly-lede,
-.weekly-issue-date {
-  color: var(--color-text-muted);
-  margin-bottom: 1.25rem;
+.weekly .breadcrumb {
+  margin-bottom: var(--space-5);
 }
 
-.weekly h2 {
-  font-size: 1.35rem;
-  margin: 1.5rem 0 0.5rem;
+/* Masthead: eyebrow, title, meta line + language switch, jump link to the sign-up box. */
+.weekly-masthead {
+  margin-bottom: var(--space-6);
 }
 
-.weekly-issues {
-  list-style: none;
-  padding: 0;
-  display: grid;
-  gap: 0.75rem;
+.weekly-eyebrow {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: var(--space-2);
 }
 
-.weekly-issues li {
+.weekly-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
 }
 
-.weekly-body h2 {
-  font-size: 1.3rem;
-  margin: 1.75rem 0 0.5rem;
+.weekly-meta-line {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.weekly-meta-line [aria-hidden="true"] {
+  margin-inline: 0.35em;
+}
+
+.weekly-lang {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+}
+
+.weekly-lang a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.25rem 0.875rem;
+  border-radius: 999px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.weekly-lang a:hover {
+  color: var(--color-text);
+}
+
+.weekly-lang a[aria-current="page"] {
+  background-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.weekly-jump {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+/* The issue body (WeeklyIssueLayout): lede, numbered stories, why / sources, outro, AI note. */
+.weekly-body {
+  font-size: var(--font-size-md);
+  line-height: 1.65;
+  counter-reset: weekly-story;
 }
 
 .weekly-body p {
-  margin-bottom: 0.9em;
-  line-height: 1.6;
+  margin-bottom: 1.1em;
 }
 
+.weekly-body .weekly-lede {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  margin-bottom: var(--space-6);
+}
+
+.weekly-story {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+.weekly-story h2 {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 var(--space-3);
+}
+
+.weekly-story h2::before {
+  counter-increment: weekly-story;
+  content: counter(weekly-story, decimal-leading-zero);
+  display: block;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-serif);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--color-accent);
+}
+
+.weekly-body .weekly-why {
+  border-left: 3px solid var(--color-accent);
+  padding-left: var(--space-3);
+}
+
+.weekly-why > em:first-child {
+  margin-right: 0.5em;
+  font-size: var(--font-size-xs);
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+}
+
+.weekly-body .weekly-sources {
+  margin-bottom: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.weekly-body .weekly-outro {
+  margin-top: var(--space-5);
+}
+
+.weekly-story + .weekly-outro {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-5);
+}
+
+.weekly-body .weekly-ai-note {
+  margin-top: var(--space-5);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Previous / next issue (same language). */
+.weekly-pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.weekly-pager a {
+  flex: 1 1 12rem;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: var(--color-text);
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.weekly-pager a:hover {
+  background-color: var(--color-bg-elevated);
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.weekly-pager-next {
+  text-align: right;
+}
+
+.weekly-pager-label {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* Buttons: filled for the primary action, outlined for the other language / secondary action. */
+.weekly-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  background-color: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.weekly-button:hover {
+  background-color: var(--color-accent-strong);
+  border-color: var(--color-accent-strong);
+  color: var(--color-accent-contrast);
+}
+
+.weekly-button-outline {
+  background-color: transparent;
+  color: var(--color-accent);
+}
+
+/* Sign-up box. */
 .weekly-subscribe {
-  margin: 2rem 0;
-  padding: 1.25rem;
+  max-width: 40rem;
+  margin: var(--space-6) 0;
+  padding: var(--space-4);
   border: 1px solid var(--color-border-strong);
-  border-radius: 0.75rem;
-  background: var(--color-bg-elevated);
+  border-radius: 0.875rem;
+  background-color: var(--color-bg-elevated);
+}
+
+.weekly-subscribe h2 {
+  margin-top: 0;
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-lg);
+}
+
+.weekly-subscribe p {
+  color: var(--color-text-muted);
 }
 
 .weekly-subscribe-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 0.5rem;
-  margin: 0.75rem 0;
+  margin: var(--space-3) 0;
 }
 
 .weekly-subscribe-form label {
-  display: grid;
-  gap: 0.25rem;
-  flex: 1 1 14rem;
-}
-
-.weekly-subscribe-form input {
-  padding: 0.55rem 0.7rem;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 0.5rem;
-  background: var(--color-bg);
-  color: inherit;
-}
-
-.weekly-subscribe-form button {
-  padding: 0.6rem 1.1rem;
-  border: 0;
-  border-radius: 0.5rem;
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: var(--font-size-sm);
   font-weight: 600;
-  cursor: pointer;
+  color: var(--color-text);
+}
+
+.weekly-subscribe-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.weekly-subscribe-controls input {
+  flex: 1 1 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--color-text-muted);
+  border-radius: 0.5rem;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
 }
 
 .weekly-subscribe-note {
-  font-size: 0.875rem;
+  margin-bottom: 0;
+  font-size: var(--font-size-sm);
+}
+
+.weekly-subscribe-soon {
+  margin: var(--space-4) 0;
   color: var(--color-text-muted);
+}
+
+/* Hub (/weekly): intro like /collections, then the sign-up box, then the past-issue cards. */
+.weekly-hub .brand-intro {
+  margin-bottom: var(--space-6);
+}
+
+.weekly-archive h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+}
+
+.weekly-archive-subtitle {
+  margin-bottom: var(--space-4);
+  color: var(--color-text-muted);
+}
+
+.weekly-empty {
+  max-width: 40rem;
+  color: var(--color-text-muted);
+}
+
+.weekly-cards {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: var(--space-4);
+}
+
+.weekly-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.weekly-card:hover {
+  transform: none;
+  border-color: var(--color-border);
+}
+
+.weekly-card .weekly-card-eyebrow {
+  font-family: var(--font-serif);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.weekly-card .weekly-card-lede {
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+
+.weekly-card-headlines {
+  list-style: disc;
+  padding-left: 1.1rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.weekly-card .weekly-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
+/* Home page strip and the static pages. */
+.brand-intro .weekly-strip {
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.weekly-strip a strong {
+  color: var(--color-text);
+}
+
+.weekly-thanks p {
+  margin-bottom: 1.1em;
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+}
+
+.weekly-notfound {
+  max-width: 38rem;
+}
+
+.weekly-notfound h1 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-2);
+}
+
+.weekly-notfound p {
+  margin-bottom: 1.1em;
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+}
+
+.weekly-notfound div + div {
+  margin-top: var(--space-5);
 }

@@ -1,0 +1,88 @@
+@using Microsoft.AspNetCore.Diagnostics
+
+@* UX-1/A11Y-6/UXW-6: the body of every 404 - the Router's NotFound fragment, the /not-found page the
+   status-code middleware re-executes for empty 404 responses (unknown issue, unknown slug, ...), and
+   that page opened directly. The status stays 404 in all three. /weekly paths get issue-specific
+   copy in the issue's language (both languages when the path does not say which). *@
+<PageTitle>@_title - TheBluesland</PageTitle>
+<HeadContent>
+    <meta name="robots" content="noindex" />
+</HeadContent>
+@if (_failed)
+{
+    <section class="about">
+        <h1>Something went wrong</h1>
+        <p>This page couldn't be shown. Try again in a moment or <a href="/">browse the playlists</a>.</p>
+    </section>
+}
+else if (_weekly)
+{
+    <section class="weekly-notfound">
+        @if (_showEnglish)
+        {
+            <div lang="en">
+                <h1>We couldn't find this issue</h1>
+                <p>The address may be wrong, or the issue isn't out yet. <a href="/weekly">Browse all issues</a>.</p>
+            </div>
+        }
+        @if (_showTurkish)
+        {
+            <div lang="tr">
+                <h1>Bu sayı bulunamadı</h1>
+                <p>Adres yanlış olabilir ya da sayı henüz yayımlanmadı. <a href="/weekly">Tüm sayılara göz at</a>.</p>
+            </div>
+        }
+        <p><a href="/">TheBluesland</a></p>
+    </section>
+}
+else
+{
+    <section class="about">
+        <h1>Page not found</h1>
+        <p>We couldn't find this page. Check the address or <a href="/">browse the playlists</a>.</p>
+    </section>
+}
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private bool _weekly;
+    private bool _failed;
+    private bool _showEnglish = true;
+    private bool _showTurkish = true;
+    private string _title = "Page not found";
+
+    protected override void OnInitialized()
+    {
+        if (HttpContext is null)
+        {
+            return;
+        }
+
+        var reExecute = HttpContext.Features.Get<IStatusCodeReExecuteFeature>();
+        var path = reExecute?.OriginalPath ?? HttpContext.Request.Path.Value ?? string.Empty;
+        _weekly = path.StartsWith("/weekly/", StringComparison.OrdinalIgnoreCase);
+
+        // Re-executed for some other empty error response (not a 404): same chrome, neutral copy.
+        _failed = reExecute is not null && HttpContext.Response.StatusCode != StatusCodes.Status404NotFound;
+        if (_failed)
+        {
+            _title = "Something went wrong";
+            return;
+        }
+
+        if (_weekly)
+        {
+            _title = "Issue not found";
+            _showTurkish = !path.EndsWith("/en", StringComparison.OrdinalIgnoreCase);
+            _showEnglish = !path.EndsWith("/tr", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Re-executed after another middleware/endpoint already chose the status: keep it.
+        if (reExecute is null)
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+        }
+    }
+}

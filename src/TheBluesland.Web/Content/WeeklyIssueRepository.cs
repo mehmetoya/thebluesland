@@ -6,19 +6,51 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace TheBluesland.Web.Content;
 
 /// <summary>One TheBluesland Weekly issue in one language, as /weekly shows it.</summary>
-public sealed record WeeklyIssue(string Id, string Language, string Title, DateOnly SendDate, string Html)
+public sealed record WeeklyIssue(
+    string Id,
+    string Language,
+    string Title,
+    DateOnly SendDate,
+    string Html,
+    string Lede,
+    IReadOnlyList<string> Headlines,
+    int ReadMinutes)
 {
+    private const string TitlePrefix = "TheBluesland Weekly · ";
+
+    private static readonly string[] TurkishMonths =
+        ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+
+    private static readonly string[] EnglishMonths =
+        ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
     public string Path => $"/weekly/{Id}/{Language}";
 
     public string LanguageName => Language == "tr" ? "Türkçe" : "English";
+
+    public int StoryCount => Headlines.Count;
+
+    /// <summary>The ISO week number from the id ("2026-W47" is 47); 0 if the id is not in that shape.</summary>
+    public int Number => Id.Length >= 7 && int.TryParse(Id.AsSpan(6), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var week) ? week : 0;
+
+    /// <summary>The front-matter title without the repeated "TheBluesland Weekly · " prefix.</summary>
+    public string DisplayTitle => Title.StartsWith(TitlePrefix, StringComparison.Ordinal) && Title.Length > TitlePrefix.Length
+        ? Title[TitlePrefix.Length..]
+        : Title;
+
+    /// <summary>"16 Kasım 2026" / "16 November 2026"; month names are built in, so no ICU data is needed.</summary>
+    public string FormattedDate => FormatDate(SendDate, Language);
+
+    public static string FormatDate(DateOnly date, string language) =>
+        $"{date.Day} {(language == "tr" ? TurkishMonths : EnglishMonths)[date.Month - 1]} {date.Year}";
 }
 
 /// <summary>
 /// The weekly archive (docs/specs/weekly-newsletter.md, module weekly-archive): merged issue files in
 /// <c>content/weekly/</c>, read once per deployment like the playlist catalogue. An issue appears
 /// only from its send date (Europe/Istanbul), so a Sunday merge is not on the web before the e-mail.
-/// The body is rendered with the curator-note sanitizer (raw HTML off, executable URL schemes
-/// neutralised). The web app never talks to the e-mail provider.
+/// The body is rendered by WeeklyIssueLayout with the curator-note sanitizer's guarantees (raw HTML
+/// off, executable URL schemes neutralised). The web app never talks to the e-mail provider.
 /// </summary>
 public sealed partial class WeeklyIssueRepository
 {
@@ -51,6 +83,19 @@ public sealed partial class WeeklyIssueRepository
 
     public WeeklyIssue? Find(string id, string language) =>
         Published().FirstOrDefault(issue => issue.Id == id && issue.Language == language);
+
+    /// <summary>The next-older and next-newer published issue in the same language (either may be null).</summary>
+    public (WeeklyIssue? Previous, WeeklyIssue? Next) Neighbours(WeeklyIssue issue)
+    {
+        var sameLanguage = Published().Where(candidate => candidate.Language == issue.Language).ToList();
+        var index = sameLanguage.FindIndex(candidate => candidate.Id == issue.Id);
+        if (index < 0)
+        {
+            return (null, null);
+        }
+
+        return (index + 1 < sameLanguage.Count ? sameLanguage[index + 1] : null, index > 0 ? sameLanguage[index - 1] : null);
+    }
 
     private static List<WeeklyIssue> Load(string directory)
     {
@@ -85,7 +130,10 @@ public sealed partial class WeeklyIssueRepository
                 continue;
             }
 
-            issues.Add(new WeeklyIssue(name.Groups["id"].Value, name.Groups["lang"].Value, title, sendDate, CuratorNoteRenderer.ToSanitizedHtml(body)));
+            var layout = WeeklyIssueLayout.Build(body);
+            issues.Add(new WeeklyIssue(
+                name.Groups["id"].Value, name.Groups["lang"].Value, title, sendDate,
+                layout.Html, layout.Lede, layout.Headlines, layout.ReadMinutes));
         }
 
         return issues
