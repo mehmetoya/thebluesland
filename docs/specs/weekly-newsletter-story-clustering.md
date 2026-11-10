@@ -1,7 +1,7 @@
 # Spec: story-clustering
 
 Modül: `story-clustering` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Önceki modül:
-[news-ingest](weekly-newsletter-news-ingest.md) · Durum: ONAY BEKLİYOR — 2026-11-10
+[news-ingest](weekly-newsletter-news-ingest.md) · Durum: ONAYLANDI — Mehmet, 2026-11-10 (3 karar)
 
 ## Assumptions
 
@@ -215,7 +215,7 @@ xUnit + Shouldly. Önce test yazılır (TDD).
 - [ ] `newsletter-preview` workflow'u production verisiyle çalışır; özet tek bakışta okunur.
 - [ ] Tam `dotnet build` + `dotnet test` yeşil; yeni paket yok, migration yok.
 
-## Kararlar (onay bekliyor)
+## Kararlar (onaylandı, 2026-11-10)
 
 1. **Önce TF-IDF, embedding yalnızca ölçüm isterse** (§3 karar kuralı).
 2. **Sonuçlar DB'ye yazılmaz;** kümeleme her hafta bellekte yeniden yapılır.
