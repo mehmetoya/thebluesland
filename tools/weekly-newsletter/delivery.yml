@@ -13,9 +13,9 @@ kitPublic: false
 languages:
   tr:
     sendTime: "08:00"
-    # Kit tag "weekly-tr"; set after the Kit setup (T0). Until then "deliver" refuses to run.
-    kitTagId: null
+    # Kit tag "weekly-tr" (created by the setup-tags task, 2026-11-10).
+    kitTagId: 25679730
   en:
     sendTime: "15:00"
-    # Kit tag "weekly-en"; set after the Kit setup (T0).
-    kitTagId: null
+    # Kit tag "weekly-en" (created by the setup-tags task, 2026-11-10).
+    kitTagId: 25679731

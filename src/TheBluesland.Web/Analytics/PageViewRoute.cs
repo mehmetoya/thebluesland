@@ -9,7 +9,7 @@ namespace TheBluesland.Web.Analytics;
 /// </summary>
 public static class PageViewRoute
 {
-    private static readonly string[] ExactMatchRoutes = ["/", "/about", "/collections", "/privacy", "/terms"];
+    private static readonly string[] ExactMatchRoutes = ["/", "/about", "/collections", "/weekly", "/privacy", "/terms"];
     private const string PlaylistsPrefix = "/playlists/";
     private const string CollectionsPrefix = "/collections/";
 

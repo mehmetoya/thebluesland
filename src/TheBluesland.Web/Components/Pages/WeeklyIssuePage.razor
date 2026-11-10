@@ -1,0 +1,48 @@
+@page "/weekly/{Id}/{Language}"
+@inject WeeklyIssueRepository Issues
+
+@if (_issue is not null)
+{
+    <PageTitle>@($"{_issue.Title} - TheBluesland")</PageTitle>
+    <PageMetadata
+        Title="@($"{_issue.Title} - TheBluesland")"
+        Description="@(_issue.Language == "tr" ? "Haftanın beş müzik haberi, beş dakikada." : "The week's five music stories, in five minutes.")"
+        CanonicalPath="@_issue.Path"
+        ImagePath="/og-image.png" />
+    <article class="weekly weekly-issue" lang="@_issue.Language">
+        <nav aria-label="Breadcrumb" class="breadcrumb"><a href="/weekly">TheBluesland Weekly</a></nav>
+        <h1>@_issue.Title</h1>
+        <p class="weekly-issue-date">@_issue.SendDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
+            @if (_other is not null)
+            {
+                <text> · </text><a href="@_other.Path" hreflang="@_other.Language">@_other.LanguageName</a>
+            }
+        </p>
+        <div class="weekly-body">@((MarkupString)_issue.Html)</div>
+        <WeeklySubscribe />
+    </article>
+}
+else
+{
+    <ResponseStatusCode Code="StatusCodes.Status404NotFound" />
+    <PageTitle>Issue not found - TheBluesland</PageTitle>
+    <h1>Issue not found</h1>
+    <p><a href="/weekly">See all issues</a>.</p>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Language { get; set; } = string.Empty;
+
+    private WeeklyIssue? _issue;
+    private WeeklyIssue? _other;
+
+    protected override void OnParametersSet()
+    {
+        _issue = Issues.Find(Id, Language);
+        _other = _issue is null ? null : Issues.Find(Id, Language == "tr" ? "en" : "tr");
+    }
+}

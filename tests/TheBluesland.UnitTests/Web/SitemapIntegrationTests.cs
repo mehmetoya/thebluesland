@@ -63,6 +63,7 @@ public sealed class SitemapIntegrationTests : IAsyncLifetime
         body.ShouldContain("/about</loc>");
         body.ShouldContain("/privacy</loc>");
         body.ShouldContain("/terms</loc>");
+        body.ShouldContain("/weekly</loc>");
     }
 
     [Fact]

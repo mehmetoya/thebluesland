@@ -117,6 +117,7 @@ public static class WebHostFactory
         builder.Services.AddMemoryCache();
         builder.Services.AddSingleton<PlaylistCacheSignalsCache>();
         builder.Services.AddSingleton<PlaylistContentRepository>();
+        builder.Services.AddSingleton<WeeklyIssueRepository>();
         builder.Services.AddScoped<PlaylistCacheLookup>();
         // US-011 AC3: stateless (each call builds its own Image<T> locally), safe as a singleton.
         builder.Services.AddSingleton<SocialCardGenerator>();
@@ -189,7 +190,7 @@ public static class WebHostFactory
                 "frame-ancestors 'self'; " +
                 "object-src 'none'; " +
                 "base-uri 'self'; " +
-                "form-action 'self'");
+                "form-action 'self' https://app.kit.com");
 
             await next();
         });

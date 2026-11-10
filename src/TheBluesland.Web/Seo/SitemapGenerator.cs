@@ -13,7 +13,7 @@ namespace TheBluesland.Web.Seo;
 /// </summary>
 public static class SitemapGenerator
 {
-    private static readonly string[] StaticPaths = ["/", "/collections", "/about", "/privacy", "/terms"];
+    private static readonly string[] StaticPaths = ["/", "/collections", "/weekly", "/about", "/privacy", "/terms"];
 
     public static string Generate(HttpContext httpContext, IReadOnlyList<PlaylistContent> publishedPlaylists)
     {
