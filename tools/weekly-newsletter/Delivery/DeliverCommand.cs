@@ -6,8 +6,9 @@ namespace TheBluesland.WeeklyNewsletter.Delivery;
 /// The <c>deliver</c> subcommand (issue-delivery spec, Design section 6): validated issue files in
 /// main → e-mail HTML → Kit's marked broadcasts → plan → create, update or cancel → job summary.
 /// Never reads, stores or logs a subscriber. Exit 0 when Kit matches main (late merges included,
-/// they are a decision, not an error); 1 on bad configuration, an invalid issue file, a Kit error
-/// or two broadcasts with one marker.
+/// they are a decision, not an error, but they are announced as a warning); 1 on bad configuration,
+/// an invalid issue file, a Kit error or two broadcasts with one marker of which one is already
+/// sending or sent. Two unsent duplicates are repaired: the newer is deleted.
 /// </summary>
 public static class DeliverCommand
 {
@@ -106,6 +107,7 @@ public static class DeliverCommand
                 await kit.UpdateAsync(action.BroadcastId!.Value, Request(action, options), action.EmailTemplateId, cancellationToken);
                 return null;
             case DeliveryActionKind.Cancel:
+            case DeliveryActionKind.DeleteDuplicate:
                 await kit.DeleteAsync(action.BroadcastId!.Value, cancellationToken);
                 return null;
             default:
