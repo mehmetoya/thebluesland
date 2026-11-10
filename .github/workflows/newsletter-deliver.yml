@@ -10,7 +10,10 @@ name: Newsletter deliver
 # Secrets: KIT_API_KEY only, on the single Deliver step. No Gemini, no database, no write access:
 # this workflow reads main and talks to Kit. Before delivering it tags each sign-up form's confirmed
 # subscribers (kit-sync-tags; Kit's free plan has no form rules): only subscriber ids, in memory,
-# and only counts reach the log. Enforced by
+# and only counts reach the log. A failed sync never blocks the delivery: deliver still runs, then
+# the step ends red with a warning. A merge after the cut-off keeps the run green (it is a decision)
+# but raises a warning annotation and a LATE banner at the top of the report. The "smoke" task
+# (kit-smoke) creates, reads and deletes a never-sent draft to prove the Kit write path. Enforced by
 # tests/TheBluesland.UnitTests/Workflows/NewsletterDeliverWorkflowTests.cs.
 
 on:
@@ -26,9 +29,9 @@ on:
   workflow_dispatch:
     inputs:
       task:
-        description: "deliver = schedule merged issues; setup-tags = create the weekly-tr/weekly-en tags in Kit and print their ids."
+        description: "deliver = schedule merged issues; setup-tags = create the weekly-tr/weekly-en tags in Kit and print their ids; smoke = create, read and delete a never-sent draft broadcast to prove the Kit write path."
         type: choice
-        options: [deliver, setup-tags]
+        options: [deliver, setup-tags, smoke]
         default: deliver
       apply:
         description: "Change Kit (otherwise a dry run that only shows the plan)."
@@ -59,6 +62,12 @@ jobs:
       - name: Build
         run: dotnet build tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release
 
+      # Monday repair crons only, 30 minutes before a send: best effort (no secrets, never fails the
+      # run) so the site is warm before readers click the issue link.
+      - name: Warm up the site
+        if: github.event_name == 'schedule'
+        run: curl -fsS --max-time 60 https://thebluesland.com/health/ready || true
+
       # Inputs reach the shell only as environment variables, never interpolated into the script.
       - name: Deliver
         env:
@@ -71,13 +80,27 @@ jobs:
           # Issue text reaches the log; stop "::" lines in it from running as workflow commands.
           stop_token="$(openssl rand -hex 16)"
           echo "::stop-commands::${stop_token}"
+          report="$RUNNER_TEMP/deliver-report.md"
           args=(deliver --content "$GITHUB_WORKSPACE/content/weekly")
           if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$APPLY_INPUT" != "true" ]; then args+=(--dry-run); fi
           if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$TASK_INPUT" = "setup-tags" ]; then args=(kit-tags weekly-tr weekly-en); fi
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$TASK_INPUT" = "smoke" ]; then args=(kit-smoke); fi
+          # A failed tag sync must not stop the delivery: remember it, run deliver, fail at the end.
+          sync_status=0
           if [ "${args[0]}" = "deliver" ]; then
             sync=(kit-sync-tags)
             if [[ " ${args[*]} " == *" --dry-run "* ]]; then sync+=(--dry-run); fi
-            dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${sync[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+            dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${sync[@]}" | tee -a "$GITHUB_STEP_SUMMARY" || sync_status=$?
           fi
-          dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+          deliver_status=0
+          dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY" "$report" || deliver_status=$?
           echo "::${stop_token}::"
+          # Annotations only after the stop token: they carry fixed text, never report text.
+          if grep -qE '^\*\*.+ LATE — [a-z]{2} will not be sent this week' "$report"; then
+            echo "::warning title=Weekly issue not sent::An issue was merged after its cut-off and will not be sent this week; see the job summary."
+          fi
+          if [ "$sync_status" -ne 0 ]; then
+            echo "::warning title=Kit tag sync failed::kit-sync-tags exited with $sync_status. Deliver still ran, but new subscribers may be missing from the delivery tags; check the log."
+          fi
+          if [ "$deliver_status" -ne 0 ]; then exit "$deliver_status"; fi
+          if [ "$sync_status" -ne 0 ]; then exit 1; fi

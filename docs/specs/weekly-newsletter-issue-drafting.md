@@ -123,8 +123,10 @@ Haftaya pazartesi yine buradayız. İyi dinlemeler.
 - **YZ notu:** merge yalnızca onaydır, bu yüzden not "düzenlendi" demez: "yazıldı; editör seçti ve
   onayladı". Notun eski sürümü taşıyan dosyalar geçerli sayılır.
 - **Hafta numarası** gönderim pazartesisinin ISO haftasıdır. Pencere varsayılan olarak o
-  pazartesiden önceki pazar 10:00 (Europe/Istanbul) ile ondan 7 gün öncesi arasıdır. Elle
-  çalıştırmada `--from/--to` ile verilebilir.
+  pazartesiden önceki pazar 10:00 (Europe/Istanbul) ile ondan 7 gün öncesi arasıdır. Çalışma
+  pazar 11:15'te (Gemini kotası sıfırlandıktan sonra) başlasa da pencere 10:00'da biter. Elle
+  çalıştırmada `--from/--to` ile verilebilir. `draft` adımı, pencereyi okumadan hemen önce
+  `ingest` çalıştırır (GitHub schedule'ı güvenilmez); ingest başarısız olursa yalnız uyarı verilir.
 - **Yedeklerin metni** dosyaya girmez; `review/<hafta>.backups.{tr,en}.md` yan dosyasına yazılır.
   issue-review bunları PR açıklamasına taşır; `review/` klasörü dala hiç commit'lenmez
   (issue-review spec §5, `validate-weekly` bunu zorlar).

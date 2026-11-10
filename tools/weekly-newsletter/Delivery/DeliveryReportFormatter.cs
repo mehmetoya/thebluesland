@@ -10,6 +10,15 @@ public static class DeliveryReportFormatter
     public static string ToMarkdown(IReadOnlyList<DeliveryAction> actions, DateTimeOffset now, TimeZoneInfo zone, bool dryRun, string? failure = null)
     {
         var markdown = new StringBuilder();
+
+        // A late merge is a decision, so the run stays green; the banner keeps it from going unnoticed.
+        // Only the issue id and the two-letter language code are printed, never issue text.
+        foreach (var late in actions.Where(action => action.Kind == DeliveryActionKind.Late))
+        {
+            var parts = late.Marker[DeliveryPlanner.MarkerPrefix.Length..].Split(':');
+            markdown.Append(CultureInfo.InvariantCulture, $"**⚠️ LATE — {MarkdownText.Cell(parts[^1])} will not be sent this week** ({MarkdownText.Cell(parts[0])} merged after the cut-off)\n\n");
+        }
+
         markdown.Append(CultureInfo.InvariantCulture, $"## Weekly delivery · {now.UtcDateTime:yyyy-MM-dd HH:mm} UTC{(dryRun ? " · dry run (nothing sent to Kit)" : string.Empty)}\n\n");
         if (actions.Count == 0)
         {
@@ -45,7 +54,9 @@ public static class DeliveryReportFormatter
         (DeliveryActionKind.Late, _) => "⚠️ merged after the cut-off; not sent this week",
         (DeliveryActionKind.Cancel, false) => "🗑️ cancelled (file left main)",
         (DeliveryActionKind.Cancel, true) => "would cancel (file left main)",
-        (DeliveryActionKind.Conflict, _) => "❌ two Kit broadcasts carry this marker; nothing was changed",
+        (DeliveryActionKind.DeleteDuplicate, false) => "🗑️ duplicate removed (the older broadcast stays)",
+        (DeliveryActionKind.DeleteDuplicate, true) => "would remove this duplicate (the older broadcast stays)",
+        (DeliveryActionKind.Conflict, _) => "❌ two Kit broadcasts carry this marker and one is already sending or sent; nothing was changed",
         _ => kind.ToString(),
     };
 }
