@@ -19,15 +19,29 @@ public sealed class IssueEmailRendererTests
 
         var email = IssueEmailRenderer.Render(issue);
 
-        email.Subject.ShouldBe("TheBluesland Weekly · 46. hafta");
-        email.PreviewText.ShouldBe("Bu hafta Television'ın gitaristine veda ettik, listeler yeniden hesaplandı ve Oasis bir kez daha Oasis'liğini yaptı.");
+        email.Subject.ShouldBe("Richard Lloyd öldü, YouTube Billboard'a dönüyor · TBL Weekly");
+        email.PreviewText.ShouldBe("Oasis Rock Hall törenine gitmiyor, GTA VI için Miami'de festival var.");
         email.Html.ShouldStartWith("<h1>TheBluesland Weekly · 46. hafta</h1>");
         email.Html.ShouldContain("<h2>Television'ın kurucularından Richard Lloyd hayatını kaybetti</h2>");
         email.Html.ShouldContain("<em>Neden önemli:</em>");
         email.Html.ShouldContain($"<a href=\"{Card.Picks.First().Links[0].Url}\">{Card.Picks.First().Links[0].Name}</a>");
-        email.Html.ShouldContain("<em>Bu sayı yapay zekâ yardımıyla hazırlandı ve TheBluesland editörü tarafından düzenlendi.</em>");
+        email.Html.ShouldContain("<em>Bu sayı yapay zekâ yardımıyla yazıldı; TheBluesland editörü seçti ve onayladı.</em>");
         email.Html.ShouldNotContain("aiAssisted");
         email.Html.ShouldNotContain("---");
+    }
+
+    [Fact]
+    public void Subject_and_preview_fall_back_to_the_title_and_the_intro_for_issues_without_them()
+    {
+        var issue = new WeeklyIssue("2026-W46", DraftLanguage.English, "Old title", new DateOnly(2026, 11, 9), "First sentence. Second.\n\n## Story\n\nBody.");
+
+        var email = IssueEmailRenderer.Render(issue);
+
+        email.Subject.ShouldBe("Old title");
+        email.PreviewText.ShouldBe("First sentence.");
+        IssueEmailRenderer.Render(issue with { Subject = "Hook · TBL Weekly", Preview = "A line." }).ShouldSatisfyAllConditions(
+            rendered => rendered.Subject.ShouldBe("Hook · TBL Weekly"),
+            rendered => rendered.PreviewText.ShouldBe("A line."));
     }
 
     [Fact]

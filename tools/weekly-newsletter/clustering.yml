@@ -13,8 +13,11 @@ similarityThreshold: 0.22
 # Etkin zamanlari bundan uzak iki haber hic baglanmaz.
 maxHoursApart: 96
 
-# Ozetin metne eklenen ilk N karakteri (baslik iki kez sayilir).
-summaryCharacters: 300
+# Ozetin metne eklenen ilk N karakteri (baslik iki kez sayilir). Ayni deger draft'in olgu
+# kartindaki ozet uzunlugudur: model yalnizca baslik + kisa ozet gorunce "Neden onemli"yi uydurur
+# ya da genellestirir (2026-W47 editor incelemesi), bu yuzden 300'den 800'e cikarildi. Gold set
+# 800'de de ayni skorlari verir; ucretsiz katmanda 8 hikaye icin prompt ~6K token kalir.
+summaryCharacters: 800
 
 # Kucuk harfe cevrildikten sonra, noktalama silinmeden once uygulanir. Yalnizca gold set'te
 # kaciran bir eslesmeyi kanitlanmis bicimde duzelten girdiler eklenir.

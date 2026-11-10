@@ -22,6 +22,13 @@ public static class PullRequestBodyFormatter
         head.Append(CultureInfo.InvariantCulture, $"## TheBluesland Weekly · {week.Id}\n\n");
         head.Append(CultureInfo.InvariantCulture,
             $"Gönderim **{week.SendDate:yyyy-MM-dd}** pazartesi · TR 08:00, EN 15:00 (Europe/Istanbul) · pencere {week.From.UtcDateTime:yyyy-MM-dd HH:mm} → {week.To.UtcDateTime:yyyy-MM-dd HH:mm} UTC\n\n");
+        head.Append(DraftReportFormatter.LowModelNotice(drafts));
+        var total = drafts.Sum(draft => draft.Warnings.Count);
+        if (total > 0)
+        {
+            head.Append(CultureInfo.InvariantCulture, $"> ⚠️ **{total} uyarı var.** Merge'ten önce aşağıdaki \"Neye bakmalı\" tablolarını bitir.\n\n");
+        }
+
         head.Append("**Merge = onay.** Metni bu PR'da düzelt → **Ready for review** → CI yeşil → merge. ");
         head.Append("TR sayısı 08:00'e, EN sayısı 15:00'e kadar merge edilmezse o dil bu hafta gitmez.\n\n");
         head.Append("Bir başlığı değiştirirsen front matter'daki `headline` değerini de aynı yap; CI ikisini karşılaştırır.\n\n");

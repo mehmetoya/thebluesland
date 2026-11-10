@@ -1,8 +1,32 @@
 namespace TheBluesland.WeeklyNewsletter.Drafting;
 
 /// <summary>The two issue languages and the fixed strings the code (not the model) writes.</summary>
-public sealed record DraftLanguage(string Code, string Name, string TitleFormat, string WhyLabel, string SourcesLabel, string BackupLabel, string AiNote)
+public sealed record DraftLanguage(
+    string Code,
+    string Name,
+    string TitleFormat,
+    string WhyLabel,
+    string SourcesLabel,
+    string BackupLabel,
+    string AiNote,
+    string IntroTagline,
+    string FallbackOutro)
 {
+    /// <summary>The brand tag every subject line ends with.</summary>
+    public const string SubjectTag = " · TBL Weekly";
+
+    public const int MaxSubject = 60;
+
+    public const int MaxPreview = 90;
+
+    /// <summary>
+    /// The note issues carried before 2026-11-10 ("edited by"). Merge is approval only, so new issues
+    /// say "selected and approved"; already merged files stay valid.
+    /// </summary>
+    public string LegacyAiNote => Code == "tr"
+        ? "Bu sayı yapay zekâ yardımıyla hazırlandı ve TheBluesland editörü tarafından düzenlendi."
+        : "This issue was prepared with AI assistance and edited by TheBluesland's editor.";
+
     public static readonly DraftLanguage Turkish = new(
         "tr",
         "Turkish",
@@ -10,7 +34,9 @@ public sealed record DraftLanguage(string Code, string Name, string TitleFormat,
         "Neden önemli:",
         "Kaynaklar:",
         "Yedek",
-        "Bu sayı yapay zekâ yardımıyla hazırlandı ve TheBluesland editörü tarafından düzenlendi.");
+        "Bu sayı yapay zekâ yardımıyla yazıldı; TheBluesland editörü seçti ve onayladı.",
+        "Beş haber, beş dakika.",
+        "Haftaya pazartesi yine buradayız. İyi dinlemeler.");
 
     public static readonly DraftLanguage English = new(
         "en",
@@ -19,7 +45,9 @@ public sealed record DraftLanguage(string Code, string Name, string TitleFormat,
         "Why it matters:",
         "Sources:",
         "Backup",
-        "This issue was prepared with AI assistance and edited by TheBluesland's editor.");
+        "Written with AI assistance; selected and approved by TheBluesland's editor.",
+        "Five stories, five minutes.",
+        "See you next Monday. Happy listening.");
 
     public static IReadOnlyList<DraftLanguage> All { get; } = [Turkish, English];
 }

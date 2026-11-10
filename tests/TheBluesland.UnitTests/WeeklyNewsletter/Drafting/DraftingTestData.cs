@@ -78,8 +78,13 @@ internal static partial class DraftingTestData
             var story = StoryParagraph().Match(paragraph);
             return new DraftStory(picks[index].Key, story.Groups["headline"].Value.Trim(), story.Groups["body"].Value.Trim(), story.Groups["why"].Value.Trim());
         }).ToList();
-        return new DraftResponse(paragraphs[1], paragraphs[7], stories);
+        var subject = SampleLine(section, label: languageHeading == "English" ? "Subject" : "Konu");
+        var preview = SampleLine(section, label: languageHeading == "English" ? "Preview" : "Önizleme");
+        return new DraftResponse(paragraphs[1], paragraphs[7], stories, subject, preview);
     }
+
+    private static string SampleLine(string section, string label) =>
+        section.Split('\n').Single(line => line.StartsWith($"{label}: `", StringComparison.Ordinal))[(label.Length + 3)..].TrimEnd('`');
 
     [GeneratedRegex(@"^\*\*(?<headline>[^*]+)\*\*\s*(?<body>.+?)\s*\*[^*]+:\*\s*(?<why>.+)$")]
     private static partial Regex StoryParagraph();
@@ -88,8 +93,10 @@ internal static partial class DraftingTestData
     public static string FakeAnswer(IEnumerable<string> keys) =>
         JsonSerializer.Serialize(new
         {
-            intro = "Five stories this week.",
+            intro = "Five stories, five minutes.",
             outro = "See you next Monday.",
+            subject = "Two hooks · TBL Weekly",
+            preview = "A different preview line.",
             stories = keys.Select(key => new { key, headline = $"Headline {key}", body = "Body text.", whyItMatters = "It matters." }),
         });
 

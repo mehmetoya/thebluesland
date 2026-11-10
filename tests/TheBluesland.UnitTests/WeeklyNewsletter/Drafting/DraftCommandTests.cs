@@ -108,16 +108,43 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task RunAsync_falls_back_to_the_lighter_model_when_the_default_is_overloaded()
+    public async Task RunAsync_gives_the_default_model_one_more_try_before_it_accepts_the_fallback()
+    {
+        // Turkish: the default fails twice (4 requests each), the fallback writes it. English: the default answers at once.
+        var handler = new QueueHandler([.. Enumerable.Repeat<Func<HttpRequestMessage, HttpResponseMessage>>(Overloaded, 8), EchoKeys, EchoKeys]);
+
+        (await RunAsync(handler, model: null)).ShouldBe(0, _error.ToString());
+
+        handler.Requests.Count.ShouldBe(10);
+        handler.Requests.Take(8).ShouldAllBe(request => request.Request.RequestUri!.AbsolutePath.Contains(GeminiClient.DefaultModel));
+        handler.Requests[8].Request.RequestUri!.AbsolutePath.ShouldContain(GeminiClient.FallbackModel);
+        handler.Requests[9].Request.RequestUri!.AbsolutePath.ShouldContain(GeminiClient.DefaultModel);
+        _output.ToString().ShouldContain($"Written by `{GeminiClient.FallbackModel}` because `{GeminiClient.DefaultModel}` was unavailable");
+        _output.ToString().ShouldContain("**[DÜŞÜK MODEL]**");
+        _error.ToString().ShouldContain($"writing the Turkish draft with {GeminiClient.FallbackModel}");
+        (await File.ReadAllTextAsync(Path.Combine(_out, "review", "2026-W47.pr-body.md"))).ShouldContain("**[DÜŞÜK MODEL]**");
+    }
+
+    [Fact]
+    public async Task RunAsync_keeps_the_default_model_when_its_second_try_succeeds()
     {
         var handler = new QueueHandler(Overloaded, Overloaded, Overloaded, Overloaded, EchoKeys, EchoKeys);
 
         (await RunAsync(handler, model: null)).ShouldBe(0, _error.ToString());
-        handler.Requests.Take(4).ShouldAllBe(request => request.Request.RequestUri!.AbsolutePath.Contains(GeminiClient.DefaultModel));
-        handler.Requests.Skip(4).Count().ShouldBe(2);
-        handler.Requests.Skip(4).ShouldAllBe(request => request.Request.RequestUri!.AbsolutePath.Contains(GeminiClient.FallbackModel));
-        _output.ToString().ShouldContain($"Written by `{GeminiClient.FallbackModel}` because `{GeminiClient.DefaultModel}` was unavailable");
-        _error.ToString().ShouldContain($"writing the Turkish draft with {GeminiClient.FallbackModel}");
+
+        handler.Requests.ShouldAllBe(request => request.Request.RequestUri!.AbsolutePath.Contains(GeminiClient.DefaultModel));
+        _output.ToString().ShouldNotContain("DÜŞÜK MODEL");
+        _output.ToString().ShouldContain($"Written by `{GeminiClient.DefaultModel}`.");
+    }
+
+    [Fact]
+    public async Task RunAsync_tells_the_model_the_send_date()
+    {
+        var handler = new QueueHandler(EchoKeys);
+
+        (await RunAsync(handler)).ShouldBe(0, _error.ToString());
+
+        handler.Requests.ShouldAllBe(request => Prompt(request.Body).Contains("The issue is sent on 2026-11-16.", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -189,6 +216,7 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
             _output,
             _error,
             CancellationToken.None,
+            TimeSpan.Zero,
             TimeSpan.Zero);
 
     private static HttpResponseMessage Overloaded(HttpRequestMessage request) =>

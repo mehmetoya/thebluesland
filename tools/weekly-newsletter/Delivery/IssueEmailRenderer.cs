@@ -40,7 +40,7 @@ public static class IssueEmailRenderer
         writer.Flush();
 
         var html = $"<h1>{Escape(issue.Title)}</h1>\n{writer}";
-        return new IssueEmail(issue.Title, Preview(issue.Body), html);
+        return new IssueEmail(issue.Subject ?? issue.Title, issue.Preview ?? Preview(issue.Body), html);
     }
 
     /// <summary>The intro's first sentence, as plain text, for the inbox preview line.</summary>

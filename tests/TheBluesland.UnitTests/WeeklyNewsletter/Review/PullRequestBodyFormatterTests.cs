@@ -105,4 +105,28 @@ public sealed class PullRequestBodyFormatterTests
         body.ShouldContain("`weekly-draft` artifact");
         body.ShouldNotContain("~~~markdown");
     }
+
+    [Fact]
+    public void A_fallback_model_draft_carries_the_low_model_marker_and_the_warning_count_is_prominent()
+    {
+        var warning = new DraftWarning(Card.Picks.First().Key, "parity: x");
+        var drafts = new[] { Draft(DraftLanguage.Turkish, warnings: [warning]), Draft(DraftLanguage.English) with { Model = "lite", FellBackFrom = "flash" } };
+
+        var body = PullRequestBodyFormatter.ToMarkdown(Week46, Card, drafts, RankReport);
+
+        body.ShouldStartWith("## TheBluesland Weekly · 2026-W46\n");
+        body.ShouldContain("**[DÜŞÜK MODEL]**");
+        body.ShouldContain("EN (`lite`)");
+        body.ShouldContain("**1 uyarı var.**");
+        DraftReportFormatter.ToMarkdown(Week46, Card, drafts).ShouldContain("**[DÜŞÜK MODEL]**");
+    }
+
+    [Fact]
+    public void No_marker_when_the_default_model_wrote_every_language()
+    {
+        var drafts = new[] { Draft(DraftLanguage.Turkish), Draft(DraftLanguage.English) };
+
+        PullRequestBodyFormatter.ToMarkdown(Week46, Card, drafts, RankReport).ShouldNotContain("DÜŞÜK MODEL");
+        DraftReportFormatter.ToMarkdown(Week46, Card, drafts).ShouldNotContain("DÜŞÜK MODEL");
+    }
 }
