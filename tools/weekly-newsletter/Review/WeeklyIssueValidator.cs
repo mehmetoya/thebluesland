@@ -15,7 +15,7 @@ namespace TheBluesland.WeeklyNewsletter.Review;
 /// Deterministic, no network. Messages never quote the issue's prose.
 /// </summary>
 /// <summary>A valid issue file as issue-delivery reads it.</summary>
-public sealed record WeeklyIssue(string Id, DraftLanguage Language, string Title, DateOnly SendDate, string Body, string? Subject = null, string? Preview = null);
+public sealed record WeeklyIssue(string Id, DraftLanguage Language, string Title, DateOnly SendDate, string Body, string? Subject = null, string? Preview = null, string? Playlist = null);
 
 public static partial class WeeklyIssueValidator
 {
@@ -36,24 +36,30 @@ public static partial class WeeklyIssueValidator
             return [];
         }
 
+        // content/weekly sits next to content/playlists in the repository; when that folder is there,
+        // an issue's optional `playlist` slug must name one of its files.
+        var siblingPlaylists = Path.GetFullPath(Path.Combine(directory, "..", "playlists"));
+        var playlistsDirectory = Directory.Exists(siblingPlaylists) ? siblingPlaylists : null;
+
         var problems = new List<string>();
         foreach (var path in Directory.GetFiles(directory, "*", SearchOption.AllDirectories).Order(StringComparer.Ordinal))
         {
             var name = Path.GetRelativePath(directory, path).Replace('\\', '/');
-            problems.AddRange(Validate(name, File.ReadAllText(path)).Select(problem => $"{name}: {problem}"));
+            problems.AddRange(Validate(name, File.ReadAllText(path), playlistsDirectory).Select(problem => $"{name}: {problem}"));
         }
 
         return problems;
     }
 
     /// <summary>The problems in one file, named relative to content/weekly.</summary>
-    public static IReadOnlyList<string> Validate(string name, string markdown) => Check(name, markdown, out _);
+    public static IReadOnlyList<string> Validate(string name, string markdown, string? playlistsDirectory = null) =>
+        Check(name, markdown, playlistsDirectory, out _);
 
     /// <summary>The issue in a valid file; null when <see cref="Validate"/> reports any problem.</summary>
     public static WeeklyIssue? Read(string name, string markdown) =>
-        Check(name, markdown, out var issue).Count == 0 ? issue : null;
+        Check(name, markdown, null, out var issue).Count == 0 ? issue : null;
 
-    private static IReadOnlyList<string> Check(string name, string markdown, out WeeklyIssue? issue)
+    private static IReadOnlyList<string> Check(string name, string markdown, string? playlistsDirectory, out WeeklyIssue? issue)
     {
         issue = null;
         var fileName = FileName().Match(name);
@@ -103,6 +109,15 @@ public static partial class WeeklyIssueValidator
         Require(problems, front.Subject is null || (front.Subject.Trim().Length > 0 && front.Subject.Trim().Length <= DraftLanguage.MaxSubject), $"subject must be 1-{DraftLanguage.MaxSubject} characters when present.");
         Require(problems, front.Preview is null || (front.Preview.Trim().Length > 0 && front.Preview.Trim().Length <= DraftLanguage.MaxPreview), $"preview must be 1-{DraftLanguage.MaxPreview} characters when present.");
 
+        Require(
+            problems,
+            front.Playlist is null || PlaylistSlug().IsMatch(front.Playlist.Trim()),
+            "playlist must be a kebab-case playlist slug (e.g. anadolu-nights) when present.");
+        if (playlistsDirectory is not null && front.Playlist is { } slug && PlaylistSlug().IsMatch(slug.Trim()))
+        {
+            Require(problems, File.Exists(Path.Combine(playlistsDirectory, slug.Trim() + ".md")), $"playlist \"{slug.Trim()}\" is not a file in content/playlists.");
+        }
+
         var stories = front.Stories ?? [];
         Require(problems, stories.Count == Stories, $"stories lists {stories.Count} stories; an issue has {Stories}.");
         foreach (var (story, index) in stories.Select((story, index) => (story, index + 1)))
@@ -144,7 +159,7 @@ public static partial class WeeklyIssueValidator
         // with it stay valid.
         if (problems.Count == 0)
         {
-            issue = new WeeklyIssue(issueId, language, front.Title!.Trim(), DateOnly.ParseExact(monday, "yyyy-MM-dd", CultureInfo.InvariantCulture), body.TrimStart('\n'), Clean(front.Subject), Clean(front.Preview));
+            issue = new WeeklyIssue(issueId, language, front.Title!.Trim(), DateOnly.ParseExact(monday, "yyyy-MM-dd", CultureInfo.InvariantCulture), body.TrimStart('\n'), Clean(front.Subject), Clean(front.Preview), Clean(front.Playlist));
         }
 
         return problems;
@@ -163,6 +178,9 @@ public static partial class WeeklyIssueValidator
     [GeneratedRegex(@"^(\d{4})-W(\d{2})\.(tr|en)\.md$", RegexOptions.CultureInvariant, 1000)]
     private static partial Regex FileName();
 
+    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.CultureInvariant, 1000)]
+    private static partial Regex PlaylistSlug();
+
     [GeneratedRegex(@"^## (.*)$", RegexOptions.CultureInvariant | RegexOptions.Multiline, 1000)]
     private static partial Regex Heading();
 
@@ -177,6 +195,8 @@ public static partial class WeeklyIssueValidator
         public string? Subject { get; set; }
 
         public string? Preview { get; set; }
+
+        public string? Playlist { get; set; }
 
         public string? SendDate { get; set; }
 

@@ -34,6 +34,23 @@ public sealed partial class IssueEmailRendererTests
         email.Html.ShouldNotContain("---");
     }
 
+    [Theory]
+    [InlineData("tr", "Bu haftanın dinlemesi", "Çalma listesini aç")]
+    [InlineData("en", "This week's listen", "Open the playlist")]
+    public void A_linked_playlist_adds_a_block_before_the_footer_and_none_otherwise(string code, string heading, string linkText)
+    {
+        var language = DraftLanguage.All.Single(candidate => candidate.Code == code);
+        var issue = new WeeklyIssue("2026-W46", language, "Title", new DateOnly(2026, 11, 9), "Intro.\n\n## Story\n\nBody.", Playlist: "anadolu-nights");
+
+        var html = IssueEmailRenderer.Render(issue).Html;
+
+        html.ShouldContain(heading);
+        html.ShouldContain($"href=\"https://thebluesland.com/{code}/playlists/anadolu-nights\"");
+        html.ShouldContain($">{linkText}</a>");
+        html.IndexOf(heading, StringComparison.Ordinal).ShouldBeLessThan(html.IndexOf("/weekly\"", html.IndexOf(heading, StringComparison.Ordinal), StringComparison.Ordinal));
+        IssueEmailRenderer.Render(issue with { Playlist = null }).Html.ShouldNotContain(heading);
+    }
+
     [Fact]
     public void Subject_and_preview_fall_back_to_the_title_and_the_intro_for_issues_without_them()
     {
@@ -97,7 +114,9 @@ public sealed partial class IssueEmailRendererTests
         html.ShouldContain(">Web'de oku</a>");
         Regex.Matches(html, @">0[1-5]</p>").Count.ShouldBe(5);
         Regex.Matches(html, "border-top:1px solid #e8eff9").Count.ShouldBeGreaterThanOrEqualTo(5);
-        html.ShouldContain("border-left:4px solid #ff904b");
+        // The "Neden önemli" label and its border are one tone.
+        html.ShouldContain("border-left:4px solid #a8501c");
+        html.ShouldContain("text-transform:uppercase;color:#a8501c;");
         html.ShouldContain("color:#004aad;text-decoration:underline;");
         html.ShouldContain(">Arşiv</a> · <a href=\"https://thebluesland.com/en/weekly/2026-W46\" lang=\"en\"");
         html.ShouldContain(">Read in English</a>");

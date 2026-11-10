@@ -46,6 +46,13 @@ public static class PlaylistSearch
                     : []));
     }
 
+    // Case folding that survives the Turkish dotted/dotless i: "SICAK", "MELANKOLİK" and "İndie" must
+    // match "sıcak", "melankolik" and "indie". char.ToLowerInvariant alone turns "I" into "i" (so
+    // "SICAK" would never meet "sıcak") and leaves "İ" untouched. Every i variant folds to plain
+    // "i" on both the query and the searchable text, in either language.
+    private static char Fold(char character) =>
+        character is 'I' or 'İ' or 'ı' ? 'i' : char.ToLowerInvariant(character);
+
     private static HashSet<string> Tokenize(string? value)
     {
         var tokens = new HashSet<string>(StringComparer.Ordinal);
@@ -59,7 +66,7 @@ public static class PlaylistSearch
         {
             if (char.IsLetterOrDigit(character))
             {
-                token.Append(char.ToLowerInvariant(character));
+                token.Append(Fold(character));
             }
             else if (token.Length > 0)
             {

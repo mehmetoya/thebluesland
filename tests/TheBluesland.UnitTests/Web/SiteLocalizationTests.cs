@@ -161,7 +161,7 @@ public sealed class SiteLocalizationTests : IAsyncLifetime
         turkish.ShouldContain("Koleksiyonlar");
         turkish.ShouldContain("Hakkında");
         turkish.ShouldContain("Filtreleri uygula");
-        turkish.ShouldContain("Tarza ya da ruh haline göre çalma listesi bul");
+        turkish.ShouldContain("Tarza ya da ruh hâline göre çalma listesi bul");
         turkish.ShouldContain("melankolik");
         turkish.ShouldContain("Spotify ile bağlantılı değildir");
         // Editorial text is English-only today: marked so, never machine-translated.
@@ -189,8 +189,8 @@ public sealed class SiteLocalizationTests : IAsyncLifetime
     {
         var turkish = await GetOkAsync("/tr/about");
         turkish.ShouldContain("<nav aria-label=\"Dil\" class=\"lang-switcher\">");
-        turkish.ShouldContain("<a href=\"/tr/about\" lang=\"tr\" hreflang=\"tr\" title=\"Türkçe\" aria-current=\"true\">TR</a>");
-        turkish.ShouldContain("href=\"/en/about\" lang=\"en\" hreflang=\"en\" title=\"English\"");
+        turkish.ShouldContain("<a href=\"/tr/about\" lang=\"tr\" hreflang=\"tr\" aria-label=\"Türkçe\" title=\"Türkçe\" aria-current=\"page\">TR</a>");
+        turkish.ShouldContain("href=\"/en/about\" lang=\"en\" hreflang=\"en\" aria-label=\"English\" title=\"English\"");
 
         var english = await GetOkAsync("/en/playlists/" + Slug);
         english.ShouldContain($"href=\"/tr/playlists/{Slug}\" lang=\"tr\" hreflang=\"tr\"");
@@ -223,6 +223,15 @@ public sealed class SiteLocalizationTests : IAsyncLifetime
         using var switched = await _http.SendAsync(otherLanguage);
         switched.Headers.GetValues("Set-Cookie").Single().ShouldStartWith("lang=en");
 
+        // QA-01: plain HTTP is not Secure; behind the TLS-terminating proxy (X-Forwarded-Proto) it is.
+        // (The client kept the lang=en cookie from above, so a /tr page sets the cookie again.)
+        cookie.ShouldNotContain("secure", Case.Insensitive);
+        using var proxied = new HttpRequestMessage(HttpMethod.Get, "/tr/about");
+        proxied.Headers.Add("X-Forwarded-Proto", "https");
+        using var proxiedResponse = await _http.SendAsync(proxied);
+        proxiedResponse.StatusCode.ShouldBe(HttpStatusCode.OK, proxiedResponse.Headers.ToString());
+        proxiedResponse.Headers.GetValues("Set-Cookie").Single().ShouldContain("secure", Case.Insensitive);
+
         // Errors and non-page URLs never set it.
         using var missing = await _http.GetAsync("/tr/no-such-page");
         missing.Headers.Contains("Set-Cookie").ShouldBeFalse();
@@ -251,6 +260,11 @@ public sealed class SiteLocalizationTests : IAsyncLifetime
     {
         (await GetOkAsync("/tr/about")).ShouldContain("\"inLanguage\":\"tr\"");
         (await GetOkAsync("/en/about")).ShouldContain("\"inLanguage\":\"en\"");
+        // QA-06: the WebSite description is in the page language too, not English under inLanguage "tr".
+        var turkishHome = await GetOkAsync("/tr");
+        turkishHome.ShouldContain("\"inLanguage\":\"tr\"");
+        turkishHome.ShouldNotContain("personal collection of Spotify playlists, rooted in blues");
+        (await GetOkAsync("/en")).ShouldContain("personal collection of Spotify playlists, rooted in blues");
         // The playlist's own text is English until a Turkish field exists.
         (await GetOkAsync("/tr/playlists/" + Slug)).ShouldContain("\"inLanguage\":\"en\"");
     }
@@ -271,6 +285,56 @@ public sealed class SiteLocalizationTests : IAsyncLifetime
         var terms = await GetOkAsync("/tr/terms");
         terms.ShouldContain("<h1>Koşullar</h1>");
         terms.ShouldContain("Spotify AB");
+    }
+
+    [Fact]
+    public async Task Turkish_collection_cards_and_pages_use_the_taxonomy_label_for_title_and_description()
+    {
+        var index = await GetOkAsync("/tr/collections");
+        index.ShouldContain("<h3>Melankolik çalma listeleri</h3>");
+        index.ShouldContain("<p>Melankolik çalma listelerini keşfet.</p>");
+        index.ShouldContain("<h3>Anadolu rock çalma listeleri</h3>");
+        index.ShouldContain("<h3>1970 öncesi çalma listeleri</h3>");
+        index.ShouldNotContain("Melancholic Playlists");
+
+        var detail = await GetOkAsync("/tr/collections/melancholic");
+        detail.ShouldContain("<h1>Melankolik çalma listeleri</h1>");
+        // Only the editorial introduction stays English, and says so.
+        detail.ShouldContain("<p lang=\"en\">For when the mood calls");
+
+        (await GetOkAsync("/en/collections")).ShouldContain("<h3>Melancholic Playlists</h3>");
+    }
+
+    [Fact]
+    public async Task Turkish_static_pages_use_the_corrected_wording()
+    {
+        var about = await GetOkAsync("/tr/about");
+        about.ShouldContain("TheBluesland de Spotify");
+        about.ShouldContain("ruh hâl");
+        about.ShouldNotContain("ruh hali");
+        about.ShouldContain("<p class=\"lede\">");
+        about.ShouldContain("href=\"/tr/weekly\">TheBluesland Weekly</a>");
+        (await GetOkAsync("/en/about")).ShouldContain("href=\"/en/weekly\">TheBluesland Weekly</a>");
+
+        var terms = await GetOkAsync("/tr/terms");
+        terms.ShouldContain("<h2>Dinleme ve erişim</h2>");
+        terms.ShouldNotContain("erişilebilirlik");
+
+        var privacy = await GetOkAsync("/tr/privacy");
+        privacy.ShouldContain("Spotify, verileri nasıl");
+        privacy.ShouldContain("kendi gizlilik politikasında</a>");
+    }
+
+    [Theory]
+    [InlineData("/tr/weekly", "birkaç dakikada")]
+    [InlineData("/en/weekly", "in a few minutes")]
+    public async Task The_slogan_promises_a_few_minutes_not_five(string path, string expected)
+    {
+        var body = await GetOkAsync(path);
+
+        body.ShouldContain(expected);
+        body.ShouldNotContain("five minutes");
+        body.ShouldNotContain("beş dakika");
     }
 
     private async Task<string> GetOkAsync(string path)

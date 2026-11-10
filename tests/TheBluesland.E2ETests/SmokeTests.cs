@@ -99,6 +99,39 @@ public sealed class SmokeTests : IAsyncLifetime
         (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= window.innerWidth")).ShouldBeTrue();
     }
 
+    // Design round 2 B-1: on a narrow phone the Turkish header wrapped and the theme toggle dropped
+    // alone onto a third line. The switcher and the toggle must share one row, on the right.
+    [Theory]
+    [InlineData(375, "/tr/weekly")]
+    [InlineData(375, "/en/weekly")]
+    [InlineData(500, "/tr/weekly")]
+    [InlineData(500, "/en/weekly")]
+    public async Task Header_language_switcher_and_theme_toggle_share_one_row(int width, string path)
+    {
+        var page = await _browser.NewPageAsync(new BrowserNewPageOptions
+        {
+            ViewportSize = new ViewportSize { Width = width, Height = 900 },
+        });
+        await page.GotoAsync(_baseAddress + path);
+
+        var switcher = await page.Locator(".lang-switcher").BoundingBoxAsync();
+        var toggle = await page.Locator(".theme-toggle").BoundingBoxAsync();
+        var wordmark = await page.Locator(".site-wordmark").BoundingBoxAsync();
+
+        switcher.ShouldNotBeNull();
+        toggle.ShouldNotBeNull();
+        wordmark.ShouldNotBeNull();
+        // Same row: vertical centres within a few pixels (the 44px links are taller than the 36px toggle).
+        Math.Abs((switcher!.Y + (switcher.Height / 2)) - (toggle!.Y + (toggle.Height / 2))).ShouldBeLessThan(4);
+        // Right-aligned, to the right of the wordmark and inside the viewport.
+        toggle.X.ShouldBeGreaterThan(switcher.X);
+        switcher.X.ShouldBeGreaterThan(wordmark!.X + wordmark.Width);
+        (toggle.X + toggle.Width).ShouldBeGreaterThan(width - 40);
+        (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth <= window.innerWidth")).ShouldBeTrue();
+        // Each language link is a >= 44px hit area.
+        (await page.Locator(".lang-switcher a").First.BoundingBoxAsync())!.Height.ShouldBeGreaterThanOrEqualTo(44);
+    }
+
     [Fact]
     public async Task Share_links_and_clipboard_fallback_use_the_canonical_playlist_url()
     {

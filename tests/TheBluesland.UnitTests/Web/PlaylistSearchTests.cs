@@ -22,6 +22,26 @@ public sealed class PlaylistSearchTests
         PublishedAt: new DateOnly(2026, 1, 1),
         PreviousSlugs: []);
 
+    // QA-04: Turkish dotted/dotless i. "SICAK" (upper-case I) never met "sıcak"; "MELANKOLİK" and "İSTANBUL" matched nothing.
+    [Theory]
+    [InlineData("SICAK")]
+    [InlineData("sıcak")]
+    [InlineData("sicak")]
+    [InlineData("MELANKOLİK")]
+    [InlineData("melankolik")]
+    [InlineData("İSTANBUL")]
+    [InlineData("ISTANBUL")]
+    [InlineData("İndie")]
+    public void Apply_on_a_turkish_page_folds_the_dotted_and_dotless_i(string query)
+    {
+        PlaylistContent[] playlists =
+        [
+            PlaylistWithSearchableFields with { Moods = ["melancholic", "warm"], Genres = ["indie"] },
+        ];
+
+        PlaylistSearch.Apply(playlists, query, "tr").Count.ShouldBe(1);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]

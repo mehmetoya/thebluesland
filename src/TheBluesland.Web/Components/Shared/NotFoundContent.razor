@@ -9,16 +9,16 @@
 <HeadContent>
     <meta name="robots" content="noindex" />
 </HeadContent>
-@if (_failed)
-{
-    <section class="about">
+@* Every variant has the same shape: h1, one sentence (the weekly one with a link to the archive),
+   then a "back to home" link. *@
+<section class="@(_weekly && !_failed ? "about weekly-notfound" : "about")">
+    @if (_failed)
+    {
         <h1>@Site.T.FailedTitle</h1>
-        <p>@Site.T.FailedBodyBefore<a href="@Site.Url("/")">@Site.T.BrowseThePlaylistsLink</a>.</p>
-    </section>
-}
-else if (_weekly)
-{
-    <section class="weekly-notfound">
+        <p>@Site.T.FailedBody</p>
+    }
+    else if (_weekly)
+    {
         @foreach (var code in _weeklyLanguages)
         {
             var text = SiteText.For(code);
@@ -27,16 +27,14 @@ else if (_weekly)
                 <p>@text.WeeklyNotFoundBodyBefore<a href="@SiteLanguage.UrlFor(code, "/weekly")">@text.WeeklyNotFoundLink</a>.</p>
             </div>
         }
-        <p><a href="@Site.Url("/")">TheBluesland</a></p>
-    </section>
-}
-else
-{
-    <section class="about">
+    }
+    else
+    {
         <h1>@Site.T.NotFoundHeading</h1>
-        <p>@Site.T.NotFoundBodyBefore<a href="@Site.Url("/")">@Site.T.BrowseThePlaylistsLink</a>.</p>
-    </section>
-}
+        <p>@Site.T.NotFoundBody</p>
+    }
+    <p><a href="@Site.Url("/")">@Site.T.BackToHome</a></p>
+</section>
 
 @code {
     [CascadingParameter]

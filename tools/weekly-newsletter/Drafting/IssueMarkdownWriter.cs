@@ -119,7 +119,10 @@ public static class IssueMarkdownWriter
     /// <summary>
     /// validate-weekly rejects a subject over 60 or a preview over 90 characters, which would block
     /// the PR's merge; the model sometimes runs over (2026-11-10: a 94-character preview). Cut at a
-    /// word boundary and add "…"; the draft report still warns, so the editor sees it.
+    /// word boundary and add "…"; the draft report still warns, so the editor sees it. The cut reads
+    /// as a phrase: the last sentence end when it keeps at least half the room, else the last comma
+    /// or " and "/" or "/" ve " boundary, else the last space - and never ends on a function word
+    /// ("... pass on a" becomes "... pass on").
     /// </summary>
     public static string Fit(string text, int max)
     {
@@ -129,9 +132,47 @@ public static class IssueMarkdownWriter
             return text;
         }
 
+        var minimum = max / 2;
+        var window = text[..max];
+        for (var index = window.Length - 1; index >= minimum; index--)
+        {
+            if (window[index] is '.' or '!' or '?' && (index + 1 == text.Length || text[index + 1] == ' '))
+            {
+                return window[..(index + 1)];
+            }
+        }
+
         var head = text[..(max - 1)];
-        var space = head.LastIndexOf(' ');
-        return (space > max / 2 ? head[..space] : head).TrimEnd(' ', ',', ';', ':', '-', '·') + "…";
+        var cut = Math.Max(
+            head.LastIndexOf(','),
+            Math.Max(
+                Math.Max(head.LastIndexOf(" and ", StringComparison.OrdinalIgnoreCase), head.LastIndexOf(" or ", StringComparison.OrdinalIgnoreCase)),
+                Math.Max(head.LastIndexOf(" ve ", StringComparison.OrdinalIgnoreCase), head.LastIndexOf(" ile ", StringComparison.OrdinalIgnoreCase))));
+        if (cut < minimum)
+        {
+            cut = head.LastIndexOf(' ');
+        }
+
+        var trimmed = TrimTrailingFunctionWords(cut >= minimum ? head[..cut] : head);
+        return (trimmed.Length > 0 ? trimmed : head.TrimEnd()) + "…";
+    }
+
+    private static readonly string[] FunctionWords = ["a", "an", "the", "and", "or", "of", "to", "ve", "ile", "bir", "da", "de"];
+
+    private static string TrimTrailingFunctionWords(string text)
+    {
+        while (true)
+        {
+            text = text.TrimEnd(' ', ',', ';', ':', '-', '·');
+            var space = text.LastIndexOf(' ');
+            var last = text[(space + 1)..];
+            if (space < 0 || !FunctionWords.Contains(last, StringComparer.OrdinalIgnoreCase))
+            {
+                return text;
+            }
+
+            text = text[..space];
+        }
     }
 
     /// <summary>

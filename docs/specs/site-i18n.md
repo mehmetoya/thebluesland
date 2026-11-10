@@ -35,7 +35,22 @@ SemtSkoru site (every page under `/[locale]/...`, one messages file per language
 
 `lang` cookie: set (HttpOnly, SameSite=Lax, Path=/, one year, Secure on HTTPS) on a successful GET/HEAD
 of a prefixed page when missing or different. The language switcher links to the prefixed page, so using
-it is what saves the choice. The cookie is disclosed in the Privacy page.
+it is what saves the choice. The cookie is disclosed in the Privacy page. TLS ends at the platform proxy,
+so the app honours `X-Forwarded-Proto` only (`UseForwardedHeaders`, trust lists cleared; any client could
+claim "https", which only affects this Secure flag) - otherwise `Request.IsHttps` would be false in
+production and the cookie would never be Secure.
+
+## Language switcher
+
+One `TR | EN` navigation (`aria-label` "Dil"/"Language") in the header, grouped with the theme toggle in
+a non-wrapping, right-aligned `.site-header-tools`; below 48rem the main nav takes its own line, so the
+two controls never separate (Playwright smoke test at 375 and 500px). Each link is a 44px-tall hit area
+with `lang`, `hreflang`, an `aria-label` carrying the language's own name ("Türkçe", "English"), and
+`aria-current="page"` on the current language (plus background and underline, not weight alone). A weekly
+issue exists per language: the issue page has no switcher of its own. When the other edition is not
+published, the other link goes to `/{other}/weekly` (the archive) with an explanatory `title`, because
+`/{other}/weekly/{id}` would only redirect back, and the page shows a one-line note ("Bu sayı yalnızca
+Türkçe." / "This issue is in English only.").
 
 ## Strings approach
 
@@ -61,8 +76,17 @@ cannot be created.
 today. `TitleIn/SummaryIn/CuratorNoteIn(lang)` return the Turkish text when present, else the English text
 plus `lang="en"` so the element is marked on a Turkish page. Cards, the detail view and the page
 title/description use it; search, JSON-LD, social cards, the feed and `llms.txt` stay English. Collection
-copy (defined in code) is English-only and marked `lang="en"` on Turkish pages; adding Turkish fields to
-`PlaylistCollection` follows the same pattern when wanted. No machine translation.
+titles and descriptions on Turkish pages are derived from the taxonomy label of the collection's slug
+("Melankolik çalma listeleri", "Melankolik çalma listelerini keşfet."; `PlaylistCollection.TitleIn/
+DescriptionIn`), so cards, the detail heading and the page title are Turkish like the section headings;
+the editorial introduction is English-only and marked `lang="en"` on Turkish pages, as is the full copy
+of a collection whose slug has no Turkish label. No machine translation.
+
+Search folds the dotted/dotless i on the query and on the text in both languages (I, İ, ı all become
+"i"), so "SICAK", "MELANKOLİK" and "İndie" match.
+
+The site slogan is "Beş haber, birkaç dakika" / "Five stories, a few minutes" (a reading time of about
+one minute is shown on each issue, so "five minutes" was not honest).
 
 ## SEO
 
@@ -73,6 +97,8 @@ copy (defined in code) is English-only and marked `lang="en"` on Turkish pages; 
   Accept-Language, so `/` would resolve to English anyway.
 - `og:locale` is `tr_TR`/`en_US` with the other as `og:locale:alternate`. JSON-LD gets `inLanguage`
   (page language for WebSite/AboutPage/FAQPage, `en` for playlist and collection pages).
+- The 404 pages (generic, error and weekly) share one shape: heading, one sentence (the weekly one links
+  to the archive), then "Ana sayfaya dön" / "Back to home".
 - `/sitemap.xml` lists every page in both languages with `xhtml:link` alternates (`tr`, `en`, `x-default`).
   `robots.txt` is unchanged. `llms.txt` and `playlists.json` point at the `/en` URLs.
 - The weekly e-mail renderer links to `/{lang}/weekly/{id}` and `/{lang}/weekly`.

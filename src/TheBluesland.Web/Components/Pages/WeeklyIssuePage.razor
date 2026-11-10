@@ -2,6 +2,7 @@
 @page "/en/weekly/{Id}"
 @inject WeeklyIssueRepository Issues
 @inject IConfiguration Configuration
+@inject PlaylistContentRepository Playlists
 
 @* The issue language is the URL's language prefix: /tr/weekly/2026-W47 is the Turkish issue, so the
    page chrome and the issue body always agree (docs/specs/site-i18n.md). *@
@@ -31,12 +32,9 @@
                     <span aria-hidden="true">·</span>
                     ~@_issue.ReadMinutes @Site.T.WeeklyMinutes
                 </p>
-                @if (_other is not null)
+                @if (_other is null)
                 {
-                    <nav class="weekly-lang" aria-label="@Site.T.WeeklyLanguageNavLabel">
-                        <a href="@_issue.Path" lang="@_issue.Language" hreflang="@_issue.Language" aria-current="page">@_issue.LanguageName</a>
-                        <a href="@_other.Path" lang="@_other.Language" hreflang="@_other.Language">@_other.LanguageName</a>
-                    </nav>
+                    <p class="weekly-lang-note" lang="@_issue.Language">@Site.T.WeeklyOnlyInThisLanguage</p>
                 }
             </div>
             @if (_hasSignup)
@@ -45,6 +43,18 @@
             }
         </header>
         <div class="weekly-body">@((MarkupString)_issue.Html)</div>
+        @if (_playlist is not null)
+        {
+            var title = _playlist.TitleIn(Site.Code);
+            var summary = _playlist.SummaryIn(Site.Code);
+            <aside class="weekly-listen" aria-label="@Site.T.WeeklyThisWeeksListen">
+                <p class="weekly-listen-label">@Site.T.WeeklyThisWeeksListen</p>
+                <a class="collection-link" href="@Site.Url($"/playlists/{_playlist.Slug}")">
+                    <h3 lang="@title.Lang">@title.Text</h3>
+                    <p lang="@summary.Lang">@summary.Text</p>
+                </a>
+            </aside>
+        }
         @if (_previous is not null || _next is not null)
         {
             <nav class="weekly-pager" aria-label="@Site.T.WeeklyIssuesNavLabel">
@@ -77,13 +87,27 @@ else if (!_redirected)
     private WeeklyIssue? _other;
     private WeeklyIssue? _previous;
     private WeeklyIssue? _next;
+    private PlaylistContent? _playlist;
     private IReadOnlyList<string> _languages = SiteLanguage.Supported;
     private bool _hasSignup;
     private bool _redirected;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         _issue = Issues.Find(Id, Site.Code);
+        _playlist = null;
+        if (_issue?.Playlist is { } slug)
+        {
+            // The linked playlist is a nicety: an unreadable catalogue must never take the issue down.
+            try
+            {
+                _playlist = await Playlists.FindBySlugAsync(slug, HttpContext?.RequestAborted ?? CancellationToken.None);
+            }
+            catch (IOException)
+            {
+            }
+        }
+
         _other = _issue is null ? null : Issues.Find(Id, Site.OtherCode);
         _languages = _other is null ? [Site.Code] : SiteLanguage.Supported;
         (_previous, _next) = _issue is null ? (null, null) : Issues.Neighbours(_issue);

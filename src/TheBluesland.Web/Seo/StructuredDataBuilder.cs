@@ -27,13 +27,13 @@ public static class StructuredDataBuilder
     // the pre-localization callers and tests get. Pages pass their own language for site chrome
     // (WebSite/AboutPage/FAQPage) and the content language ("en" until a Turkish field exists, see
     // docs/specs/site-i18n.md) for playlist and collection pages.
-    public static string BuildWebSite(string siteUrl, string? inLanguage = null) =>
+    public static string BuildWebSite(string siteUrl, string? inLanguage = null, string? description = null) =>
         JsonSerializer.Serialize(
             new WebSiteSchema("https://schema.org", "WebSite", "TheBluesland", siteUrl)
             {
                 Id = siteUrl + "#website",
                 InLanguage = inLanguage,
-                Description = "Mehmet's personal collection of Spotify playlists, rooted in blues and spanning rock, folk, jazz, soul and electronic music. Each playlist has a short listening note.",
+                Description = description ?? "Mehmet's personal collection of Spotify playlists, rooted in blues and spanning rock, folk, jazz, soul and electronic music. Each playlist has a short listening note.",
             },
             Options);
 
