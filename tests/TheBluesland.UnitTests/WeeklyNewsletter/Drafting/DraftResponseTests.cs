@@ -20,6 +20,17 @@ public sealed class DraftResponseTests
     }
 
     [Fact]
+    public void Parse_reads_subject_and_preview_and_treats_blank_ones_as_absent()
+    {
+        var keys = Card.Stories.Select(story => story.Key);
+        var draft = DraftResponse.Parse(FakeAnswer(keys), Card);
+        var blank = DraftResponse.Parse(FakeAnswer(keys).Replace("\"A different preview line.\"", "\" \"", StringComparison.Ordinal), Card);
+
+        (draft.Subject, draft.Preview).ShouldBe(("Two hooks · TBL Weekly", "A different preview line."));
+        blank.Preview.ShouldBeNull();
+    }
+
+    [Fact]
     public void Parse_rejects_missing_duplicate_or_unknown_keys()
     {
         var keys = Card.Stories.Select(story => story.Key).ToList();

@@ -17,7 +17,12 @@ public sealed record FactStory(
     string Type,
     string Why,
     IReadOnlyList<FactArticle> Articles,
-    IReadOnlyList<SourceLink> Links);
+    IReadOnlyList<SourceLink> Links)
+{
+    /// <summary>Everything the model saw for this story: source names, headlines and summaries.</summary>
+    public string AllText() =>
+        string.Join(" \n ", Articles.SelectMany(article => new[] { article.SourceName, article.Title, article.Summary ?? string.Empty }));
+}
 
 /// <summary>
 /// The week's facts and nothing else (ADR-0006 madde 1): the ranked picks and backups, each with
@@ -78,6 +83,5 @@ public sealed record FactCard(IReadOnlyList<FactStory> Stories)
     }
 
     /// <summary>Everything a draft may draw facts from, for the validator.</summary>
-    public string AllText() =>
-        string.Join(" \n ", Stories.SelectMany(story => story.Articles.SelectMany(article => new[] { article.SourceName, article.Title, article.Summary ?? string.Empty })));
+    public string AllText() => string.Join(" \n ", Stories.Select(story => story.AllText()));
 }

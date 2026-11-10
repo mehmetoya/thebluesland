@@ -16,6 +16,9 @@ namespace TheBluesland.WeeklyNewsletter.Drafting;
 /// </summary>
 public static class DraftCommand
 {
+    /// <summary>How long the default model rests before its one extra try (a busy model rarely recovers in seconds).</summary>
+    public static readonly TimeSpan DefaultPrimaryRetryPause = TimeSpan.FromSeconds(90);
+
     public static async Task<int> RunAsync(
         string toolDirectory,
         string voiceGuidePath,
@@ -30,7 +33,8 @@ public static class DraftCommand
         TextWriter output,
         TextWriter error,
         CancellationToken cancellationToken,
-        TimeSpan? retryDelay = null)
+        TimeSpan? retryDelay = null,
+        TimeSpan? primaryRetryPause = null)
     {
         var clustering = await ClusteringOptionsLoader.LoadAsync(Path.Combine(toolDirectory, "clustering.yml"), cancellationToken);
         var ranking = await RankingOptionsLoader.LoadAsync(Path.Combine(toolDirectory, "ranking.yml"), cancellationToken);
@@ -109,28 +113,40 @@ public static class DraftCommand
         var card = FactCard.From(result, names, clustering.Options!.SummaryCharacters);
         var voiceGuide = await File.ReadAllTextAsync(voiceGuidePath, cancellationToken);
         // An explicitly chosen model is respected; only the default falls back when it is overloaded.
-        var gemini = new GeminiClient(httpClient, apiKey!, string.IsNullOrWhiteSpace(model) ? GeminiClient.DefaultModel : model, retryDelay);
-        string? fallbackModel = string.IsNullOrWhiteSpace(model) ? GeminiClient.FallbackModel : null;
-        string? fellBackFrom = null;
+        var primary = new GeminiClient(httpClient, apiKey!, string.IsNullOrWhiteSpace(model) ? GeminiClient.DefaultModel : model, retryDelay);
+        var fallback = string.IsNullOrWhiteSpace(model) ? new GeminiClient(httpClient, apiKey!, GeminiClient.FallbackModel, retryDelay) : null;
+        var pause = primaryRetryPause ?? DefaultPrimaryRetryPause;
 
         var drafts = new List<LanguageDraft>();
         foreach (var language in DraftLanguage.All)
         {
-            var prompt = DraftPromptBuilder.Build(language, voiceGuide, card);
+            var prompt = DraftPromptBuilder.Build(language, voiceGuide, card, week.SendDate);
+            var gemini = primary;
+            string? fellBackFrom = null;
             DraftResponse response;
             try
             {
                 try
                 {
-                    response = await WriteAsync(gemini, prompt, card, cancellationToken);
+                    response = await WriteAsync(primary, prompt, card, cancellationToken);
                 }
-                catch (HttpRequestException ex) when (fallbackModel is not null && GeminiClient.IsUnavailable(ex) && !cancellationToken.IsCancellationRequested)
+                catch (HttpRequestException ex) when (fallback is not null && GeminiClient.IsUnavailable(ex) && !cancellationToken.IsCancellationRequested)
                 {
-                    await error.WriteLineAsync($"{gemini.Model} is unavailable ({ex.Message}); writing the {language.Name} draft with {fallbackModel}.");
-                    fellBackFrom = gemini.Model;
-                    gemini = new GeminiClient(httpClient, apiKey!, fallbackModel, retryDelay);
-                    fallbackModel = null;
-                    response = await WriteAsync(gemini, prompt, card, cancellationToken);
+                    // The lighter model writes visibly worse text, so the default gets one more chance
+                    // after a pause before the draft is accepted from the fallback (content review ED-1).
+                    await error.WriteLineAsync($"{primary.Model} is unavailable ({ex.Message}); retrying it once in {pause.TotalSeconds:0}s before using {fallback.Model} for the {language.Name} draft.");
+                    await Task.Delay(pause, cancellationToken);
+                    try
+                    {
+                        response = await WriteAsync(primary, prompt, card, cancellationToken);
+                    }
+                    catch (HttpRequestException retry) when (GeminiClient.IsUnavailable(retry) && !cancellationToken.IsCancellationRequested)
+                    {
+                        await error.WriteLineAsync($"{primary.Model} is still unavailable ({retry.Message}); writing the {language.Name} draft with {fallback.Model}.");
+                        fellBackFrom = primary.Model;
+                        gemini = fallback;
+                        response = await WriteAsync(fallback, prompt, card, cancellationToken);
+                    }
                 }
             }
             catch (Exception ex) when ((ex is HttpRequestException or DraftFormatException or TaskCanceledException) && !cancellationToken.IsCancellationRequested)
@@ -139,7 +155,7 @@ public static class DraftCommand
                 return 1;
             }
 
-            var (clean, warnings) = DraftValidator.Validate(response, card);
+            var (clean, warnings) = DraftValidator.Validate(response, card, language, week.SendDate);
             drafts.Add(new LanguageDraft(
                 language,
                 IssueMarkdownWriter.Issue(week, language, clean, card),
@@ -149,6 +165,8 @@ public static class DraftCommand
                 gemini.Model,
                 fellBackFrom));
         }
+
+        drafts = DraftValidator.AddParity(drafts, card);
 
         Directory.CreateDirectory(Path.Combine(outputDirectory, IssueMarkdownWriter.ReviewDirectory));
         foreach (var draft in drafts)

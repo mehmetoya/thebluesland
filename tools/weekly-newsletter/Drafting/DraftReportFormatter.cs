@@ -20,6 +20,24 @@ public sealed record LanguageDraft(
 /// </summary>
 public static class DraftReportFormatter
 {
+    /// <summary>Marks a draft written by the fallback model; the workflow also puts it in the PR title.</summary>
+    public const string LowModelMarker = "[DÜŞÜK MODEL]";
+
+    /// <summary>True when any language was written by the fallback model, even after the default's extra try.</summary>
+    public static bool UsedFallback(IReadOnlyList<LanguageDraft> drafts) => drafts.Any(draft => draft.FellBackFrom is not null);
+
+    /// <summary>The low-model notice (Turkish, for Mehmet), or empty when the default model wrote every language.</summary>
+    public static string LowModelNotice(IReadOnlyList<LanguageDraft> drafts)
+    {
+        if (!UsedFallback(drafts))
+        {
+            return string.Empty;
+        }
+
+        var languages = string.Join(", ", drafts.Where(draft => draft.FellBackFrom is not null).Select(draft => $"{draft.Language.Code.ToUpperInvariant()} (`{draft.Model}`)"));
+        return $"> ⚠️ **{LowModelMarker}** Varsayılan model iki denemede de yanıt vermedi; şu diller daha hafif modelle yazıldı: {languages}. Metni normalden dikkatli oku ya da taslağı varsayılan modelle yeniden üret.\n\n";
+    }
+
     public static string ToMarkdown(IssueWeek week, FactCard card, IReadOnlyList<LanguageDraft> drafts)
     {
         var markdown = new StringBuilder();
@@ -28,11 +46,12 @@ public static class DraftReportFormatter
         markdown.Append(CultureInfo.InvariantCulture,
             $"Window {week.From.UtcDateTime:yyyy-MM-dd HH:mm} → {week.To.UtcDateTime:yyyy-MM-dd HH:mm} UTC · {card.Picks.Count()} stories + {card.Backups.Count()} backups · {string.Join(" + ", drafts.Select(draft => draft.Language.Code.ToUpperInvariant()))}\n\n");
 
+        markdown.Append(LowModelNotice(drafts));
         foreach (var draft in drafts)
         {
             var count = draft.Warnings.Count;
             markdown.Append(CultureInfo.InvariantCulture,
-                $"### {draft.Language.Code.ToUpperInvariant()} · {(count == 0 ? "✅ no warnings" : $"⚠️ {count} to check")}\n\n");
+                $"###{draft.Language.Code.ToUpperInvariant()} · {(count == 0 ? "✅ no warnings" : $"⚠️ {count} to check")}\n\n");
             markdown.Append(CultureInfo.InvariantCulture, $"Written by `{draft.Model}`");
             markdown.Append(draft.FellBackFrom is { } busy
                 ? string.Create(CultureInfo.InvariantCulture, $" because `{busy}` was unavailable (busy or out of free quota).\n\n")
