@@ -1,78 +1,78 @@
-"""Builds TheBluesland logo SVGs (docs/brand). Wordmark is Georgia converted to outlines.
+"""Builds TheBluesland logo set from the Bluesland playlist cover's identity (docs/brand).
 
-Run: <venv with fonttools>/bin/python docs/brand/build.py, then render the PNGs (see README.md).
+Royal blue, white rounded lettering (Fredoka, SIL OFL), an orange acoustic guitar and white notes.
+Run with fonttools installed: FREDOKA_DIR=<dir with Fredoka-600.ttf, Fredoka-700.ttf> python build.py
+(static weights instantiated from Google Fonts' Fredoka[wdth,wght].ttf). See README.md.
 """
 import math
+import os
 from pathlib import Path
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 
 OUT = Path(__file__).parent
-BG, DISC, AMBER, AMBER_DARK, CREAM = '#12141b', '#0c0d12', '#d99a4e', '#8a5220', '#f7f1e6'
-FONTS = '/System/Library/Fonts/Supplemental/'
+FONT_DIR = Path(os.environ['FREDOKA_DIR'])
+BLUE, WHITE, ORANGE, NECK, DARK, RING = '#004aad', '#ffffff', '#ff904b', '#c4632f', '#1b1b1d', '#e8773a'
 
 
-def text_path(font_file, text, x, baseline, size, tracking=0.0):
-    """Outlines for text set at (x, baseline), with the font's kern pairs and extra tracking."""
-    font = TTFont(FONTS + font_file)
+def text_path(weight, text, x, baseline, size, tracking=0.0):
+    """Outlines for text set at (x, baseline) with extra tracking; no font needed to view the SVG."""
+    font = TTFont(FONT_DIR / f'Fredoka-{weight}.ttf')
     scale = size / font['head'].unitsPerEm
     cmap, glyphs, hmtx = font.getBestCmap(), font.getGlyphSet(), font['hmtx']
-    kern = {}
-    if 'kern' in font:
-        for table in font['kern'].kernTables:
-            kern.update(getattr(table, 'kernTable', {}))
-    pen = SVGPathPen(glyphs, lambda v: f'{v:.2f}'.rstrip('0').rstrip('.'))
-    cursor, previous = x, None
+    pen = SVGPathPen(glyphs, lambda v: f'{v:.2f}')
+    cursor = x
     for character in text:
         name = cmap[ord(character)]
-        if previous is not None:
-            cursor += kern.get((previous, name), 0) * scale
         glyphs[name].draw(TransformPen(pen, (scale, 0, 0, -scale, cursor, baseline)))
         cursor += hmtx[name][0] * scale + tracking
-        previous = name
     return pen.getCommands(), cursor
 
 
-def crescent(cx, cy, r, dx, dy):
-    """The part of circle (cx,cy,r) outside the same circle moved by (dx,dy): one closed path, no seams."""
-    d = math.hypot(dx, dy)
-    mx, my = cx + dx / 2, cy + dy / 2
-    h = math.sqrt(r * r - (d / 2) ** 2)
-    ux, uy = -dy / d, dx / d
-    p1 = (mx + h * ux, my + h * uy)
-    p2 = (mx - h * ux, my - h * uy)
-    return (f'M {p1[0]:.2f} {p1[1]:.2f} A {r} {r} 0 1 1 {p2[0]:.2f} {p2[1]:.2f} '
-            f'A {r} {r} 0 0 0 {p1[0]:.2f} {p1[1]:.2f} Z')
+def guitar(angle=40):
+    """Acoustic guitar drawn upright in a 512 box (centre 256,259), then tilted like the cover's."""
+    pegs = ''.join(f'<circle cx="{x}" cy="{y}" r="7" fill="{NECK}"/>' for x in (225, 287) for y in (50, 68, 86))
+    return (f'<g transform="rotate({angle} 256 259)">'
+            f'<rect x="228" y="30" width="56" height="72" rx="14" fill="{NECK}"/>{pegs}'
+            f'<rect x="241" y="96" width="30" height="170" fill="{NECK}"/>'
+            f'<circle cx="256" cy="272" r="78" fill="{ORANGE}"/><circle cx="256" cy="388" r="102" fill="{ORANGE}"/>'
+            f'<circle cx="256" cy="304" r="44" fill="none" stroke="{RING}" stroke-width="7"/>'
+            f'<circle cx="256" cy="304" r="34" fill="{DARK}"/>'
+            f'<rect x="218" y="414" width="76" height="16" rx="6" fill="{DARK}"/></g>')
 
 
-def disc(full=True, label=76, ring=22):
-    """The record in a 512 box: amber rim, grooves (full only), amber crescent label for 'late night'."""
-    k = label / 100
-    grooves = ''.join(
-        f'<circle cx="256" cy="256" r="{r}" fill="none" stroke="{AMBER}" stroke-opacity="0.3" stroke-width="3"/>'
-        for r in (166, 146, 126, 106)) if full else ''
-    return (f'<circle cx="256" cy="256" r="{196 if full else 192}" fill="{DISC}" stroke="{AMBER}" stroke-width="{ring}"/>'
-            f'{grooves}<path d="{crescent(256, 256, label, 34 * k, -26 * k)}" fill="{AMBER}"/>')
+def notes(x, y, scale, colour=WHITE):
+    """An eighth note and a beamed pair, as on the cover."""
+    eighth = ('<ellipse cx="0" cy="0" rx="13" ry="9.5" transform="rotate(-20)"/>'
+              '<rect x="9" y="-58" width="5.5" height="57"/>'
+              '<path d="M 14.5 -58 C 22 -44 40 -40 34 -16 C 31 -30 24 -35 14.5 -38 Z"/>')
+    beamed = ('<g transform="translate(58 -6)"><ellipse cx="0" cy="0" rx="13" ry="9.5" transform="rotate(-20)"/>'
+              '<ellipse cx="44" cy="-8" rx="13" ry="9.5" transform="rotate(-20 44 -8)"/>'
+              '<rect x="9" y="-60" width="5.5" height="59"/><rect x="53" y="-68" width="5.5" height="59"/>'
+              '<path d="M 9 -60 L 58.5 -68 L 58.5 -55 L 9 -47 Z"/></g>')
+    return f'<g fill="{colour}" transform="translate({x} {y}) scale({scale})">{eighth}{beamed}</g>'
 
 
 def svg(width, height, body):
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">{body}</svg>\n'
 
 
-(OUT / 'mark.svg').write_text(svg(512, 512, f'<rect width="512" height="512" rx="96" fill="{BG}"/>' + disc()))
-(OUT / 'avatar.svg').write_text(svg(512, 512, f'<rect width="512" height="512" fill="{BG}"/>' + disc(full=False, label=100, ring=34)))
+# Square marks: guitar fills the tile, notes in the free top-left corner (inside a circle crop).
+inner = f'<g transform="translate(40 52) scale(0.86)">{guitar()}</g>' + notes(118, 196, 1.2)
+(OUT / 'avatar.svg').write_text(svg(512, 512, f'<rect width="512" height="512" fill="{BLUE}"/>' + inner))
+(OUT / 'mark.svg').write_text(svg(512, 512, f'<rect width="512" height="512" rx="96" fill="{BLUE}"/>' + inner))
 
-# Horizontal lockup: mark ~215 tall centred on the text block, 44 gap, 40 margins all round.
-SCALE = 215 / 512
-DISC_R = 207 * SCALE
-TEXT_X = 40 + 2 * DISC_R + 44
-the, _ = text_path('Georgia Italic.ttf', 'The', TEXT_X - 2, 111, 56)
-word, right = text_path('Georgia Bold.ttf', 'Bluesland', TEXT_X, 219, 128, tracking=-2)
-WIDTH, HEIGHT = math.ceil(right + 40), 300
-mark = f'<g transform="translate({40 - 49 * SCALE:.2f},{150 - 256 * SCALE:.2f}) scale({SCALE:.4f})">{disc()}</g>'
-for name, text_color, the_color, background in [
-        ('logo-dark', CREAM, AMBER, BG), ('logo-light', BG, AMBER_DARK, CREAM), ('logo-transparent', BG, AMBER_DARK, None)]:
-    fill = f'<rect width="{WIDTH}" height="{HEIGHT}" fill="{background}"/>' if background else ''
-    (OUT / f'{name}.svg').write_text(svg(WIDTH, HEIGHT, fill + mark + f'<path d="{the}" fill="{the_color}"/><path d="{word}" fill="{text_color}"/>'))
-print(WIDTH, HEIGHT)
+# Horizontal lockups: guitar + "The" (small) over "Bluesland" (large), 40 margins.
+GUITAR = f'<g transform="translate(0 -8) scale(0.62)">{guitar()}</g>'
+TEXT_X = 296
+for name, background, the_colour, word_colour in [
+        ('logo-blue', BLUE, ORANGE, WHITE),
+        ('logo-light', WHITE, BLUE, BLUE),
+        ('logo-transparent', None, BLUE, BLUE)]:
+    the, _ = text_path(600, 'The', TEXT_X + 4, 112, 56)
+    word, right = text_path(700, 'Bluesland', TEXT_X, 226, 136, tracking=-1)
+    width = math.ceil(right + 40)
+    fill = f'<rect width="{width}" height="300" fill="{background}"/>' if background else ''
+    (OUT / f'{name}.svg').write_text(svg(width, 300, fill + GUITAR + f'<path d="{the}" fill="{the_colour}"/><path d="{word}" fill="{word_colour}"/>'))
+    print(name, width)
