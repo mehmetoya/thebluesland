@@ -52,13 +52,17 @@ public sealed record WeeklyIssue(
 /// <summary>
 /// The weekly archive (docs/specs/weekly-newsletter.md, module weekly-archive): merged issue files in
 /// <c>content/weekly/</c>, read once per deployment like the playlist catalogue. An issue appears
-/// only from its send date (Europe/Istanbul), so a Sunday merge is not on the web before the e-mail.
+/// only from its send time in its language (Weekly:SendTimeTr / Weekly:SendTimeEn on the send date,
+/// Europe/Istanbul; defaults 08:00 and 15:00 as in delivery.yml), so it is never on the web before
+/// its e-mail. The same rule feeds the hub, the issue pages and previous/next.
 /// The body is rendered by WeeklyIssueLayout with the curator-note sanitizer's guarantees (raw HTML
 /// off, executable URL schemes neutralised). The web app never talks to the e-mail provider.
 /// </summary>
 public sealed partial class WeeklyIssueRepository
 {
     public const string ContentDirectoryConfigKey = "WeeklyContent:Directory";
+    public const string SendTimeTrConfigKey = "Weekly:SendTimeTr";
+    public const string SendTimeEnConfigKey = "Weekly:SendTimeEn";
 
     private static readonly TimeZoneInfo Istanbul = TimeZoneInfo.FindSystemTimeZoneById("Europe/Istanbul");
 
@@ -69,21 +73,35 @@ public sealed partial class WeeklyIssueRepository
 
     private readonly Lazy<IReadOnlyList<WeeklyIssue>> _all;
     private readonly TimeProvider _clock;
+    private readonly TimeOnly _sendTimeTr;
+    private readonly TimeOnly _sendTimeEn;
 
     public WeeklyIssueRepository(IConfiguration configuration, TimeProvider? clock = null)
     {
         var directory = configuration[ContentDirectoryConfigKey]
             ?? System.IO.Path.Combine(Directory.GetCurrentDirectory(), "content", "weekly");
         _clock = clock ?? TimeProvider.System;
+        _sendTimeTr = SendTime(configuration[SendTimeTrConfigKey], new TimeOnly(8, 0));
+        _sendTimeEn = SendTime(configuration[SendTimeEnConfigKey], new TimeOnly(15, 0));
         _all = new Lazy<IReadOnlyList<WeeklyIssue>>(() => Load(directory));
     }
 
-    /// <summary>Published issues, newest first; Turkish before English within an issue.</summary>
+    /// <summary>Published issues, newest first; Turkish before English within an issue. Each language appears at its own send time.</summary>
     public IReadOnlyList<WeeklyIssue> Published()
     {
-        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(_clock.GetUtcNow(), Istanbul).DateTime);
-        return _all.Value.Where(issue => issue.SendDate <= today).ToList();
+        var now = _clock.GetUtcNow();
+        return _all.Value.Where(issue => PublishAt(issue) <= now).ToList();
     }
+
+    /// <summary>The instant the issue goes out by e-mail, and so appears on the web.</summary>
+    private DateTimeOffset PublishAt(WeeklyIssue issue)
+    {
+        var local = issue.SendDate.ToDateTime(issue.Language == "tr" ? _sendTimeTr : _sendTimeEn);
+        return new DateTimeOffset(local, Istanbul.GetUtcOffset(local));
+    }
+
+    private static TimeOnly SendTime(string? configured, TimeOnly fallback) =>
+        TimeOnly.TryParseExact(configured, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out var time) ? time : fallback;
 
     public WeeklyIssue? Find(string id, string language) =>
         Published().FirstOrDefault(issue => issue.Id == id && issue.Language == language);

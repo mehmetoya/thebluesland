@@ -76,8 +76,13 @@ Her broadcast'in iç açıklama alanında (`description`, abone görmez) bir iş
 | var | yok | geçmişte veya < 2 dk | **gönderme**; özette uyarı |
 | yok (revert/silme) | var, gitmemiş | gelecekte | broadcast'i sil (gönderim iptal) |
 
-Aynı işaretle iki broadcast bulunursa komut hiçbir şey yapmaz ve başarısız olur (çift gönderim
-riski). Mehmet'in Kit panelinde bakması gerekir.
+Aynı işaretle iki broadcast bulunursa ve ikisi de henüz gitmemişse (draft/scheduled, `send_at` kesim
+anından sonra) komut **yenisini siler, eskisini tutar** (çoğunlukla zaman aşımına uğramış bir POST'un
+Kit'te yine de oluşmasından doğar) ve normal akışa devam eder. İkisinden biri gitmişse, gidiyorsa ya da
+kesim anı içindeyse komut hiçbir şey yapmaz ve başarısız olur (çift gönderim riski); Mehmet'in Kit
+panelinde bakması gerekir. Zaman aşımı/5xx alan bir `create`, körü körüne tekrarlanmaz: önce broadcast
+listesinde aynı işaret aranır, varsa onun id'si kullanılır. İşaret olmayan açıklamalar (ör.
+`thebluesland-weekly-smoke:<zaman>`) yok sayılır.
 
 ### 4. E-postanın içeriği
 
@@ -117,6 +122,11 @@ minimumLeadMinutes: 2
 
 ### 6. `deliver` alt komutu
 
+`kit-smoke` (workflow_dispatch, `task: smoke`) Kit yazma yolunu ilk gerçek gönderimden önce kanıtlar:
+`send_at`'siz (asla gitmeyen) bir taslak oluşturur, geri okur (id, `draft`, `weekly-tr` etiketi),
+siler ve hesabın adını/planını ve maskelenmiş varsayılan gönderen adresini yazar.
+`kit-sync-tags` başarısız olsa bile `deliver` çalışır; adım yine de kırmızı biter.
+
 ```
 dotnet run --project tools/weekly-newsletter -- deliver [--content content/weekly] [--dry-run]
 ```
@@ -126,7 +136,8 @@ dotnet run --project tools/weekly-newsletter -- deliver [--content content/weekl
 - `--dry-run` Kit'e yazmaz; ne yapacağını söyler. Elle tetiklemede varsayılan budur.
 - Özet tablosu: her sayı ve dil için durum (zamanlandı, güncellendi, değişmedi, gitti, geç merge,
   iptal edildi), gönderim anı ve Kit broadcast id'si.
-- Çıkış kodu 0'dır; "geç merge" de 0'dır, çünkü bu bir karardır, hata değildir. Yapılandırma eksikse,
+- Çıkış kodu 0'dır; "geç merge" de 0'dır, çünkü bu bir karardır, hata değildir (yine de özetin başına
+  kalın bir "LATE" uyarısı ve bir `::warning::` anotasyonu eklenir). Yapılandırma eksikse,
   Kit hata verdiyse (yeniden denemeden sonra) veya çift broadcast bulunduysa 1'dir.
 
 ## Kod dışı kurulum (Mehmet, bir kez — T0)

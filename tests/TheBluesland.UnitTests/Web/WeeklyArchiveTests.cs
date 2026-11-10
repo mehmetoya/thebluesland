@@ -34,11 +34,41 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     }
 
     [Fact]
-    public void An_issue_is_hidden_until_its_send_date_in_istanbul()
+    public void Each_language_appears_at_its_own_send_time_in_istanbul()
     {
-        // Sunday 2026-11-08 23:30 UTC is already Monday 02:30 in Istanbul.
-        new WeeklyIssueRepository(Config(), new FixedTimeProvider(new DateTimeOffset(2026, 11, 8, 20, 0, 0, TimeSpan.Zero))).Published().ShouldBeEmpty();
-        new WeeklyIssueRepository(Config(), new FixedTimeProvider(new DateTimeOffset(2026, 11, 8, 23, 30, 0, TimeSpan.Zero))).Published().Count.ShouldBe(2);
+        // W46 is sent Monday 2026-11-09: TR 08:00 (05:00 UTC), EN 15:00 (12:00 UTC) Istanbul.
+        Published(2026, 11, 8, 23, 30).ShouldBeEmpty(); // Monday 02:30 Istanbul: before the e-mail
+        Published(2026, 11, 9, 4, 59).ShouldBeEmpty();
+        Published(2026, 11, 9, 5, 0).ShouldBe(["/tr/weekly/2026-W46"]);
+        Published(2026, 11, 9, 11, 59).ShouldBe(["/tr/weekly/2026-W46"]);
+        Published(2026, 11, 9, 12, 0).ShouldBe(["/tr/weekly/2026-W46", "/en/weekly/2026-W46"]);
+    }
+
+    [Fact]
+    public void Send_times_come_from_configuration_and_a_bad_value_falls_back_to_the_defaults()
+    {
+        var custom = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            [WeeklyIssueRepository.ContentDirectoryConfigKey] = Fixtures,
+            [WeeklyIssueRepository.SendTimeTrConfigKey] = "09:30",
+            [WeeklyIssueRepository.SendTimeEnConfigKey] = "not a time",
+        }).Build();
+
+        new WeeklyIssueRepository(custom, new FixedTimeProvider(new DateTimeOffset(2026, 11, 9, 6, 29, 0, TimeSpan.Zero))).Published().ShouldBeEmpty();
+        new WeeklyIssueRepository(custom, new FixedTimeProvider(new DateTimeOffset(2026, 11, 9, 6, 30, 0, TimeSpan.Zero))).Published().Select(issue => issue.Path).ShouldBe(["/tr/weekly/2026-W46"]);
+        new WeeklyIssueRepository(custom, new FixedTimeProvider(new DateTimeOffset(2026, 11, 9, 12, 0, 0, TimeSpan.Zero))).Published().Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public void Previous_and_next_respect_the_same_publish_time()
+    {
+        // 2099-W01 (tr) is sent 2098-12-29 08:00 Istanbul = 05:00 UTC.
+        var before = new WeeklyIssueRepository(Config(), new FixedTimeProvider(new DateTimeOffset(2098, 12, 29, 4, 59, 0, TimeSpan.Zero)));
+        var after = new WeeklyIssueRepository(Config(), new FixedTimeProvider(new DateTimeOffset(2098, 12, 29, 5, 0, 0, TimeSpan.Zero)));
+
+        before.Neighbours(before.Find("2026-W46", "tr")!).Next.ShouldBeNull();
+        before.Find("2099-W01", "tr").ShouldBeNull();
+        after.Neighbours(after.Find("2026-W46", "tr")!).Next!.Id.ShouldBe("2099-W01");
     }
 
     [Fact]
@@ -410,6 +440,10 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     // Razor entity-encodes non-ASCII text (&#xFC;), so decode before comparing Turkish copy.
     private static async Task<string> BodyAsync(HttpResponseMessage response) =>
         WebUtility.HtmlDecode(await response.Content.ReadAsStringAsync());
+
+    private static IReadOnlyList<string> Published(int year, int month, int day, int hourUtc, int minuteUtc) =>
+        new WeeklyIssueRepository(Config(), new FixedTimeProvider(new DateTimeOffset(year, month, day, hourUtc, minuteUtc, 0, TimeSpan.Zero)))
+            .Published().Select(issue => issue.Path).ToList();
 
     private static IConfiguration Config() =>
         new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { [WeeklyIssueRepository.ContentDirectoryConfigKey] = Fixtures }).Build();
