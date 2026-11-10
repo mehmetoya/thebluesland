@@ -1317,6 +1317,7 @@ body:has(.filter-mobile-toggle:checked) {
 }
 
 .weekly-lang-note {
+  flex-basis: 100%;
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
 }
