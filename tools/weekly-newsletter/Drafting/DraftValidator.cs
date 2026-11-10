@@ -33,6 +33,10 @@ public static partial class DraftValidator
     // A date this far before the send date is read as next year's, not as a past event.
     private static readonly TimeSpan PastLookback = TimeSpan.FromDays(60);
 
+    // A date in the card this close before the send date is an event readers will find over (the card
+    // is written in the window; the issue goes out a week later).
+    private static readonly TimeSpan CardPastLookback = TimeSpan.FromDays(14);
+
     // Capitalized words that are not facts: months, weekdays, common abbreviations and our own name.
     private static readonly HashSet<string> NotNames = new(
         ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
@@ -104,7 +108,8 @@ public static partial class DraftValidator
         DraftResponse draft,
         FactCard card,
         DraftLanguage? language = null,
-        DateOnly? sendDate = null)
+        DateOnly? sendDate = null,
+        string? sampleText = null)
     {
         var warnings = new List<DraftWarning>();
         var all = FactsOf(card.Stories);
@@ -113,6 +118,15 @@ public static partial class DraftValidator
             .SelectMany(story => story.Articles)
             .SelectMany(article => Runs(article.Summary))
             .ToHashSet(StringComparer.Ordinal);
+        var sampleRuns = Runs(sampleText).ToHashSet(StringComparer.Ordinal);
+        var titleRuns = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var article in card.Stories.SelectMany(story => story.Articles))
+        {
+            foreach (var run in Runs(article.Title))
+            {
+                titleRuns.TryAdd(run, article.SourceName);
+            }
+        }
 
         string Check(string where, string field, string text, Facts facts, int? maxCharacters, int? maxSentences)
         {
@@ -155,9 +169,21 @@ public static partial class DraftValidator
                 warnings.Add(new DraftWarning(where, $"{field}: “{thisWeek.Value}”; the issue is sent on Monday and covers the previous week."));
             }
 
-            if (Runs(clean).FirstOrDefault(summaryRuns.Contains) is { } copied)
+            var copies = Runs(clean).Where(summaryRuns.Contains).ToList();
+            if (field == "headline" && copies.Count > 0 && copies.All(titleRuns.ContainsKey))
             {
-                warnings.Add(new DraftWarning(where, $"{field}: copies a summary (“{copied}…”)."));
+                // Feeds repeat their headline inside the summary, and a headline is a short title, not prose:
+                // one note, not a copy warning (body and why-it-matters copies stay warnings).
+                warnings.Add(new DraftWarning(where, $"headline matches {titleRuns[copies[0]]}'s headline."));
+            }
+            else if (copies.Count > 0)
+            {
+                warnings.Add(new DraftWarning(where, $"{field}: copies a summary (“{copies[0]}…”)."));
+            }
+
+            if (Runs(clean).FirstOrDefault(sampleRuns.Contains) is { } sampled)
+            {
+                warnings.Add(new DraftWarning(where, $"{field}: copies the voice guide's sample issue (“{sampled}…”)."));
             }
 
             return clean;
@@ -173,7 +199,11 @@ public static partial class DraftValidator
 
         var subject = draft.Subject is null
             ? null
-            : Check("subject", "subject", draft.Subject, all, DraftLanguage.MaxSubject, null);
+            : Check("subject", "subject", draft.Subject, all, null, null);
+        if (subject is { } rawSubject && rawSubject.Length > DraftLanguage.MaxSubject)
+        {
+            warnings.Add(new DraftWarning("subject", $"subject: {rawSubject.Length} characters (limit {DraftLanguage.MaxSubject}); published as “{IssueMarkdownWriter.FitSubject(rawSubject)}”."));
+        }
         var preview = draft.Preview is null
             ? null
             : Check("preview", "preview", draft.Preview, all, DraftLanguage.MaxPreview, null);
@@ -197,11 +227,32 @@ public static partial class DraftValidator
         {
             var cardStory = card.Stories.FirstOrDefault(candidate => candidate.Key == story.Key);
             var facts = perStory.GetValueOrDefault(story.Key) ?? all;
+            if (story.WhyItMatters == DraftResponse.MissingBackupNote)
+            {
+                // The code filled this backup from the card (untranslated English): checking card text
+                // against itself only makes noise.
+                stories.Add(new DraftStory(story.Key, Sanitize(story.Headline), Sanitize(story.Body), story.WhyItMatters));
+                warnings.Add(new DraftWarning(story.Key, "backup not written by the model; card text shown untranslated."));
+                continue;
+            }
+
             var headline = Check(story.Key, "headline", story.Headline, facts, MaxHeadline, null);
             var body = Check(story.Key, "body", story.Body, facts, MaxBodyCharacters, MaxBodySentences);
             var why = Check(story.Key, "why it matters", story.WhyItMatters, facts, MaxWhyCharacters, MaxWhySentences);
             stories.Add(new DraftStory(story.Key, headline, body, why));
             StoryChecks(story.Key, $"{headline} {body} {why}", cardStory, facts, sendDate, warnings);
+            if (RepeatsBody(why, $"{headline} {body}"))
+            {
+                warnings.Add(new DraftWarning(story.Key, "why it matters repeats the headline/body; add a concrete fact from the card."));
+            }
+        }
+
+        var introNames = CapitalWords(intro);
+        var mentioned = stories.Count(story => card.Picks.Any(pick => pick.Key == story.Key)
+            && CapitalWords(story.Headline).Any(introNames.Contains));
+        if (mentioned > 3)
+        {
+            warnings.Add(new DraftWarning("intro", "intro names more than three stories."));
         }
 
         return (new DraftResponse(intro, outro, stories, subject, preview), warnings);
@@ -209,7 +260,9 @@ public static partial class DraftValidator
 
     /// <summary>
     /// Adds the TR/EN parity warnings: a number or proper name that one language's story carries and
-    /// the other's does not (the two languages carry the same facts; only the style differs).
+    /// the other's does not (the two languages carry the same facts; only the style differs). One
+    /// warning per story and direction lists everything missing. Backups the model did not write and
+    /// items already reported as omitted are left out.
     /// </summary>
     public static List<LanguageDraft> AddParity(IReadOnlyList<LanguageDraft> drafts, FactCard card)
     {
@@ -227,16 +280,29 @@ public static partial class DraftValidator
             {
                 var theirs = other.Text.Stories.FirstOrDefault(candidate => candidate.Key == story.Key);
                 var ours = mine.Text.Stories.FirstOrDefault(candidate => candidate.Key == story.Key);
-                if (theirs is null || ours is null)
+                if (theirs is null || ours is null
+                    || theirs.WhyItMatters == DraftResponse.MissingBackupNote || ours.WhyItMatters == DraftResponse.MissingBackupNote)
                 {
                     continue;
                 }
 
                 var tokens = Tokens(StoryText(ours));
-                tokens.UnionWith(Number().Matches(StoryText(ours)).Select(match => Normalize(match.Value)));
-                foreach (var item in ParityItems(theirs).Where(item => !tokens.Contains(item)))
+                var numbers = Number().Matches(StoryText(ours)).Select(match => Normalize(match.Value)).ToHashSet(StringComparer.Ordinal);
+                var omitted = mine.Warnings.Concat(other.Warnings)
+                    .Where(warning => warning.Where == story.Key && warning.Message.StartsWith("omitted:", StringComparison.Ordinal))
+                    .SelectMany(warning => OmittedItem().Matches(warning.Message).Select(match => match.Groups[1].Value))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var missing = ParityItems(theirs, story)
+                    .Where(item => item.IsNumber ? !numbers.Contains(item.Words[0]) : !item.Words.All(tokens.Contains))
+                    .Where(item => !item.Words.Any(omitted.Contains))
+                    .Select(item => item.Display)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                if (missing.Count > 0)
                 {
-                    extra.Add(new DraftWarning(story.Key, $"{mine.Language.Code.ToUpperInvariant()}/{other.Language.Code.ToUpperInvariant()} parity: “{item}” is in the {other.Language.Code.ToUpperInvariant()} story but not in the {mine.Language.Code.ToUpperInvariant()} story."));
+                    var (a, b) = (mine.Language.Code.ToUpperInvariant(), other.Language.Code.ToUpperInvariant());
+                    var list = string.Join(", ", missing.Select(item => $"“{item}”"));
+                    extra.Add(new DraftWarning(story.Key, $"{a}/{b} parity: {list} {(missing.Count == 1 ? "is" : "are")} in the {b} story but not in the {a} story."));
                 }
             }
 
@@ -334,10 +400,16 @@ public static partial class DraftValidator
             warnings.Add(new DraftWarning(key, $"generic phrase “{phrase}”: why it matters should state a concrete consequence from the card."));
         }
 
-        if (sendDate is { } send && FutureMarker().Match(text) is { Success: true } future
-            && PastDates(text, send).FirstOrDefault() is { Length: > 0 } past)
+        if (sendDate is { } send && FutureMarker().Match(text) is { Success: true } future)
         {
-            warnings.Add(new DraftWarning(key, $"“{past}” is before the send date ({send:yyyy-MM-dd}) but the text uses future tense (“{future.Value}”); write past events in past tense."));
+            if (PastDates(text, send, PastLookback.TotalDays).FirstOrDefault() is { Length: > 0 } past)
+            {
+                warnings.Add(new DraftWarning(key, $"“{past}” is before the send date ({send:yyyy-MM-dd}) but the text uses future tense (“{future.Value}”); write past events in past tense."));
+            }
+            else if (PastDates(facts.Text, send, CardPastLookback.TotalDays).FirstOrDefault() is { Length: > 0 } cardPast)
+            {
+                warnings.Add(new DraftWarning(key, $"the card dates “{cardPast}” before the send date; write it as already announced/happened, not future tense."));
+            }
         }
     }
 
@@ -456,17 +528,77 @@ public static partial class DraftValidator
         }
     }
 
-    /// <summary>Numbers and proper names of one story, for comparing the two languages.</summary>
-    private static IEnumerable<string> ParityItems(DraftStory story)
+    private sealed record ParityItem(string Display, string[] Words, bool IsNumber);
+
+    // Title and abbreviation particles that begin or sit inside a name without being part of one.
+    private static readonly HashSet<string> NameParticles = new(["The", "St", "Mt", "Dr", "Mr", "Mrs", "Ms", "Of", "And"], StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Numbers and proper names of one story, for comparing the two languages. Adjacent capitalized
+    /// words form one name. Headlines are Title Case, so a headline word counts only when the story's
+    /// text or a card summary also capitalizes it mid-sentence and the card never writes it lowercase
+    /// (the same proof <see cref="Omissions"/> asks for).
+    /// </summary>
+    private static List<ParityItem> ParityItems(DraftStory story, FactStory cardStory)
     {
-        var items = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var items = new List<ParityItem>();
         foreach (var field in new[] { story.Headline, story.Body, story.WhyItMatters })
         {
-            items.UnionWith(Number().Matches(field).Select(match => Normalize(match.Value)));
-            items.UnionWith(Names(field, exemptFirstWord: false));
+            items.AddRange(Number().Matches(field).Select(match => Normalize(match.Value)).Distinct(StringComparer.Ordinal).Select(number => new ParityItem(number, [number], true)));
         }
 
+        var attested = cardStory.Articles
+            .SelectMany(article => CapitalizedMidSentence(article.Summary?.Replace(article.Title, " ", StringComparison.OrdinalIgnoreCase) ?? string.Empty))
+            .Concat(CapitalizedMidSentence($"{story.Body} {story.WhyItMatters}"))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var lowercase = Word().Matches(cardStory.AllText()).Where(word => char.IsLower(word.Value[0])).Select(word => Suffix().Replace(word.Value, string.Empty)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        items.AddRange(NamePhrases(story.Headline, name => attested.Contains(name) && !lowercase.Contains(name)));
+        items.AddRange(NamePhrases(story.Body, _ => true));
+        items.AddRange(NamePhrases(story.WhyItMatters, _ => true));
         return items;
+    }
+
+    /// <summary>Runs of adjacent capitalized words (see <see cref="Names"/>), each a single name as written.</summary>
+    private static List<ParityItem> NamePhrases(string text, Func<string, bool> accept)
+    {
+        var run = new List<Match>();
+        var previousEnd = -1;
+        var first = Word().Match(text);
+        var phrases = new List<ParityItem>();
+
+        void Flush()
+        {
+            if (run.Count > 0)
+            {
+                var words = run.Select(word => Suffix().Replace(word.Value, string.Empty)).ToArray();
+                phrases.Add(new ParityItem(string.Join(' ', run.Select(word => word.Value.TrimEnd('\'', '’'))), words, false));
+                run.Clear();
+            }
+        }
+
+        foreach (Match word in Word().Matches(text))
+        {
+            var name = Suffix().Replace(word.Value, string.Empty);
+            var isName = char.IsUpper(word.Value[0]) && name.Length >= 2 && !NotNames.Contains(name) && !NameParticles.Contains(name)
+                && !(StartsSentence(text, word.Index) && !LooksLikeName(word, name))
+                && accept(name);
+            var adjacent = previousEnd >= 0 && text[previousEnd..word.Index].All(char.IsWhiteSpace);
+            if (!isName || !adjacent)
+            {
+                Flush();
+            }
+
+            if (isName)
+            {
+                run.Add(word);
+            }
+
+            previousEnd = word.Index + word.Length;
+        }
+
+        Flush();
+        return phrases;
     }
 
     /// <summary>The sentences of an outro minus any that talk about AI: the code adds the AI note itself (ADR-0006 madde 4).</summary>
@@ -483,6 +615,28 @@ public static partial class DraftValidator
         return kept.Count > 0 ? string.Join(' ', kept) : language?.FallbackOutro ?? string.Empty;
     }
 
+    private static readonly HashSet<string> StopWords = new(
+        ["that", "this", "with", "from", "have", "were", "their", "them", "they", "also", "than", "then", "will", "would", "been", "into",
+         "için", "gibi", "daha", "olan", "ancak", "çünkü", "kadar", "sonra", "önce", "bile", "veya", "olarak"],
+        StringComparer.Ordinal);
+
+    /// <summary>
+    /// True when most of the content words (four letters or more) of "why it matters" already occur in the
+    /// headline and body, compared on a five-letter stem so Turkish suffixes and English endings match.
+    /// </summary>
+    private static bool RepeatsBody(string why, string headlineAndBody)
+    {
+        static HashSet<string> Stems(string text) => Word().Matches(text)
+            .Select(word => Suffix().Replace(word.Value, string.Empty).ToLowerInvariant())
+            .Where(word => word.Length >= 4 && !StopWords.Contains(word))
+            .Select(word => word.Length > 5 ? word[..5] : word)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var words = Stems(why);
+        var known = Stems(headlineAndBody);
+        return words.Count >= 3 && words.Count(known.Contains) * 10 >= words.Count * 7;
+    }
+
     private static bool RepeatsSubject(string subject, string preview)
     {
         var core = subject.EndsWith(DraftLanguage.SubjectTag, StringComparison.Ordinal) ? subject[..^DraftLanguage.SubjectTag.Length] : subject;
@@ -491,7 +645,7 @@ public static partial class DraftValidator
     }
 
     /// <summary>Every "Month day" / "day Month" in the text that falls shortly before the send date, as written.</summary>
-    private static IEnumerable<string> PastDates(string text, DateOnly sendDate)
+    private static IEnumerable<string> PastDates(string text, DateOnly sendDate, double maxDays)
     {
         foreach (var match in MonthDay().Matches(text).Concat(DayMonth().Matches(text)))
         {
@@ -502,7 +656,7 @@ public static partial class DraftValidator
                 && day <= DateTime.DaysInMonth(sendDate.Year, month))
             {
                 var date = new DateOnly(sendDate.Year, month, day);
-                if (date < sendDate && sendDate.DayNumber - date.DayNumber <= PastLookback.TotalDays)
+                if (date < sendDate && sendDate.DayNumber - date.DayNumber <= maxDays)
                 {
                     yield return match.Value;
                 }
@@ -545,6 +699,13 @@ public static partial class DraftValidator
             yield return name;
         }
     }
+
+    /// <summary>Every capitalized word of two letters or more (a sentence's first word included), without its Turkish suffix.</summary>
+    private static HashSet<string> CapitalWords(string text) =>
+        Word().Matches(text)
+            .Select(word => Suffix().Replace(word.Value, string.Empty))
+            .Where(word => word.Length >= 2 && char.IsUpper(word[0]) && !NotNames.Contains(word) && !NameParticles.Contains(word))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
     private static bool LooksLikeName(Match word, string name)
     {
@@ -600,7 +761,7 @@ public static partial class DraftValidator
     private static partial Regex Hype();
 
     // Stock "why it matters" phrases that say nothing the card states (content review FC-2/ED-6).
-    [GeneratedRegex(@"öncü bir grup|geniş (?:bir )?kitle\w*|doğrudan belirliyor|kendine yer buluyor|h[âa]l[âa] bu mirasla|\bproving\b|reach well beyond|\bpioneering\b|\bcoveted\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 1000)]
+    [GeneratedRegex(@"öncü bir grup|geniş (?:bir )?kitle\w*|doğrudan belirliyor|kendine yer buluyor|h[âa]l[âa] bu mirasla|pek çok müzisyen\w*|birçok müzisyen\w*|yeniden yer alacak|\bmany musicians\b|\ba favorite of\b|\bproving\b|reach well beyond|\bpioneering\b|\bcoveted\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 1000)]
     private static partial Regex GenericPhrase();
 
     [GeneratedRegex(@"\bthis week\b|(?<!\p{L})bu hafta(?!\p{L})", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 1000)]
@@ -612,10 +773,10 @@ public static partial class DraftValidator
 
     private const string MonthNames = "Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık";
 
-    [GeneratedRegex(@"\b(?<m>" + MonthNames + @")\.?\s+(?<d>\d{1,2})\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 1000)]
+    [GeneratedRegex(@"\b(?<m>" + MonthNames + @")\.?\s+(?<d>\d{1,2})(?:st|nd|rd|th)?\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 1000)]
     private static partial Regex MonthDay();
 
-    [GeneratedRegex(@"\b(?<d>\d{1,2})\s+(?<m>" + MonthNames + @")(?!\p{L})", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 1000)]
+    [GeneratedRegex(@"\b(?<d>\d{1,2})(?:st|nd|rd|th)?\s+(?<m>" + MonthNames + @")(?!\p{L})", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, 1000)]
     private static partial Regex DayMonth();
 
     // "AI", "yapay zekâ/zeka", "artificial intelligence" - the disclosure's own words.
@@ -627,6 +788,10 @@ public static partial class DraftValidator
 
     [GeneratedRegex(@"\d+", RegexOptions.CultureInvariant, 1000)]
     private static partial Regex Number();
+
+    // The quoted item of an "omitted: ... is in the card's headlines" warning.
+    [GeneratedRegex(@"“([^”]+)”", RegexOptions.CultureInvariant, 1000)]
+    private static partial Regex OmittedItem();
 
     [GeneratedRegex(@"[.?…](?=\s|$)", RegexOptions.CultureInvariant, 1000)]
     private static partial Regex SentenceEnd();

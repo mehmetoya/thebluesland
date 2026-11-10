@@ -246,9 +246,7 @@ public sealed class DraftValidatorTests(ITestOutputHelper output)
 
         result[0].Warnings.Where(warning => warning.Message.Contains("parity", StringComparison.Ordinal)).Select(warning => warning.Message).ToList().ShouldBeEmpty();
         var parity = result[1].Warnings.Where(warning => warning.Message.Contains("parity", StringComparison.Ordinal)).Select(warning => warning.Message).ToList();
-        parity.ShouldContain("EN/TR parity: “75” is in the TR story but not in the EN story.");
-        parity.ShouldContain("EN/TR parity: “Winter” is in the TR story but not in the EN story.");
-        parity.ShouldNotContain(message => message.Contains("Geese", StringComparison.Ordinal));
+        parity.ShouldBe(["EN/TR parity: “75”, “Winter” are in the TR story but not in the EN story."]);
     }
 
     [Theory]

@@ -7,7 +7,78 @@ namespace TheBluesland.WeeklyNewsletter.Drafting;
 /// </summary>
 public static class DraftPromptBuilder
 {
-    public static string Build(DraftLanguage language, string voiceGuide, FactCard card, DateOnly sendDate) =>
+    private const string SampleHeading = "## Örnek sayı";
+
+    /// <summary>
+    /// The prompt for one language. <paramref name="lite"/> is the variant for the lighter fallback
+    /// model: no sample issue (it copies it), the guide's tone and language sections only, and the rules
+    /// as a short numbered checklist after the fact card, where a small model still follows them.
+    /// </summary>
+    public static string Build(DraftLanguage language, string voiceGuide, FactCard card, DateOnly sendDate, bool lite = false) =>
+        lite ? BuildLite(language, voiceGuide, card, sendDate) : BuildFull(language, voiceGuide, card, sendDate);
+
+    /// <summary>The guide's sample-issue section ("## Örnek sayı" up to the next "## " heading), or empty.</summary>
+    private static (string Without, string Sample) SplitSample(string voiceGuide)
+    {
+        var marker = voiceGuide.IndexOf(SampleHeading, StringComparison.Ordinal);
+        if (marker < 0 || (marker > 0 && voiceGuide[marker - 1] != '\n'))
+        {
+            return (voiceGuide, string.Empty);
+        }
+
+        var next = voiceGuide.IndexOf("\n## ", marker + SampleHeading.Length, StringComparison.Ordinal);
+        return next < 0
+            ? (voiceGuide[..marker].TrimEnd() + "\n", voiceGuide[marker..])
+            : (voiceGuide[..marker] + voiceGuide[(next + 1)..], voiceGuide[marker..next]);
+    }
+
+    /// <summary>
+    /// The sample issue's own text (its quoted issue lines and subject/preview lines), for the check that the
+    /// model did not copy it; the surrounding rules prose is left out.
+    /// </summary>
+    public static string SampleText(string voiceGuide) =>
+        string.Join(
+            '\n',
+            SplitSample(voiceGuide).Sample
+                .Split('\n')
+                .Where(line => line.StartsWith('>') || line.StartsWith("Konu:", StringComparison.Ordinal) || line.StartsWith("Önizleme:", StringComparison.Ordinal)
+                    || line.StartsWith("Subject:", StringComparison.Ordinal) || line.StartsWith("Preview:", StringComparison.Ordinal))
+                .Select(line => line.TrimStart('>').Trim()));
+
+    private static string BuildLite(DraftLanguage language, string voiceGuide, FactCard card, DateOnly sendDate) =>
+        $"""
+        You write TheBluesland Weekly, a Monday music-news newsletter. Follow the voice guide's tone and
+        language sections. Write the issue in {language.Name}, fresh in that language (never a translation).
+        Both language versions carry the same facts; only the style differs.
+
+        === VOICE GUIDE (tone and languages) ===
+        {SplitSample(voiceGuide).Without}
+        === END VOICE GUIDE ===
+
+        === FACT CARD ===
+        {card.ToPromptText()}=== END FACT CARD ===
+
+        Check every item before you answer:
+        1. Use only facts from the fact card; leave out any detail it does not give. No URLs, Markdown, emoji or "!".
+        2. The issue is sent on {sendDate:yyyy-MM-dd}. Events before that date: past tense. An announcement for a date
+           before it: "said they would skip" / "katılmayacağını açıkladı", never how it turned out. Something not
+           started yet stays future: "will count from January 16" / "16 Ocak'tan itibaren sayılacak".
+        3. Never write "this week", a weekday, "a year ago", "last week", "months ago" or "a decade" unless the card says it.
+        4. For every story: who (with identity: band, role), what happened, when (date), where (city) and every proper
+           name the card's headlines use (songs in double quotes, institutions in full on first mention). Same list in both languages.
+        5. Write roles as the card words them ("founder", "inventor", "first", "only" only if a summary says it). If two
+           articles disagree on a date or number, leave it out.
+        6. headline: at most 70 characters, who + what happened, no institution abbreviations ("Rock Hall" is allowed; the body uses the full name).
+        7. body: 2-3 sentences, one verb per event, no sentence copied from a summary, no "X grubundan" / "the band X" filler.
+        8. whyItMatters: 1-2 short sentences with no label and one new fact that the headline and body do not contain
+           (else the next step: date, place, who is affected). No stock phrases ("pioneering", "geniş kitle", "pek çok müzisyen", "a favorite of").
+        9. intro: 1-2 sentences about at most three picks, ending with "{language.IntroTagline}". outro: 1-2 short sentences, no AI, no signature.
+        10. subject: at most {DraftLanguage.MaxSubject} characters, two hooks, ending with "{DraftLanguage.SubjectTag}"; if it runs over, drop the second hook.
+            preview: at most {DraftLanguage.MaxPreview} characters, adds something, does not repeat the subject.
+        11. Write every story in the card, picks and backups, each under its exact story key. A missing backup is an error.
+        """;
+
+    private static string BuildFull(DraftLanguage language, string voiceGuide, FactCard card, DateOnly sendDate) =>
         $"""
         You write TheBluesland Weekly, a Monday music-news newsletter. Follow the voice guide below
         exactly; its sample issue is fictional and a reference for tone and length only, never a source of

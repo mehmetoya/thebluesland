@@ -114,7 +114,7 @@ public static class DraftCommand
         var voiceGuide = await File.ReadAllTextAsync(voiceGuidePath, cancellationToken);
         // An explicitly chosen model is respected; only the default falls back when it is overloaded.
         var primary = new GeminiClient(httpClient, apiKey!, string.IsNullOrWhiteSpace(model) ? GeminiClient.DefaultModel : model, retryDelay);
-        var fallback = string.IsNullOrWhiteSpace(model) ? new GeminiClient(httpClient, apiKey!, GeminiClient.FallbackModel, retryDelay) : null;
+        var fallback = string.IsNullOrWhiteSpace(model) ? new GeminiClient(httpClient, apiKey!, GeminiClient.FallbackModel, retryDelay, GeminiClient.FallbackTemperature) : null;
         var pause = primaryRetryPause ?? DefaultPrimaryRetryPause;
 
         var drafts = new List<LanguageDraft>();
@@ -145,7 +145,8 @@ public static class DraftCommand
                         await error.WriteLineAsync($"{primary.Model} is still unavailable ({retry.Message}); writing the {language.Name} draft with {fallback.Model}.");
                         fellBackFrom = primary.Model;
                         gemini = fallback;
-                        response = await WriteAsync(fallback, prompt, card, cancellationToken);
+                        // The lighter model gets the short checklist prompt without the sample issue it would copy.
+                        response = await WriteAsync(fallback, DraftPromptBuilder.Build(language, voiceGuide, card, week.SendDate, lite: true), card, cancellationToken);
                     }
                 }
             }
@@ -155,7 +156,7 @@ public static class DraftCommand
                 return 1;
             }
 
-            var (clean, warnings) = DraftValidator.Validate(response, card, language, week.SendDate);
+            var (clean, warnings) = DraftValidator.Validate(response, card, language, week.SendDate, DraftPromptBuilder.SampleText(voiceGuide));
             drafts.Add(new LanguageDraft(
                 language,
                 IssueMarkdownWriter.Issue(week, language, clean, card),

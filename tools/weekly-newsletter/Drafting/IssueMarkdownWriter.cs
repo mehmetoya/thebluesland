@@ -134,16 +134,33 @@ public static class IssueMarkdownWriter
         return (space > max / 2 ? head[..space] : head).TrimEnd(' ', ',', ';', ':', '-', '·') + "…";
     }
 
-    /// <summary>Like <see cref="Fit"/>, but keeps the brand tag at the end of the subject.</summary>
+    /// <summary>
+    /// Like <see cref="Fit"/>, but keeps the brand tag at the end of the subject. When the hooks run
+    /// over, the second hook is dropped: the cut falls at the last hook separator (", ", "; ", " ve ",
+    /// " and ") that fits, without "…". Only a subject with no separator is cut mid-phrase.
+    /// </summary>
     public static string FitSubject(string subject)
     {
         subject = subject.Trim();
-        if (subject.Length <= DraftLanguage.MaxSubject || !subject.EndsWith(DraftLanguage.SubjectTag, StringComparison.Ordinal))
+        if (subject.Length <= DraftLanguage.MaxSubject)
         {
-            return Fit(subject, DraftLanguage.MaxSubject);
+            return subject;
         }
 
-        var hooks = subject[..^DraftLanguage.SubjectTag.Length];
-        return Fit(hooks, DraftLanguage.MaxSubject - DraftLanguage.SubjectTag.Length) + DraftLanguage.SubjectTag;
+        var tagged = subject.EndsWith(DraftLanguage.SubjectTag, StringComparison.Ordinal);
+        var hooks = tagged ? subject[..^DraftLanguage.SubjectTag.Length] : subject;
+        var tag = tagged ? DraftLanguage.SubjectTag : string.Empty;
+        var room = DraftLanguage.MaxSubject - tag.Length;
+        for (var cut = Math.Min(room, hooks.Length - 1); cut >= room / 3; cut--)
+        {
+            if (HookSeparators.Any(separator => string.CompareOrdinal(hooks, cut, separator, 0, separator.Length) == 0))
+            {
+                return hooks[..cut].TrimEnd() + tag;
+            }
+        }
+
+        return Fit(hooks, room) + tag;
     }
+
+    private static readonly string[] HookSeparators = [", ", "; ", " ve ", " and "];
 }

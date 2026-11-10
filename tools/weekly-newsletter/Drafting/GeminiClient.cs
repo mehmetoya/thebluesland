@@ -11,7 +11,7 @@ namespace TheBluesland.WeeklyNewsletter.Drafting;
 /// not reference the Spotify tool (spec Assumptions 3). The key goes in a header, never the URL, so
 /// it cannot end up in a logged request line. Transient 429/5xx answers are retried after a pause.
 /// </summary>
-public sealed class GeminiClient(HttpClient httpClient, string apiKey, string model, TimeSpan? retryDelay = null)
+public sealed class GeminiClient(HttpClient httpClient, string apiKey, string model, TimeSpan? retryDelay = null, double temperature = GeminiClient.DefaultTemperature)
 {
     public const string ApiKeyVariable = "GEMINI_API_KEY";
     public const string ModelVariable = "GEMINI_MODEL";
@@ -22,6 +22,11 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
     // When the default model stays overloaded (503 "high demand", first production runs on
     // 2026-11-10), the lighter model on the same free tier usually still answers.
     public const string FallbackModel = "gemini-flash-lite-latest";
+
+    /// <summary>The default model writes at 0.4; the lighter fallback model drifts less at <see cref="FallbackTemperature"/>.</summary>
+    public const double DefaultTemperature = 0.4;
+
+    public const double FallbackTemperature = 0.2;
 
     private const int MaxAttempts = 4;
     private static readonly TimeSpan MaxRetryDelay = TimeSpan.FromMinutes(1);
@@ -42,7 +47,7 @@ public sealed class GeminiClient(HttpClient httpClient, string apiKey, string mo
                 Content = JsonContent.Create(new
                 {
                     contents = new[] { new { parts = new[] { new { text = prompt } } } },
-                    generationConfig = new { temperature = 0.4, responseMimeType = "application/json", responseSchema },
+                    generationConfig = new { temperature, responseMimeType = "application/json", responseSchema },
                 }),
             };
             request.Headers.Add("x-goog-api-key", apiKey);
