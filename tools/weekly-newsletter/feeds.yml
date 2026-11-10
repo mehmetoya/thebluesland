@@ -1,0 +1,63 @@
+# TheBluesland Weekly - news-ingest kaynak listesi
+# (docs/specs/weekly-newsletter-news-ingest.md, Design section 3).
+#
+# Kaynak eklemek/kapatmak icin yalnizca bu dosya degisir; kod degismez.
+#   id      : kebab-case, bir kez secilir ve degismez - news_article.source buna baglanir.
+#   url     : mutlak https RSS/Atom adresi.
+#   enabled : false ise ingest bu kaynagi atlar (gecmis satirlar silinmez).
+#
+# Dogrulama: 2026-11-10, her adres "TheBlueslandWeekly/1.0" User-Agent'i ile bir kez cekildi, hepsi
+# 200 ve gecerli RSS 2.0 dondu. Ornek yanitlar (4 oge, tam metin `content:encoded` cikarilmis):
+# tests/TheBluesland.UnitTests/Fixtures/newsletter-feeds/<id>.xml
+#
+# Kullanim: yalnizca baslik + feed ozeti + baglanti, ic kullanim icin (kumeleme ve olgu karti).
+# Ozet hicbir zaman oldugu gibi yayinlanmaz, makale tam metni cekilmez (spec Assumptions 4).
+#
+# Hiz notu ("oge/gun" = 2026-11-10 olcumu): bir feed yalnizca son N ogeyi tutar. N ogenin kapsadigi
+# sure ingest araligindan kisaysa oge kacabilir. En dar pencere consequence (15 oge ~ 4,7 saat).
+
+feeds:
+  # ~9 oge/gun, 10 oge. Ana /feed/ yerine music-news: ana akis konser/etkinlik ve genel icerik de
+  # tasiyor. Kategoriler "genre rock", "genre kpop" gibi tur etiketleri iceriyor (story-ranking icin).
+  - id: billboard
+    name: Billboard
+    url: https://www.billboard.com/c/music/music-news/feed/
+    enabled: true
+
+  # ~6 oge/gun, 29 oge. Kisa ozet (tek cumle), kategori yalnizca "News".
+  - id: pitchfork
+    name: Pitchfork
+    url: https://pitchfork.com/feed/feed-news/rss
+    enabled: true
+
+  # ~22 oge/gun, 10 oge. Kisa ozet; kategoriler sanatci adi iceriyor.
+  - id: rolling-stone
+    name: Rolling Stone
+    url: https://www.rollingstone.com/music/music-news/feed/
+    enabled: true
+
+  # ~16 oge/gun, 10 oge. Ozet HTML ve sonunda WordPress "The post ... appeared first on NME." eki var.
+  - id: nme
+    name: NME
+    url: https://www.nme.com/news/music/feed
+    enabled: true
+
+  # ~13 oge/gun, 40 oge. Ozet cogu zaman yalnizca WordPress eki ("The post X appeared first on
+  # Stereogum.") - fiilen yalnizca baslik veriyor.
+  - id: stereogum
+    name: Stereogum
+    url: https://www.stereogum.com/feed/
+    enabled: true
+
+  # ~77 oge/gun, 15 oge (~4,7 saat pencere). Ana /feed/ yerine music kategorisi: ana akis TV/film
+  # editoryallerini de tasiyor.
+  - id: consequence
+    name: Consequence
+    url: https://consequence.net/category/music/feed/
+    enabled: true
+
+  # ~3 oge/gun, 10 oge. Sektor haberleri; ozet "Source" baglantisiyla bitiyor.
+  - id: music-business-worldwide
+    name: Music Business Worldwide
+    url: https://www.musicbusinessworldwide.com/feed/
+    enabled: true

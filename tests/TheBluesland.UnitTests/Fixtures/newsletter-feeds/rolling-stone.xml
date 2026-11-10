@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Music News</title>
+	<atom:link href="https://www.rollingstone.com/music/music-news/feed/" rel="self" type="application/rss+xml" />
+	<link>https://www.rollingstone.com</link>
+	<description>Music, Film, TV and Political News Coverage</description>
+	<lastBuildDate>Tue, 10 Nov 2026 03:51:24 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.9.11</generator>
+
+<image>
+	<url>https://www.rollingstone.com/wp-content/uploads/2024/12/R-Avatar_512x512_flat.png?w=32</url>
+	<title>Music News</title>
+	<link>https://www.rollingstone.com</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+<site xmlns="com-wordpress:feed-additions:1">148354167</site>	<item>
+		<title>Billy Joel Announces Return to Stage and &#8216;A Little Music&#8217; After Brain Disorder Diagnoses</title>
+		<link>https://www.rollingstone.com/music/music-news/billy-joel-announces-official-show-brain-disorder-diagnoses-1235655037/</link>
+		
+		<dc:creator><![CDATA[Charisma Madarang]]></dc:creator>
+		<pubDate>Tue, 10 Nov 2026 03:51:17 +0000</pubDate>
+				<category><![CDATA[Music]]></category>
+		<category><![CDATA[Music News]]></category>
+		<category><![CDATA[Billy Joel]]></category>
+		<guid isPermaLink="false">https://www.rollingstone.com/?p=1235655037</guid>
+
+					<description><![CDATA[The singer made a surprise cameo during a Billy Joel cover band's show in January]]></description>
+		
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">1235655037</post-id>	</item>
+		<item>
+		<title>Paul McCartney and Ringo Starr to Reunite at Las Vegas Show in 2027</title>
+		<link>https://www.rollingstone.com/music/music-news/paul-mccartney-ringo-starr-vegas-2027-reunion-1235654889/</link>
+		
+		<dc:creator><![CDATA[Jaeden Pinder]]></dc:creator>
+		<pubDate>Mon, 09 Nov 2026 22:02:46 +0000</pubDate>
+				<category><![CDATA[Music]]></category>
+		<category><![CDATA[Music News]]></category>
+		<category><![CDATA[Joe Walsh]]></category>
+		<category><![CDATA[Paul McCartney]]></category>
+		<category><![CDATA[Ringo Starr]]></category>
+		<guid isPermaLink="false">https://www.rollingstone.com/?p=1235654889</guid>
+
+					<description><![CDATA[The two Beatles will make a rare onstage appearance together at Joe Walsh's VetsAid music festival in January]]></description>
+		
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">1235654889</post-id>	</item>
+		<item>
+		<title>Judge Sets Steven Tyler Sex Assault Trial Date</title>
+		<link>https://www.rollingstone.com/music/music-news/steven-tyler-child-sex-abuse-trial-julia-misley-aerosmith-1235654761/</link>
+		
+		<dc:creator><![CDATA[Nancy Dillon]]></dc:creator>
+		<pubDate>Mon, 09 Nov 2026 21:24:33 +0000</pubDate>
+				<category><![CDATA[Music]]></category>
+		<category><![CDATA[Music News]]></category>
+		<category><![CDATA[Aerosmith]]></category>
+		<category><![CDATA[controversy]]></category>
+		<category><![CDATA[courts and crime]]></category>
+		<category><![CDATA[Steven Tyler]]></category>
+		<guid isPermaLink="false">https://www.rollingstone.com/?p=1235654761</guid>
+
+					<description><![CDATA[A California judge said Monday he would toss out and reconsider any rulings by a previous judge if either side requests it in the long-running case]]></description>
+		
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">1235654761</post-id>	</item>
+		<item>
+		<title>Pink Becomes First Solo Female Pop Artist to Headline the Sphere</title>
+		<link>https://www.rollingstone.com/music/music-news/pink-sphere-residency-2027-1235654728/</link>
+		
+		<dc:creator><![CDATA[Althea Legaspi]]></dc:creator>
+		<pubDate>Mon, 09 Nov 2026 19:49:55 +0000</pubDate>
+				<category><![CDATA[Music]]></category>
+		<category><![CDATA[Music News]]></category>
+		<category><![CDATA[Pink]]></category>
+		<category><![CDATA[The Sphere]]></category>
+		<guid isPermaLink="false">https://www.rollingstone.com/?p=1235654728</guid>
+
+					<description><![CDATA[Musician’s Las Vegas run at the venue kicks off in September 2027]]></description>
+		
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">1235654728</post-id>	</item>
+		</channel>
+</rss>
