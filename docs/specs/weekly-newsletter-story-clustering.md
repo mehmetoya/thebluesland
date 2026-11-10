@@ -227,7 +227,7 @@ xUnit + Shouldly. Önce test yazılır (TDD).
 - [x] Aynı girdi her çalıştırmada byte byte aynı raporu üretir.
 - [x] 1.000 haberlik sentetik hafta < 5 sn'de kümelenir.
 - [ ] `newsletter-preview` workflow'u production verisiyle çalışır; özet tek bakışta okunur.
-- [ ] Tam `dotnet build` + `dotnet test` yeşil; yeni paket yok, migration yok.
+- [x] Tam `dotnet build` + `dotnet test` yeşil (633, Release); yeni paket yok, migration yok.
 
 ## Kararlar (onaylandı, 2026-11-10)
 

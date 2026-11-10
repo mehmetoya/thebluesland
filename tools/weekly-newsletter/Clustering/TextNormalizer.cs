@@ -6,12 +6,19 @@ namespace TheBluesland.WeeklyNewsletter.Clustering;
 
 /// <summary>
 /// Turns a headline or summary into comparable tokens (story-clustering spec, Design section 2,
-/// step 1): lowercase, configured abbreviations, accents removed ("Céline" → "celine"),
+/// step 1): lowercase, configured whole-word abbreviations, accents removed ("Céline" → "celine"),
 /// possessive 's dropped, everything except a–z/0–9 treated as a separator, English stop words
 /// removed. No synonym dictionary.
 /// </summary>
 public sealed partial class TextNormalizer(IReadOnlyList<Abbreviation> abbreviations)
 {
+    // Whole words only, so a short entry can never rewrite letters inside another word.
+    private readonly IReadOnlyList<(Regex Pattern, string To)> _abbreviations = abbreviations
+        .Select(abbreviation => (
+            new Regex($"(?<![a-z0-9]){Regex.Escape(abbreviation.From)}(?![a-z0-9])", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1)),
+            abbreviation.To))
+        .ToList();
+
     private static readonly HashSet<string> StopWords = new(
         ["a", "an", "the", "and", "or", "of", "to", "in", "on", "at", "for", "with", "by", "from",
          "is", "are", "was", "be", "as", "it", "its", "his", "her", "their", "this", "that", "new"],
@@ -25,9 +32,9 @@ public sealed partial class TextNormalizer(IReadOnlyList<Abbreviation> abbreviat
         }
 
         var lower = text.ToLower(CultureInfo.InvariantCulture);
-        foreach (var abbreviation in abbreviations)
+        foreach (var (pattern, to) in _abbreviations)
         {
-            lower = lower.Replace(abbreviation.From, abbreviation.To, StringComparison.Ordinal);
+            lower = pattern.Replace(lower, to);
         }
 
         lower = Possessive().Replace(RemoveDiacritics(lower), string.Empty);

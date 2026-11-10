@@ -39,6 +39,6 @@ Plan: [tasks/plan.md](plan.md) · Spec: [docs/specs/weekly-newsletter-story-clus
 
 ## Checkpoint C
 
-- [ ] Tam `dotnet build TheBluesland.slnx` ve `dotnet test` yeşil
-- [ ] Spec Success Criteria işaretlendi
+- [x] Tam `dotnet build TheBluesland.slnx` ve `dotnet test` yeşil (633)
+- [x] Spec Success Criteria işaretlendi
 - [ ] Review; PR; merge; production'da `newsletter-preview` yeşil

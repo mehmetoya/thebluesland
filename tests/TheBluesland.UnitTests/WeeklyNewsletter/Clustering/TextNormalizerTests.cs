@@ -35,6 +35,14 @@ public sealed class TextNormalizerTests
         Normalizer.Tokenize("Grand Theft Auto VI: The Festival").ShouldBe(["gta", "vi", "festival"]);
     }
 
+    [Fact]
+    public void Tokenize_applies_abbreviations_to_whole_words_only()
+    {
+        var normalizer = new TextNormalizer([new Abbreviation("rs", "record store")]);
+
+        normalizer.Tokenize("RS day at Mars hall").ShouldBe(["record", "store", "day", "mars", "hall"]);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

@@ -44,6 +44,9 @@ public static class TfIdfVectorizer
             documents.Add(counts);
         }
 
+        // Weight = (1 + ln tf) * ln((1 + N) / (1 + df) + 1). The "+ 1" sits inside the log, unlike the
+        // textbook ln(...) + 1: a term in every article still weighs ln 2 rather than 1, so this-week
+        // boilerplate counts for less. Deliberate - clustering.yml's threshold is calibrated on it.
         var total = articles.Count;
         return documents
             .Select(counts =>

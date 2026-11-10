@@ -100,14 +100,23 @@ public sealed class StoryClustererTests
     }
 
     [Fact]
-    public void Cluster_handles_a_thousand_article_week_within_five_seconds()
+    public void Cluster_handles_a_thousand_article_week_with_many_merges_within_five_seconds()
     {
-        var week = Filler(1000).ToList();
+        // 800 unrelated articles plus 100 events each reported by two sources: 100 merges, which
+        // exercises the merge loop, not only the similarity matrix.
+        var week = Filler(800).ToList();
+        for (var index = 0; index < 100; index++)
+        {
+            var headline = $"Performer{index} cancels arena residency Venue{index} after injury Injury{index}";
+            week.Add(Article(5000 + index, "stereogum", headline, hoursAfterMonday: index % 40));
+            week.Add(Article(6000 + index, "consequence", headline + " report", hoursAfterMonday: (index % 40) + 1));
+        }
 
         var stopwatch = Stopwatch.StartNew();
-        StoryClusterer.Cluster(week, Options());
+        var stories = StoryClusterer.Cluster(week, Options());
         stopwatch.Stop();
 
+        stories.Count(story => story.SourceCount == 2).ShouldBe(100);
         stopwatch.Elapsed.ShouldBeLessThan(TimeSpan.FromSeconds(5));
     }
 

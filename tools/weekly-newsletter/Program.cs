@@ -16,7 +16,7 @@ Console.CancelKeyPress += (_, e) =>
 const string Usage = """
     Usage:
       ingest [path/to/feeds.yml]
-      cluster [--from <date>] [--to <date>]   (UTC; default: the 7 days before now)
+      cluster [--from <date>] [--to <date>]   (UTC, yyyy-MM-dd[THH:mm[:ss]]; default: the 7 days before now)
     """;
 
 var toolDirectory = Path.Combine(Directory.GetCurrentDirectory(), "tools", "weekly-newsletter");
@@ -73,5 +73,11 @@ switch (args.FirstOrDefault())
         return 1;
 }
 
+// ISO dates only, so "11/03/2026" cannot be silently read as March or November.
 static bool TryParseUtc(string text, out DateTimeOffset value) =>
-    DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out value);
+    DateTimeOffset.TryParseExact(
+        text.TrimEnd('Z'),
+        ["yyyy-MM-dd", "yyyy-MM-ddTHH:mm", "yyyy-MM-ddTHH:mm:ss"],
+        CultureInfo.InvariantCulture,
+        DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+        out value);

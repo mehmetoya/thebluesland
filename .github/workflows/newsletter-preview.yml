@@ -21,9 +21,8 @@ on:
         required: false
         default: ""
 
-concurrency:
-  group: newsletter-db
-  cancel-in-progress: false
+# No concurrency group: the preview only reads, and sharing newsletter-db with ingest would let a
+# queued preview cancel a pending scheduled ingest (GitHub keeps one pending run per group).
 
 permissions:
   contents: read
