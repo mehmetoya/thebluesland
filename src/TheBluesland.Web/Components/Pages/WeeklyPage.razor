@@ -1,5 +1,6 @@
 @page "/weekly"
 @inject WeeklyIssueRepository Issues
+@inject IConfiguration Configuration
 
 <PageTitle>TheBluesland Weekly - TheBluesland</PageTitle>
 <PageMetadata
@@ -8,36 +9,62 @@
     CanonicalPath="/weekly"
     ImagePath="/og-image.png" />
 
-<article class="weekly">
-    <h1>TheBluesland Weekly</h1>
-    <p class="weekly-lede">Every Monday: the week's five music stories and why they matter, in Turkish and English.</p>
+<article class="weekly-hub">
+    <section class="brand-intro">
+        <h1>TheBluesland Weekly</h1>
+        <p>Every Monday: the week's five music stories and why they matter, in Turkish and English.</p>
+    </section>
 
-    <WeeklySubscribe />
+    <WeeklySubscribe Language="en" ShowWhenUnavailable="true" />
 
-    <h2>Issues</h2>
-    @if (_issues.Count == 0)
-    {
-        <p>The first issue is on its way. Check back on Monday.</p>
-    }
-    else
-    {
-        <ul class="weekly-issues">
-            @foreach (var issue in _issues.GroupBy(issue => issue.Id))
-            {
-                <li>
-                    <span class="weekly-issue-date">@issue.First().SendDate.ToString("d MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture)</span>
-                    @foreach (var language in issue)
-                    {
-                        <a href="@language.Path" hreflang="@language.Language">@language.Title</a>
-                    }
-                </li>
-            }
-        </ul>
-    }
+    <section class="weekly-archive" aria-labelledby="weekly-archive-title">
+        <h2 id="weekly-archive-title">Past issues</h2>
+        <p class="weekly-archive-subtitle" lang="tr">Geçmiş sayılar</p>
+        @if (_issues.Count == 0)
+        {
+            <p class="weekly-empty">
+                The first issue arrives Monday 08:00 (TR) / 15:00 (EN), Istanbul time.@(_hasSignup ? " Subscribe above to get it first." : "")
+            </p>
+        }
+        else
+        {
+            <ul class="weekly-cards">
+                @foreach (var group in _issues.GroupBy(issue => issue.Id))
+                {
+                    var lead = group.FirstOrDefault(issue => issue.Language == "en") ?? group.First();
+                    <li class="collection-link weekly-card">
+                        <p class="weekly-card-eyebrow">
+                            <time datetime="@lead.SendDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)">@WeeklyIssue.FormatDate(lead.SendDate, "en")</time>
+                            <span aria-hidden="true">·</span>
+                            @(lead.Language == "tr" ? "Sayı" : "Issue") @lead.Number
+                        </p>
+                        <p class="weekly-card-lede" lang="@lead.Language">@lead.Lede</p>
+                        <ul class="weekly-card-headlines" lang="@lead.Language">
+                            @foreach (var headline in lead.Headlines.Take(3))
+                            {
+                                <li>@headline</li>
+                            }
+                        </ul>
+                        <p class="weekly-card-actions">
+                            @foreach (var issue in group)
+                            {
+                                <a class="weekly-button weekly-button-outline" href="@issue.Path" lang="@issue.Language" hreflang="@issue.Language">@(issue.Language == "tr" ? "Türkçe oku" : "Read in English")<span class="sr-only"> (@(issue.Language == "tr" ? "Sayı" : "Issue") @issue.Number)</span></a>
+                            }
+                        </p>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
 </article>
 
 @code {
     private IReadOnlyList<WeeklyIssue> _issues = [];
+    private bool _hasSignup;
 
-    protected override void OnInitialized() => _issues = Issues.Published();
+    protected override void OnInitialized()
+    {
+        _issues = Issues.Published();
+        _hasSignup = WeeklySignup.Forms(Configuration).Count > 0;
+    }
 }

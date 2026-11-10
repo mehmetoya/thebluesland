@@ -1,0 +1,5 @@
+@page "/not-found"
+
+@* UX-1: UseStatusCodePagesWithReExecute("/not-found") in WebHostFactory renders this for every empty
+   404; the status itself stays whatever the original response had. *@
+<NotFoundContent />
