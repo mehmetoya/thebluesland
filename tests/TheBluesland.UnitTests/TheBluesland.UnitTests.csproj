@@ -22,6 +22,7 @@
     <ProjectReference Include="../../src/TheBluesland.Data/TheBluesland.Data.csproj" />
     <ProjectReference Include="../../src/TheBluesland.Web/TheBluesland.Web.csproj" />
     <ProjectReference Include="../../tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj" />
+    <ProjectReference Include="../../tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj" />
   </ItemGroup>
 
   <ItemGroup>

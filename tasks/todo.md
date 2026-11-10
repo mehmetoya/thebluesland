@@ -25,7 +25,7 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
   - Dependencies: Yok
   - Files: `tools/weekly-newsletter/feeds.yml`, `tests/TheBluesland.UnitTests/Fixtures/newsletter-feeds/*.xml`
 
-- [ ] **T2: Araç iskeleti + `feeds.yml` yükleyici/doğrulayıcı** — M
+- [x] **T2: Araç iskeleti + `feeds.yml` yükleyici/doğrulayıcı** — M
   - Description: Yeni console projesi (`TheBluesland.WeeklyNewsletter`), slnx ve test projesine
     referans; `Program.cs` alt komut yönlendirmesi (`ingest` şimdilik yalnız config yükler);
     `FeedConfigLoader` YAML okur ve doğrular.
@@ -40,7 +40,7 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
     `tests/.../WeeklyNewsletter/FeedConfigLoaderTests.cs`
 
 ### Checkpoint A
-- [ ] `FOCUSED` yeşil, build temiz
+- [x] `FOCUSED` yeşil, build temiz (22 test; yerelde `-p:NuGetAudit=false` ile — bkz. NuGet audit notu)
 - [x] Mehmet T1 kaynak listesini onayladı (2026-11-10; çalışma aralığı 2 saat)
 
 ## Phase 2: Core
@@ -158,3 +158,13 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
 - [ ] Spec Success Criteria tek tek işaretlendi
 - [ ] `/review` tamamlandı, bulgular kapandı
 - [ ] PR açıldı; Mehmet T10 adımlarını uyguladı ve ilk gerçek çalışma yeşil
+
+## Bloklayıcı (modül dışı, PR öncesi zorunlu)
+
+- [ ] **NuGet audit: mevcut paketlerde bilinen açıklar** — 2026-11-10'da yerel restore'da ortaya çıktı;
+  `TreatWarningsAsErrors` yüzünden restore kırılıyor (son yeşil CI 2026-10-04, açıklar sonradan
+  yayımlandı → bu branch'in PR'ında CI kırılır). Etkilenen: `SixLabors.ImageSharp` 3.1.11 (high ×4,
+  moderate ×2; Web), `System.Security.Cryptography.Xml` 10.0.11 (high ×2; Data),
+  transitif `System.Security.Cryptography.Pkcs` 10.0.11 (high, moderate; Data).
+  - Karar Mehmet'te: sürüm yükseltme ayrı küçük PR mı, bu branch'te ayrı commit mi.
+  - O zamana kadar yerel doğrulama yalnız komut satırında `-p:NuGetAudit=false` ile; repo ayarı değişmez.

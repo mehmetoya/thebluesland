@@ -12,4 +12,7 @@
   <Folder Name="/tools/spotify-playlist-fetcher/">
     <Project Path="tools/spotify-playlist-fetcher/TheBluesland.SpotifyFetcher.csproj" />
   </Folder>
+  <Folder Name="/tools/weekly-newsletter/">
+    <Project Path="tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj" />
+  </Folder>
 </Solution>
