@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using TheBluesland.Data;
 using TheBluesland.WeeklyNewsletter.Ingest;
 using TheBluesland.WeeklyNewsletter.Reporting;
 
@@ -57,7 +55,7 @@ public static class ClusterCommand
         List<ClusterInput> articles;
         try
         {
-            articles = await ReadWindowAsync(connectionString, windowStart, windowEnd, cancellationToken);
+            articles = await ArticleWindowReader.ReadAsync(connectionString, windowStart, windowEnd, cancellationToken);
         }
         catch (Exception ex) when (DatabaseErrors.Find(ex) is { } database)
         {
@@ -69,25 +67,5 @@ public static class ClusterCommand
         var names = feeds.Feeds.ToDictionary(feed => feed.Id, feed => feed.Name, StringComparer.Ordinal);
         await output.WriteAsync(ClusterReportFormatter.ToMarkdown(stories, windowStart, windowEnd, options.Options!, names));
         return 0;
-    }
-
-    private static async Task<List<ClusterInput>> ReadWindowAsync(
-        string connectionString,
-        DateTimeOffset from,
-        DateTimeOffset to,
-        CancellationToken cancellationToken)
-    {
-        await using var context = NewsletterDbContext.Create(connectionString);
-        return await context.NewsArticles
-            .AsNoTracking()
-            .Where(article => (article.PublishedAt ?? article.FetchedAt) >= from && (article.PublishedAt ?? article.FetchedAt) < to)
-            .Select(article => new ClusterInput(
-                article.Id,
-                article.Source,
-                article.Title,
-                article.Summary,
-                article.Url,
-                article.PublishedAt ?? article.FetchedAt))
-            .ToListAsync(cancellationToken);
     }
 }

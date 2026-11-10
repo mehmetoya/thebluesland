@@ -1,0 +1,11 @@
+{
+  "description": "Mehmet's own pick of five stories for 2026-W46 (approved 2026-11-10, story-ranking spec section 4). Each story is identified by one of its article ids in ../newsletter-clustering/2026-W46.json.",
+  "articles": "newsletter-clustering/2026-W46.json",
+  "picks": [
+    { "articleId": 20, "story": "Richard Lloyd (Television) dies" },
+    { "articleId": 13, "story": "YouTube streams count toward Billboard charts again" },
+    { "articleId": 46, "story": "Oasis skip Rock and Roll Hall of Fame induction" },
+    { "articleId": 16, "story": "GTA VI music festival" },
+    { "articleId": 19, "story": "The Strokes on SNL / Spitting Image video" }
+  ]
+}

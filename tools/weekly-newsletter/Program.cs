@@ -1,10 +1,12 @@
 using System.Globalization;
 using TheBluesland.WeeklyNewsletter.Clustering;
 using TheBluesland.WeeklyNewsletter.Ingest;
+using TheBluesland.WeeklyNewsletter.Ranking;
 
 // TheBluesland Weekly pipeline tool (docs/specs/weekly-newsletter.md). Each pipeline stage is a
-// subcommand: "ingest" (docs/specs/weekly-newsletter-news-ingest.md) and "cluster"
-// (docs/specs/weekly-newsletter-story-clustering.md). Runs only from GitHub Actions or Mehmet's
+// subcommand: "ingest" (docs/specs/weekly-newsletter-news-ingest.md), "cluster"
+// (docs/specs/weekly-newsletter-story-clustering.md) and "rank"
+// (docs/specs/weekly-newsletter-story-ranking.md). Runs only from GitHub Actions or Mehmet's
 // own machine, from the repository root.
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>
@@ -17,6 +19,7 @@ const string Usage = """
     Usage:
       ingest [path/to/feeds.yml]
       cluster [--from <date>] [--to <date>]   (UTC, yyyy-MM-dd[THH:mm[:ss]]; default: the 7 days before now)
+      rank    [--from <date>] [--to <date>]   (same window; prints the 5 picks and 3 backups)
     """;
 
 var toolDirectory = Path.Combine(Directory.GetCurrentDirectory(), "tools", "weekly-newsletter");
@@ -31,7 +34,7 @@ switch (args.FirstOrDefault())
             return await IngestCommand.RunAsync(feedsPath, connectionString, httpClient, TimeProvider.System, Console.Out, Console.Error, cts.Token);
         }
 
-    case "cluster":
+    case "cluster" or "rank":
         {
             DateTimeOffset? from = null, to = null;
             for (var i = 1; i < args.Length; i++)
@@ -56,16 +59,18 @@ switch (args.FirstOrDefault())
                 return 1;
             }
 
-            return await ClusterCommand.RunAsync(
-                Path.Combine(toolDirectory, "clustering.yml"),
-                Path.Combine(toolDirectory, "feeds.yml"),
-                connectionString,
-                from,
-                to,
-                TimeProvider.System,
-                Console.Out,
-                Console.Error,
-                cts.Token);
+            return args[0] == "rank"
+                ? await RankCommand.RunAsync(toolDirectory, connectionString, from, to, TimeProvider.System, Console.Out, Console.Error, cts.Token)
+                : await ClusterCommand.RunAsync(
+                    Path.Combine(toolDirectory, "clustering.yml"),
+                    Path.Combine(toolDirectory, "feeds.yml"),
+                    connectionString,
+                    from,
+                    to,
+                    TimeProvider.System,
+                    Console.Out,
+                    Console.Error,
+                    cts.Token);
         }
 
     default:
