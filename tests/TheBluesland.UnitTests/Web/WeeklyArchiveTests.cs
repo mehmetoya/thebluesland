@@ -29,7 +29,7 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     {
         var repository = new WeeklyIssueRepository(Config(), new FixedTimeProvider(new DateTimeOffset(2026, 11, 10, 9, 0, 0, TimeSpan.Zero)));
 
-        repository.Published().Select(issue => issue.Path).ShouldBe(["/weekly/2026-W46/tr", "/weekly/2026-W46/en"]);
+        repository.Published().Select(issue => issue.Path).ShouldBe(["/tr/weekly/2026-W46", "/en/weekly/2026-W46"]);
         repository.Find("2099-W01", "tr").ShouldBeNull();
     }
 
@@ -123,18 +123,18 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     [Fact]
     public async Task The_archive_shows_issue_cards_and_one_sign_up_form_with_a_button_per_configured_kit_form()
     {
-        var response = await _http.GetAsync("/weekly");
+        var response = await _http.GetAsync("/en/weekly");
         var body = await BodyAsync(response);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldContain("<title>TheBluesland Weekly - TheBluesland</title>");
         body.ShouldContain("Past issues");
-        body.ShouldContain("lang=\"tr\">Geçmiş sayılar</p>");
+        body.ShouldNotContain("Geçmiş sayılar");
         body.ShouldContain("Issue 46");
         body.ShouldContain("9 November 2026");
-        body.ShouldContain("href=\"/weekly/2026-W46/tr\"");
-        body.ShouldContain("href=\"/weekly/2026-W46/en\"");
-        Regex.IsMatch(body, "<a [^>]*href=\"/weekly/2026-W46/tr\" lang=\"tr\" hreflang=\"tr\">Türkçe oku").ShouldBeTrue();
+        body.ShouldContain("href=\"/tr/weekly/2026-W46\"");
+        body.ShouldContain("href=\"/en/weekly/2026-W46\"");
+        Regex.IsMatch(body, "<a [^>]*href=\"/tr/weekly/2026-W46\" lang=\"tr\" hreflang=\"tr\">Türkçe oku").ShouldBeTrue();
         body.ShouldContain(">Read in English");
         body.ShouldNotContain("TheBluesland Weekly · ");
         body.ShouldNotContain("2099-W01");
@@ -150,6 +150,23 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task The_turkish_archive_speaks_turkish_and_puts_the_turkish_button_first()
+    {
+        var response = await _http.GetAsync("/tr/weekly");
+        var body = await BodyAsync(response);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
+        body.ShouldContain("<html lang=\"tr\">");
+        body.ShouldContain("Geçmiş sayılar");
+        body.ShouldNotContain("Past issues");
+        body.ShouldContain("Sayı 46");
+        body.ShouldContain("9 Kasım 2026");
+        body.ShouldContain("Her pazartesi e-postanda");
+        body.ShouldContain("Her pazartesi: haftanın beş müzik haberi");
+        body.IndexOf("Türkçe al", StringComparison.Ordinal).ShouldBeLessThan(body.IndexOf("İngilizce al", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task An_empty_archive_says_when_the_first_issue_arrives_and_when_sign_ups_are_not_configured()
     {
         var (http, _) = await StartAsync(builder =>
@@ -159,7 +176,7 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
             builder.Configuration["Weekly:KitFormIdEn"] = string.Empty;
         });
 
-        var body = await BodyAsync(await http.GetAsync("/weekly"));
+        var body = await BodyAsync(await http.GetAsync("/en/weekly"));
 
         body.ShouldContain("The first issue arrives Monday 08:00 (TR) / 15:00 (EN), Istanbul time.");
         body.ShouldNotContain("Subscribe above");
@@ -170,7 +187,7 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     [Fact]
     public async Task An_issue_page_has_a_masthead_a_language_switch_a_jump_link_and_a_sign_up_in_its_language()
     {
-        var response = await _http.GetAsync("/weekly/2026-W46/tr");
+        var response = await _http.GetAsync("/tr/weekly/2026-W46");
         var body = await BodyAsync(response);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
@@ -184,7 +201,7 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
         body.ShouldContain("~1 dk");
         body.ShouldContain("<span aria-hidden=\"true\">·</span>");
         body.ShouldContain("lang=\"tr\" hreflang=\"tr\" aria-current=\"page\">Türkçe</a>");
-        body.ShouldContain("href=\"/weekly/2026-W46/en\" lang=\"en\" hreflang=\"en\">English</a>");
+        body.ShouldContain("href=\"/en/weekly/2026-W46\" lang=\"en\" hreflang=\"en\">English</a>");
         body.ShouldContain("href=\"#weekly-subscribe\"");
         body.ShouldContain("<link rel=\"canonical\" href=\"https://");
         body.ShouldContain("Her pazartesi e-postanda");
@@ -198,7 +215,7 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     [Fact]
     public async Task The_english_issue_page_has_an_english_sign_up_with_the_english_button_filled()
     {
-        var body = await BodyAsync(await _http.GetAsync("/weekly/2026-W46/en"));
+        var body = await BodyAsync(await _http.GetAsync("/en/weekly/2026-W46"));
 
         body.ShouldContain("Issue 46</p>");
         body.ShouldContain("aria-label=\"Breadcrumb\"");
@@ -210,17 +227,23 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     [Fact]
     public async Task The_header_marks_the_current_section()
     {
-        var body = await BodyAsync(await _http.GetAsync("/weekly"));
+        var body = await BodyAsync(await _http.GetAsync("/en/weekly"));
 
-        body.ShouldContain("<a href=\"/weekly\" aria-current=\"page\">Weekly</a>");
-        body.ShouldNotContain("<a href=\"/about\" aria-current");
+        body.ShouldContain("<a href=\"/en/weekly\" aria-current=\"page\">Weekly</a>");
+        body.ShouldNotContain("<a href=\"/en/about\" aria-current");
     }
 
     [Theory]
-    [InlineData("/weekly/2026-w46/tr", HttpStatusCode.MovedPermanently, "/weekly/2026-W46/tr")]
-    [InlineData("/weekly/2026-W46/TR", HttpStatusCode.MovedPermanently, "/weekly/2026-W46/tr")]
-    [InlineData("/weekly/2026-W46", HttpStatusCode.Found, "/weekly/2026-W46/tr")]
-    [InlineData("/weekly/2026-w46", HttpStatusCode.Found, "/weekly/2026-W46/tr")]
+    // Old /weekly/{id}/{lang} addresses (Kit, past e-mails, shares) move to /{lang}/weekly/{id}.
+    [InlineData("/weekly/2026-w46/tr", HttpStatusCode.MovedPermanently, "/tr/weekly/2026-W46")]
+    [InlineData("/weekly/2026-W46/TR", HttpStatusCode.MovedPermanently, "/tr/weekly/2026-W46")]
+    [InlineData("/weekly/2026-W46/en", HttpStatusCode.MovedPermanently, "/en/weekly/2026-W46")]
+    // No language: the Turkish issue, or the English one when it is the only one published (UX-10).
+    [InlineData("/weekly/2026-W46", HttpStatusCode.Found, "/tr/weekly/2026-W46")]
+    [InlineData("/weekly/2026-w46", HttpStatusCode.Found, "/tr/weekly/2026-W46")]
+    // Lower-case id inside the new scheme.
+    [InlineData("/tr/weekly/2026-w46", HttpStatusCode.MovedPermanently, "/tr/weekly/2026-W46")]
+    [InlineData("/en/weekly/2026-w46", HttpStatusCode.MovedPermanently, "/en/weekly/2026-W46")]
     public async Task Non_canonical_issue_addresses_redirect(string path, HttpStatusCode status, string location)
     {
         var response = await _noRedirect.GetAsync(path);
@@ -230,10 +253,12 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData("/weekly/2099-W01/tr")]
+    [InlineData("/tr/weekly/2099-W01")]
+    [InlineData("/en/weekly/2099-W01")]
     [InlineData("/weekly/2026-W46/de")]
     [InlineData("/weekly/2099-W01")]
     [InlineData("/weekly/nonsense")]
+    [InlineData("/tr/weekly/nonsense")]
     public async Task Unsent_or_unknown_issues_are_404(string path)
     {
         (await _noRedirect.GetAsync(path)).StatusCode.ShouldBe(HttpStatusCode.NotFound);
@@ -242,15 +267,16 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
     [Fact]
     public async Task A_missing_issue_404_renders_a_real_page_in_its_language_with_the_site_chrome()
     {
-        var response = await _http.GetAsync("/weekly/2099-W01/tr");
+        var response = await _http.GetAsync("/tr/weekly/2099-W01");
         var body = await BodyAsync(response);
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        body.ShouldContain("<html lang=\"tr\">");
         body.ShouldContain("<h1>Bu sayı bulunamadı</h1>");
         body.ShouldContain("Adres yanlış olabilir ya da sayı henüz yayımlanmadı.");
-        body.ShouldContain("href=\"/weekly\">Tüm sayılara göz at</a>");
+        body.ShouldContain("href=\"/tr/weekly\">Tüm sayılara göz at</a>");
         body.ShouldNotContain("We couldn't find this issue");
-        body.ShouldContain("<title>Issue not found - TheBluesland</title>");
+        body.ShouldContain("<title>Sayı bulunamadı - TheBluesland</title>");
         body.ShouldContain("class=\"site-header\"");
         body.ShouldContain("class=\"site-footer\"");
         body.ShouldContain("<meta name=\"robots\" content=\"noindex\"");
@@ -265,13 +291,15 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         body.ShouldContain("<h1>We couldn't find this issue</h1>");
         body.ShouldContain("<h1>Bu sayı bulunamadı</h1>");
-        body.ShouldContain("href=\"/weekly\">Browse all issues</a>");
+        body.ShouldContain("href=\"/tr/weekly\">Tüm sayılara göz at</a>");
+        body.ShouldContain("href=\"/en/weekly\">Browse all issues</a>");
     }
 
     [Theory]
     [InlineData("/no-such-page")]
-    [InlineData("/playlists/no-such-playlist-slug")]
-    [InlineData("/collections/no-such-collection")]
+    [InlineData("/en/no-such-page")]
+    [InlineData("/en/playlists/no-such-playlist-slug")]
+    [InlineData("/en/collections/no-such-collection")]
     public async Task Any_404_renders_a_page_with_a_heading_and_a_way_home(string path)
     {
         var response = await _http.GetAsync(path);
@@ -281,25 +309,56 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
         body.ShouldContain("class=\"site-header\"");
         body.ShouldContain("<h1>Page not found</h1>");
         body.ShouldContain("<title>Page not found - TheBluesland</title>");
-        body.ShouldContain("<a href=\"/\">browse the playlists</a>");
+        body.ShouldContain("<a href=\"/en\">browse the playlists</a>");
+        body.ShouldContain("class=\"site-footer\"");
+    }
+
+    [Theory]
+    [InlineData("/tr/no-such-page")]
+    [InlineData("/tr/playlists/no-such-playlist-slug")]
+    [InlineData("/tr/collections/no-such-collection")]
+    public async Task A_turkish_404_is_a_turkish_page_with_a_way_home(string path)
+    {
+        var response = await _http.GetAsync(path);
+        var body = await BodyAsync(response);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        body.ShouldContain("<html lang=\"tr\">");
+        body.ShouldContain("<title>Sayfa bulunamadı - TheBluesland</title>");
+        body.ShouldContain("<h1>Sayfa bulunamadı</h1>");
+        body.ShouldContain("<a href=\"/tr\">çalma listelerine göz at</a>");
         body.ShouldContain("class=\"site-footer\"");
     }
 
     [Theory]
     [InlineData("tr", "Neredeyse tamam", "Kit'ten gelen e-postadaki onay bağlantısına tıkla")]
     [InlineData("en", "Almost there", "click the confirmation link")]
-    [InlineData(null, "Almost there", "click the confirmation link")]
-    public async Task The_thanks_page_asks_for_the_confirmation_click_and_is_not_indexed(string? language, string heading, string text)
+    public async Task The_thanks_page_asks_for_the_confirmation_click_and_is_not_indexed(string language, string heading, string text)
     {
-        var response = await _http.GetAsync(language is null ? "/weekly/thanks" : $"/weekly/thanks?lang={language}");
+        var response = await _http.GetAsync($"/{language}/weekly/thanks");
         var body = await BodyAsync(response);
 
         response.StatusCode.ShouldBe(HttpStatusCode.OK, body);
         body.ShouldContain($"<h1>{heading}</h1>");
         body.ShouldContain(text);
-        body.ShouldContain("href=\"/weekly\"");
+        body.ShouldContain($"href=\"/{language}/weekly\"");
         body.ShouldContain("<meta name=\"robots\" content=\"noindex\"");
         body.ShouldNotContain("rel=\"canonical\"");
+    }
+
+    // Kit's forms still redirect to the pre-localization thanks URL; it must keep landing on the right page.
+    [Theory]
+    [InlineData("/weekly/thanks?lang=tr", "/tr/weekly/thanks")]
+    [InlineData("/weekly/thanks?lang=TR", "/tr/weekly/thanks")]
+    [InlineData("/weekly/thanks?lang=en", "/en/weekly/thanks")]
+    [InlineData("/weekly/thanks", "/en/weekly/thanks")]
+    [InlineData("/weekly/thanks?lang=de", "/en/weekly/thanks")]
+    public async Task The_old_kit_thanks_url_moves_to_the_language_prefixed_one(string path, string location)
+    {
+        var response = await _noRedirect.GetAsync(path);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.MovedPermanently);
+        response.Headers.Location!.OriginalString.ShouldBe(location);
     }
 
     public async Task InitializeAsync()

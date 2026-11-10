@@ -62,8 +62,9 @@ public sealed class PlaylistRenderSurfaceTests
                 [nameof(PlaylistDetailView.CacheSnapshot)] = PlaylistCacheSnapshot.Unavailable,
             },
             languageCode: SiteLanguage.Turkish);
+        html = System.Net.WebUtility.HtmlDecode(html); // Razor entity-encodes non-ASCII text
 
-        html.ShouldContain("Spotify&#x27;da aç");
+        html.ShouldContain("Spotify'da aç");
         html.ShouldContain("<h1 lang=\"en\">" + SamplePlaylist.Title + "</h1>");
         html.ShouldContain("<div class=\"curator-note\" lang=\"en\">");
         html.ShouldContain("enerjik"); // translated tag label
@@ -81,6 +82,7 @@ public sealed class PlaylistRenderSurfaceTests
                 [nameof(PlaylistCard.CacheSnapshot)] = PlaylistCacheSnapshot.Unavailable,
             },
             languageCode: SiteLanguage.Turkish);
+        html = System.Net.WebUtility.HtmlDecode(html);
 
         html.ShouldContain("<h2>Erkin Koray Başyapıtları</h2>");
         html.ShouldNotContain(SamplePlaylist.Title);
