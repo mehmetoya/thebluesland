@@ -96,6 +96,7 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
             builder.Configuration[PlaylistContentRepository.ContentDirectoryConfigKey] = Path.Combine(AppContext.BaseDirectory, "Fixtures", "content-playlists");
             builder.Configuration[WeeklyIssueRepository.ContentDirectoryConfigKey] = Fixtures;
             builder.Configuration["Weekly:KitFormIdTr"] = "123";
+            builder.Configuration["Weekly:KitFormIdEn"] = string.Empty;
             builder.Configuration[$"ConnectionStrings:{WebHostFactory.ConnectionStringName}"] =
                 "Host=127.0.0.1;Port=1;Username=postgres;Password=postgres;Database=thebluesland;Timeout=2";
         });
