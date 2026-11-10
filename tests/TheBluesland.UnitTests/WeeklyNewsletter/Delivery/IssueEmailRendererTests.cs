@@ -13,7 +13,7 @@ namespace TheBluesland.UnitTests.WeeklyNewsletter.Delivery;
 public sealed partial class IssueEmailRendererTests
 {
     [Fact]
-    public void The_approved_sample_issue_renders_with_its_title_stories_sources_and_ai_note()
+    public void The_approved_sample_issue_renders_with_its_title_stories_and_sources()
     {
         var file = IssueMarkdownWriter.Issue(Week46, DraftLanguage.Turkish, SampleIssue("Türkçe", Card), Card);
         var issue = WeeklyIssueValidator.Read(IssueName(DraftLanguage.Turkish), file).ShouldNotBeNull();
@@ -29,7 +29,7 @@ public sealed partial class IssueEmailRendererTests
         var firstLink = Card.Picks.First().Links[0];
         Hrefs(email.Html).ShouldContain(firstLink.Url);
         email.Html.ShouldContain($">{firstLink.Name}</a>");
-        email.Html.ShouldContain("Bu sayı yapay zekâ yardımıyla yazıldı; TheBluesland editörü seçti ve onayladı.</em>");
+        email.Html.ShouldNotContain("yapay zekâ");
         email.Html.ShouldNotContain("aiAssisted");
         email.Html.ShouldNotContain("---");
     }

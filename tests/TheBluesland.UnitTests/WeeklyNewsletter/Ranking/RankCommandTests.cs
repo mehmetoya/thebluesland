@@ -59,7 +59,7 @@ public sealed class RankCommandTests : IAsyncLifetime
         exitCode.ShouldBe(0, _error.ToString());
         var report = _output.ToString();
         report.ShouldContain("3 stories · 2 picked + 0 backups");
-        report.ShouldContain("| Pitchfork · Stereogum | 2 sources · obituary +1.5 · brand +1.25 = 4.75 |");
+        report.ShouldContain("| Pitchfork · Stereogum | 2 sources · obituary +1.5 · brand +0.75 = 4.25 |");
         report.ShouldContain("| Consequence | 1 source · live +0.25 = 1.25 |");
         report.ShouldContain("roundup: not a news story");
     }

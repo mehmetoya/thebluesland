@@ -50,7 +50,7 @@ public sealed class FactCardAndPromptTests
         prompt.ShouldContain("Both language versions carry the same facts; only the style differs.");
         prompt.ShouldContain("a concrete consequence or comparison");
         prompt.ShouldContain("who + what happened");
-        prompt.ShouldContain("Do not write the AI note or a signature; the code adds it.");
+        prompt.ShouldContain("Do not mention AI or write a signature.");
         prompt.ShouldContain("ending with the sentence \"Beş haber, beş dakika.\"");
         prompt.ShouldContain("at most 60 characters");
         prompt.ShouldContain("at most 90 characters");

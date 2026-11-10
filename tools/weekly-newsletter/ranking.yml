@@ -25,7 +25,10 @@ relatedThreshold: 0.15
 # birikmez). Boylece 2 kaynakli blues/rock haberi, 3 kaynakli marka-disi habere yetisir ve nis
 # kaynaklar (tek kaynakli) kapsam sayisinda kaybetmez. Roundup (haber olmayan) hikayeler almaz.
 # coreSources feeds.yml'deki id'lerdir; bir testle feeds.yml'de var olduklari dogrulanir.
-brandBonus: 1.25
+brandBonus: 0.75
+# Tek kaynakli hikaye marka bonusu almaz: 2026-11-10 onizlemesinde tek bir sitenin (Louder) tek
+# kaynakli metal haberleri, cok kaynakli buyuk haberleri geride birakti.
+brandMinSources: 2
 brandKeywords: [blues, bluesman, bluesy, rock, guitar, guitarist, guitarists, jazz, soul, americana, bluegrass, classic rock]
 coreSources: [american-blues-scene, blues-rock-review, ultimate-classic-rock, louder, jazztimes]
 
@@ -35,10 +38,11 @@ genreSwapMinRatio: 0.7
 types:
   - name: roundup          # editoryal liste, haber degil: hic secilmez
     excluded: true
-    phrases: [best songs, great songs, new albums you should, selects playlist, weekly round up, the number ones, songs of the week]
+    phrases: [best songs, great songs, new albums you should, selects playlist, weekly round up, the number ones, songs of the week, of the week, blues rock weekly]
   - name: obituary
     bonus: 1.5
-    phrases: [dies, died, dead, death, passed away]
+    # "death" tek basina yok: "since X's death" gibi yeniden birlesme haberlerini olum sanmasin.
+    phrases: [dies, died, dead, passed away, obituary]
     exclude: [near death]
   - name: legal
     bonus: 1.0
@@ -50,7 +54,7 @@ types:
     phrases: [chart, charts, streaming, royalties, royalty, acquires, acquisition, deal, earnings, quarter, q1, q2, q3, q4, revenue, label, distribution]
   - name: milestone
     bonus: 0.75
-    phrases: [diagnosis, diagnosed, hospitalized, hospitalised, cancel, cancels, canceled, cancelled, hiatus, reunite, reunites, reunion, farewell, final show, final concert, retire, retires, retirement, return to stage, hall of fame, induction]
+    phrases: [diagnosis, diagnosed, hospitalized, hospitalised, cancel, cancels, canceled, cancelled, hiatus, reunite, reunites, reunion, reform, reforms, reforming, farewell, final show, final concert, retire, retires, retirement, return to stage, hall of fame, induction]
   - name: videogame     # muzik-disi lansman: 'live' bonusu almasin (festival/concert kelimesi gecse de)
     bonus: 0
     phrases: [gta, grand theft auto, video game, video games, videogame]

@@ -140,11 +140,8 @@ public static partial class WeeklyIssueValidator
             }
         }
 
-        var lastLine = body.Split('\n').LastOrDefault(line => line.Trim().Length > 0)?.Trim();
-        Require(
-            problems,
-            lastLine == $"*{language.AiNote}*" || lastLine == $"*{language.LegacyAiNote}*",
-            "the issue must end with the AI note, word for word (ADR-0006 madde 4).");
+        // The AI note is no longer required (ADR-0006 madde 4, 2026-11-10); older issues that end
+        // with it stay valid.
         if (problems.Count == 0)
         {
             issue = new WeeklyIssue(issueId, language, front.Title!.Trim(), DateOnly.ParseExact(monday, "yyyy-MM-dd", CultureInfo.InvariantCulture), body.TrimStart('\n'), Clean(front.Subject), Clean(front.Preview));

@@ -45,6 +45,7 @@ public static partial class RankingOptionsLoader
         }
 
         Require(document?.BrandBonus is >= 0, "brandBonus must be zero or positive.", errors);
+        Require(document?.BrandMinSources is null or >= 1, "brandMinSources must be 1 or more.", errors);
         var brand = (document?.BrandKeywords ?? []).Select(word => word?.Trim() ?? string.Empty).ToList();
         foreach (var word in brand.Where(word => !Phrase().IsMatch(word)))
         {
@@ -95,6 +96,7 @@ public static partial class RankingOptionsLoader
                     genre,
                     document.GenreSwapMinRatio!.Value,
                     document.BrandBonus!.Value,
+                    document.BrandMinSources ?? 1,
                     brand,
                     core,
                     types),
@@ -132,6 +134,8 @@ public static partial class RankingOptionsLoader
         public double? GenreSwapMinRatio { get; set; }
 
         public double? BrandBonus { get; set; }
+
+        public int? BrandMinSources { get; set; }
 
         public List<string?>? BrandKeywords { get; set; }
 

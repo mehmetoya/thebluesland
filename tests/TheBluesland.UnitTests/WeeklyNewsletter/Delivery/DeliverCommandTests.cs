@@ -51,7 +51,7 @@ public sealed class DeliverCommandTests : IDisposable
         en.GetProperty("send_at").GetString().ShouldBe("2026-11-09T15:00:00+03:00");
         tr.GetProperty("send_at").GetString().ShouldBe("2026-11-09T08:00:00+03:00");
         tr.GetProperty("subscriber_filter")[0].GetProperty("all")[0].GetProperty("ids")[0].GetInt64().ShouldBe(111);
-        tr.GetProperty("content").GetString()!.ShouldContain("<em>Bu sayı yapay zekâ yardımıyla yazıldı");
+        tr.GetProperty("content").GetString()!.ShouldNotContain("yapay zekâ");
         _output.ToString().ShouldContain("| 2026-W46:tr | Mon 2026-11-09 08:00 | ✅ scheduled | 502 |");
     }
 

@@ -49,8 +49,12 @@ Bu yeni sınır, kod yazılmadan önce kayda geçmeli.
    sileceği bir hata olarak kabul edilir. issue-drafting, bunu azaltmak için her paragrafın
    dayandığı kaynakları PR açıklamasında listeler.
 
-4. **Şeffaflık.** Her sayının altında kısa bir not yer alır: "Bu sayı yapay zekâ yardımıyla
-   hazırlandı ve TheBluesland editörü tarafından düzenlendi." Kesin metin ses rehberinde.
+4. **Şeffaflık.** ~~Her sayının altında kısa bir not yer alır.~~ **Güncelleme 2026-11-10 (Mehmet'in
+   kararı):** Sayının altına AI notu konmaz. Gerekçe: her sayı Mehmet'in incelemesinden ve PR
+   onayından geçer, editoryal sorumluluk ondadır (AB AI Act md. 50(4)'teki insan incelemesi /
+   editoryal sorumluluk istisnasıyla uyumlu; hukuki görüş değildir). Kayıt olarak front matter'da
+   `aiAssisted: true` kalır. Metin hiçbir yerde "editör yazdı" ya da tamamen insan yazımı gibi
+   sunulmaz (Gemini kullanım politikası). Bu tarihten önce yayımlanan notlu sayılar geçerlidir.
 
 5. **Credential ve yetki izolasyonu (ADR-0005 madde 3'ün deseni).**
    - `GEMINI_API_KEY` yalnızca taslak workflow'unun yazım adımına verilir; Render'a asla girmez.

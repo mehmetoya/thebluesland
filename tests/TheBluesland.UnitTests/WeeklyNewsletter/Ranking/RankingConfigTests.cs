@@ -50,7 +50,7 @@ public sealed class RankingConfigTests
     }
 
     [Fact]
-    public void Brand_settings_are_configured_and_two_blues_sources_outscore_three_off_brand_ones()
+    public void Brand_settings_lift_a_multi_source_blues_story_but_not_a_single_source_one()
     {
         var options = Repository();
 
@@ -59,7 +59,21 @@ public sealed class RankingConfigTests
         options.BrandKeywords.ShouldContain("jazz");
         var blues = Story("Blues guitarist announces farewell to the road", sources: 2);
         StoryTypeClassifier.FitsBrand(blues, options.BrandKeywords, options.CoreSources).ShouldBeTrue();
-        (2 + options.BrandBonus).ShouldBeGreaterThan(3 * options.CoverageWeight);
+        // 2026-11-10 preview: one site's single-source stories crowded out the week's big news, so
+        // the bonus needs two sources and stays below one extra source of coverage.
+        options.BrandMinSources.ShouldBe(2);
+        options.BrandBonus.ShouldBeLessThan(options.CoverageWeight);
+        (2 + options.BrandBonus).ShouldBeGreaterThan(2.5 * options.CoverageWeight);
+    }
+
+    [Theory]
+    [InlineData("Horror punk icons Murderdolls are reforming for their first show since Joey Jordison's death", "milestone")]
+    [InlineData("Metal Hammer's tracks of the week: November 6 2026", "roundup")]
+    [InlineData("Blues Rock Weekly – November 6, 2026", "roundup")]
+    [InlineData("Richard Lloyd, Television Guitarist, Dies at 75", "obituary")]
+    public void Regression_2026_11_10_preview_stories_get_the_right_type(string headline, string expected)
+    {
+        StoryTypeClassifier.Classify(Story(headline), Repository().Types).Name.ShouldBe(expected);
     }
 
     [Fact]
