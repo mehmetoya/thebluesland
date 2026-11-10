@@ -19,10 +19,18 @@ Spotify's own release-date data, rather than staying untagged or guessed by hand
 This is not a Spotify clone or a new music catalogue — it has no accounts, no playback outside the
 embedded Spotify player, and never stores track-level data.
 
+Alongside the site, the repo is building **TheBluesland Weekly**: a Monday newsletter of five
+music-news stories, written separately in Turkish and English. Its pipeline lives in
+`tools/weekly-newsletter` and runs only in GitHub Actions — news ingest is live, the later steps
+(story clustering, ranking, AI drafting into a bot pull request, email delivery and a `/weekly`
+archive) are still being built. Where everything stands and what comes next:
+[`docs/roadmap.md`](docs/roadmap.md).
+
 ## ✨ At a glance
 
-- 🎧 120 curated playlists, each with a hand-written curator note — never left to speak for itself
+- 🎧 115 published playlists, each with a hand-written curator note — never left to speak for itself
 - 🏷️ Filter by mood, genre, occasion, and era, or browse dedicated pages per taxonomy value
+- 🔎 Home-page text search, and a "refresh mix" on playlist pages for a related-but-different pick
 - 🕰️ Automatic era tagging for genuinely mixed-era playlists, computed from Spotify's own release dates
 - 🌓 A calm, dark-first "late-night record room" visual identity — see [Design system](#-design-system)
 - 🤖 Built for AI answer engines, not just search bots — `llms.txt`, JSON-LD, `FAQPage` schema
@@ -175,12 +183,14 @@ src/TheBluesland.Web/       Blazor Web App - content reading, validation, and we
 src/TheBluesland.Data/      EF Core / PostgreSQL schema and migrations
 tools/spotify-playlist-fetcher/   Spotify sync tool, run monthly by GitHub Actions
 tools/playlist-taxonomy-report/   Local-only tool: reports mood/genre/occasion/era tag distribution
+tools/weekly-newsletter/    TheBluesland Weekly pipeline (news ingest today), run by GitHub Actions
 content/playlists/          Version-controlled editorial playlist content
 tests/TheBluesland.UnitTests/     Unit, schema, and web integration tests (Testcontainers Postgres)
 tests/TheBluesland.E2ETests/      Playwright smoke tests against the real app, in-process
-.github/workflows/           CI, deploy, monthly Spotify sync, and manual AI-assisted tooling
+tests/JavaScript/           Node test-runner regression tests (front-end JS, workflow shell input handling)
+.github/workflows/           CI, deploy, monthly Spotify sync, newsletter ingest, and manual AI-assisted tooling
 .github/render.yaml          Render Blueprint (service definition, no secret values)
-docs/                        Spec, ADRs, and product backlog/plan
+docs/                        Roadmap, spec, ADRs, feature specs, and the frozen product backlog/plan
 ```
 
 ## 💻 Local development
@@ -242,7 +252,7 @@ inside the web app or the PR/deploy pipelines:
 | `suggest-curator-note.yml` | Manual | Drafts a curator-note suggestion for one playlist via Gemini, from the cache's public fields only; never writes to `content/playlists/*.md` — Mehmet applies it through a normal PR if he agrees. |
 | `newsletter-ingest.yml` | Every 2 hours, or manual | TheBluesland Weekly news ingest (`docs/specs/weekly-newsletter-news-ingest.md`): pulls the music-news RSS feeds listed in `tools/weekly-newsletter/feeds.yml` into the `newsletter` schema, removes items older than 8 weeks and writes a per-source health table to the job summary. Fails only when every feed fails. No Spotify or AI access. |
 
-Each of `sync-spotify.yml`, `report-eras.yml` and `suggest-curator-note.yml` is the *only* workflow allowed to hold its particular external credential (see
+Each of `sync-spotify.yml`, `report-eras.yml`, `suggest-curator-note.yml` and `newsletter-ingest.yml` is the *only* workflow allowed to hold its particular external credential (see
 [Spotify cache database access](#-spotify-cache-database-access-sec-001) below) — `ci.yml` and
 `deploy.yml` can reach neither Spotify nor any AI provider, enforced by regression tests, not just
 convention.
@@ -305,8 +315,8 @@ One-time setup (Mehmet, against the Neon project, as the database owner):
    in the Neon Console).
 4. Add the role's connection string, with `SSL Mode=Require`, as the repository secret
    `NEON_NEWSLETTER_CONNECTION_STRING`, and restrict it to `newsletter-ingest.yml`.
-5. After this branch is merged to `main`, open **Actions → Newsletter ingest → Run workflow** and check
-   that the job summary shows a ✅ row for every source.
+5. Open **Actions → Newsletter ingest → Run workflow** and check that the job summary shows a ✅
+   row for every source. (Done in production on 2026-11-10: 7/7 sources OK on the first run.)
 
 Re-run the role script after any later `NewsletterDbContext` migration that adds a table; it
 revokes and re-grants, so the role always matches exactly what the script lists.
@@ -330,12 +340,15 @@ Host=<neon-host>;Database=<db>;Username=<role>;Password=<password>;SSL Mode=Requ
 
 ## 📚 Documentation
 
+- [`docs/roadmap.md`](docs/roadmap.md) — what is live, what is in progress, and the ordered next
+  steps (mostly TheBluesland Weekly), with open decisions and risks
 - [`docs/business-technical-specification.md`](docs/business-technical-specification.md) — full
   product and technical spec (v0.2), including the design system (section 10) and taxonomy
   (section 8)
 - [`docs/adr/`](docs/adr/) — architecture decision records
 - [`docs/specs/`](docs/specs/) — feature-level specs written before implementation (design system
-  rollout, auto-unpublish, era-threshold tuning, custom domain migration, and more)
+  rollout, auto-unpublish, era-threshold tuning, custom domain migration, the TheBluesland Weekly
+  capability map `weekly-newsletter.md` and its module specs, and more)
 - [`docs/automatic-eras.md`](docs/automatic-eras.md) — how automatic era tagging works, and its
   one-time rollout steps
 - [`docs/product/backlog.md`](docs/product/backlog.md) — historical record of implementation-ordered
