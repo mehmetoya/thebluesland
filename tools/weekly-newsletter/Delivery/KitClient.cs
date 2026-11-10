@@ -38,6 +38,7 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
     public const string ApiKeyVariable = "KIT_API_KEY";
     private const string BaseUrl = "https://api.kit.com/v4/broadcasts";
     private const string TagsUrl = "https://api.kit.com/v4/tags";
+    private const string FormsUrl = "https://api.kit.com/v4/forms";
     private const int MaxAttempts = 4;
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web)
@@ -88,6 +89,37 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
         using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, TagsUrl) { Content = JsonContent.Create(new { name }) }, cancellationToken);
         var created = await response.Content.ReadFromJsonAsync<TagResponse>(Json, cancellationToken);
         return created?.Tag is { Name: not null } tag ? new KitTag(tag.Id, tag.Name) : throw new KitException($"Kit did not return the tag '{name}'.");
+    }
+
+    /// <summary>Ids of a form's active (confirmed) subscribers. Only ids are read; e-mail addresses are never deserialized.</summary>
+    public Task<IReadOnlyList<long>> ListFormSubscriberIdsAsync(long formId, CancellationToken cancellationToken) =>
+        ListSubscriberIdsAsync($"{FormsUrl}/{formId}/subscribers", cancellationToken);
+
+    /// <summary>Ids of a tag's active subscribers.</summary>
+    public Task<IReadOnlyList<long>> ListTagSubscriberIdsAsync(long tagId, CancellationToken cancellationToken) =>
+        ListSubscriberIdsAsync($"{TagsUrl}/{tagId}/subscribers", cancellationToken);
+
+    public async Task TagSubscriberAsync(long tagId, long subscriberId, CancellationToken cancellationToken)
+    {
+        using var _ = await SendAsync(() => new HttpRequestMessage(HttpMethod.Post, $"{TagsUrl}/{tagId}/subscribers/{subscriberId}") { Content = JsonContent.Create(new { }) }, cancellationToken);
+    }
+
+    private async Task<IReadOnlyList<long>> ListSubscriberIdsAsync(string baseUrl, CancellationToken cancellationToken)
+    {
+        var ids = new List<long>();
+        string? after = null;
+        do
+        {
+            var url = after is null ? $"{baseUrl}?status=active&per_page=1000" : $"{baseUrl}?status=active&per_page=1000&after={Uri.EscapeDataString(after)}";
+            using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, url), cancellationToken);
+            var page = await response.Content.ReadFromJsonAsync<SubscriberListResponse>(Json, cancellationToken)
+                ?? throw new KitException("Kit's subscriber list was empty.");
+            ids.AddRange((page.Subscribers ?? []).Select(subscriber => subscriber.Id));
+            after = page.Pagination is { HasNextPage: true, EndCursor: { Length: > 0 } cursor } ? cursor : null;
+        }
+        while (after is not null);
+
+        return ids;
     }
 
     public async Task<long> CreateAsync(KitBroadcastRequest request, CancellationToken cancellationToken)
@@ -221,6 +253,10 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
     private sealed record TagListResponse(List<TagDto>? Tags, Pagination? Pagination);
 
     private sealed record TagResponse(TagDto? Tag);
+
+    private sealed record SubscriberIdDto(long Id);
+
+    private sealed record SubscriberListResponse(List<SubscriberIdDto>? Subscribers, Pagination? Pagination);
 
     private sealed record BroadcastDto(
         long Id,

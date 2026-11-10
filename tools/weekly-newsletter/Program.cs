@@ -30,6 +30,7 @@ const string Usage = """
       issue-week [--from <date>] [--to <date>]   (prints the issue id "draft" would write, e.g. 2026-W47)
       validate-weekly [path/to/content/weekly]
       deliver [--content <dir>] [--dry-run]   (schedules merged issues in Kit; default content: content/weekly)
+      kit-sync-tags [--dry-run]   (tags each language's confirmed form subscribers with its delivery tag; Kit free plan has no form rules)
       kit-tags [tag ...]   (creates the delivery tags in Kit if missing and prints their ids; default: weekly-tr weekly-en)
     """;
 
@@ -64,6 +65,19 @@ switch (args.FirstOrDefault())
             return await KitTagsCommand.RunAsync(
                 args.Length > 1 ? args[1..] : KitTagsCommand.DefaultTags,
                 Environment.GetEnvironmentVariable(KitClient.ApiKeyVariable),
+                httpClient,
+                Console.Out,
+                Console.Error,
+                cts.Token);
+        }
+
+    case "kit-sync-tags":
+        {
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(1) };
+            return await KitSyncTagsCommand.RunAsync(
+                toolDirectory,
+                Environment.GetEnvironmentVariable(KitClient.ApiKeyVariable),
+                args.Skip(1).Contains("--dry-run"),
                 httpClient,
                 Console.Out,
                 Console.Error,
