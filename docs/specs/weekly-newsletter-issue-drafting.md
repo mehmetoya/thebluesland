@@ -9,8 +9,9 @@ Modül: `issue-drafting` · Map: [weekly-newsletter.md](weekly-newsletter.md) ·
 1. Bu modül taslağı **dosya olarak üretir**; PR açmaz ve zamanlanmış çalışmaz. Bunlar
    `issue-review` modülünün işidir (map). Bu modülün kendi workflow'u yalnızca elle tetiklenir ve
    taslağı job summary'de ve indirilebilir bir artifact olarak gösterir.
-2. Yazım Gemini ücretsiz katmanıyla yapılır: haftada 2 çağrı (TR ve EN), her biri birkaç bin
-   token. `suggest-curator-note.yml` ile aynı API ve aynı varsayılan model kullanılır
+2. Yazım Gemini ücretsiz katmanıyla yapılır: dil başına bir yazım çağrısı (TR ve EN), her biri
+   birkaç bin token; ek olarak otomatik düzeltme ve son kontrol çağrıları (bölüm 3a, 3b; çağrı
+   bütçesi bölüm 3c). `suggest-curator-note.yml` ile aynı API ve aynı varsayılan model kullanılır
    (`GEMINI_MODEL`, boşsa araçtaki varsayılan).
 3. Gemini istemcisi `spotify-playlist-fetcher` içindekiyle aynı desende ama **ayrı** yazılır
    (~100 satır). Newsletter aracı Spotify aracına referans veremez (proje kuralı) ve yeni ortak
@@ -95,6 +96,79 @@ PR açıklamasının "Neye bakmalı" bölümü ayrıca, bir haberin özetleri fa
 söylüyorsa "dates differ across sources: Jan 27 (Stereogum) / Jan 29 (UCR, Consequence)" satırını
 taşır. Ingest, özetin başındaki başlık tekrarını ve sondaki "başlık + yazar adı" kuyruğunu
 (ör. Consequence "… Paolo Ragusa") temizler.
+
+### 3a. Otomatik düzeltme (`DraftRepair`, 2026-11-10)
+
+Mehmet metne dokunmadan yalnız okuyup merge etsin diye, bir dil taslağı çözümlenip denetlendikten
+sonra **düzeltilebilir** uyarı varsa dil başına **en fazla bir** ek Gemini isteği yapılır: modelin kendi
+JSON yanıtı + olgu kartı + düz uyarı listesi gider, aynı şemada tam JSON istenir (ses rehberi örneği
+gitmez, kopyalanacak bir şey yok; Spotify/abone verisi yok). Düzeltilebilir sayılanlar: "neden önemli"
+gövdeyi tekrar ediyor, kalıp ifade, örnek sayı kopyası, geçmiş/gelecek zaman ya da zaman sözcüğü, konu
+(60) ya da önizleme (90) sınırı aşımı, konuda " · TBL Weekly" eksik, önizleme konuyu tekrarlıyor.
+Eksik yedek, TR/EN eşitliği ve "eksik" uyarıları bu geçişte düzeltilmez.
+
+- Onarılmış yanıt çözümlenir ve yeniden denetlenir; **yalnız çözümlenirse ve toplam uyarı sayısı kesin
+  olarak azsa** kabul edilir. Eşitlikte ya da kötüleşmede ilk taslak kalır.
+- Onarım isteği başarısız olursa (kota, HTTP, biçim) ilk taslak kalır; PR açıklamasında
+  "Otomatik düzeltme: başarısız (...); ilk taslak korundu" yazar. Onarım çalışmayı **asla** düşürmez.
+  Onarım isteği yalnız bir kez yeniden denenir (HTTP düzeyinde 2 deneme; yazımda 4).
+- PR açıklaması ve iş özeti dil başına "Otomatik düzeltme: X uyarı → Y uyarı" ya da "gerekmedi"
+  yazar (sayılar TR/EN eşitliği denetiminden önceki sayılardır).
+- Onarım, dili yazan modelle yapılır (yedek model yazdıysa yedek model).
+- Prompt kuralları (`whyItMatters`): gövdede **olmayan** bağlam ekler (tarih, sonuç, neye
+  bakılacağı/neyin dinleneceği), yalnız olgu kartından; gövdeyi yeniden anlatmaz, bariz olanı
+  söylemez, önem iddiası yok. Konu: model kendisi ≤ 60 karakter yazar; sınır " · TBL Weekly"
+  (13 karakter) dahil verilir, yani kancalara en çok 47 karakter kalır. Hafif model prompt'unda aynı
+  kurallar vardır.
+
+### 3b. Son kontrolcü ve otomatik yayın (`DraftChecker`, `PublishDecision`, 2026-11-10 akşam)
+
+İnsan incelemesi kalktığı için (ADR-0006 madde 2) onarımdan sonra her dil için **bir** Gemini
+çağrısı "son kontrolcü" rolünde çalışır. Girdi: olgu kartı + yayımlanacak metnin düz hâli (konu,
+önizleme, giriş, 5 haber, kapanış; yedekler ve kaynak linkleri girmez, prompt'a URL girmez). Kontrol:
+her iddia kartta var mı, uydurma tarih/rakam/ad yok mu, zaman kipi, "neden önemli" yeni bir şey
+söylüyor mu, doğal TR/EN, konu/önizleme sığıyor mu, örnek ya da özet kopyası yok mu. Çıktı JSON
+`{ pass: bool, problems: [..] }`. `pass: true` ama sorun listesi doluysa geçmedi sayılır.
+Kontrolcü çağrısı başarısız olursa (kota, HTTP, biçim) **geçmedi** sayılır. Kontrolcü, dili yazan modelle
+çalışır (ek model yok; kota riski büyürse yedek modele geçirilebilir, şimdilik ayrı model kullanılmaz).
+
+**Engelleyen doğrulama problemleri** (yayımlanan metinde; yedekler sayılmaz): kartta olmayan rakam,
+kartta olmayan zaman sözcüğü, gönderim tarihinden önceki olay için gelecek zaman, özetten ya da
+örnek sayıdan kopya. Üslup uyarıları (kalıp ifade, tekrar, uzunluk, kısaltma, eksik öğe, TR/EN
+eşitliği, özel ad sezgisi) engellemez; uydurma ad kontrolü kontrolcüye bırakılır.
+
+**Karar** (`review/<hafta>.publish.json`, `{ autoMerge, reasons }`): iki dil de kontrolden geçti, engelleyen
+problem yok **ve** hiçbir dil hafif yedek modelle yazılmadı ise `autoMerge: true`. Bir dil geçmezse (ya da
+engelleyen problem varsa) o dil için **bir** kez "yeniden yaz + onar + kontrol" dönüşü denenir (aynı model,
+aynı prompt); ikinci taslak geçerse o kalır, geçmezse ilk taslak ve gerekçeleri kalır. Kontrolcü
+yanıt veremediyse yeniden yazılmaz (aynı kesintiye daha fazla kota harcanmaz). Hiçbir durumda
+üçüncü deneme yoktur ve hiçbiri çalışmayı düşürmez.
+
+**Workflow** (`newsletter-draft.yml`, `open-pr`): karar `true` ve `WEEKLY_BOT_TOKEN` varsa PR (draft
+olmayan) açılır ve `gh pr merge --auto --merge` etkinleştirilir; zorunlu CI kontrolleri merge'ü
+bekletir, branch protection ve admin merge'e dokunulmaz. Aksi hâlde draft PR açık kalır, `needs-human`
+etiketi ve gerekçeleri sayan bir yorum eklenir; merge edilmezse o hafta gönderim yoktur. Secret yoksa
+yalnız uyarı verilir (eski yol: draft PR, elle merge). Sebep: `GITHUB_TOKEN` olayları başka workflow'ları
+tetiklemez, PR'da CI hiç koşmaz ve merge deploy/gönderimi başlatmaz (doğrulandı: GitHub docs,
+"Triggering a workflow" ve `GITHUB_TOKEN` sayfaları). Branch `main` gerisinde kalırsa (strict
+protection) otomatik merge beklemede kalabilir; runbook'a bak.
+
+### 3c. Gemini çağrı bütçesi (çalışma başına)
+
+Sayım, `generateContent` isteği = `GenerateJsonAsync` çağrısı başına HTTP isteği. Her istek içinde 429/5xx
+için yeniden deneme vardır (yazım: en çok 4 HTTP denemesi; onarım ve kontrolcü: en çok 2).
+
+| Durum | İstek (dil başına) | İki dil |
+|---|---|---|
+| Normal: yazım + (düzeltme gerekirse) onarım + kontrol | 2–3 | **4–6** |
+| Bir dil geçmedi: + yeniden yazım + onarım? + kontrol | 5–6 | en çok 8–9 (diğer dil temiz) |
+| Her iki dil bir dönüş daha | 5–6 | **10–12** |
+| Bozuk yanıt yeniden isteği (yazım başına +1), yedek model yolu (varsayılan model 2 kez + yedek) | yazım 2'ye kadar × 3 aşama = en çok 6 | üstündeki satırlara eklenir; en kötü durum dil başına 12 çağrı, toplam **24** (HTTP yeniden denemeleri hariç) |
+
+Ayrıca pazar 11:00 UTC güvenlik cron'u ve elle tetikleme PR yoksa taslağı yeniden üretir. Ücretsiz katman
+**resmî** günlük/dakikalık sınırları bu repoda belgelenmemiş ve burada doğrulanmadı: **doğrulanmadı**
+(sayı uydurulmaz; modelin kendi sayfasından teyit edilmeli). Kontrolcü yedek modele alınmadı: yedek
+model yalnızca yazımda ve yalnız varsayılan model yanıt vermezse devreye girer.
 
 Uyarılar dosyaya **girmez**. Job summary'de ve PR açıklamasında (üstte toplam sayı, altta tablo) hikâye hikâye
 listelenir. Mehmet'in neye bakacağını bilmesi için vardır; taslağı engellemez.

@@ -35,7 +35,18 @@ Bu yeni sınır, kod yazılmadan önce kayda geçmeli.
 
    Model dış kaynak çekmez; prompt kapalı bir metindir.
 
-2. **Çıktı önce taslaktır; dışarı çıkış yalnızca insan merge'üyle olur.**
+2. **Çıktı önce taslaktır; dışarı çıkış PR merge'üyle olur.**
+   **Güncelleme 2026-11-10 (akşam, Mehmet'in kararı):** insan incelemesi kalktı. Taslak, Gemini'nin
+   "son kontrolcü" çağrısından (her dil için; olgu kartı + yayımlanacak metin) ve kodun engelleyen
+   doğrulama denetimlerinden geçerse workflow PR'da `gh pr merge --auto --merge` açar; zorunlu CI
+   kontrolleri yine merge'ü bekletir, branch protection gevşetilmez, admin merge yoktur. Geçmezse
+   (bir kez yeniden yaz + düzelt + kontrol dönüşünden sonra da) PR açık kalır, `needs-human` etiketi
+   ve açıklayıcı yorum alır; merge edilmezse o hafta gönderim olmaz. Kontrolcü yanıt veremezse
+   (kota, HTTP, biçim) geçmedi sayılır. Hafif yedek modelle yazılan taslak kendiliğinden yayımlanmaz.
+   `GITHUB_TOKEN` ile açılan/merge edilen PR'lar CI, deploy ve gönderim workflow'larını tetiklemez;
+   bu yüzden otomatik yayın için `WEEKLY_BOT_TOKEN` (yalnız bu repo, Contents ve Pull requests
+   read/write fine-grained PAT) gerekir; secret yoksa eski yol (draft PR, elle merge) sürer.
+   Önceki metin (Mehmet düzeltip merge eder) aşağıda tarihsel kayıt olarak durur:
    - Bot, taslağı `content/weekly/<yıl>-W<hafta>.{tr,en}.md` olarak bir **draft PR**'da açar.
      Doğrudan `main`'e yazamaz.
    - Gönderim (`issue-delivery`) yalnızca `main`'e merge edilmiş dosyayı okur. Merge yoksa o dilin
@@ -49,12 +60,16 @@ Bu yeni sınır, kod yazılmadan önce kayda geçmeli.
    sileceği bir hata olarak kabul edilir. issue-drafting, bunu azaltmak için her paragrafın
    dayandığı kaynakları PR açıklamasında listeler.
 
-4. **Şeffaflık.** ~~Her sayının altında kısa bir not yer alır.~~ **Güncelleme 2026-11-10 (Mehmet'in
-   kararı):** Sayının altına AI notu konmaz. Gerekçe: her sayı Mehmet'in incelemesinden ve PR
-   onayından geçer, editoryal sorumluluk ondadır (AB AI Act md. 50(4)'teki insan incelemesi /
-   editoryal sorumluluk istisnasıyla uyumlu; hukuki görüş değildir). Kayıt olarak front matter'da
-   `aiAssisted: true` kalır. Metin hiçbir yerde "editör yazdı" ya da tamamen insan yazımı gibi
-   sunulmaz (Gemini kullanım politikası). Bu tarihten önce yayımlanan notlu sayılar geçerlidir.
+4. **Şeffaflık.** ~~Her sayının altında kısa bir not yer alır.~~ ~~Sayının altına AI notu konmaz
+   (insan incelemesi gerekçesiyle).~~ **Güncelleme 2026-11-10 (akşam, Mehmet'in kararı):** insan
+   incelemesi yok, yayın son kontrolcüden sonra otomatik; AB AI Act md. 50(4)'teki insan incelemesi
+   istisnasının dayanağı kalmadı. Bu yüzden her yeni sayının sonunda, çıkış cümlelerinin altında,
+   kodun yazdığı tek satırlık kredi cümlesi bulunur ve bu açıklama (şeffaflık bildirimi) yerine
+   geçer: TR "Bu sayı TheBluesland ve Gemini'nin elinden.", EN "This issue comes from TheBluesland
+   and Gemini." Yazarda/doğrulayıcıda zorunlu (2026-W47 ve sonrası); eski not ve notsuz sayılar
+   geçerli kalır. Google/Gemini logosu kullanılmaz. Front matter'da `aiAssisted: true` kalır. Metin
+   hiçbir yerde insan yazımı gibi sunulmaz (Gemini kullanım politikası). Kredi cümlesinin md.
+   50(4) için yeterli olup olmadığı hukuki görüş değildir; bu, sahibinin kabul ettiği bir risktir.
 
 5. **Credential ve yetki izolasyonu (ADR-0005 madde 3'ün deseni).**
    - `GEMINI_API_KEY` yalnızca taslak workflow'unun yazım adımına verilir; Render'a asla girmez.
@@ -91,5 +106,6 @@ Bu yeni sınır, kod yazılmadan önce kayda geçmeli.
   kuralı test edilir.
 - `GITHUB_TOKEN` ile açılan PR'lar `pull_request` workflow'larını tetiklemez. `content/weekly/`
   doğrulamasının nasıl çalışacağı issue-review spec'inde çözülür (roadmap riski).
-- Abonelere giden her metin bir insan merge'ünden geçmiş olur. Bu ADR değişmeden bu kural
-  gevşetilemez.
+- ~~Abonelere giden her metin bir insan merge'ünden geçmiş olur.~~ 2026-11-10 akşam: metin ya
+  son kontrolcüden geçip otomatik merge edilir ya da `needs-human` PR'ında Mehmet'in merge'ünü
+  bekler. Kontrolcü ve engelleyen denetimler gevşetilmeden otomatik yayın genişletilemez.
