@@ -27,7 +27,8 @@ public static class DraftCommand
         TimeProvider clock,
         TextWriter output,
         TextWriter error,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        TimeSpan? retryDelay = null)
     {
         var clustering = await ClusteringOptionsLoader.LoadAsync(Path.Combine(toolDirectory, "clustering.yml"), cancellationToken);
         var ranking = await RankingOptionsLoader.LoadAsync(Path.Combine(toolDirectory, "ranking.yml"), cancellationToken);
@@ -112,15 +113,30 @@ public static class DraftCommand
         var names = feeds.Feeds.ToDictionary(feed => feed.Id, feed => feed.Name, StringComparer.Ordinal);
         var card = FactCard.From(result, names, clustering.Options!.SummaryCharacters);
         var voiceGuide = await File.ReadAllTextAsync(voiceGuidePath, cancellationToken);
-        var gemini = new GeminiClient(httpClient, apiKey!, string.IsNullOrWhiteSpace(model) ? GeminiClient.DefaultModel : model);
+        // An explicitly chosen model is respected; only the default falls back when it is overloaded.
+        var gemini = new GeminiClient(httpClient, apiKey!, string.IsNullOrWhiteSpace(model) ? GeminiClient.DefaultModel : model, retryDelay);
+        string? fallbackModel = string.IsNullOrWhiteSpace(model) ? GeminiClient.FallbackModel : null;
+        string? fellBackFrom = null;
 
         var drafts = new List<LanguageDraft>();
         foreach (var language in DraftLanguage.All)
         {
+            var prompt = DraftPromptBuilder.Build(language, voiceGuide, card);
             DraftResponse response;
             try
             {
-                response = await WriteAsync(gemini, DraftPromptBuilder.Build(language, voiceGuide, card), card, cancellationToken);
+                try
+                {
+                    response = await WriteAsync(gemini, prompt, card, cancellationToken);
+                }
+                catch (HttpRequestException ex) when (fallbackModel is not null && GeminiClient.IsUnavailable(ex) && !cancellationToken.IsCancellationRequested)
+                {
+                    await error.WriteLineAsync($"{gemini.Model} is unavailable ({ex.Message}); writing the {language.Name} draft with {fallbackModel}.");
+                    fellBackFrom = gemini.Model;
+                    gemini = new GeminiClient(httpClient, apiKey!, fallbackModel, retryDelay);
+                    fallbackModel = null;
+                    response = await WriteAsync(gemini, prompt, card, cancellationToken);
+                }
             }
             catch (Exception ex) when ((ex is HttpRequestException or DraftFormatException or TaskCanceledException) && !cancellationToken.IsCancellationRequested)
             {
@@ -133,7 +149,9 @@ public static class DraftCommand
                 language,
                 IssueMarkdownWriter.Issue(week, language, clean, card),
                 IssueMarkdownWriter.Backups(week, language, clean, card),
-                warnings));
+                warnings,
+                gemini.Model,
+                fellBackFrom));
         }
 
         Directory.CreateDirectory(outputDirectory);

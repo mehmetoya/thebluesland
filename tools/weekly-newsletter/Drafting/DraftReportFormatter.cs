@@ -4,7 +4,14 @@ using TheBluesland.WeeklyNewsletter.Reporting;
 
 namespace TheBluesland.WeeklyNewsletter.Drafting;
 
-public sealed record LanguageDraft(DraftLanguage Language, string IssueMarkdown, string BackupsMarkdown, IReadOnlyList<DraftWarning> Warnings);
+/// <param name="FellBackFrom">The default model that was unavailable, when <paramref name="Model"/> is the fallback.</param>
+public sealed record LanguageDraft(
+    DraftLanguage Language,
+    string IssueMarkdown,
+    string BackupsMarkdown,
+    IReadOnlyList<DraftWarning> Warnings,
+    string Model,
+    string? FellBackFrom = null);
 
 /// <summary>
 /// The job summary for a draft run: which issue, the warnings Mehmet should check (story by
@@ -26,6 +33,10 @@ public static class DraftReportFormatter
             var count = draft.Warnings.Count;
             markdown.Append(CultureInfo.InvariantCulture,
                 $"### {draft.Language.Code.ToUpperInvariant()} · {(count == 0 ? "✅ no warnings" : $"⚠️ {count} to check")}\n\n");
+            markdown.Append(CultureInfo.InvariantCulture, $"Written by `{draft.Model}`");
+            markdown.Append(draft.FellBackFrom is { } busy
+                ? string.Create(CultureInfo.InvariantCulture, $" because `{busy}` was unavailable (busy or out of free quota).\n\n")
+                : ".\n\n");
             if (count > 0)
             {
                 markdown.Append("| Where | What to check |\n|---|---|\n");
