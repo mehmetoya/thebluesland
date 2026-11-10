@@ -240,6 +240,7 @@ inside the web app or the PR/deploy pipelines:
 | `retry-rate-limited-sync.yml` | Every 3 hours, or manual | Re-dispatches `sync-spotify.yml` automatically once a detected Spotify rate-limit cooldown has elapsed — only for that specific known failure signature; any other failure is left alone so it still surfaces to Mehmet. Holds no Spotify/database credential, only `actions: write`. |
 | `report-eras.yml` | Manual | Prints a per-playlist era-distribution report from the cache's stored bucket counts — a plain database read, no Spotify call, safe to re-run any time. |
 | `suggest-curator-note.yml` | Manual | Drafts a curator-note suggestion for one playlist via Gemini, from the cache's public fields only; never writes to `content/playlists/*.md` — Mehmet applies it through a normal PR if he agrees. |
+| `newsletter-ingest.yml` | Every 2 hours, or manual | TheBluesland Weekly news ingest (`docs/specs/weekly-newsletter-news-ingest.md`): pulls the music-news RSS feeds listed in `tools/weekly-newsletter/feeds.yml` into the `newsletter` schema, removes items older than 8 weeks and writes a per-source health table to the job summary. Fails only when every feed fails. No Spotify or AI access. |
 
 Each of `sync-spotify.yml`, `report-eras.yml` and `suggest-curator-note.yml` is the *only* workflow allowed to hold its particular external credential (see
 [Spotify cache database access](#-spotify-cache-database-access-sec-001) below) — `ci.yml` and
@@ -281,13 +282,43 @@ also a Render env var) feeds that hash and must never be committed. See the role
 comment for example SQL queries (daily unique visitors, top playlists by view/click) to run in the
 Neon SQL editor.
 
+### Newsletter database access
+
+The TheBluesland Weekly pipeline (`docs/specs/weekly-newsletter.md`) keeps its data in its own
+`newsletter` schema — `NewsletterDbContext`, including its migrations history table — and writes it
+only through `newsletter_writer`, created by
+[`src/TheBluesland.Data/Scripts/create-newsletter-role.sql`](src/TheBluesland.Data/Scripts/create-newsletter-role.sql).
+The role can `SELECT`/`INSERT`/`DELETE` `newsletter.news_article` and nothing else: no `UPDATE`, no
+DDL, no access to `spotify_playlist_cache` or `page_view_events`, and the web app's roles cannot read
+the newsletter schema either. Its connection string is the GitHub Actions secret
+`NEON_NEWSLETTER_CONNECTION_STRING`, used only by `newsletter-ingest.yml` and never present in Render.
+
+One-time setup (Mehmet, against the Neon project, as the database owner):
+
+1. Apply the migration:
+   `dotnet ef database update --context NewsletterDbContext --project src/TheBluesland.Data --connection "<owner connection string>"`
+2. Run `create-newsletter-role.sql` in the Neon SQL editor. **Create `newsletter_writer` only
+   through this script** — a role made in the Neon Console joins `neon_superuser` (read/write on
+   every table), and the script refuses to adopt such a role. It creates the role `NOLOGIN`.
+3. Enable login with a strong password that never appears in SQL history: in `psql`, run
+   `ALTER ROLE newsletter_writer LOGIN;` and then `\password newsletter_writer` (or set the password
+   in the Neon Console).
+4. Add the role's connection string, with `SSL Mode=Require`, as the repository secret
+   `NEON_NEWSLETTER_CONNECTION_STRING`, and restrict it to `newsletter-ingest.yml`.
+5. After this branch is merged to `main`, open **Actions → Newsletter ingest → Run workflow** and check
+   that the job summary shows a ✅ row for every source.
+
+Re-run the role script after any later `NewsletterDbContext` migration that adds a table; it
+revokes and re-grants, so the role always matches exactly what the script lists.
+
 Spotify credentials (`SPOTIFY_CLIENT_ID`, `SPOTIFY_REFRESH_TOKEN`) are likewise GitHub Actions
 secrets scoped only to the monthly sync workflow, and `GEMINI_API_KEY` is scoped only to
 `suggest-curator-note.yml` — none of these four secrets are ever present in Render, `ci.yml`, or
 `deploy.yml`, and `suggest-curator-note.yml` never receives the Spotify or sync-write secrets
 either. This isolation is pinned by regression tests
 (`tests/TheBluesland.UnitTests/Workflows/CiWorkflowSecretIsolationTests.cs`,
-`DeployWorkflowSecretIsolationTests.cs` and `SuggestCuratorNoteWorkflowSecretIsolationTests.cs`).
+`DeployWorkflowSecretIsolationTests.cs`, `SuggestCuratorNoteWorkflowSecretIsolationTests.cs` and
+`NewsletterIngestWorkflowSecretIsolationTests.cs`, which scans every workflow file).
 
 **Connection string format:** Neon's dashboard gives you a `postgresql://user:pass@host/db?...` URI
 by default, which Npgsql also accepts directly. If you hit a

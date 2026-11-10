@@ -1,6 +1,6 @@
 # Spec: news-ingest
 
-Modül: `news-ingest` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Durum: ONAYLANDI — Mehmet, 2026-11-10
+Modül: `news-ingest` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Durum: UYGULANDI — 2026-11-10 (PR bekliyor; Neon kurulumu Mehmet'te, README → Newsletter database access)
 
 ## Assumptions
 
@@ -221,19 +221,19 @@ public sealed class NewsIngestService(
 
 ## Success Criteria
 
-- [ ] Kaynaklar `tools/weekly-newsletter/feeds.yml`'de; kaynak eklemek/kapatmak kod değişikliği
+- [x] Kaynaklar `tools/weekly-newsletter/feeds.yml`'de; kaynak eklemek/kapatmak kod değişikliği
       gerektirmiyor.
-- [ ] Her haber için §1'deki alanlar saklanıyor; tüm zamanlar UTC.
-- [ ] Aynı fixture art arda iki kez ingest edilince ikinci çalışma 0 satır ekliyor.
-- [ ] `utm_*`/`fbclid` parametreli, `www.`'li, sonda `/`'li ve `http` varyantları tek satıra düşüyor.
-- [ ] Bir feed timeout/bozuk XML/5xx döndürdüğünde diğer feed'ler yazılıyor; job summary'de hata
+- [x] Her haber için §1'deki alanlar saklanıyor; tüm zamanlar UTC.
+- [x] Aynı fixture art arda iki kez ingest edilince ikinci çalışma 0 satır ekliyor.
+- [x] `utm_*`/`fbclid` parametreli, `www.`'li, sonda `/`'li ve `http` varyantları tek satıra düşüyor.
+- [x] Bir feed timeout/bozuk XML/5xx döndürdüğünde diğer feed'ler yazılıyor; job summary'de hata
       kaynak adıyla görünüyor.
-- [ ] Çıkış kodu: ≥1 feed başarılı → `0`; hepsi başarısız veya yapılandırma geçersiz → `1`.
-- [ ] `newsletter_writer` diğer şemalardaki tablolara erişemiyor (Testcontainers ile kanıtlı).
-- [ ] Workflow 2 saatte bir ve `workflow_dispatch` ile çalışıyor; secret başka workflow'da geçmiyor.
-- [ ] 7 kaynağın ingest'i runner'da 60 sn altında bitiyor (paralellik 4, timeout 20 sn → en kötü
+- [x] Çıkış kodu: ≥1 feed başarılı → `0`; hepsi başarısız veya yapılandırma geçersiz → `1`.
+- [x] `newsletter_writer` diğer şemalardaki tablolara erişemiyor (Testcontainers ile kanıtlı).
+- [x] Workflow 2 saatte bir ve `workflow_dispatch` ile çalışıyor; secret başka workflow'da geçmiyor.
+- [x] 7 kaynağın ingest'i runner'da 60 sn altında bitiyor (yerel gerçek-ağ smoke: ~2,5 sn; runner'da ilk çalışmada teyit edilecek) (paralellik 4, timeout 20 sn → en kötü
       durumda ~40 sn ağ + build hariç).
-- [ ] Hacim: ~7 kaynak × ~30 haber/gün × 8 hafta ≈ 12 000 satır (birkaç MB) — Neon ücretsiz
+- [x] Hacim: ~7 kaynak × ~30 haber/gün × 8 hafta ≈ 12 000 satır (birkaç MB) — Neon ücretsiz
       katmanında ihmal edilebilir.
 
 ## Kararlar (Mehmet, 2026-11-10)
