@@ -119,7 +119,9 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
 
 ## Phase 3: Çalıştırma ve teslim
 
-- [ ] **T8: `ingest` komutu — retention, rapor, çıkış kodları** — S
+- [x] **T8: `ingest` komutu — retention, rapor, çıkış kodları** — S
+  - Sonuç (2026-11-10): gerçek ağ + yerel Postgres + `newsletter_writer` rolüyle smoke: 7/7 kaynak, 124
+    yeni haber, ikinci çalışma 0 yeni, toplam ~2,5 sn (hedef < 60 sn).
   - Description: `Program.cs`'te `ingest`'i bağla (`NEON_NEWSLETTER_CONNECTION_STRING`'den context);
     servis sonrası 8 haftadan eski satırları sil; `IngestReport`'u Markdown tablo olarak stdout'a
     (workflow `GITHUB_STEP_SUMMARY`'ye `tee`'ler); çıkış kodu kuralı.
