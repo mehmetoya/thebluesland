@@ -170,7 +170,7 @@ public sealed class KitClient(HttpClient httpClient, string apiKey, TimeSpan? re
         return single?.Broadcast is { } dto ? Map(dto) : throw new KitException($"Kit did not return broadcast {id}.");
     }
 
-    /// <summary>The account's name, plan and primary e-mail (the default sender); only these fields are read.</summary>
+    /// <summary>The account's name, plan and primary (login) e-mail; only these fields are read.</summary>
     public async Task<KitAccount> GetAccountAsync(CancellationToken cancellationToken)
     {
         using var response = await SendAsync(() => new HttpRequestMessage(HttpMethod.Get, AccountUrl), cancellationToken);
