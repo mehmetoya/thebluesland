@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:npr="https://www.npr.org/rss/" xmlns:nprml="https://api.npr.org/nprml" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
+  <channel>
+    <title>NPR Topics: Music</title>
+    <link>https://www.npr.org/templates/story/story.php?storyId=1039</link>
+    <description>Tiny Desks, All Songs Considered and in-depth features from NPR</description>
+    <language>en</language>
+    <copyright>Copyright 2024 NPR - For Personal Use Only</copyright>
+    <generator>Story API Shim 1.2.24</generator>
+    <lastBuildDate>Tue, 10 Nov 2026 11:56:52 -0500</lastBuildDate>
+    <image>
+      <url>https://media.npr.org/images/podcasts/primary/npr_generic_image_300.jpg?s=200</url>
+      <title>NPR Topics: Music</title>
+      <link>https://www.npr.org/music</link>
+    </image>
+    <item>
+ <title>How a musician turned singing sands into an instrument</title>
+ <description>A North Carolina musician was fascinating by the sound of singing sand dunes. He asked researchers from all over the world for help turning them into an instrument.</description>
+ <pubDate>Sat, 07 Nov 2026 17:12:01 -0500</pubDate>
+ <link>https://www.npr.org/2026/11/07/nx-s1-6029751/how-a-musician-turned-singing-sands-into-an-instrument</link>
+ <guid>https://www.npr.org/2026/11/07/nx-s1-6029751/how-a-musician-turned-singing-sands-into-an-instrument</guid>
+ <dc:creator>Henry Larson</dc:creator>
+ </item>
+	<item>
+ <title>The transatlantic shift: British bands ride a new wave of alt-country</title>
+ <description>A number of rising bands in the U.K. are drawing on Americana to create a genre of British alt-Country music.</description>
+ <pubDate>Sat, 07 Nov 2026 07:40:56 -0500</pubDate>
+ <link>https://www.npr.org/2026/11/07/nx-s1-5986177/the-transatlantic-shift-british-bands-drive-a-new-wave-of-alt-country</link>
+ <guid>https://www.npr.org/2026/11/07/nx-s1-5986177/the-transatlantic-shift-british-bands-drive-a-new-wave-of-alt-country</guid>
+ <dc:creator>Danny Hensel</dc:creator>
+ </item>
+	<item>
+ <title>Tiny Desk Radio: Joan Shelley, Melissa Aldana with Gonzalo Rubalcaba, Ganavya</title>
+ <description>Reflection, renewal. On this episode, we provide a musical reset for the mind. Look for &lt;em&gt;Tiny Desk Radio&lt;/em&gt; on your local NPR station.&lt;br&gt;&lt;br&gt;</description>
+ <pubDate>Thu, 05 Nov 2026 12:00:00 -0500</pubDate>
+ <link>https://www.npr.org/2026/11/05/g-s1-151990/tiny-desk-radio-joan-shelley-melissa-aldana-with-gonzalo-rubalcaba-ganavya</link>
+ <guid>https://www.npr.org/2026/11/05/g-s1-151990/tiny-desk-radio-joan-shelley-melissa-aldana-with-gonzalo-rubalcaba-ganavya</guid>
+ </item>
+	<item>
+ <title>Discursive Verses: Is &apos;Spend Dat&apos; the best financial indicator of America&apos;s grift economy?</title>
+ <description>NPR Music culture critic and reporter Rodney Carmichael ruminates on the latest in rap culture. This week: How Yung Miami&apos;s summer bop became a sweeping indictment.</description>
+ <pubDate>Thu, 05 Nov 2026 11:30:00 -0500</pubDate>
+ <link>https://www.npr.org/2026/11/05/nx-s1-6029747/the-week-in-hip-hop-yung-miami-spend-dat</link>
+ <guid>https://www.npr.org/2026/11/05/nx-s1-6029747/the-week-in-hip-hop-yung-miami-spend-dat</guid>
+ <dc:creator>Rodney Carmichael</dc:creator>
+ </item>
+	</channel>
+</rss>

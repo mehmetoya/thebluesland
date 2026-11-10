@@ -7,7 +7,8 @@
 #   enabled : false ise ingest bu kaynagi atlar (gecmis satirlar silinmez).
 #
 # Dogrulama: 2026-11-10, her adres "TheBlueslandWeekly/1.0" User-Agent'i ile bir kez cekildi, hepsi
-# 200 ve gecerli RSS 2.0 dondu. Ornek yanitlar (4 oge, tam metin `content:encoded` cikarilmis):
+# 200 ve gecerli RSS 2.0 dondu. 16 kaynak: ilk 7'si pop/indie/sektor medyasi, sonraki 9'u blues, rock,
+# caz, klasik rock ve kuresel/kultur kaynaklari (story-ranking spec, "Kaynak dengesi"). Ornek yanitlar (4 oge, tam metin `content:encoded` cikarilmis):
 # tests/TheBluesland.UnitTests/Fixtures/newsletter-feeds/<id>.xml
 #
 # Kullanim: yalnizca baslik + feed ozeti + baglanti, ic kullanim icin (kumeleme ve olgu karti).
@@ -15,6 +16,13 @@
 #
 # Hiz notu ("oge/gun" = 2026-11-10 olcumu): bir feed yalnizca son N ogeyi tutar. N ogenin kapsadigi
 # sure ingest araligindan kisaysa oge kacabilir. En dar pencere consequence (15 oge ~ 4,7 saat).
+#
+# Marka cekirdegi (brand-fit bonusu alan kaynaklar) feeds.yml'de degil ranking.yml `coreSources`
+# altindadir; kaynak eklerken orada da karar ver. Bilerek EKLENMEYENLER: kerrang (feed her seferinde
+# yalnizca 1 oge donduruyor, 2 saatlik araliga ~10 haberlik gunu sigdirmaz), bantmag (Turkce:
+# kumeleme Ingilizce baslik benzerligiyle calistigi icin hicbir hikayeye katilamaz; icerigi de
+# cogunlukla etkinlik rehberi/dizi-film, haber degil), BBC Entertainment (muzik disi gurultu,
+# filtre mekanizmasi yok).
 
 feeds:
   # ~9 oge/gun, 10 oge. Ana /feed/ yerine music-news: ana akis konser/etkinlik ve genel icerik de
@@ -60,4 +68,60 @@ feeds:
   - id: music-business-worldwide
     name: Music Business Worldwide
     url: https://www.musicbusinessworldwide.com/feed/
+    enabled: true
+
+  # ~0,4 oge/gun, 10 oge. Cok yavas blues dergisi; yalnizca marka cekirdegi (ranking.yml).
+  - id: american-blues-scene
+    name: American Blues Scene
+    url: https://www.americanbluesscene.com/feed/
+    enabled: true
+
+  # ~1,4 oge/gun, 10 oge. Blues-rock incelemeleri ve haberleri; marka cekirdegi.
+  - id: blues-rock-review
+    name: Blues Rock Review
+    url: https://bluesrockreview.com/feed
+    enabled: true
+
+  # ~8 oge/gun, 35 oge (~4 gun). Klasik rock haberleri; marka cekirdegi.
+  - id: ultimate-classic-rock
+    name: Ultimate Classic Rock
+    url: https://ultimateclassicrock.com/feed/
+    enabled: true
+
+  # ~10 oge/gun, 50 oge. Rock/metal haberleri; marka cekirdegi. `description` kisa ozet, tam metin
+  # `dc:content`/`content:encoded` icinde (okunmaz; fixture'dan cikarildi). Ilk adres (/feeds/all)
+  # http://.../feeds.xml'e yonleniyordu; nihai https adres yazildi. Yanit ~830 KB (10 MB sinirinin altinda).
+  - id: louder
+    name: Louder
+    url: https://www.loudersound.com/feeds.xml
+    enabled: true
+
+  # ~37 oge/gun, 30 oge (~19 saat pencere). Sarki yazarligi ve americana, klasik rock listeleri.
+  - id: american-songwriter
+    name: American Songwriter
+    url: https://americansongwriter.com/feed/
+    enabled: true
+
+  # ~1 oge/gun, 10 oge. Caz haberleri; marka cekirdegi.
+  - id: jazztimes
+    name: JazzTimes
+    url: https://www.jazztimes.com/feed/
+    enabled: true
+
+  # ~1,4 oge/gun, 26 oge. Kuresel gundem (Birlesik Krallik); marka cekirdegi degil.
+  - id: guardian-music
+    name: The Guardian
+    url: https://www.theguardian.com/music/rss
+    enabled: true
+
+  # ~1,5 oge/gun, 10 oge. NPR Music; marka cekirdegi degil.
+  - id: npr-music
+    name: NPR Music
+    url: https://feeds.npr.org/1039/rss.xml
+    enabled: true
+
+  # ~4 oge/gun, 32 oge. Bagimsiz/deneysel muzik ve kultur; marka cekirdegi degil.
+  - id: the-quietus
+    name: The Quietus
+    url: https://thequietus.com/feed/
     enabled: true

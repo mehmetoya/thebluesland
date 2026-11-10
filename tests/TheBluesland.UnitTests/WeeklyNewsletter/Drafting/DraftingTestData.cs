@@ -32,7 +32,9 @@ internal static partial class DraftingTestData
     public static FactCard W46Card()
     {
         var clustering = ClusteringOptionsLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/clustering.yml"))).Options!;
-        var ranking = RankingOptionsLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/ranking.yml"))).Options!;
+        // The approved sample issue (voice guide) is mapped onto the picks in their W46 order, which
+        // predates the brand bonus; ranking without it keeps that calibration stable.
+        var ranking = RankingOptionsLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/ranking.yml"))).Options! with { BrandBonus = 0 };
         var names = FeedConfigLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/feeds.yml"))).Feeds.ToDictionary(feed => feed.Id, feed => feed.Name);
         var result = StoryRanker.Rank(StoryClusterer.Cluster(W46Articles(), clustering), ranking, clustering);
         return FactCard.From(result, names, clustering.SummaryCharacters);
