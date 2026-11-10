@@ -71,7 +71,7 @@ yazmayacak. 8 hikâye girer (5 seçim + 3 yedek).
 ### 3. Deterministik denetim (kod, yanıt geldikten sonra)
 
 | Denetim | Kural | Sonuç |
-|---|---|---|
+| --- | --- | --- |
 | Şema | 8 hikâyenin her key'i tam bir kez | Bozuksa bir kez yeniden iste, yine bozuksa çalışma başarısız |
 | Uzunluk | başlık ≤ 70 karakter, gövde ≤ 3 cümle ve ≤ 450 karakter, "neden önemli" ≤ 2 cümle ve ≤ 260 karakter (onaylı örnek sayı 2 kısa cümle kullanıyor) | Uyarı |
 | Link/biçim | URL, `[`, `]`, `<`, emoji, `!` yok | Temizlenir ve uyarı verilir |
@@ -159,7 +159,7 @@ Sayım, `generateContent` isteği = `GenerateJsonAsync` çağrısı başına HTT
 için yeniden deneme vardır (yazım: en çok 4 HTTP denemesi; onarım ve kontrolcü: en çok 2).
 
 | Durum | İstek (dil başına) | İki dil |
-|---|---|---|
+| --- | --- | --- |
 | Normal: yazım + (düzeltme gerekirse) onarım + kontrol | 2–3 | **4–6** |
 | Bir dil geçmedi: + yeniden yazım + onarım? + kontrol | 5–6 | en çok 8–9 (diğer dil temiz) |
 | Her iki dil bir dönüş daha | 5–6 | **10–12** |
