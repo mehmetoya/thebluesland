@@ -36,18 +36,21 @@ biri blues/rock/soul/indie *olabilir*, ama global gündem önceliklidir (map: on
 puan = kapsam + önem + marka
 kapsam = farklı kaynak sayısı × 1.0
 önem   = hikâyenin türüne göre sabit ek puan (ranking.yml)
-marka  = brandBonus (1.25), hikâye marka kelimesi taşıyorsa VEYA çekirdek kaynak yazdıysa; tek sefer
+marka  = brandBonus (0.75), en az brandMinSources (2) kaynak VE (marka kelimesi VEYA çekirdek kaynak); tek sefer
 ```
 
 **Marka uyumu.** `brandKeywords` (blues, rock, guitar, jazz, soul, americana, classic rock…) hikâyenin
 herhangi bir başlığında/özetinde tam kelime olarak geçerse ya da `coreSources` (american-blues-scene,
 blues-rock-review, ultimate-classic-rock, louder, jazztimes) içinden bir kaynak hikâyeyi yazdıysa
-hikâye `brandBonus` alır; birikmez, roundup'lar almaz. Etkisi: 2 kaynaklı blues/rock haberi
-(2 + 1.25 = 3.25), 3 kaynaklı marka-dışı habere (3.0) yetişir; tek kaynaklı çekirdek-kaynak haberi
-2.25'ten başlar, yani kapsam yüzünden hiç yüzeye çıkamama sorunu biter ama haftayı da basmaz
-(tek kaynaklı bir release 2.25 < 3 kaynaklı bir release). Çekirdek liste feeds.yml'de değil
+hikâye `brandBonus` alır; birikmez, roundup'lar almaz. Bonus yalnız en az `brandMinSources` (2)
+kaynaklı hikâyeye verilir. Etkisi: 2 kaynaklı blues/rock haberi (2 + 0.75 = 2.75) 2 kaynaklı
+marka-dışı haberi geçer ama 3 kaynaklı büyük haberi (3.0) geçmez. 2026-11-10 tarihli düzeltme: ilk
+sürümde bonus 1.25 ve tek kaynaklılara da açıktı; önizlemede tek bir sitenin (Louder) tek kaynaklı
+metal haberleri haftanın çok kaynaklı haberlerini ilk 5'ten itti. Çekirdek liste feeds.yml'de değil
 ranking.yml'dedir (`StoryRanker.Rank` imzası değişmesin diye); bir test her `coreSources` id'sinin
-`feeds.yml`'de etkin olduğunu doğrular. Rapor "Why" sütunu `· brand +1.25` gösterir.
+`feeds.yml`'de etkin olduğunu doğrular. Rapor "Why" sütunu `· brand +0.75` gösterir. Aynı düzeltmede
+"death" tek başına ölüm sayılmaz ("since X's death" yeniden birleşme haberidir), "of the week" ve
+"Blues Rock Weekly" roundup sayılır, "reform/reforming" milestone'dur.
 
 **Tür**, hikâyenin tüm üye başlıklarında aranan anahtar kelimelerle belirlenir. Yukarıdan aşağı ilk
 eşleşen tür kazanır. Kelime listeleri ve ağırlıklar `ranking.yml`'dedir; kod değişmeden ayarlanır.
