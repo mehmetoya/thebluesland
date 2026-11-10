@@ -74,7 +74,7 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
   - Dependencies: T2
   - Files: `Ingest/ArticleUrlNormalizer.cs`, `tests/.../WeeklyNewsletter/ArticleUrlNormalizerTests.cs`
 
-- [ ] **T5: `NewsletterDbContext` + `NewsArticle` + migration** — M
+- [x] **T5: `NewsletterDbContext` + `NewsArticle` + migration** — M
   - Description: `newsletter` şeması, spec §1 kolonları, `normalized_url` unique,
     `coalesce(published_at, fetched_at)` index'i; design-time factory; ilk migration
     `Migrations/NewsletterDb/` altına.
