@@ -6,6 +6,7 @@ public sealed partial class SiteText
     {
         LanguageName = "English",
         SwitcherLabel = "Language",
+        SwitcherNoEditionTitle = "This issue has no Turkish edition; open the Turkish archive",
 
         NavPrimaryLabel = "Primary",
         NavPlaylists = "Playlists",
@@ -124,7 +125,7 @@ public sealed partial class SiteText
         WeeklyIssueWord = "Issue",
         WeeklyIssueDescription = "The week's five music stories, in five minutes.",
         WeeklyMinutes = "min",
-        WeeklyLanguageNavLabel = "Language",
+        WeeklyOnlyInThisLanguage = "This issue is in English only.",
         WeeklyIssuesNavLabel = "Issues",
         WeeklyPreviousIssue = "Previous issue",
         WeeklyNextIssue = "Next issue",

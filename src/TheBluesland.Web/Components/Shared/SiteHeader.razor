@@ -1,33 +1,33 @@
 @inject NavigationManager Navigation
+@inject WeeklyIssueRepository Issues
 <header class="site-header">
     <div class="site-header-inner">
         <a href="@Site.Url("/")" class="site-wordmark"><img src="/images/guitar.svg" alt="" width="28" height="28" />TheBluesland</a>
-        @* nav + toggle share one flex-wrap unit (.site-header-controls) instead of each being its
-           own direct child of .site-header-inner's space-between row: with three independent
-           space-between children, a narrow viewport that fits wordmark+nav on one line still wraps
-           the toggle alone onto its own line, flush left - a real bug found on a production iPhone
-           screenshot (2026-09-11). Grouping them means the whole nav+toggle cluster wraps together,
-           so the toggle always stays visually attached to "About", never orphaned. *@
-        <div class="site-header-controls">
-            <nav aria-label="@Site.T.NavPrimaryLabel" class="site-nav">
-                <a href="@Site.Url("/")" aria-current="@Current("")">@Site.T.NavPlaylists</a>
-                <a href="@Site.Url("/collections")" aria-current="@Current("collections")">@Site.T.NavCollections</a>
-                <a href="@Site.Url("/weekly")" aria-current="@Current("weekly")">@Site.T.NavWeekly</a>
-                <a href="@Site.Url("/about")" aria-current="@Current("about")">@Site.T.NavAbout</a>
-            </nav>
-            @* docs/specs/site-i18n.md: "TR | EN" links to the same page in the other language. Each
-               link carries its own lang/hreflang; the current language is aria-current="true" (not
-               "page": the item is a language choice, not a site section). Visiting a prefixed page
-               is what saves the visitor's choice (the lang cookie, set server-side). *@
+        @* Three flex children of .site-header-inner: wordmark, nav, and .site-header-tools (language
+           switcher + theme toggle). The tools group never wraps internally and keeps margin-left:auto,
+           so on a narrow screen the two controls stay together on the right of the wordmark's line
+           (never a toggle orphaned on its own line, flush left - the 2026-09-11 iPhone bug and its
+           2026-11 Turkish-label recurrence); below 48rem the nav drops to its own full-width line. *@
+        <nav aria-label="@Site.T.NavPrimaryLabel" class="site-nav">
+            <a href="@Site.Url("/")" aria-current="@Current("")">@Site.T.NavPlaylists</a>
+            <a href="@Site.Url("/collections")" aria-current="@Current("collections")">@Site.T.NavCollections</a>
+            <a href="@Site.Url("/weekly")" aria-current="@Current("weekly")">@Site.T.NavWeekly</a>
+            <a href="@Site.Url("/about")" aria-current="@Current("about")">@Site.T.NavAbout</a>
+        </nav>
+        <div class="site-header-tools">
+            @* docs/specs/site-i18n.md: "TR EN" links to the same page in the other language; this is
+               the page's only language navigation (the weekly issue page has none of its own). Each
+               link carries its own lang/hreflang and an aria-label with the language's own name
+               ("TR" alone is ambiguous); the current language is aria-current="page". On a weekly
+               issue that exists in one language only, the other link goes to that language's
+               archive (/{lang}/weekly) with an explanatory title instead of a redirect round trip.
+               Visiting a prefixed page is what saves the visitor's choice (the lang cookie). *@
             <nav aria-label="@Site.T.SwitcherLabel" class="lang-switcher">
-                @for (var i = 0; i < SiteLanguage.Supported.Count; i++)
+                @foreach (var code in SiteLanguage.Supported)
                 {
-                    var code = SiteLanguage.Supported[i];
-                    if (i > 0)
-                    {
-                        <span aria-hidden="true">|</span>
-                    }
-                    <a href="@Site.SwitchUrl(code)" lang="@(code)" hreflang="@(code)" title="@SiteText.For(code).LanguageName" aria-current="@(code == Site.Code ? "true" : null)">@(code.ToUpperInvariant())</a>
+                    var href = SwitchHref(code, out var noEdition);
+                    var name = SiteText.For(code).LanguageName;
+                    <a href="@href" lang="@(code)" hreflang="@(code)" aria-label="@name" title="@(noEdition ? Site.T.SwitcherNoEditionTitle : name)" aria-current="@(code == Site.Code ? "page" : null)">@(code.ToUpperInvariant())</a>
                 }
             </nav>
             @* docs/specs/dark-light-mode-toggle.md section 3: hand-authored inline SVGs (no icon
@@ -50,6 +50,28 @@
 </header>
 
 @code {
+    // The switcher target for the given language. A weekly issue page whose other-language edition
+    // is not published links to that language's archive: /{other}/weekly/{id} would only 302 back
+    // to this page (a dead click).
+    private string SwitchHref(string code, out bool noEdition)
+    {
+        noEdition = false;
+        if (code != Site.Code
+            && SiteLanguage.TrySplit(Site.CurrentPathAndQuery, out _, out var rest))
+        {
+            var segments = rest.Split('?', '#')[0].Trim('/').Split('/');
+            if (segments is ["weekly", { Length: > 0 } id]
+                && !id.Equals("thanks", StringComparison.OrdinalIgnoreCase)
+                && Issues.Find(id.ToUpperInvariant(), code) is null)
+            {
+                noEdition = true;
+                return SiteLanguage.UrlFor(code, "/weekly");
+            }
+        }
+
+        return Site.SwitchUrl(code);
+    }
+
     // DD-12: the section the visitor is in gets aria-current="page" (rendered only when it matches -
     // a null attribute value is omitted). Home counts for "/" and the playlist detail pages.
     private string? Current(string section)

@@ -189,8 +189,8 @@ public sealed class SiteLocalizationTests : IAsyncLifetime
     {
         var turkish = await GetOkAsync("/tr/about");
         turkish.ShouldContain("<nav aria-label=\"Dil\" class=\"lang-switcher\">");
-        turkish.ShouldContain("<a href=\"/tr/about\" lang=\"tr\" hreflang=\"tr\" title=\"Türkçe\" aria-current=\"true\">TR</a>");
-        turkish.ShouldContain("href=\"/en/about\" lang=\"en\" hreflang=\"en\" title=\"English\"");
+        turkish.ShouldContain("<a href=\"/tr/about\" lang=\"tr\" hreflang=\"tr\" aria-label=\"Türkçe\" title=\"Türkçe\" aria-current=\"page\">TR</a>");
+        turkish.ShouldContain("href=\"/en/about\" lang=\"en\" hreflang=\"en\" aria-label=\"English\" title=\"English\"");
 
         var english = await GetOkAsync("/en/playlists/" + Slug);
         english.ShouldContain($"href=\"/tr/playlists/{Slug}\" lang=\"tr\" hreflang=\"tr\"");

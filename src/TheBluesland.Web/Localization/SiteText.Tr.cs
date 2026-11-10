@@ -6,6 +6,7 @@ public sealed partial class SiteText
     {
         LanguageName = "Türkçe",
         SwitcherLabel = "Dil",
+        SwitcherNoEditionTitle = "Bu sayının İngilizce sürümü yok; İngilizce arşive git",
 
         NavPrimaryLabel = "Ana gezinme",
         NavPlaylists = "Çalma listeleri",
@@ -125,7 +126,7 @@ public sealed partial class SiteText
         WeeklyIssueWord = "Sayı",
         WeeklyIssueDescription = "Haftanın beş müzik haberi, beş dakikada.",
         WeeklyMinutes = "dk",
-        WeeklyLanguageNavLabel = "Dil",
+        WeeklyOnlyInThisLanguage = "Bu sayı yalnızca Türkçe.",
         WeeklyIssuesNavLabel = "Sayılar",
         WeeklyPreviousIssue = "Önceki sayı",
         WeeklyNextIssue = "Sonraki sayı",

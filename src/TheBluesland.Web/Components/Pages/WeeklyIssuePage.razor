@@ -31,12 +31,9 @@
                     <span aria-hidden="true">·</span>
                     ~@_issue.ReadMinutes @Site.T.WeeklyMinutes
                 </p>
-                @if (_other is not null)
+                @if (_other is null)
                 {
-                    <nav class="weekly-lang" aria-label="@Site.T.WeeklyLanguageNavLabel">
-                        <a href="@_issue.Path" lang="@_issue.Language" hreflang="@_issue.Language" aria-current="page">@_issue.LanguageName</a>
-                        <a href="@_other.Path" lang="@_other.Language" hreflang="@_other.Language">@_other.LanguageName</a>
-                    </nav>
+                    <p class="weekly-lang-note" lang="@_issue.Language">@Site.T.WeeklyOnlyInThisLanguage</p>
                 }
             </div>
             @if (_hasSignup)

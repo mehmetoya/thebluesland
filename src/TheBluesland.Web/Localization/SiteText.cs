@@ -17,6 +17,7 @@ public sealed partial class SiteText
     // Language switcher.
     public required string LanguageName { get; init; }
     public required string SwitcherLabel { get; init; }
+    public required string SwitcherNoEditionTitle { get; init; }
 
     // Header and footer.
     public required string NavPrimaryLabel { get; init; }
@@ -128,7 +129,7 @@ public sealed partial class SiteText
     public required string WeeklyIssueWord { get; init; }
     public required string WeeklyIssueDescription { get; init; }
     public required string WeeklyMinutes { get; init; }
-    public required string WeeklyLanguageNavLabel { get; init; }
+    public required string WeeklyOnlyInThisLanguage { get; init; }
     public required string WeeklyIssuesNavLabel { get; init; }
     public required string WeeklyPreviousIssue { get; init; }
     public required string WeeklyNextIssue { get; init; }

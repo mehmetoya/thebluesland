@@ -245,16 +245,16 @@
   color: var(--color-accent);
 }
 
-/* Groups nav + the theme toggle into one flex-wrap unit, so .site-header-inner's space-between
-   layout only ever wraps this whole cluster as a piece - not the toggle alone onto its own line.
-   Fixes a real production bug (2026-09-11, iPhone Pro Max width): wordmark + nav fit on one line
-   by themselves, so the toggle - previously a third independent space-between child - wrapped to
-   a second line completely by itself, flush left. */
-.site-header-controls {
+/* Language switcher + theme toggle: one never-wrapping group, always on the right. The header row
+   is wordmark | nav | tools; tools keep margin-left:auto so that wherever the row wraps they stay
+   right-aligned on the wordmark's line. A real bug twice (2026-09-11 iPhone, 2026-11 Turkish labels):
+   when the toggle was a free-wrapping child it dropped alone onto a third line, flush left. */
+.site-header-tools {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 1.5rem;
+  gap: 0.75rem;
+  margin-left: auto;
 }
 
 .site-nav {
@@ -263,6 +263,24 @@
   gap: 1.5rem;
   /* Intentionally not a token - same reasoning as .site-wordmark above. */
   font-size: 0.9375rem;
+}
+
+/* Below 48rem the nav takes its own full-width line under wordmark + tools. */
+@media (max-width: 48rem) {
+  .site-nav {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 30rem) {
+  .site-nav {
+    gap: 1rem;
+  }
+
+  .site-header-inner {
+    gap: 0.5rem 1rem;
+  }
 }
 
 .site-nav a {
@@ -275,30 +293,42 @@
   color: var(--color-accent);
 }
 
-/* "TR | EN" language switcher (docs/specs/site-i18n.md): quiet by default, the current language is
-   the accent-coloured, non-underlined one (aria-current="true"). */
+/* "TR EN" language switcher (docs/specs/site-i18n.md): each link is a >=44px-tall hit area; the
+   current language is the aria-current="page" one - bold, full-strength text on a subtle pill with
+   an underline, so the state is not carried by weight alone. */
 .lang-switcher {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.125rem;
   font-size: 0.8125rem;
   letter-spacing: 0.04em;
   color: var(--color-text-muted);
 }
 
 .lang-switcher a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
+  border-radius: 0.5rem;
   color: var(--color-text-muted);
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .lang-switcher a:hover {
   color: var(--color-accent);
 }
 
-.lang-switcher a[aria-current="true"] {
+.lang-switcher a[aria-current="page"] {
   color: var(--color-text);
   font-weight: 700;
+  background-color: var(--color-bg-elevated);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.35em;
 }
 
 /* Dark/light toggle button (docs/specs/dark-light-mode-toggle.md section 3): the two SVG icons are
@@ -1239,33 +1269,9 @@ body:has(.filter-mobile-toggle:checked) {
   margin-inline: 0.35em;
 }
 
-.weekly-lang {
-  display: inline-flex;
-  padding: 2px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 999px;
-}
-
-.weekly-lang a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2rem;
-  padding: 0.25rem 0.875rem;
-  border-radius: 999px;
+.weekly-lang-note {
   font-size: var(--font-size-sm);
-  font-weight: 600;
   color: var(--color-text-muted);
-  text-decoration: none;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.weekly-lang a:hover {
-  color: var(--color-text);
-}
-
-.weekly-lang a[aria-current="page"] {
-  background-color: var(--color-accent);
-  color: var(--color-accent-contrast);
 }
 
 .weekly-jump {

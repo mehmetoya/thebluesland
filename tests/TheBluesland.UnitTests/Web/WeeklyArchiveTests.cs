@@ -200,8 +200,11 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
         body.ShouldContain("1 haber");
         body.ShouldContain("~1 dk");
         body.ShouldContain("<span aria-hidden=\"true\">·</span>");
-        body.ShouldContain("lang=\"tr\" hreflang=\"tr\" aria-current=\"page\">Türkçe</a>");
-        body.ShouldContain("href=\"/en/weekly/2026-W46\" lang=\"en\" hreflang=\"en\">English</a>");
+        // One language navigation only (the header switcher), no in-page pill and no note when both editions exist.
+        body.ShouldNotContain("weekly-lang");
+        Regex.Matches(body, "<nav aria-label=\"Dil\"").Count.ShouldBe(1);
+        body.ShouldContain("href=\"/tr/weekly/2026-W46\" lang=\"tr\" hreflang=\"tr\" aria-label=\"Türkçe\" title=\"Türkçe\" aria-current=\"page\">TR</a>");
+        body.ShouldContain("href=\"/en/weekly/2026-W46\" lang=\"en\" hreflang=\"en\" aria-label=\"English\" title=\"English\">EN</a>");
         body.ShouldContain("href=\"#weekly-subscribe\"");
         body.ShouldContain("<link rel=\"canonical\" href=\"https://");
         body.ShouldContain("Her pazartesi e-postanda");
@@ -210,6 +213,34 @@ public sealed class WeeklyArchiveTests : IAsyncLifetime
         // The page language's button is filled; the other one is outlined.
         Regex.IsMatch(body, "class=\"weekly-button\">Türkçe al</button>").ShouldBeTrue();
         Regex.IsMatch(body, "class=\"weekly-button weekly-button-outline\">İngilizce al</button>").ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task An_issue_without_a_translation_has_a_note_and_a_switcher_that_goes_to_the_other_archive()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "weekly-single-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var source = await File.ReadAllTextAsync(Path.Combine(Fixtures, "2026-W46.tr.md"));
+            await File.WriteAllTextAsync(
+                Path.Combine(directory, "2026-W45.tr.md"),
+                source.Replace("issue: 2026-W46", "issue: 2026-W45").Replace("sendDate: 2026-11-09", "sendDate: 2026-11-02"));
+            var (http, _) = await StartAsync(builder => builder.Configuration[WeeklyIssueRepository.ContentDirectoryConfigKey] = directory);
+
+            var body = await BodyAsync(await http.GetAsync("/tr/weekly/2026-W45"));
+
+            body.ShouldContain("<p class=\"weekly-lang-note\" lang=\"tr\">Bu sayı yalnızca Türkçe.</p>");
+            body.ShouldNotContain("weekly-lang\"");
+            Regex.Matches(body, "<nav aria-label=\"Dil\"").Count.ShouldBe(1);
+            // The English link goes to the archive (a link to the issue would 302 straight back here).
+            body.ShouldContain("href=\"/en/weekly\" lang=\"en\" hreflang=\"en\" aria-label=\"English\" title=\"Bu sayının İngilizce sürümü yok; İngilizce arşive git\"");
+            body.ShouldContain("href=\"/tr/weekly/2026-W45\" lang=\"tr\" hreflang=\"tr\" aria-label=\"Türkçe\" title=\"Türkçe\" aria-current=\"page\">TR</a>");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
     }
 
     [Fact]
