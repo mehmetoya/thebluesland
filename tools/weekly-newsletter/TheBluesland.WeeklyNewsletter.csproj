@@ -14,6 +14,8 @@
     <PackageReference Include="YamlDotNet" />
     <!-- RSS 2.0 / Atom parsing (news-ingest spec decision 2, approved 2026-11-10). -->
     <PackageReference Include="System.ServiceModel.Syndication" />
+    <!-- Issue Markdown to e-mail HTML (issue-delivery spec, Design section 4); already the web app's package. -->
+    <PackageReference Include="Markdig" />
   </ItemGroup>
 
   <ItemGroup>

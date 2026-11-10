@@ -1,0 +1,21 @@
+# TheBluesland Weekly delivery (docs/specs/weekly-newsletter-issue-delivery.md, Design section 5).
+# Nothing here is secret; the only secret is KIT_API_KEY, held by newsletter-deliver.yml alone.
+
+# Send times are wall-clock times in this zone on the issue's Monday (map: approved schedule).
+timeZone: Europe/Istanbul
+
+# A merge closer than this to a send time misses that week (spec section 2).
+minimumLeadMinutes: 2
+
+# Kit's "public" flag publishes a broadcast to Kit's own web page. Our archive is /weekly.
+kitPublic: false
+
+languages:
+  tr:
+    sendTime: "08:00"
+    # Kit tag "weekly-tr"; set after the Kit setup (T0). Until then "deliver" refuses to run.
+    kitTagId: null
+  en:
+    sendTime: "15:00"
+    # Kit tag "weekly-en"; set after the Kit setup (T0).
+    kitTagId: null

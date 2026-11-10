@@ -1,0 +1,69 @@
+name: Newsletter deliver
+
+# docs/specs/weekly-newsletter-issue-delivery.md: schedules every merged issue in
+# content/weekly/ as a Kit broadcast for its send time (TR Monday 08:00, EN Monday 15:00
+# Europe/Istanbul, from tools/weekly-newsletter/delivery.yml). Kit's own scheduler sends it, so
+# GitHub's cron delays never move a send time. main is the source of truth: an edit before the send
+# updates the broadcast, a revert cancels it, a sent broadcast is never touched, and a merge after
+# the cut-off does not go out that week (ADR-0006 madde 2; map schedule).
+#
+# Secrets: KIT_API_KEY only, on the single Deliver step. No Gemini, no database, no write access:
+# this workflow reads main and talks to Kit. Subscriber data never passes through it. Enforced by
+# tests/TheBluesland.UnitTests/Workflows/NewsletterDeliverWorkflowTests.cs.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "content/weekly/**"
+      - "tools/weekly-newsletter/delivery.yml"
+  schedule:
+    # 30 minutes before each send (Monday 05:00 and 12:00 UTC): repairs a failed push run.
+    - cron: "30 4 * * 1"
+    - cron: "30 11 * * 1"
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Change Kit (otherwise a dry run that only shows the plan)."
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: newsletter-deliver
+  cancel-in-progress: false
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Build
+        run: dotnet build tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release
+
+      # Inputs reach the shell only as environment variables, never interpolated into the script.
+      - name: Deliver
+        env:
+          KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
+          EVENT_NAME: ${{ github.event_name }}
+          APPLY_INPUT: ${{ inputs.apply }}
+        run: |
+          set -euo pipefail
+          # Issue text reaches the log; stop "::" lines in it from running as workflow commands.
+          stop_token="$(openssl rand -hex 16)"
+          echo "::stop-commands::${stop_token}"
+          args=(deliver --content "$GITHUB_WORKSPACE/content/weekly")
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$APPLY_INPUT" != "true" ]; then args+=(--dry-run); fi
+          dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "::${stop_token}::"

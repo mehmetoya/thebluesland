@@ -1,5 +1,6 @@
 using System.Globalization;
 using TheBluesland.WeeklyNewsletter.Clustering;
+using TheBluesland.WeeklyNewsletter.Delivery;
 using TheBluesland.WeeklyNewsletter.Drafting;
 using TheBluesland.WeeklyNewsletter.Ingest;
 using TheBluesland.WeeklyNewsletter.Ranking;
@@ -9,7 +10,8 @@ using TheBluesland.WeeklyNewsletter.Review;
 // subcommand: "ingest" (docs/specs/weekly-newsletter-news-ingest.md), "cluster"
 // (docs/specs/weekly-newsletter-story-clustering.md) and "rank"
 // (docs/specs/weekly-newsletter-story-ranking.md); "draft" (docs/specs/weekly-newsletter-issue-drafting.md);
-// "issue-week" and "validate-weekly" (docs/specs/weekly-newsletter-issue-review.md). Runs only from
+// "issue-week" and "validate-weekly" (docs/specs/weekly-newsletter-issue-review.md); "deliver"
+// (docs/specs/weekly-newsletter-issue-delivery.md). Runs only from
 // GitHub Actions or Mehmet's own machine, from the repository root.
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>
@@ -27,6 +29,7 @@ const string Usage = """
               (default window: the 7 days before the last Sunday 10:00 Europe/Istanbul; default out: content/weekly)
       issue-week [--from <date>] [--to <date>]   (prints the issue id "draft" would write, e.g. 2026-W47)
       validate-weekly [path/to/content/weekly]
+      deliver [--content <dir>] [--dry-run]   (schedules merged issues in Kit; default content: content/weekly)
     """;
 
 var toolDirectory = Path.Combine(Directory.GetCurrentDirectory(), "tools", "weekly-newsletter");
@@ -52,6 +55,41 @@ switch (args.FirstOrDefault())
 
             Console.WriteLine(problems.Count == 0 ? $"content/weekly is valid ({directory})." : $"{problems.Count} problem(s) in {directory}.");
             return problems.Count == 0 ? 0 : 1;
+        }
+
+    case "deliver":
+        {
+            var contentDirectory = Path.Combine(Directory.GetCurrentDirectory(), "content", "weekly");
+            var dryRun = false;
+            for (var i = 1; i < args.Length; i++)
+            {
+                if (args[i] == "--dry-run")
+                {
+                    dryRun = true;
+                }
+                else if (args[i] == "--content" && i + 1 < args.Length && args[i + 1].Length > 0)
+                {
+                    contentDirectory = Path.GetFullPath(args[++i]);
+                }
+                else
+                {
+                    Console.Error.WriteLine($"Unrecognized or invalid argument '{args[i]}'.");
+                    Console.Error.WriteLine(Usage);
+                    return 1;
+                }
+            }
+
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(1) };
+            return await DeliverCommand.RunAsync(
+                toolDirectory,
+                contentDirectory,
+                Environment.GetEnvironmentVariable(KitClient.ApiKeyVariable),
+                dryRun,
+                httpClient,
+                TimeProvider.System,
+                Console.Out,
+                Console.Error,
+                cts.Token);
         }
 
     case "cluster" or "rank" or "draft" or "issue-week":
