@@ -20,8 +20,8 @@ public sealed record DraftLanguage(
     public const int MaxPreview = 90;
 
     /// <summary>
-    /// The note issues carried before 2026-11-10 ("edited by"). Merge is approval only, so new issues
-    /// say "selected and approved"; already merged files stay valid.
+    /// The note the first drafts carried ("edited by"). Issues ending with it stay valid; new issues
+    /// end with <see cref="AiNote"/>, the credit line (ADR-0006 madde 4).
     /// </summary>
     public string LegacyAiNote => Code == "tr"
         ? "Bu sayı yapay zekâ yardımıyla hazırlandı ve TheBluesland editörü tarafından düzenlendi."
@@ -34,7 +34,7 @@ public sealed record DraftLanguage(
         "Neden önemli:",
         "Kaynaklar:",
         "Yedek",
-        "Bu sayı yapay zekâ yardımıyla yazıldı; TheBluesland editörü seçti ve onayladı.",
+        "Bu sayı TheBluesland ve Gemini'nin elinden.",
         "Beş haber, beş dakika.",
         "Haftaya pazartesi yine buradayız. İyi dinlemeler.");
 
@@ -45,7 +45,7 @@ public sealed record DraftLanguage(
         "Why it matters:",
         "Sources:",
         "Backup",
-        "Written with AI assistance; selected and approved by TheBluesland's editor.",
+        "This issue comes from TheBluesland and Gemini.",
         "Five stories, five minutes.",
         "See you next Monday. Happy listening.");
 

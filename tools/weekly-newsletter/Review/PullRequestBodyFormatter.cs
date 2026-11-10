@@ -29,7 +29,8 @@ public static class PullRequestBodyFormatter
             head.Append(CultureInfo.InvariantCulture, $"> ⚠️ **{total} uyarı var.** Merge'ten önce aşağıdaki \"Neye bakmalı\" tablolarını bitir.\n\n");
         }
 
-        head.Append("**Merge = onay.** Metni bu PR'da düzelt → **Ready for review** → CI yeşil → merge. ");
+        head.Append(PublishDecision.Decide(drafts, card).ToMarkdown());
+        head.Append("Elle müdahale gerekirse: metni bu PR'da düzelt → **Ready for review** → CI yeşil → merge. ");
         head.Append("TR sayısı 08:00'e, EN sayısı 15:00'e kadar merge edilmezse o dil bu hafta gitmez.\n\n");
         head.Append("Bir başlığı değiştirirsen front matter'daki `headline` değerini de aynı yap; CI ikisini karşılaştırır.\n\n");
 
@@ -40,6 +41,9 @@ public static class PullRequestBodyFormatter
             head.Append(CultureInfo.InvariantCulture,
                 $"#### {draft.Language.Code.ToUpperInvariant()} · {(count == 0 ? "✅ uyarı yok" : $"⚠️ {count} uyarı")} · `{draft.Model}`");
             head.Append(draft.FellBackFrom is { } busy ? $" (`{busy}` yanıt vermedi)\n\n" : "\n\n");
+            head.Append(DraftReportFormatter.RepairLine(draft.Repair, turkish: true));
+            head.Append(draft.Regenerated ? "İlk taslak kontrollerden geçmedi; bu metin bir kez yeniden yazma + düzeltme + kontrol turunun sonucudur.\n\n" : string.Empty);
+            head.Append(DraftChecker.ToMarkdown(draft.Check));
             head.Append(DraftReportFormatter.WarningsTable(card, draft.Warnings));
         }
 

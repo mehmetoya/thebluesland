@@ -8,7 +8,8 @@ namespace TheBluesland.UnitTests.Workflows;
 /// <summary>
 /// docs/specs/weekly-newsletter-issue-review.md, Design sections 1-3, and ADR-0006 madde 5: the AI
 /// key and the right to write the repository never share a job; the bot writes only a newsletter/
-/// branch, only as a draft PR, and never approves or merges; CI runs when Mehmet marks it ready.
+/// branch, never approves, and enables auto-merge (never an admin merge) only when the tool's decision file
+/// says true and the optional WEEKLY_BOT_TOKEN exists; otherwise a draft PR stays for Mehmet (label needs-human).
 /// </summary>
 public sealed partial class NewsletterDraftWorkflowTests
 {
@@ -42,13 +43,39 @@ public sealed partial class NewsletterDraftWorkflowTests
     }
 
     [Fact]
-    public void The_ai_key_and_database_secret_live_only_on_the_draft_step_and_open_pr_has_no_secret()
+    public void The_ai_key_and_database_secret_live_only_on_the_draft_step_and_open_pr_has_only_the_bot_token()
     {
         var draftStep = Between(DraftJob, "- name: Draft\n", "- name: Upload draft");
 
-        SecretReference().Matches(Yaml).Select(match => match.Groups[1].Value).Order().ShouldBe(["GEMINI_API_KEY", "NEON_NEWSLETTER_CONNECTION_STRING"]);
+        SecretReference().Matches(Yaml).Select(match => match.Groups[1].Value).Distinct().Order().ShouldBe(["GEMINI_API_KEY", "NEON_NEWSLETTER_CONNECTION_STRING", "WEEKLY_BOT_TOKEN"]);
         SecretReference().Matches(draftStep).Count.ShouldBe(2);
-        OpenPrJob.ShouldNotContain("secrets.");
+        DraftJob.ShouldNotContain("WEEKLY_BOT_TOKEN");
+        // The job that can write the repository never holds the AI key (ADR-0006 madde 5).
+        SecretReference().Matches(OpenPrJob).Select(match => match.Groups[1].Value).Distinct().ShouldBe(["WEEKLY_BOT_TOKEN"]);
+        OpenPrJob.ShouldNotContain("GEMINI");
+    }
+
+    [Fact]
+    public void Auto_merge_needs_the_decision_file_and_the_bot_token_and_never_bypasses_protection()
+    {
+        // GITHUB_TOKEN events start no workflows: without the PAT the PR would get no CI and auto-merge would wait forever.
+        OpenPrJob.ShouldContain("GH_TOKEN: ${{ secrets.WEEKLY_BOT_TOKEN || github.token }}");
+        OpenPrJob.ShouldContain("token: ${{ secrets.WEEKLY_BOT_TOKEN || github.token }}");
+        OpenPrJob.ShouldContain("jq -r '.autoMerge'");
+        OpenPrJob.ShouldContain("if [ \"$auto_merge\" = \"true\" ] && [ \"$HAS_BOT_TOKEN\" = \"true\" ]; then publish=true; fi");
+        OpenPrJob.ShouldContain("gh pr merge \"$url\" --auto --merge");
+        Regex.Matches(Yaml, @"gh pr merge[^\n]*").Select(match => match.Value).ShouldAllBe(command => command.Contains("--auto --merge", StringComparison.Ordinal));
+        DraftJob.ShouldNotContain("gh pr merge");
+        Yaml.ShouldNotContain("--admin");
+        Yaml.ShouldNotContain("gh pr review");
+        Yaml.ShouldNotContain("--approve");
+        // A draft PR with the label and a comment is the human path.
+        OpenPrJob.ShouldContain("gh pr create --draft --base main");
+        OpenPrJob.ShouldContain("gh pr edit \"$url\" --add-label needs-human");
+        OpenPrJob.ShouldContain("gh pr comment \"$url\" --body-file");
+        // Without the secret the job only warns and leaves the draft for a manual merge.
+        OpenPrJob.ShouldContain("::warning title=WEEKLY_BOT_TOKEN is not set::");
+        OpenPrJob.IndexOf("gh pr merge", StringComparison.Ordinal).ShouldBeGreaterThan(OpenPrJob.IndexOf("url=\"$(gh pr create", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -57,9 +84,8 @@ public sealed partial class NewsletterDraftWorkflowTests
         OpenPrJob.ShouldContain("if ! [[ \"$WEEK\" =~ ^[0-9]{4}-W[0-9]{2}$ ]]; then");
         OpenPrJob.ShouldContain("branch=\"newsletter/$WEEK\"");
         GitPush().Matches(Yaml).Select(match => match.Value.Trim()).ShouldBe(["git push origin \"HEAD:refs/heads/$branch\""]);
-        OpenPrJob.ShouldContain("gh pr create --draft --base main");
+        OpenPrJob.ShouldContain("gh pr create");
         OpenPrJob.ShouldContain("validate-weekly");
-        Yaml.ShouldNotContain("gh pr merge");
         Yaml.ShouldNotContain("gh pr review");
         Yaml.ShouldNotContain("--approve");
         Yaml.ShouldNotContain("git push --force");
@@ -88,7 +114,7 @@ public sealed partial class NewsletterDraftWorkflowTests
 
         OpenPrJob.ShouldContain("gh pr list --head \"$branch\" --state all");
         OpenPrJob.ShouldContain("git switch -c \"$branch\" FETCH_HEAD");
-        OpenPrJob.IndexOf("gh pr list --head", StringComparison.Ordinal).ShouldBeLessThan(OpenPrJob.IndexOf("gh pr create --draft", StringComparison.Ordinal));
+        OpenPrJob.IndexOf("gh pr list --head", StringComparison.Ordinal).ShouldBeLessThan(OpenPrJob.IndexOf("url=\"$(gh pr create", StringComparison.Ordinal));
         OpenPrJob.ShouldNotContain("--force");
     }
 

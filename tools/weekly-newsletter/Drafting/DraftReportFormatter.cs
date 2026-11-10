@@ -5,6 +5,9 @@ using TheBluesland.WeeklyNewsletter.Reporting;
 namespace TheBluesland.WeeklyNewsletter.Drafting;
 
 /// <param name="FellBackFrom">The default model that was unavailable, when <paramref name="Model"/> is the fallback.</param>
+/// <param name="Repair">What the self-repair pass did; null when it was not part of the run.</param>
+/// <param name="Check">The final checker's verdict; null when no checker ran.</param>
+/// <param name="Regenerated">True when the first draft failed the checks and one regenerate + repair + check cycle was tried.</param>
 public sealed record LanguageDraft(
     DraftLanguage Language,
     string IssueMarkdown,
@@ -12,7 +15,10 @@ public sealed record LanguageDraft(
     DraftResponse Text,
     IReadOnlyList<DraftWarning> Warnings,
     string Model,
-    string? FellBackFrom = null);
+    string? FellBackFrom = null,
+    RepairReport? Repair = null,
+    CheckVerdict? Check = null,
+    bool Regenerated = false);
 
 /// <summary>
 /// The job summary for a draft run: which issue, the warnings Mehmet should check (story by
@@ -56,6 +62,9 @@ public static class DraftReportFormatter
             markdown.Append(draft.FellBackFrom is { } busy
                 ? string.Create(CultureInfo.InvariantCulture, $" because `{busy}` was unavailable (busy or out of free quota).\n\n")
                 : ".\n\n");
+            markdown.Append(RepairLine(draft.Repair, turkish: false));
+            markdown.Append(draft.Regenerated ? "The first draft failed the checks; this is the result of one regenerate + repair + check cycle.\n\n" : string.Empty);
+            markdown.Append(DraftChecker.ToMarkdown(draft.Check));
             markdown.Append(WarningsTable(card, draft.Warnings));
 
             markdown.Append(CultureInfo.InvariantCulture, $"<details><summary>{draft.Language.Code.ToUpperInvariant()} issue</summary>\n\n");
@@ -65,6 +74,31 @@ public static class DraftReportFormatter
         }
 
         return markdown.ToString();
+    }
+
+    /// <summary>
+    /// The self-repair outcome as one line ending in a blank line (issue-drafting spec, Design section 3a),
+    /// "Otomatik düzeltme: 7 uyarı → 3 uyarı" for Mehmet's PR body (<paramref name="turkish"/>) or its English twin for the job summary; empty when there is no report.
+    /// </summary>
+    public static string RepairLine(RepairReport? repair, bool turkish)
+    {
+        if (repair is null)
+        {
+            return string.Empty;
+        }
+
+        var (label, unit, none, kept, failed) = turkish
+            ? ("Otomatik düzeltme", "uyarı", "gerekmedi", "ilk taslak korundu", "düzeltme isteği başarısız")
+            : ("Automatic repair", "warnings", "not needed", "original draft kept", "repair request failed");
+        var change = string.Create(CultureInfo.InvariantCulture, $"{repair.Before} {unit} → {repair.After} {unit}");
+        var text = repair.Status switch
+        {
+            RepairStatus.NotNeeded => none,
+            RepairStatus.Accepted => change,
+            RepairStatus.Rejected => $"{change}; {kept}",
+            _ => $"{failed} ({MarkdownText.Cell(repair.Failure)}); {kept}",
+        };
+        return $"{label}: {text}\n\n";
     }
 
     /// <summary>The warnings as a "where / what to check" table, the story named by its lead headline; empty when there are none.</summary>

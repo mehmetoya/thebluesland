@@ -11,7 +11,7 @@ namespace TheBluesland.WeeklyNewsletter.Review;
 /// Checks <c>content/weekly/</c> before an issue reaches <c>main</c> (issue-review spec, Design
 /// section 4): file name and front matter agree, the send date is the issue week's Monday, five
 /// stories each with an https source, body headings match the front matter in order, every story
-/// shows its source links, the AI note closes the issue, and no backups or review file is present.
+/// shows its source links, the credit line closes issues sent from <see cref="CreditRequiredFrom"/> on, and no backups or review file is present.
 /// Deterministic, no network. Messages never quote the issue's prose.
 /// </summary>
 /// <summary>A valid issue file as issue-delivery reads it.</summary>
@@ -20,6 +20,9 @@ public sealed record WeeklyIssue(string Id, DraftLanguage Language, string Title
 public static partial class WeeklyIssueValidator
 {
     public const int Stories = 5;
+
+    /// <summary>The first send date whose issue must carry the credit line (2026-W47, the first automatically published issue).</summary>
+    public static readonly DateOnly CreditRequiredFrom = new(2026, 11, 16);
 
     // Unknown keys are allowed: issue-delivery and weekly-archive may add front matter fields
     // (issue-drafting spec, Design section 4).
@@ -155,8 +158,18 @@ public static partial class WeeklyIssueValidator
             }
         }
 
-        // The AI note is no longer required (ADR-0006 madde 4, 2026-11-10); older issues that end
-        // with it stay valid.
+        // The credit line under the outro is the transparency disclosure (ADR-0006 madde 4, 2026-11-10):
+        // new issues carry it; earlier issues (the legacy note, or no note) stay valid.
+        if (front.SendDate is { } sendText
+            && DateOnly.TryParseExact(sendText, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var sendDate)
+            && sendDate >= CreditRequiredFrom)
+        {
+            Require(
+                problems,
+                body.TrimEnd().EndsWith($"*{language.AiNote}*", StringComparison.Ordinal),
+                $"the issue must end with the credit line *{language.AiNote}* (ADR-0006 madde 4).");
+        }
+
         if (problems.Count == 0)
         {
             issue = new WeeklyIssue(issueId, language, front.Title!.Trim(), DateOnly.ParseExact(monday, "yyyy-MM-dd", CultureInfo.InvariantCulture), body.TrimStart('\n'), Clean(front.Subject), Clean(front.Preview), Clean(front.Playlist));

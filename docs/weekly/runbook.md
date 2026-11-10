@@ -14,7 +14,24 @@ Kaynak: Operasyon ve Yayın Odası raporu (2026-11-10). Ayrıntılı kurallar:
 - Bir kez `gh workflow run newsletter-deliver.yml -f task=smoke` çalıştır: Kit'te taslak bir
   broadcast oluşturup siler; oluşturma yolunun çalıştığını gösterir.
 
-## Pazar
+## Pazar — otomatik yayın (2026-11-10 akşamından itibaren)
+
+**Varsayılan: yapılacak bir şey yok.** Taslak workflow'u metni yazar, kendini düzeltir, bir "son
+kontrolcü" Gemini çağrısından geçirir; iki dil de geçerse PR açılır ve otomatik merge etkinleşir (CI
+yeşil olunca kendiliğinden merge edilir, gönderim kendiliğinden zamanlanır). Yalnız şunlarda dokun:
+
+- PR'da **`needs-human`** etiketi varsa: PR yorumu nedenini söyler (kontrolcü geçmedi, engelleyen
+  doğrulama problemi, hafif modelle yazıldı ya da otomatik merge açılamadı). Metni düzeltip aşağıdaki
+  elle yola (3–4. adım) dön ya da PR'ı kapat; **merge edilmezse o hafta hiçbir dil gitmez**.
+- Otomatik merge beklemede kalırsa (PR yeşil ama merge olmuyor): `main` ilerlemiş olabilir (strict
+  koruma) → `gh pr update-branch <n>`; CI yeşil olunca merge kendiliğinden olur.
+- Kurulum (bir kez): repo secret'ı `WEEKLY_BOT_TOKEN` = yalnız bu repoya sınırlı fine-grained PAT,
+  yetkiler **Contents: read/write** ve **Pull requests: read/write**. Secret yoksa workflow uyarı
+  verir ve eski yolu izler (draft PR, elle merge). `GITHUB_TOKEN` ile açılan PR'da CI koşmaz ve
+  merge deploy/gönderimi başlatmaz; bu yüzden PAT gerekir. Repo ayarında "Allow auto-merge" açık olmalı.
+  Branch protection gevşetilmez.
+
+## Pazar — elle yol (needs-human ya da secret yok)
 
 1. **11:15** Taslak workflow'u kendiliğinden çalışır (önce haberleri toplar, sonra yazar).
    **14:00** güvenlik denemesi, dal zaten varsa hiçbir şey yapmaz.

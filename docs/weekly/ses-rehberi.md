@@ -64,8 +64,9 @@ Haber × 5    Başlık (≤ 70 karakter): kim + ne oldu. Okurun tanımayabilece�
              2–3 cümle: ne oldu
              Neden önemli: 1–2 kısa cümle, somut sonuç
              Kaynaklar: (kod ekler)
-Kapanış      1–2 kısa cümle. YZ notu ya da imza yazılmaz; kod ekler.
-Not          Yok. Sayının altına AI notu konmaz (ADR-0006 madde 4, 2026-11-10).
+Kapanış      1–2 kısa cümle. İmza ve YZ notu yazılmaz; modelin kapanışında YZ'den söz eden cümle silinir.
+Kredi        Kod ekler (model yazmaz): TR "Bu sayı TheBluesland ve Gemini'nin elinden." / EN "This issue
+             comes from TheBluesland and Gemini." Kapanışın altında tek satır (ADR-0006 madde 4).
 ```
 
 ## Türkçe
