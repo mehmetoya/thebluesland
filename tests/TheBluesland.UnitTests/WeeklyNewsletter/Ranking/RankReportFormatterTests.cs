@@ -20,6 +20,12 @@ public sealed class RankReportFormatterTests
     }
 
     [Fact]
+    public void Why_shows_the_brand_bonus_when_it_applied()
+    {
+        RankReportFormatter.Why(new RankedStory(Story("Alma Brightwater dies", sources: 2), 4.5, "obituary", 1.5, true, BrandBonus: 1)).ShouldBe("2 sources · obituary +1.5 · brand +1 = 4.50");
+    }
+
+    [Fact]
     public void ToMarkdown_shows_headline_picks_backups_and_passed_over_stories()
     {
         var pick = new RankedStory(Story("Alma Brightwater | dies <b>", sources: 2), 3.5, "obituary", 1.5, true);

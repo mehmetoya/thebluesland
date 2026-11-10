@@ -23,7 +23,7 @@ public sealed class FactCardAndPromptTests
     [Fact]
     public void Prompt_contains_the_voice_guide_the_language_and_every_story_key()
     {
-        var prompt = DraftPromptBuilder.Build(DraftLanguage.Turkish, VoiceGuide(), Card);
+        var prompt = DraftPromptBuilder.Build(DraftLanguage.Turkish, VoiceGuide(), Card, new DateOnly(2026, 11, 16));
 
         prompt.ShouldContain(VoiceGuide());
         prompt.ShouldContain("Write the issue in Turkish");
@@ -34,9 +34,31 @@ public sealed class FactCardAndPromptTests
     [Fact]
     public void Prompt_never_contains_a_url()
     {
-        var factCardPart = DraftPromptBuilder.Build(DraftLanguage.English, "guide", Card);
+        var factCardPart = DraftPromptBuilder.Build(DraftLanguage.English, "guide", Card, new DateOnly(2026, 11, 16));
 
         factCardPart.ShouldNotContain("http");
         factCardPart.ShouldNotContain("www.");
+    }
+
+    [Fact]
+    public void Prompt_carries_the_send_date_and_the_content_rules_the_editorial_review_asked_for()
+    {
+        var prompt = DraftPromptBuilder.Build(DraftLanguage.Turkish, "guide", Card, new DateOnly(2026, 11, 16));
+
+        prompt.ShouldContain("The issue is sent on 2026-11-16. Events before that date are past: use past tense.");
+        prompt.ShouldContain("Never say \"this week\"");
+        prompt.ShouldContain("Both language versions carry the same facts; only the style differs.");
+        prompt.ShouldContain("a concrete consequence or comparison");
+        prompt.ShouldContain("who + what happened");
+        prompt.ShouldContain("Do not write the AI note or a signature; the code adds it.");
+        prompt.ShouldContain("ending with the sentence \"Beş haber, beş dakika.\"");
+        prompt.ShouldContain("at most 60 characters");
+        prompt.ShouldContain("at most 90 characters");
+    }
+
+    [Fact]
+    public void Response_schema_asks_for_subject_and_preview()
+    {
+        System.Text.Json.JsonSerializer.Serialize(DraftPromptBuilder.ResponseSchema).ShouldContain("\"required\":[\"intro\",\"outro\",\"subject\",\"preview\",\"stories\"]");
     }
 }

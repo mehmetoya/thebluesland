@@ -32,7 +32,9 @@ internal static partial class DraftingTestData
     public static FactCard W46Card()
     {
         var clustering = ClusteringOptionsLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/clustering.yml"))).Options!;
-        var ranking = RankingOptionsLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/ranking.yml"))).Options!;
+        // The approved sample issue (voice guide) is mapped onto the picks in their W46 order, which
+        // predates the brand bonus; ranking without it keeps that calibration stable.
+        var ranking = RankingOptionsLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/ranking.yml"))).Options! with { BrandBonus = 0 };
         var names = FeedConfigLoader.Parse(File.ReadAllText(RepoFiles.Find("tools/weekly-newsletter/feeds.yml"))).Feeds.ToDictionary(feed => feed.Id, feed => feed.Name);
         var result = StoryRanker.Rank(StoryClusterer.Cluster(W46Articles(), clustering), ranking, clustering);
         return FactCard.From(result, names, clustering.SummaryCharacters);
@@ -78,8 +80,13 @@ internal static partial class DraftingTestData
             var story = StoryParagraph().Match(paragraph);
             return new DraftStory(picks[index].Key, story.Groups["headline"].Value.Trim(), story.Groups["body"].Value.Trim(), story.Groups["why"].Value.Trim());
         }).ToList();
-        return new DraftResponse(paragraphs[1], paragraphs[7], stories);
+        var subject = SampleLine(section, label: languageHeading == "English" ? "Subject" : "Konu");
+        var preview = SampleLine(section, label: languageHeading == "English" ? "Preview" : "Önizleme");
+        return new DraftResponse(paragraphs[1], paragraphs[7], stories, subject, preview);
     }
+
+    private static string SampleLine(string section, string label) =>
+        section.Split('\n').Single(line => line.StartsWith($"{label}: `", StringComparison.Ordinal))[(label.Length + 3)..].TrimEnd('`');
 
     [GeneratedRegex(@"^\*\*(?<headline>[^*]+)\*\*\s*(?<body>.+?)\s*\*[^*]+:\*\s*(?<why>.+)$")]
     private static partial Regex StoryParagraph();
@@ -88,8 +95,10 @@ internal static partial class DraftingTestData
     public static string FakeAnswer(IEnumerable<string> keys) =>
         JsonSerializer.Serialize(new
         {
-            intro = "Five stories this week.",
+            intro = "Five stories, five minutes.",
             outro = "See you next Monday.",
+            subject = "Two hooks · TBL Weekly",
+            preview = "A different preview line.",
             stories = keys.Select(key => new { key, headline = $"Headline {key}", body = "Body text.", whyItMatters = "It matters." }),
         });
 

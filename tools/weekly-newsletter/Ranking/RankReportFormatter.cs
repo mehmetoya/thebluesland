@@ -56,12 +56,13 @@ public static class RankReportFormatter
         return markdown.ToString();
     }
 
-    /// <summary>"3 sources · obituary +1.5 = 4.50" - the reason a story is where it is.</summary>
+    /// <summary>"3 sources · obituary +1.5 · brand +1 = 5.50" - the reason a story is where it is.</summary>
     public static string Why(RankedStory story)
     {
         var sources = story.Story.SourceCount == 1 ? "1 source" : $"{story.Story.SourceCount} sources";
         var bonus = story.Bonus > 0 ? string.Create(CultureInfo.InvariantCulture, $" · {story.Type} +{story.Bonus:0.##}") : $" · {story.Type}";
-        return string.Create(CultureInfo.InvariantCulture, $"{sources}{bonus} = {story.Score:0.00}");
+        var brand = story.BrandBonus > 0 ? string.Create(CultureInfo.InvariantCulture, $" · brand +{story.BrandBonus:0.##}") : string.Empty;
+        return string.Create(CultureInfo.InvariantCulture, $"{sources}{bonus}{brand} = {story.Score:0.00}");
     }
 
     private static void Row(StringBuilder markdown, string label, RankedStory story, IReadOnlyDictionary<string, string> sourceNames)

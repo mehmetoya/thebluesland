@@ -33,7 +33,7 @@ public static class IssueEmailRenderer
         }
 
         var html = IssueEmailLayout.Build(issue, document);
-        return new IssueEmail(issue.Title, Preview(issue.Body), html);
+        return new IssueEmail(issue.Subject ?? issue.Title, issue.Preview ?? Preview(issue.Body), html);
     }
 
     /// <summary>The intro's first sentence, as plain text, for the inbox preview line.</summary>

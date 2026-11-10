@@ -24,6 +24,15 @@ public sealed class RssFeedClientTests
     [InlineData("stereogum")]
     [InlineData("consequence")]
     [InlineData("music-business-worldwide")]
+    [InlineData("american-blues-scene")]
+    [InlineData("blues-rock-review")]
+    [InlineData("ultimate-classic-rock")]
+    [InlineData("louder")]
+    [InlineData("american-songwriter")]
+    [InlineData("jazztimes")]
+    [InlineData("guardian-music")]
+    [InlineData("npr-music")]
+    [InlineData("the-quietus")]
     public void Parse_real_fixture_returns_every_item_with_title_absolute_url_and_utc_date(string feedId)
     {
         var items = ParseFixture(feedId);
@@ -43,6 +52,15 @@ public sealed class RssFeedClientTests
     [InlineData("stereogum")]
     [InlineData("consequence")]
     [InlineData("music-business-worldwide")]
+    [InlineData("american-blues-scene")]
+    [InlineData("blues-rock-review")]
+    [InlineData("ultimate-classic-rock")]
+    [InlineData("louder")]
+    [InlineData("american-songwriter")]
+    [InlineData("jazztimes")]
+    [InlineData("guardian-music")]
+    [InlineData("npr-music")]
+    [InlineData("the-quietus")]
     public void Parse_real_fixture_summaries_are_plain_text_without_wordpress_boilerplate(string feedId)
     {
         var summaries = ParseFixture(feedId).Select(item => item.Summary).OfType<string>().ToList();

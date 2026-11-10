@@ -51,6 +51,33 @@ public sealed class RankingOptionsLoaderTests
     }
 
     [Fact]
+    public void Parse_rejects_bad_brand_settings()
+    {
+        var result = RankingOptionsLoader.Parse(
+            """
+            picks: 5
+            backups: 3
+            coverageWeight: 1
+            maxPerType: 2
+            relatedThreshold: 0.15
+            genreKeywords: [rock]
+            genreSwapMinRatio: 0.7
+            brandBonus: -1
+            brandKeywords: [Blues]
+            coreSources: [Louder_Sound]
+            types:
+              - name: obituary
+                bonus: 1.5
+                phrases: [dies]
+            """);
+
+        result.IsValid.ShouldBeFalse();
+        result.Errors.ShouldContain("brandBonus must be zero or positive.");
+        result.Errors.ShouldContain(error => error.Contains("brandKeywords: 'Blues'", StringComparison.Ordinal));
+        result.Errors.ShouldContain(error => error.Contains("coreSources: 'Louder_Sound'", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Parse_rejects_unknown_keys()
     {
         RankingOptionsLoader.Parse("pickz: 5").Errors.ShouldHaveSingleItem().ShouldContain("not valid YAML");

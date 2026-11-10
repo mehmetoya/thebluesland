@@ -44,6 +44,19 @@ public static partial class RankingOptionsLoader
             errors.Add($"genreKeywords: '{word}' must be lowercase letters/digits separated by single spaces.");
         }
 
+        Require(document?.BrandBonus is >= 0, "brandBonus must be zero or positive.", errors);
+        var brand = (document?.BrandKeywords ?? []).Select(word => word?.Trim() ?? string.Empty).ToList();
+        foreach (var word in brand.Where(word => !Phrase().IsMatch(word)))
+        {
+            errors.Add($"brandKeywords: '{word}' must be lowercase letters/digits separated by single spaces.");
+        }
+
+        var core = (document?.CoreSources ?? []).Select(id => id?.Trim() ?? string.Empty).ToList();
+        foreach (var id in core.Where(id => !SourceId().IsMatch(id)))
+        {
+            errors.Add($"coreSources: '{id}' must be a kebab-case feed id.");
+        }
+
         var types = new List<StoryTypeRule>();
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var (entry, index) in (document?.Types ?? []).Select((entry, index) => (entry, index)))
@@ -81,6 +94,9 @@ public static partial class RankingOptionsLoader
                     document.RelatedThreshold!.Value,
                     genre,
                     document.GenreSwapMinRatio!.Value,
+                    document.BrandBonus!.Value,
+                    brand,
+                    core,
                     types),
                 []);
     }
@@ -95,6 +111,9 @@ public static partial class RankingOptionsLoader
 
     [GeneratedRegex("^[a-z0-9]+( [a-z0-9]+)*$", RegexOptions.CultureInvariant)]
     private static partial Regex Phrase();
+
+    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$", RegexOptions.CultureInvariant)]
+    private static partial Regex SourceId();
 
     private sealed class Document
     {
@@ -111,6 +130,12 @@ public static partial class RankingOptionsLoader
         public List<string?>? GenreKeywords { get; set; }
 
         public double? GenreSwapMinRatio { get; set; }
+
+        public double? BrandBonus { get; set; }
+
+        public List<string?>? BrandKeywords { get; set; }
+
+        public List<string?>? CoreSources { get; set; }
 
         public List<TypeEntry?>? Types { get; set; }
     }

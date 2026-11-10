@@ -32,6 +32,45 @@ public sealed class StoryRankerTests
     }
 
     [Fact]
+    public void Rank_brand_bonus_lets_a_two_source_blues_story_beat_a_three_source_off_brand_one()
+    {
+        var offBrand = Story("Corvid Lane share surprise single Paper Lanterns", sources: 3);                       // 3 + 0
+        var blues = Story("Delta bluesman Alma Brightwater announces farewell residency", sources: 2, hoursAfterMonday: 5); // 2 + 0.25 + 1.5
+        var settings = Settings(picks: 2, backups: 0, brandBonus: 1.5, brandKeywords: ["blues", "bluesman"]);
+
+        var result = Rank(settings, offBrand, blues);
+
+        result.Picks[0].Story.ShouldBe(blues);
+        result.Picks[0].BrandBonus.ShouldBe(1.5);
+        result.Picks[1].BrandBonus.ShouldBe(0);
+        Rank(Settings(picks: 2, backups: 0), offBrand, blues).Picks[0].Story.ShouldBe(offBrand);
+    }
+
+    [Fact]
+    public void Rank_core_source_gives_a_single_source_story_the_brand_bonus_once()
+    {
+        var core = Story("Fennel Avenue reveal acoustic version of Glass Garden", sources: 1) with { Sources = ["louder"] };
+        var plain = Story("Halcyon Drift unveil remix album Static Bloom", sources: 1);
+        var settings = Settings(picks: 2, backups: 0, brandBonus: 1.0, brandKeywords: ["rock"], coreSources: ["louder"]);
+
+        var result = Rank(settings, plain, core);
+
+        result.Picks[0].Story.ShouldBe(core);
+        result.Picks[0].Score.ShouldBe(2.0);
+    }
+
+    [Fact]
+    public void Rank_brand_bonus_does_not_rescue_roundups()
+    {
+        var roundup = Story("Best songs of the week: rock edition", sources: 1);
+
+        var result = Rank(Settings(brandBonus: 1.0, brandKeywords: ["rock"]), roundup);
+
+        result.Picks.ShouldBeEmpty();
+        result.Skipped.ShouldContain(skipped => skipped.Story.Story == roundup && skipped.Story.BrandBonus == 0);
+    }
+
+    [Fact]
     public void Rank_breaks_score_ties_by_article_count_then_recency()
     {
         var older = Story("Fennel Avenue reveal acoustic version of Glass Garden", sources: 2, hoursAfterMonday: 0);

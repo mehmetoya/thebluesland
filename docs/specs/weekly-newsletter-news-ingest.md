@@ -233,7 +233,15 @@ public sealed class NewsIngestService(
 - [x] Workflow 2 saatte bir ve `workflow_dispatch` ile çalışıyor; secret başka workflow'da geçmiyor.
 - [x] 7 kaynağın ingest'i runner'da 60 sn altında bitiyor (yerel gerçek-ağ smoke: ~2,5 sn; runner'da ilk çalışmada teyit edilecek) (paralellik 4, timeout 20 sn → en kötü
       durumda ~40 sn ağ + build hariç).
-- [x] Hacim: ~7 kaynak × ~30 haber/gün × 8 hafta ≈ 12 000 satır (birkaç MB) — Neon ücretsiz
+- [x] **Kaynak genişlemesi (2026-11-10, PR-3):** 7 → 16 kaynak (blues/rock/caz/klasik rock + küresel;
+      ayrıntı ve eklenmeyenler `feeds.yml` başlığında). Süre: paralellik 4, feed başına 20 sn →
+      en kötü durumda 16/4 × 20 = ~80 sn ağ; workflow `timeout-minutes: 10` ve 2 saatlik cron
+      değişmeden yeter. Hız: en dar pencere hâlâ consequence (~4,7 saat); American Songwriter 30 öğe
+      ≈ 19 saat, Louder 50 öğe ≈ 5 gün — hiçbiri 2 saatlik aralığı aşmıyor. Hacim: ~140 öğe/gün × 56 gün
+      ≈ 8 000 satır × en çok 2 KB özet ≈ 20 MB (8 hafta saklama) — Neon ücretsiz katmanında hâlâ
+      ihmal edilebilir. Louder yanıtı ~830 KB (tam metin içeriyor, 10 MB sınırının çok altında; özet
+      yalnızca kısa `description`).
+- [x] Hacim (ilk 7 kaynak): ~7 kaynak × ~30 haber/gün × 8 hafta ≈ 12 000 satır (birkaç MB) — Neon ücretsiz
       katmanında ihmal edilebilir.
 
 ## Kararlar (Mehmet, 2026-11-10)

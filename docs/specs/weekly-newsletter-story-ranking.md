@@ -13,6 +13,10 @@ Modül: `story-ranking` · Map: [weekly-newsletter.md](weekly-newsletter.md) · 
    değiştirebilir (map: issue-review). Hedef, Mehmet'in çoğu hafta hiçbir şeyi değiştirmemesidir.
 4. Kaynak sayısı 7 olduğu için kapsam tek başına zayıf bir sinyaldir. Bu hafta 12 hikâyeyi 2
    kaynak yazmış; aralarındaki farkı ancak "önem" sinyali açar.
+5. **Kaynak dengesi (PR-3, W47 editoryal inceleme):** ilk 7 kaynak ABD/UK pop-indie-sektör medyasıydı;
+   marka (blues/rock kökenli katalog) küresel müzik haberi vaat ediyor. 9 kaynak eklendi (blues,
+   klasik rock, rock/metal, caz, şarkı yazarlığı, Guardian, NPR, Quietus). Niş kaynaklar kapsam
+   sayısında hep kaybeder; bu yüzden §1'de marka uyumu bonusu var.
 
 ## Objective
 
@@ -29,10 +33,21 @@ biri blues/rock/soul/indie *olabilir*, ama global gündem önceliklidir (map: on
 ### 1. Puan
 
 ```
-puan = kapsam + önem
+puan = kapsam + önem + marka
 kapsam = farklı kaynak sayısı × 1.0
 önem   = hikâyenin türüne göre sabit ek puan (ranking.yml)
+marka  = brandBonus (1.25), hikâye marka kelimesi taşıyorsa VEYA çekirdek kaynak yazdıysa; tek sefer
 ```
+
+**Marka uyumu.** `brandKeywords` (blues, rock, guitar, jazz, soul, americana, classic rock…) hikâyenin
+herhangi bir başlığında/özetinde tam kelime olarak geçerse ya da `coreSources` (american-blues-scene,
+blues-rock-review, ultimate-classic-rock, louder, jazztimes) içinden bir kaynak hikâyeyi yazdıysa
+hikâye `brandBonus` alır; birikmez, roundup'lar almaz. Etkisi: 2 kaynaklı blues/rock haberi
+(2 + 1.25 = 3.25), 3 kaynaklı marka-dışı habere (3.0) yetişir; tek kaynaklı çekirdek-kaynak haberi
+2.25'ten başlar, yani kapsam yüzünden hiç yüzeye çıkamama sorunu biter ama haftayı da basmaz
+(tek kaynaklı bir release 2.25 < 3 kaynaklı bir release). Çekirdek liste feeds.yml'de değil
+ranking.yml'dedir (`StoryRanker.Rank` imzası değişmesin diye); bir test her `coreSources` id'sinin
+`feeds.yml`'de etkin olduğunu doğrular. Rapor "Why" sütunu `· brand +1.25` gösterir.
 
 **Tür**, hikâyenin tüm üye başlıklarında aranan anahtar kelimelerle belirlenir. Yukarıdan aşağı ilk
 eşleşen tür kazanır. Kelime listeleri ve ağırlıklar `ranking.yml`'dedir; kod değişmeden ayarlanır.
@@ -41,9 +56,10 @@ eşleşen tür kazanır. Kelime listeleri ve ağırlıklar `ranking.yml`'dedir; 
 |---|---|---:|---|
 | roundup | "best songs", "new albums you should", "selects playlist", "weekly round-up", "the number ones" | hariç | Editoryal liste, haber değil |
 | obituary | dies, died, dead, death (ama "near-death" değil) | +1.5 | Kayıp haberi gündemin en net sinyali |
-| legal | lawsuit, sues, court, trial, judge, charged, contract | +1.0 | Sektörü ve sanatçıları etkiler |
+| legal | lawsuit, sues, court, trial, judge, charged, breach, settlement, injunction, infringement, contract dispute | +1.0 | Sektörü ve sanatçıları etkiler. "contract" tek başına **yok**: "record contract" gibi iş haberleri yasal sayılmaz |
 | industry | charts, streaming, royalties, acquires, deal, earnings, quarter, label | +1.0 | "Neden önemli" açısı en güçlü tür |
 | milestone | diagnosis, cancels, hiatus, reunite, farewell, final show, hall of fame | +0.75 | Kariyer dönüm noktası |
+| videogame | gta, grand theft auto, video game | 0 | Müzik dışı lansman: "festival/concert" geçse de `live` bonusu almaz (live'dan önce denenir) |
 | live | tour, residency, festival, headline | +0.25 | Haftada çok sayıda; ayırt edici değil |
 | release | (eşleşme yoksa) | 0 | Tekil şarkı/video haberleri |
 
@@ -63,6 +79,16 @@ Eşitlikte sırası: daha çok üye haber, sonra daha yeni `LastSeen`, sonra sto
    (`genreSwapMinRatio`). Eşleşen aday yoksa veya puanı düşükse hiçbir şey değişmez.
 4. Yedekler 6.–8. sıradan seçilir: seçilen her şeyle ilişkili olmamalı, tür sınırı yedeklerin kendi içinde uygulanır. Tür slotuyla yerinden çıkan hikâye doğal olarak ilk yedek olur.
 
+### 2b. Bilinen boşluk: geçmiş etkinlik cezası
+
+Gönderim gününden önce bitmiş etkinlikler (ör. cumartesi biten ödül töreni) ceza almıyor. Ucuz ve
+sağlam bir çözüm yok: `StoryRanker.Rank` gönderim tarihini bilmiyor (imza Drafting/Review'da da
+kullanılıyor) ve özetlerdeki tarihler serbest metin ("last night", "Saturday"). Anahtar kelimeyle
+("ceremony", "awards") ceza vermek yaklaşan törenleri de cezalandırırdı. Karar: ranking'de
+yapılmıyor; issue-drafting prompt'una eklenen geçmiş zaman kuralı ve Mehmet'in PR incelemesi
+karşılıyor. Gerekirse sonraki adım: `Rank`'e gönderim tarihi + yalnızca "tonight/last night/on
+<weekday>" kalıpları.
+
 ### 3. Gerçek haftada deneme (2026-W46, prototip)
 
 | # | Hikâye | Puan dökümü |
@@ -75,6 +101,25 @@ Eşitlikte sırası: daha çok üye haber, sonra daha yeni `LastSeen`, sonra sto
 | Y1 | NewJeans sözleşmeleri / HYBE yanıtı | 2 + legal 1.0 = 3.00 |
 | Y2 | McCartney & Ringo, VetsAid'de birlikte | 2 + milestone 0.75 = 2.75 |
 | Y3 | Juan Atkins'in kataloğu ölümünden sonra %1.285 arttı | 1 + obituary 1.5 = 2.50 |
+
+**PR-3 sonrası W46 (marka bonusu + legal düzeltmesi + videogame, kaynaklar hâlâ 7):**
+
+| # | Hikâye | Puan dökümü |
+|---:|---|---|
+| 1 | Richard Lloyd (Television) öldü | 3 + obituary 1.5 + brand 1.25 = 5.75 |
+| 2 | Oasis Hall of Fame törenine katılmayacak | 3 + milestone 0.75 + brand 1.25 = 5.00 |
+| 3 | YouTube yayınları yeniden Billboard listelerinde | 3 + industry 1.0 = 4.00 |
+| 4 | Del Casher (gitar wah-wah pedalı mucidi) öldü | 1 + obituary 1.5 + brand 1.25 = 3.75 |
+| 5 | GTA VI müzik festivali | 3 + videogame 0 = 3.00 |
+| Y1 | Strokes SNL'de | 3.00 |
+| Y2 | McCartney & Ringo, VetsAid | 2.75 (W46 verisinde Louder yok; Louder yazsaydı çekirdek bonusu +1.25 alırdı) |
+| Y3 | Juan Atkins kataloğu | 2.50 |
+
+Gold set bilinçli sonuç: Mehmet'in 5'inin 4'ü ilk 5'te, 5'incisi (Strokes SNL) ilk yedek; 5/5 ilk 8'de.
+Kabul ölçütü (≥4/5, hepsi ilk 8'de) sağlanıyor. Gold set dosyası değiştirilmedi. Fark nedeni: gitar
+alet mucidi ölüm haberi (tek kaynak, ama obituary + marka) Strokes'u (3 kaynak, bonus yok) geçiyor;
+marka bonusunun tasarım gereği yaptığı şey bu. NewJeans sözleşme haberi artık `legal` değil (Y1
+listesinden düştü); GTA VI 3.25'ten 3.0'a indi ama ilk 5'te kalıyor.
 
 - Tür slotu bu hafta devreye girmiyor: ilk 5'te zaten Richard Lloyd (gitarist) ve Oasis var.
 - **Bilinen zayıflık:** anahtar kelime yaklaşımı "Near-Death" geçen Darius Rucker belgesel haberini
@@ -122,6 +167,7 @@ story-clustering ile aynı. Yeni paket ve migration yok.
 
 ```
 tools/weekly-newsletter/ranking.yml
+tests/TheBluesland.UnitTests/WeeklyNewsletter/Ranking/RankingConfigTests.cs   # legal/videogame/brand/coreSources
 tools/weekly-newsletter/Ranking/{RankingOptions, RankingOptionsLoader, StoryTypeClassifier, StoryRanker, RankCommand, RankReportFormatter}.cs
 tests/TheBluesland.UnitTests/WeeklyNewsletter/Ranking/*Tests.cs
 tests/TheBluesland.UnitTests/Fixtures/newsletter-ranking/2026-W46.json

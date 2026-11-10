@@ -1,7 +1,7 @@
 # TheBluesland Weekly - story-ranking ayarlari
 # (docs/specs/weekly-newsletter-story-ranking.md, Design sections 1-2).
 #
-# puan = farkli kaynak sayisi x coverageWeight + hikayenin turunun bonusu.
+# puan = farkli kaynak sayisi x coverageWeight + hikayenin turunun bonusu + marka uyumu bonusu.
 # Tur, hikayenin tum uye basliklarinda aranan ifadelerle belirlenir; listede yukaridan asagi ilk
 # eslesen tur kazanir. Ifadeler kucuk harf, aksansiz, noktalamasiz yazilir ve tam kelime olarak
 # eslesir ("dies" "studies" icinde eslesmez). "exclude" ifadeleri o tur aranmadan once metinden
@@ -20,6 +20,15 @@ relatedThreshold: 0.15
 
 # Ilk 5'te bu kelimelerden hicbiri (baslik + ozet) yoksa, eslesen en iyi aday 5. siradakinin
 # yerine gecer - yalnizca puani 5. siradakinin en az bu orani kadarsa. Kota degil.
+# Marka uyumu (TheBluesland blues/rock kokenli bir katalog): hikaye ya brandKeywords'ten birini
+# baslik/ozetinde tasiyorsa ya da coreSources'taki bir kaynak yazdiysa brandBonus alir (tek sefer,
+# birikmez). Boylece 2 kaynakli blues/rock haberi, 3 kaynakli marka-disi habere yetisir ve nis
+# kaynaklar (tek kaynakli) kapsam sayisinda kaybetmez. Roundup (haber olmayan) hikayeler almaz.
+# coreSources feeds.yml'deki id'lerdir; bir testle feeds.yml'de var olduklari dogrulanir.
+brandBonus: 1.25
+brandKeywords: [blues, bluesman, bluesy, rock, guitar, guitarist, guitarists, jazz, soul, americana, bluegrass, classic rock]
+coreSources: [american-blues-scene, blues-rock-review, ultimate-classic-rock, louder, jazztimes]
+
 genreKeywords: [blues, rock, soul, indie, punk, metal, folk, americana, guitar, guitarist, garage, grunge, shoegaze]
 genreSwapMinRatio: 0.7
 
@@ -33,13 +42,18 @@ types:
     exclude: [near death]
   - name: legal
     bonus: 1.0
-    phrases: [lawsuit, sues, sued, court, trial, judge, charged, arrested, assault, contract, contracts]
+    # "contract" tek basina yok: "record contract" gibi is haberlerini yasal sanmasin; hukuki
+    # baglam sart (lawsuit, court, breach, settlement...).
+    phrases: [lawsuit, sues, sued, court, trial, judge, charged, arrested, assault, breach, settlement, settles, injunction, infringement, lawsuits, litigation, contract dispute]
   - name: industry
     bonus: 1.0
     phrases: [chart, charts, streaming, royalties, royalty, acquires, acquisition, deal, earnings, quarter, q1, q2, q3, q4, revenue, label, distribution]
   - name: milestone
     bonus: 0.75
     phrases: [diagnosis, diagnosed, hospitalized, hospitalised, cancel, cancels, canceled, cancelled, hiatus, reunite, reunites, reunion, farewell, final show, final concert, retire, retires, retirement, return to stage, hall of fame, induction]
+  - name: videogame     # muzik-disi lansman: 'live' bonusu almasin (festival/concert kelimesi gecse de)
+    bonus: 0
+    phrases: [gta, grand theft auto, video game, video games, videogame]
   - name: live
     bonus: 0.25
     phrases: [tour, residency, festival, headline, headlines, headlining, concert]

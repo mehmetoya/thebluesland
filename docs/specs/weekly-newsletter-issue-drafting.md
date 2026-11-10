@@ -36,7 +36,7 @@ birkaç cümleyi düzeltmek olmalı.
 ### 1. Olgu kartı (prompt'un tek veri girdisi)
 
 Her hikâye için şunlar girer: hikâye anahtarı, tür ve puan dökümü, üye haberlerin kaynak adı,
-yayın tarihi, başlığı ve özeti (ilk 300 karakter). **URL'ler prompt'a girmez**, çünkü model link
+yayın tarihi, başlığı ve özeti (ilk 800 karakter; `clustering.yml` `summaryCharacters`, 2026-11-10'da 300'den çıkarıldı: kısa özetle model "Neden önemli"yi uyduruyordu). Haberin zamanı `published_at ?? fetched_at`tır; RSS'te `pubDate`/`published` yoksa `updated` kullanılır, yani yayın tarihi güncelleme tarihine tercih edilir (kod değişikliği gerekmedi). **URL'ler prompt'a girmez**, çünkü model link
 yazmayacak. 8 hikâye girer (5 seçim + 3 yedek).
 
 ### 2. Model çağrısı
@@ -44,12 +44,20 @@ yazmayacak. 8 hikâye girer (5 seçim + 3 yedek).
 - Dil başına bir çağrı yapılır. Prompt şunlardan oluşur: ses rehberinin tamamı (örnek sayı
   dahil), o dilin bölümü, olgu kartı ve kurallar.
 - Yanıt `responseSchema` ile **JSON**'dur:
-  `{ intro, outro, stories: [{ key, headline, body, whyItMatters }] }`.
+  `{ intro, outro, subject, preview, stories: [{ key, headline, body, whyItMatters }] }`.
+  `subject` (≤ 60 karakter, iki haber kancası, sonu " · TBL Weekly") e-posta konusu, `preview` (≤ 90
+  karakter, konuyu tekrarlamaz) gelen kutusu satırıdır.
+- Prompt gönderim tarihini taşır ("The issue is sent on …; önceki olaylar geçmiş zaman; 'bu hafta'
+  yazma"). Her iki dil aynı olguları taşır; yalnızca üslup farklıdır. "Neden önemli" kartta yazan
+  somut bir sonuç ya da karşılaştırmadır; kartta olmayan arka plan bilgisi yasaktır (ADR-0006 madde 3).
 - Sıcaklık düşüktür (0.4). Hata durumunda istemci 429/5xx için bir kez bekleyip yeniden dener
   (fetcher deseni).
 - Varsayılan model yoğunluk veya kota nedeniyle (503/429) yanıt vermezse taslak ücretsiz katmandaki
   `gemini-flash-lite-latest` ile yazılır; rapor hangi modelin yazdığını gösterir. Elle seçilen model
   değiştirilmez. (2026-11-10, ilk production çalıştırmalarından sonra eklendi.)
+- Yedek model sessizce kabul edilmez: dil başına varsayılan model önce bir kez daha, bir bekleme
+  (90 sn) sonrası denenir; yine yanıt vermezse yedek yazar ve iş özeti ile PR açıklaması
+  "[DÜŞÜK MODEL]" işaretini taşır, workflow PR başlığına da ekler (2026-W47 incelemesi, ED-1).
 
 ### 3. Deterministik denetim (kod, yanıt geldikten sonra)
 
@@ -58,12 +66,20 @@ yazmayacak. 8 hikâye girer (5 seçim + 3 yedek).
 | Şema | 8 hikâyenin her key'i tam bir kez | Bozuksa bir kez yeniden iste, yine bozuksa çalışma başarısız |
 | Uzunluk | başlık ≤ 70 karakter, gövde ≤ 3 cümle ve ≤ 450 karakter, "neden önemli" ≤ 2 cümle ve ≤ 260 karakter (onaylı örnek sayı 2 kısa cümle kullanıyor) | Uyarı |
 | Link/biçim | URL, `[`, `]`, `<`, emoji, `!` yok | Temizlenir ve uyarı verilir |
-| **Rakam** | Metindeki her sayı (yıl, yaş, tarih, tutar) olgu kartında geçmeli | Uyarı, cümle işaretlenir |
-| **Özel ad** | Büyük harfle başlayan her ad (ilk kelime hariç) olgu kartında geçmeli | Uyarı |
+| **Rakam** | Metindeki her sayı (yıl, yaş, tarih, tutar) **o haberin** olgu kartında geçmeli (başka haberin kartı yetmez) | Uyarı, cümle işaretlenir |
+| **Özel ad** | Büyük harfle başlayan her ad o haberin kartında geçmeli. Yalnızca alanın ilk kelimesi muaftır; sonraki cümle başları yalnızca ad gibi görünüyorsa (kısaltma ya da ek almış ad) denetlenir | Uyarı |
+| **Eksik** | Haberin başlıklarının çoğunluğunda geçen rakam, kısaltma ve (özette de büyük harfle geçen) adlar metinde olmalı; "Grand Theft Auto" baş harfleriyle (GTA) karşılanır | Uyarı |
+| **TR/EN eşitliği** | Bir dilin haberinde olup diğerinde olmayan rakam ve özel ad | Uyarı (eksik olan dile) |
+| **Zaman sözcüğü** | "bir yıl/a year", "geçen hafta/last week", "aylar önce/months ago", "on yıl/decades", haftanın günleri kartta yoksa | Uyarı |
+| **Geçmiş/gelecek** | Haber, gönderim tarihinden önceki bir tarihi (son 60 gün) anıp gelecek zaman kullanıyorsa (-acak/-ecek, will) | Uyarı (en iyi çaba) |
+| **Kalıp "Neden önemli"** | "öncü bir grup", "geniş kitle", "doğrudan belirliyor", "kendine yer buluyor", "hâlâ bu mirasla", "proving", "reach well beyond", "pioneering", "coveted" | Uyarı |
+| "Bu hafta" | Sayı önceki haftayı anlatır; "bu hafta/this week" yazılmaz | Uyarı |
+| Outro | YZ ya da yapay zekâ geçen cümle silinir (kod notu kendisi ekler); outro boş kalırsa dilin standart kapanışı | Temizlenir ve uyarı verilir |
+| Konu / önizleme | konu ≤ 60, önizleme ≤ 90 karakter; konu " · TBL Weekly" ile biter; önizleme konuyu tekrarlamaz; giriş TR "Beş haber, beş dakika." / EN "Five stories, five minutes." içerir | Uyarı |
 | Kopya | Özetten 8+ kelimelik aynı dizi | Uyarı |
 | Abartı | Ses rehberinin yasakladığı sıfatlar (efsane, inanılmaz, "tarihi bir", legendary, iconic…) | Uyarı |
 
-Uyarılar dosyaya **girmez**. Job summary'de (ve ileride PR açıklamasında) hikâye hikâye
+Uyarılar dosyaya **girmez**. Job summary'de ve PR açıklamasında (üstte toplam sayı, altta tablo) hikâye hikâye
 listelenir. Mehmet'in neye bakacağını bilmesi için vardır; taslağı engellemez.
 
 ### 4. Dosya biçimi — `content/weekly/2026-W46.tr.md`
@@ -73,6 +89,8 @@ listelenir. Mehmet'in neye bakacağını bilmesi için vardır; taslağı engell
 issue: 2026-W46
 language: tr
 title: "TheBluesland Weekly · 46. hafta"
+subject: "Richard Lloyd öldü, YouTube Billboard'a dönüyor · TBL Weekly"   # isteğe bağlı
+preview: "Oasis Rock Hall törenine gitmiyor, GTA VI için Miami'de festival var."   # isteğe bağlı
 sendDate: 2026-11-16
 window: { from: 2026-11-08T07:00:00Z, to: 2026-11-15T07:00:00Z }
 aiAssisted: true
@@ -97,9 +115,14 @@ Kaynaklar: [Pitchfork](…) · [Stereogum](…) · [NME](…)
 
 Haftaya pazartesi yine buradayız. İyi dinlemeler.
 
-*Bu sayı yapay zekâ yardımıyla hazırlandı ve TheBluesland editörü tarafından düzenlendi.*
+*Bu sayı yapay zekâ yardımıyla yazıldı; TheBluesland editörü seçti ve onayladı.*
 ```
 
+- `subject` ve `preview` isteğe bağlıdır (eski dosyalar geçerli kalır); varsa `validate-weekly` 60/90
+  karakter sınırını zorlar ve issue-delivery e-posta konusu/önizlemesi olarak kullanır; yoksa konu
+  `title`, önizleme girişin ilk cümlesidir. Web arşivi bilinmeyen front matter alanlarını yok sayar.
+- **YZ notu:** merge yalnızca onaydır, bu yüzden not "düzenlendi" demez: "yazıldı; editör seçti ve
+  onayladı". Notun eski sürümü taşıyan dosyalar geçerli sayılır.
 - **Hafta numarası** gönderim pazartesisinin ISO haftasıdır. Pencere varsayılan olarak o
   pazartesiden önceki pazar 10:00 (Europe/Istanbul) ile ondan 7 gün öncesi arasıdır. Elle
   çalıştırmada `--from/--to` ile verilebilir.

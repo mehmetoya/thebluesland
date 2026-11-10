@@ -102,9 +102,34 @@ public sealed class WeeklyIssueValidatorTests
     [Fact]
     public void The_ai_note_must_close_the_issue_word_for_word()
     {
-        var problems = WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), Turkish.Replace("editörü tarafından düzenlendi.", "editörü düzenledi.", StringComparison.Ordinal));
+        var problems = WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), Turkish.Replace("editörü seçti ve onayladı.", "editörü düzenledi.", StringComparison.Ordinal));
 
         problems.ShouldHaveSingleItem().ShouldContain("AI note");
+    }
+
+    [Fact]
+    public void Issues_with_the_note_of_the_first_drafts_stay_valid()
+    {
+        var legacy = Turkish.Replace(DraftLanguage.Turkish.AiNote, DraftLanguage.Turkish.LegacyAiNote, StringComparison.Ordinal);
+
+        WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), legacy).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public void Subject_and_preview_are_optional_read_back_and_length_limited()
+    {
+        var name = IssueName(DraftLanguage.Turkish);
+        var withBoth = Draft(DraftLanguage.Turkish, Answer() with { Subject = "Two hooks · TBL Weekly", Preview = "A line." }).IssueMarkdown;
+
+        var withNeither = Draft(DraftLanguage.Turkish, Answer() with { Subject = null, Preview = null }).IssueMarkdown;
+        WeeklyIssueValidator.Validate(name, withNeither).ShouldBeEmpty();
+        var issue = WeeklyIssueValidator.Read(name, withBoth).ShouldNotBeNull();
+        (issue.Subject, issue.Preview).ShouldBe(("Two hooks · TBL Weekly", "A line."));
+        WeeklyIssueValidator.Read(name, withNeither).ShouldNotBeNull().Subject.ShouldBeNull();
+
+        var tooLong = Draft(DraftLanguage.Turkish, Answer() with { Subject = new string('s', 61), Preview = new string('p', 91) }).IssueMarkdown;
+        WeeklyIssueValidator.Validate(name, tooLong).ShouldBe(
+            ["subject must be 1-60 characters when present.", "preview must be 1-90 characters when present."]);
     }
 
     [Fact]
