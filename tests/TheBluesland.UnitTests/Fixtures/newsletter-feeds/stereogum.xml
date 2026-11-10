@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	xmlns:media="http://search.yahoo.com/mrss/">
+
+<channel>
+	<title>Stereogum</title>
+	<atom:link href="https://stereogum.com/feed/" rel="self" type="application/rss+xml" />
+	<link>https://stereogum.com/</link>
+	<description>The world&#039;s best music blog.</description>
+	<lastBuildDate>Tue, 10 Nov 2026 04:48:52 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=7.1.4</generator>
+
+<image>
+	<url>https://lede-admin.stereogum.com/wp-content/uploads/sites/64/2022/02/stereogum-site-icon-192x192-1644917357.png?w=32</url>
+	<title>Stereogum</title>
+	<link>https://stereogum.com/</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+<site xmlns="com-wordpress:feed-additions:1">245057171</site>	<item>
+		<title>Opus Kink &#8211; &#8220;Low Roader&#8221;</title>
+		<link>https://stereogum.com/2517069/opus-kink-low-roader/music/</link>
+		
+		<dc:creator><![CDATA[Margaret Farrell]]></dc:creator>
+		<pubDate>Mon, 09 Nov 2026 21:38:51 +0000</pubDate>
+				<category><![CDATA[New Music]]></category>
+		<category><![CDATA[Opus Kink]]></category>
+		<guid isPermaLink="false">https://stereogum.com/?p=2517069</guid>
+
+					<description><![CDATA[<p>The post <a href="https://stereogum.com/2517069/opus-kink-low-roader/music/">Opus Kink &#8211; &#8220;Low Roader&#8221;</a> appeared first on <a href="https://stereogum.com">Stereogum</a>.</p>
+]]></description>
+		
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">2517069</post-id><media:content medium="image" url="https://lede-admin.stereogum.com/wp-content/uploads/sites/64/2026/11/Artwork_-Opus-Kink-Low-Roader.png?w=564" width="564" height="564" />	</item>
+		<item>
+		<title>Oasis Won&#8217;t Attend Their Rock &#038; Roll Hall Of Fame Induction</title>
+		<link>https://stereogum.com/2517176/oasis-wont-attend-their-rock-roll-hall-of-fame-induction/news/</link>
+		
+		<dc:creator><![CDATA[Danielle Chelosky]]></dc:creator>
+		<pubDate>Mon, 09 Nov 2026 21:26:28 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Liam Gallagher]]></category>
+		<category><![CDATA[Oasis]]></category>
+		<guid isPermaLink="false">https://stereogum.com/?p=2517176</guid>
+
+					<description><![CDATA[<p>The post <a href="https://stereogum.com/2517176/oasis-wont-attend-their-rock-roll-hall-of-fame-induction/news/">Oasis Won&#8217;t Attend Their Rock &amp; Roll Hall Of Fame Induction</a> appeared first on <a href="https://stereogum.com">Stereogum</a>.</p>
+]]></description>
+		
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">2517176</post-id><media:content medium="image" url="https://lede-admin.stereogum.com/wp-content/uploads/sites/64/2026/11/oasis.jpg?w=564" width="564" height="388" />	</item>
+		<item>
+		<title>CMA Awards Respond To Backlash Over Red Carpet Exclusions</title>
+		<link>https://stereogum.com/2517155/cma-awards-respond-to-backlash-over-red-carpet-exclusions/news/</link>
+		
+		<dc:creator><![CDATA[Danielle Chelosky]]></dc:creator>
+		<pubDate>Mon, 09 Nov 2026 19:35:57 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[CMAs]]></category>
+		<category><![CDATA[Rodney Atkins]]></category>
+		<category><![CDATA[Sammy Kershaw]]></category>
+		<guid isPermaLink="false">https://stereogum.com/?p=2517155</guid>
+
+					<description><![CDATA[<p>The post <a href="https://stereogum.com/2517155/cma-awards-respond-to-backlash-over-red-carpet-exclusions/news/">CMA Awards Respond To Backlash Over Red Carpet Exclusions</a> appeared first on <a href="https://stereogum.com">Stereogum</a>.</p>
+]]></description>
+		
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">2517155</post-id><media:content medium="image" url="https://lede-admin.stereogum.com/wp-content/uploads/sites/64/2026/11/GettyImages-1486198166.jpg?w=564" width="564" height="376" />	</item>
+		<item>
+		<title>B0YG1RL &#8211; &#8220;i dont recall&#8221; &#038; &#8220;openinghearts&#8221;</title>
+		<link>https://stereogum.com/2517160/b0yg1rl-i-dont-recall-openinghearts/music/</link>
+		
+		<dc:creator><![CDATA[Tom Breihan]]></dc:creator>
+		<pubDate>Mon, 09 Nov 2026 19:27:32 +0000</pubDate>
+				<category><![CDATA[New Music]]></category>
+		<category><![CDATA[4evr]]></category>
+		<category><![CDATA[B0YG1RL]]></category>
+		<category><![CDATA[Cass Morrison]]></category>
+		<category><![CDATA[Surf Gang]]></category>
+		<guid isPermaLink="false">https://stereogum.com/?p=2517160</guid>
+
+					<description><![CDATA[<p>The post <a href="https://stereogum.com/2517160/b0yg1rl-i-dont-recall-openinghearts/music/">B0YG1RL &#8211; &#8220;i dont recall&#8221; &amp; &#8220;openinghearts&#8221;</a> appeared first on <a href="https://stereogum.com">Stereogum</a>.</p>
+]]></description>
+		
+		
+		
+		<post-id xmlns="com-wordpress:feed-additions:1">2517160</post-id><media:content medium="image" url="https://lede-admin.stereogum.com/wp-content/uploads/sites/64/2026/11/b0yg1rl_c4c645.jpg?w=564" width="564" height="564" />	</item>
+		</channel>
+</rss>
