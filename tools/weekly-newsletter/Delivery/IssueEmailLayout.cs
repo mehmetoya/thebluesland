@@ -27,7 +27,6 @@ internal static class IssueEmailLayout
     private const string Rule = "#e8eff9";
     private const string Brand = "#004aad";
     private const string Label = "#a8501c";
-    private const string Orange = "#ff904b";
     private const string Soft = "#f5f8fd";
 
     private const string LinkStyle = $"color:{Brand};text-decoration:underline;";
@@ -94,7 +93,7 @@ internal static class IssueEmailLayout
                 if (IsWhy(block, issue))
                 {
                     StyleWhyLabel((ParagraphBlock)block);
-                    html.Append(Render(block, $"margin:0 0 12px;padding:12px 16px;border-left:4px solid {Orange};background:{Soft};font-size:15px;line-height:1.55;color:{Ink};"));
+                    html.Append(Render(block, $"margin:0 0 12px;padding:12px 16px;border-left:4px solid {Label};background:{Soft};font-size:15px;line-height:1.55;color:{Ink};"));
                     continue;
                 }
 

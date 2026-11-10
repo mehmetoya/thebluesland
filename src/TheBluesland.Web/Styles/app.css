@@ -1355,9 +1355,16 @@ body:has(.filter-mobile-toggle:checked) {
   color: var(--color-accent);
 }
 
+/* The "why it matters" label and its left border are one tone per theme: accent (orange) on dark,
+   secondary (burnt orange, the AA-passing one on cream) on light. */
 .weekly-body .weekly-why {
-  border-left: 3px solid var(--color-accent);
+  --weekly-why-tone: var(--color-accent);
+  border-left: 3px solid var(--weekly-why-tone);
   padding-left: var(--space-3);
+}
+
+:root[data-theme="light"] .weekly-body .weekly-why {
+  --weekly-why-tone: var(--color-secondary);
 }
 
 .weekly-why > em:first-child {
@@ -1367,7 +1374,7 @@ body:has(.filter-mobile-toggle:checked) {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-secondary);
+  color: var(--weekly-why-tone);
 }
 
 .weekly-body .weekly-sources {

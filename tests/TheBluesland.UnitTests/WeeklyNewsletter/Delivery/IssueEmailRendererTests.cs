@@ -97,7 +97,9 @@ public sealed partial class IssueEmailRendererTests
         html.ShouldContain(">Web'de oku</a>");
         Regex.Matches(html, @">0[1-5]</p>").Count.ShouldBe(5);
         Regex.Matches(html, "border-top:1px solid #e8eff9").Count.ShouldBeGreaterThanOrEqualTo(5);
-        html.ShouldContain("border-left:4px solid #ff904b");
+        // The "Neden önemli" label and its border are one tone.
+        html.ShouldContain("border-left:4px solid #a8501c");
+        html.ShouldContain("text-transform:uppercase;color:#a8501c;");
         html.ShouldContain("color:#004aad;text-decoration:underline;");
         html.ShouldContain(">Arşiv</a> · <a href=\"https://thebluesland.com/en/weekly/2026-W46\" lang=\"en\"");
         html.ShouldContain(">Read in English</a>");
