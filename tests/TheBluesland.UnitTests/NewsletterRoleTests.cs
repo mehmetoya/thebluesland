@@ -20,7 +20,7 @@ namespace TheBluesland.UnitTests;
 public sealed class NewsletterRoleTests : IAsyncLifetime
 {
     private const string RoleName = "newsletter_writer";
-    private const string RolePassword = "placeholder-newsletter-password";
+    private const string RolePassword = "test-only-newsletter-password";
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
@@ -46,14 +46,20 @@ public sealed class NewsletterRoleTests : IAsyncLifetime
             await analytics.Database.MigrateAsync();
         }
 
-        await using var admin = new NpgsqlConnection(adminConnectionString);
-        await admin.OpenAsync();
-        foreach (var script in new[] { "create-newsletter-role.sql", "create-spotify-cache-roles.sql", "create-analytics-role.sql" })
+        await using (var admin = new NpgsqlConnection(adminConnectionString))
         {
-            await using var command = admin.CreateCommand();
-            command.CommandText = ReadEmbeddedScript(script);
-            await command.ExecuteNonQueryAsync();
+            await admin.OpenAsync();
+            foreach (var script in new[] { "create-newsletter-role.sql", "create-spotify-cache-roles.sql", "create-analytics-role.sql" })
+            {
+                await using var command = admin.CreateCommand();
+                command.CommandText = ReadEmbeddedScript(script);
+                await command.ExecuteNonQueryAsync();
+            }
         }
+
+        // The script creates the role NOLOGIN (fail-closed); enabling login with a password is the
+        // operator's step, done here with a test-only password.
+        await ExecuteAsAdminAsync($"alter role {RoleName} login password '{RolePassword}'");
     }
 
     public Task DisposeAsync() => _postgres.DisposeAsync().AsTask();
@@ -85,7 +91,24 @@ public sealed class NewsletterRoleTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task NewsletterWriter_can_read_back_and_delete_articles()
+    public async Task NewsletterWriter_can_read_back_articles_including_categories()
+    {
+        await using (var writer = NewsletterDbContext.Create(RoleConnectionString()))
+        {
+            var article = NewArticle("https://nme.com/read-back");
+            article.Categories.AddRange(["Rock", "Music News"]);
+            writer.NewsArticles.Add(article);
+            await writer.SaveChangesAsync();
+        }
+
+        await using var reader = NewsletterDbContext.Create(RoleConnectionString());
+        var rows = await reader.NewsArticles.AsNoTracking().ToListAsync();
+
+        rows.Single().Categories.ShouldBe(["Rock", "Music News"]);
+    }
+
+    [Fact]
+    public async Task NewsletterWriter_can_delete_articles_for_retention()
     {
         await using var context = NewsletterDbContext.Create(RoleConnectionString());
         context.NewsArticles.Add(NewArticle("https://nme.com/to-delete"));
@@ -99,7 +122,7 @@ public sealed class NewsletterRoleTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task NewsletterWriter_update_is_rejected_because_ingest_never_rewrites_a_row()
+    public async Task NewsletterWriter_update_is_rejected_as_defence_in_depth_against_rewrites()
     {
         await ExecuteAsRoleAsync(
             """
@@ -107,7 +130,7 @@ public sealed class NewsletterRoleTests : IAsyncLifetime
             values ('nme', 't', 'https://nme.com/u', 'https://nme.com/u', now())
             """);
 
-        await ShouldBeDeniedAsync("update newsletter.news_article set title = 'changed'");
+        await ShouldBeDeniedAsync("update newsletter.news_article set title = 'changed' where normalized_url = 'https://nme.com/u'");
     }
 
     [Theory]
@@ -116,6 +139,8 @@ public sealed class NewsletterRoleTests : IAsyncLifetime
     [InlineData("alter table newsletter.news_article add column extra text")]
     [InlineData("delete from newsletter.__ef_migrations_history")]
     [InlineData("insert into newsletter.__ef_migrations_history values ('x', 'y')")]
+    [InlineData("create table public.sneaky (id int)")]
+    [InlineData("select nextval('newsletter.news_article_id_seq')")]
     public async Task NewsletterWriter_cannot_change_the_schema_or_migrations_history(string sql)
     {
         await ShouldBeDeniedAsync(sql);
@@ -131,15 +156,55 @@ public sealed class NewsletterRoleTests : IAsyncLifetime
         await ShouldBeDeniedAsync(sql);
     }
 
-    [Fact]
-    public async Task Role_script_can_be_run_twice()
+    [Theory]
+    [InlineData("spotify_cache_readonly", "placeholder-readonly-password")]
+    [InlineData("spotify_cache_readwrite", "placeholder-readwrite-password")]
+    [InlineData("analytics_writer", "placeholder-analytics-password")]
+    public async Task Other_roles_cannot_read_the_newsletter_schema(string role, string password)
     {
-        await using var admin = new NpgsqlConnection(_postgres.GetConnectionString());
-        await admin.OpenAsync();
-        await using var command = admin.CreateCommand();
-        command.CommandText = ReadEmbeddedScript("create-newsletter-role.sql");
+        var connectionString = new NpgsqlConnectionStringBuilder(_postgres.GetConnectionString()) { Username = role, Password = password }.ConnectionString;
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "select count(*) from newsletter.news_article";
 
-        await Should.NotThrowAsync(() => command.ExecuteNonQueryAsync());
+        var exception = await Should.ThrowAsync<PostgresException>(() => command.ExecuteScalarAsync());
+
+        exception.SqlState.ShouldBe(PostgresErrorCodes.InsufficientPrivilege);
+    }
+
+    [Fact]
+    public async Task Role_script_creates_the_role_without_login()
+    {
+        await ExecuteAsAdminAsync($"drop owned by {RoleName}; drop role {RoleName};");
+
+        await ExecuteAsAdminAsync(ReadEmbeddedScript("create-newsletter-role.sql"));
+
+        (await ScalarAsAdminAsync<bool>($"select rolcanlogin from pg_roles where rolname = '{RoleName}'")).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Role_script_rerun_keeps_login_and_converges_to_the_listed_grants()
+    {
+        await ExecuteAsAdminAsync($"grant update on newsletter.news_article to {RoleName}");
+
+        await ExecuteAsAdminAsync(ReadEmbeddedScript("create-newsletter-role.sql"));
+
+        await ShouldBeDeniedAsync("update newsletter.news_article set title = 'x' where false");
+        (await ExecuteAsRoleAsync("select 1")).ShouldBe(-1);
+    }
+
+    [Theory]
+    [InlineData("grant pg_read_all_data to newsletter_writer")]
+    [InlineData("alter role newsletter_writer createrole")]
+    [InlineData("alter role newsletter_writer bypassrls")]
+    public async Task Role_script_refuses_a_pre_existing_role_with_extra_power(string escalation)
+    {
+        await ExecuteAsAdminAsync(escalation);
+
+        var exception = await Should.ThrowAsync<PostgresException>(() => ExecuteAsAdminAsync(ReadEmbeddedScript("create-newsletter-role.sql")));
+
+        exception.MessageText.ShouldContain("newsletter_writer");
     }
 
     private static NewsArticle NewArticle(string normalizedUrl) => new()
@@ -156,6 +221,24 @@ public sealed class NewsletterRoleTests : IAsyncLifetime
         var exception = await Should.ThrowAsync<PostgresException>(() => ExecuteAsRoleAsync(sql));
 
         exception.SqlState.ShouldBeOneOf(PostgresErrorCodes.InsufficientPrivilege, "42501");
+    }
+
+    private async Task ExecuteAsAdminAsync(string sql)
+    {
+        await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private async Task<T> ScalarAsAdminAsync<T>(string sql)
+    {
+        await using var connection = new NpgsqlConnection(_postgres.GetConnectionString());
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        return (T)(await command.ExecuteScalarAsync())!;
     }
 
     private async Task<int> ExecuteAsRoleAsync(string sql)
