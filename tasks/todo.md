@@ -45,7 +45,10 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
 
 ## Phase 2: Core
 
-- [ ] **T3: `RssFeedClient` (RSS 2.0 + Atom → `FeedItem`)** — M
+- [x] **T3: `RssFeedClient` (RSS 2.0 + Atom → `FeedItem`)** — M
+  - Sonuç: hata sözleşmesi HTTP → `HttpRequestException`, zaman aşımı → `TimeoutException`, okunamayan
+    feed → `XmlException` (Syndication'ın `NotSupportedException`'ı dahil normalize edildi). Bozuk tarih
+    öğeyi düşürmez, yalnız `PublishedAt` null olur (`DateTimeParser` kancası). DTD/entity çözümlenmez.
   - Description: `System.ServiceModel.Syndication` paketini ekle; `HttpClient` ile çek (20 sn timeout,
     tanımlayıcı User-Agent), ayrıştır; HTML temizle, entity çöz, özeti 2 000 karaktere kırp;
     kategorileri al; tarih yoksa null; bağlantısız öğeyi atla.
@@ -98,7 +101,7 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
 
 - [ ] **T7: `NewsIngestService` — paralel çekim, hata izolasyonu, idempotent insert** — M
   - Description: Etkin feed'leri en fazla 4 paralel çeker; her feed'in hatası (`HttpRequestException`,
-    timeout, `XmlException`) yalnız o feed'i `Failed` yapar; öğeleri normalize edip
+    `TimeoutException`, `XmlException` — T3 sözleşmesi) yalnız o feed'i `Failed` yapar; öğeleri normalize edip
     `ON CONFLICT (normalized_url) DO NOTHING` ile yazar; `fetched_at` `TimeProvider`'dan.
     Sonuç: feed başına (çekilen, yeni eklenen, durum, hata) içeren `IngestReport`.
   - Acceptance:

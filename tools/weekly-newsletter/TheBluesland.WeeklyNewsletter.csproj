@@ -12,6 +12,8 @@
   <ItemGroup>
     <!-- Parses feeds.yml (news-ingest spec, Design section 3). -->
     <PackageReference Include="YamlDotNet" />
+    <!-- RSS 2.0 / Atom parsing (news-ingest spec decision 2, approved 2026-11-10). -->
+    <PackageReference Include="System.ServiceModel.Syndication" />
   </ItemGroup>
 
   <ItemGroup>
