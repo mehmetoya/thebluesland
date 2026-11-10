@@ -64,7 +64,7 @@ dotnet test tests/TheBluesland.UnitTests/TheBluesland.UnitTests.csproj --filter 
   - Files: `Directory.Packages.props`, `tools/weekly-newsletter/*.csproj`, `Ingest/RssFeedClient.cs`,
     `Ingest/FeedItem.cs`, `tests/.../WeeklyNewsletter/RssFeedClientTests.cs`
 
-- [ ] **T4: `ArticleUrlNormalizer`** — S
+- [x] **T4: `ArticleUrlNormalizer`** — S
   - Description: Spec §2 kurallarını uygulayan saf fonksiyon.
   - Acceptance:
     - [ ] `http`/`https`, `www.`, büyük harf host, sondaki `/`, fragment, `utm_*`/`fbclid`/`gclid`/
