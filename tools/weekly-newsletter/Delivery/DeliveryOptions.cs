@@ -6,8 +6,12 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace TheBluesland.WeeklyNewsletter.Delivery;
 
-/// <summary>One language's list in Kit and the wall-clock time its issue goes out on Monday.</summary>
-public sealed record LanguageDelivery(TimeOnly SendTime, long KitTagId);
+/// <summary>
+/// One language's list in Kit and the wall-clock time its issue goes out on Monday. Kit's free plan
+/// cannot tag form sign-ups itself, so <c>kit-sync-tags</c> copies the form's confirmed subscribers
+/// (<see cref="KitFormId"/>) into the tag before each send.
+/// </summary>
+public sealed record LanguageDelivery(TimeOnly SendTime, long KitTagId, long? KitFormId = null);
 
 /// <summary><c>delivery.yml</c> (issue-delivery spec, Design section 5).</summary>
 public sealed record DeliveryOptions(
@@ -85,7 +89,12 @@ public static class DeliveryOptionsLoader
                 errors.Add($"languages.{language.Code}.kitTagId is not set; it comes from the Kit setup (issue-delivery spec, T0).");
             }
 
-            languages[language.Code] = new LanguageDelivery(sendTime, entry.KitTagId ?? 0);
+            if (entry.KitFormId is <= 0)
+            {
+                errors.Add($"languages.{language.Code}.kitFormId must be a positive Kit form id when set.");
+            }
+
+            languages[language.Code] = new LanguageDelivery(sendTime, entry.KitTagId ?? 0, entry.KitFormId);
         }
 
         foreach (var unknown in (document?.Languages?.Keys.ToList() ?? []).Where(code => DraftLanguage.All.All(language => language.Code != code)))
@@ -116,5 +125,7 @@ public static class DeliveryOptionsLoader
         public string? SendTime { get; set; }
 
         public long? KitTagId { get; set; }
+
+        public long? KitFormId { get; set; }
     }
 }

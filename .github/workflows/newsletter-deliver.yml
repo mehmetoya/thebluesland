@@ -8,7 +8,9 @@ name: Newsletter deliver
 # the cut-off does not go out that week (ADR-0006 madde 2; map schedule).
 #
 # Secrets: KIT_API_KEY only, on the single Deliver step. No Gemini, no database, no write access:
-# this workflow reads main and talks to Kit. Subscriber data never passes through it. Enforced by
+# this workflow reads main and talks to Kit. Before delivering it tags each sign-up form's confirmed
+# subscribers (kit-sync-tags; Kit's free plan has no form rules): only subscriber ids, in memory,
+# and only counts reach the log. Enforced by
 # tests/TheBluesland.UnitTests/Workflows/NewsletterDeliverWorkflowTests.cs.
 
 on:
@@ -72,5 +74,10 @@ jobs:
           args=(deliver --content "$GITHUB_WORKSPACE/content/weekly")
           if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$APPLY_INPUT" != "true" ]; then args+=(--dry-run); fi
           if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$TASK_INPUT" = "setup-tags" ]; then args=(kit-tags weekly-tr weekly-en); fi
+          if [ "${args[0]}" = "deliver" ]; then
+            sync=(kit-sync-tags)
+            if [[ " ${args[*]} " == *" --dry-run "* ]]; then sync+=(--dry-run); fi
+            dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${sync[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
           dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
           echo "::${stop_token}::"

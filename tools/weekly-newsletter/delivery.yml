@@ -15,7 +15,11 @@ languages:
     sendTime: "08:00"
     # Kit tag "weekly-tr" (created by the setup-tags task, 2026-11-10).
     kitTagId: 25679730
+    # Kit form "TheBluesland Weekly TR"; kit-sync-tags copies its confirmed subscribers into the tag.
+    kitFormId: 10170833
   en:
     sendTime: "15:00"
     # Kit tag "weekly-en" (created by the setup-tags task, 2026-11-10).
     kitTagId: 25679731
+    # Kit form "TheBluesland Weekly EN".
+    kitFormId: 10170837
