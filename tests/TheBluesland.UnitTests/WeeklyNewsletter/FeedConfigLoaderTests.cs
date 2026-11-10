@@ -220,13 +220,17 @@ public sealed class FeedConfigLoaderTests
     }
 
     [Fact]
-    public async Task LoadAsync_repository_feeds_yml_is_valid_and_has_seven_enabled_sources()
+    public async Task LoadAsync_repository_feeds_yml_is_valid_and_has_sixteen_enabled_sources()
     {
         var result = await FeedConfigLoader.LoadAsync(FindRepoFile("tools/weekly-newsletter/feeds.yml"), CancellationToken.None);
 
         result.Errors.ShouldBeEmpty();
         result.EnabledFeeds.Select(feed => feed.Id).ShouldBe(
-            ["billboard", "pitchfork", "rolling-stone", "nme", "stereogum", "consequence", "music-business-worldwide"]);
+            [
+                "billboard", "pitchfork", "rolling-stone", "nme", "stereogum", "consequence", "music-business-worldwide",
+                "american-blues-scene", "blues-rock-review", "ultimate-classic-rock", "louder", "american-songwriter",
+                "jazztimes", "guardian-music", "npr-music", "the-quietus",
+            ]);
     }
 
     [Fact]
