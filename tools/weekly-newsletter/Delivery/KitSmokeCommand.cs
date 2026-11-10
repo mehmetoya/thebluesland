@@ -8,7 +8,7 @@ namespace TheBluesland.WeeklyNewsletter.Delivery;
 /// It creates a draft (no <c>send_at</c>, so Kit can never send it) for the weekly-tr tag under the
 /// description <c>thebluesland-weekly-smoke:&lt;utc timestamp&gt;</c> (not a delivery marker, so the
 /// planner ignores it), reads it back, deletes it, and prints what happened plus the account's
-/// non-secret facts. The account's primary e-mail, which is the default sender, is printed masked.
+/// non-secret facts. The account's primary (login) e-mail is printed masked; it is not the broadcast sender, which Kit picks from the sender addresses set in its UI.
 /// Exit 0 only when all three steps worked.
 /// </summary>
 public static class KitSmokeCommand
@@ -119,7 +119,7 @@ public static class KitSmokeCommand
                 {
                     details.Name is { Length: > 0 } name ? $"name {MarkdownText.Cell(name)}" : null,
                     details.Plan is { Length: > 0 } plan ? $"plan {MarkdownText.Cell(plan)}" : null,
-                    details.PrimaryEmail is { Length: > 0 } email ? $"default sender {MarkdownText.Cell(Mask(email))}" : null,
+                    details.PrimaryEmail is { Length: > 0 } email ? $"account e-mail {MarkdownText.Cell(Mask(email))}" : null,
                 }.Where(part => part is not null));
             if (account.Length == 0)
             {

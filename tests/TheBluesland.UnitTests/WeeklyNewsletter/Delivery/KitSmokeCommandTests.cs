@@ -48,7 +48,7 @@ public sealed class KitSmokeCommandTests : IDisposable
         output.ShouldContain("| read | ✅ ok |");
         output.ShouldContain("| delete | ✅ ok |");
         output.ShouldContain("plan free");
-        output.ShouldContain("default sender m***@example.com");
+        output.ShouldContain("account e-mail m***@example.com");
         output.ShouldNotContain("mehmet@example.com");
         output.ShouldNotContain("test-key");
     }
