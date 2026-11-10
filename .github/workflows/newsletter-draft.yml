@@ -1,0 +1,78 @@
+name: Newsletter draft
+
+# docs/specs/weekly-newsletter-issue-drafting.md, Design section 5: drafts the TR and EN issue
+# (plus backups) with Gemini and shows them in the job summary and as a downloadable artifact.
+# Dispatch-only and read-only: it opens no PR and writes no branch - issue-review adds the weekly
+# schedule and the bot PR later (ADR-0006). The prompt holds only the week's fact card and the
+# voice guide (docs/weekly/ses-rehberi.md); never Spotify or subscriber data.
+#
+# Secrets: GEMINI_API_KEY and NEON_NEWSLETTER_CONNECTION_STRING (newsletter_writer role), both on
+# the single step that runs the tool (enforced by
+# tests/TheBluesland.UnitTests/Workflows/NewsletterIngestWorkflowSecretIsolationTests.cs and
+# SuggestCuratorNoteWorkflowSecretIsolationTests.cs). Gemini free tier only.
+
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: "Window start, UTC (yyyy-MM-dd or yyyy-MM-ddTHH:mm). Empty = 7 days before 'to'."
+        required: false
+        default: ""
+      to:
+        description: "Window end, UTC, exclusive. Empty = the last Sunday 10:00 Europe/Istanbul."
+        required: false
+        default: ""
+      model:
+        description: "Gemini model id (optional; the tool's free-tier default if empty)."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    # Worst case: 2 languages × (1 + 1 malformed retry) × 3 attempts × 90 s, plus build.
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj
+
+      - name: Build
+        run: dotnet build tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-restore
+
+      # Inputs reach the shell only as environment variables, never interpolated into the script.
+      - name: Draft
+        env:
+          NEON_NEWSLETTER_CONNECTION_STRING: ${{ secrets.NEON_NEWSLETTER_CONNECTION_STRING }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ inputs.model }}
+          WINDOW_FROM: ${{ inputs.from }}
+          WINDOW_TO: ${{ inputs.to }}
+        run: |
+          set -euo pipefail
+          # Feed and model text reach the log; stop "::" lines in it from running as workflow commands.
+          stop_token="$(openssl rand -hex 16)"
+          echo "::stop-commands::${stop_token}"
+          args=(draft --out "$RUNNER_TEMP/weekly")
+          if [ -n "$WINDOW_FROM" ]; then args+=(--from "$WINDOW_FROM"); fi
+          if [ -n "$WINDOW_TO" ]; then args+=(--to "$WINDOW_TO"); fi
+          dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "::${stop_token}::"
+
+      - name: Upload draft
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-draft
+          path: ${{ runner.temp }}/weekly/
+          if-no-files-found: error
+          retention-days: 14
