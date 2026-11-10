@@ -7,15 +7,20 @@ name: Newsletter draft
 # spends the previous day's quota. The week's window still ends at 10:00 Istanbul (issue-week).
 # GitHub's schedule is unreliable (the two-hourly ingest has skipped hours), so the Draft step runs
 # "ingest" itself right before drafting; an ingest failure only warns.
-# Merging that PR is Mehmet's approval (ADR-0006 madde 2); the bot never approves or merges.
+# Publishing is automatic (ADR-0006 madde 2, updated 2026-11-10): when the tool's final checker passed
+# both languages with no blocking problem (review/<week>.publish.json) and WEEKLY_BOT_TOKEN is set, the
+# open-pr job opens a ready PR and enables auto-merge (`gh pr merge --auto --merge`); the required CI
+# checks still gate the merge. Otherwise the PR stays open with the label needs-human and a comment, and
+# nothing is sent that week unless Mehmet merges it. The bot never approves and never bypasses protection.
 # Dispatch runs only show the draft (job summary + artifact) unless open_pr is set.
 #
 # Two jobs, so the AI key and the right to write the repository never meet (ADR-0006 madde 5):
 #   draft   - contents: read + pull-requests: read (to see whether the week's PR exists); GEMINI_API_KEY and NEON_NEWSLETTER_CONNECTION_STRING on its single
 #             Draft step only. The prompt holds only the week's fact card and the voice guide;
 #             never Spotify or subscriber data. Gemini free tier only.
-#   open-pr - contents: write + pull-requests: write, no secret at all. Receives the draft only as
-#             files, validates them, and pushes nothing but a newsletter/ branch.
+#   open-pr - contents: write + pull-requests: write; its only secret is the optional WEEKLY_BOT_TOKEN
+#             (never the AI key). Receives the draft only as files, validates them, and pushes nothing
+#             but a newsletter/ branch.
 # Enforced by tests/TheBluesland.UnitTests/Workflows/NewsletterDraftWorkflowTests.cs and the
 # secret isolation tests next to it.
 
@@ -161,8 +166,15 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      # WEEKLY_BOT_TOKEN (optional): a fine-grained PAT limited to this repository (Contents and Pull
+      # requests: read/write). Events made with GITHUB_TOKEN never start other workflows, so a PR opened
+      # or merged with it would get no CI (required checks never report; auto-merge would wait forever)
+      # and its merge would not start deploy.yml or the delivery workflow. Without the secret the job
+      # falls back to GITHUB_TOKEN and a draft PR that Mehmet merges by hand (the runbook's manual path).
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.WEEKLY_BOT_TOKEN || github.token }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -180,10 +192,11 @@ jobs:
 
       # Only the two issue files are committed; backups and the PR body stay in review/ and reach
       # the PR as its description. The branch name is checked before anything is pushed.
-      - name: Open draft PR
+      - name: Open PR
         env:
           WEEK: ${{ needs.draft.outputs.week }}
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.WEEKLY_BOT_TOKEN || github.token }}
+          HAS_BOT_TOKEN: ${{ secrets.WEEKLY_BOT_TOKEN != '' }}
           OWNER: ${{ github.repository_owner }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
@@ -215,6 +228,38 @@ jobs:
           title="TheBluesland Weekly $WEEK"
           # The draft tool marks a fallback-model draft in the PR body; surface it in the title too.
           if grep -qF '[DÜŞÜK MODEL]' "$body"; then title="[DÜŞÜK MODEL] $title"; fi
-          url="$(gh pr create --draft --base main --head "$branch" --title "$title" --body-file "$body")"
+          # The tool's decision (final checker passed for both languages, no blocking problem, default model).
+          # Only the exact string "true" publishes; a missing or unreadable file means a human decides.
+          decision="$RUNNER_TEMP/weekly/review/$WEEK.publish.json"
+          auto_merge="$(jq -r '.autoMerge' "$decision" 2>/dev/null || echo false)"
+          publish=false
+          if [ "$auto_merge" = "true" ] && [ "$HAS_BOT_TOKEN" = "true" ]; then publish=true; fi
+          if [ "$auto_merge" = "true" ] && [ "$HAS_BOT_TOKEN" != "true" ]; then
+            echo "::warning title=WEEKLY_BOT_TOKEN is not set::The draft passed the final check, but PRs made with GITHUB_TOKEN get no CI and cannot auto-merge. Left as a draft PR for a manual merge (docs/weekly/runbook.md)."
+          fi
+          if [ "$publish" = "true" ]; then
+            url="$(gh pr create --base main --head "$branch" --title "$title" --body-file "$body")"
+          else
+            url="$(gh pr create --draft --base main --head "$branch" --title "$title" --body-file "$body")"
+          fi
           gh pr edit "$url" --add-assignee "$OWNER" || echo "::warning::Could not assign the PR to $OWNER."
-          echo "Draft PR: $url" >> "$GITHUB_STEP_SUMMARY"
+          needs_human_note="$RUNNER_TEMP/needs-human.md"
+          if [ "$publish" = "true" ]; then
+            # Auto-merge waits for the required checks; the merge itself is GitHub's, as the token's owner.
+            if gh pr merge "$url" --auto --merge; then
+              echo "PR with auto-merge enabled: $url" >> "$GITHUB_STEP_SUMMARY"
+            else
+              publish=false
+              printf 'Son kontrol geçti ama otomatik merge açılamadı (repo ayarında auto-merge kapalı olabilir ya da token yetkisi yok). Merge elle yapılmalı; yapılmazsa bu hafta hiçbir dil gitmez.\n' > "$needs_human_note"
+            fi
+          elif [ "$auto_merge" != "true" ]; then
+            { printf 'Bu sayı otomatik yayına uygun bulunmadı; PR açık kaldı ve merge edilmedi. Merge edilmezse bu hafta hiçbir dil gitmez.\n\n'; jq -r '.reasons[]? | "- " + .' "$decision" 2>/dev/null || true; } > "$needs_human_note"
+          fi
+          if [ -s "$needs_human_note" ]; then
+            gh label create needs-human --color B60205 --description "Weekly draft needs a human decision before it can be merged" 2>/dev/null || true
+            gh pr edit "$url" --add-label needs-human || echo "::warning::Could not add the needs-human label."
+            gh pr comment "$url" --body-file "$needs_human_note" || echo "::warning::Could not comment on the PR."
+            echo "PR needs a human (label needs-human): $url" >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$publish" != "true" ]; then
+            echo "Draft PR: $url" >> "$GITHUB_STEP_SUMMARY"
+          fi
