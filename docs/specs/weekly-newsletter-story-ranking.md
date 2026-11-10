@@ -1,7 +1,7 @@
 # Spec: story-ranking
 
 Modül: `story-ranking` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Önceki modül:
-[story-clustering](weekly-newsletter-story-clustering.md) · Durum: ONAY BEKLİYOR — 2026-11-10
+[story-clustering](weekly-newsletter-story-clustering.md) · Durum: ONAYLANDI — Mehmet, 2026-11-10 (3 karar + W46 gold set)
 
 ## Assumptions
 
@@ -161,7 +161,7 @@ tests/TheBluesland.UnitTests/Fixtures/newsletter-ranking/2026-W46.json
       seçimin nedenini gösteriyor.
 - [ ] Tam build ve test yeşil; yeni paket ve migration yok.
 
-## Kararlar (onay bekliyor)
+## Kararlar (onaylandı, 2026-11-10)
 
 1. **AI'sız, kurallı puanlama:** kapsam + tür ağırlığı, yukarıdaki tablo başlangıç değerleri.
 2. **Çeşitlilik:** tür başına en fazla 2 ve ilişkili hikâyeden tek biri.
@@ -170,5 +170,4 @@ tests/TheBluesland.UnitTests/Fixtures/newsletter-ranking/2026-W46.json
 
 ## Open Questions
 
-- **W46 için senin 5'in.** Yukarıdaki tablo benim önerim. Aynen kabul edersen gold set bu olur;
-  değiştirmek istediğin varsa söyle.
+- Yok. Mehmet W46 için §3 tablosundaki 5 hikâyeyi aynen seçti (2026-11-10); gold set bu.

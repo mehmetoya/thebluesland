@@ -1,7 +1,7 @@
 # ADR-0006 — TheBluesland Weekly: AI metni dışarı gider, ama yalnızca insan onayından sonra
 
-Durum: **Önerildi** — Mehmet'in onayını bekliyor (2026-11-10). Onaylanmadan `issue-drafting`
-modülünün spec'i yazılmaz (capability map, karar 1).
+Durum: **Kabul edildi** — Mehmet, 2026-11-10. `issue-drafting` spec'i bu ADR'a bağlıdır
+(capability map, karar 1).
 
 ## Bağlam
 

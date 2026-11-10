@@ -1,37 +1,23 @@
-# Implementation Plan: story-clustering (TheBluesland Weekly)
+# Implementation Plan: story-ranking (TheBluesland Weekly)
 
-Spec: [docs/specs/weekly-newsletter-story-clustering.md](../docs/specs/weekly-newsletter-story-clustering.md) ·
-Map: [docs/specs/weekly-newsletter.md](../docs/specs/weekly-newsletter.md) · Durum: UYGULANIYOR (2026-11-10)
+Spec: [docs/specs/weekly-newsletter-story-ranking.md](../docs/specs/weekly-newsletter-story-ranking.md) ·
+ADR: [0006](../docs/adr/0006-weekly-newsletter-ai-metin-siniri.md) · Durum: UYGULANIYOR (2026-11-10)
 
-Önceki modülün (news-ingest) planı git geçmişinde: `git show 1187b60:tasks/plan.md`.
+Önceki modüllerin planları git geçmişinde (`git log -- tasks/plan.md`).
 
 ## Overview
 
-`tools/weekly-newsletter` içine saf, deterministik bir `StoryClusterer`; bunun yanına DB'den hafta
-penceresini okuyan `cluster` alt komutu ve elle tetiklenen `newsletter-preview.yml`. Yeni paket,
-yeni tablo ve migration yok.
-
-## Architecture Decisions
-
-- **Riskli olan önce:** yöntemin gerçek veride işe yarayıp yaramadığı. Gold set (T1) ve kalibrasyon
-  (T5), DB, rapor ve workflow'dan önce yapılır. Karar kuralı tutmazsa I/O kodu boşa yazılmamış olur.
-- **Saf çekirdek, ince kabuk:** Normalizer → Vectorizer → Clusterer ağ ve DB'ye dokunmaz. I/O
-  yalnızca `ClusterCommand`'dadır.
-- **Eşikler yapılandırmada:** `clustering.yml` (feeds.yml deseni). Gold set testi regresyonu korur.
+`StoryRanker`: hikâyeleri kapsam + tür ağırlığıyla puanlar, çeşitlilik kurallarını ve tür slotunu
+uygular, 5 seçim + 3 yedek döndürür. Yanına `rank` alt komutu ve preview workflow'unda
+`stage: rank` eklenir. Yeni paket, tablo ve migration yok.
 
 ## Dependency Graph
 
 ```
-T1 gold set ───────────────────────────────┐
-T2 tipler + options + normalizer ── T3 TF-IDF ── T4 clusterer ── T5 gold set testi + kalibrasyon
-                                                                    └── T6 rapor ── T7 cluster komutu (DB) ── T8 preview workflow + doküman
+T1 ranking.yml + options + classifier ── T2 StoryRanker (puan, çeşitlilik, slot) ── T3 W46 gold set testi
+                                                                                   └── T4 ortak pencere okuyucu + rank komutu + rapor ── T5 preview stage + doküman
 ```
 
-## Checkpoints
+## Checkpoint
 
-- **A (T1 sonrası):** Mehmet gold set etiketlerine bakar. Etiket değişirse yalnızca T5 yeniden
-  kalibre edilir.
-- **B (T5 sonrası):** ölçüm karar kuralını geçiyor mu? Geçmiyorsa embedding için ayrı görev
-  açılır ve Mehmet'e gösterilir.
-- **C (T8 sonrası):** `newsletter-preview` production verisiyle yeşil; tam build ve test; review;
-  PR ve merge.
+T5 sonrası: tam build + test, review, PR, merge, production'da `stage: rank`.
