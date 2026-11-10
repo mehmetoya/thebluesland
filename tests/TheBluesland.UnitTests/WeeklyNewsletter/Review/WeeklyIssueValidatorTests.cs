@@ -63,7 +63,6 @@ public sealed class WeeklyIssueValidatorTests
         var problems = WeeklyIssueValidator.Validate(IssueName(DraftLanguage.English), Turkish);
 
         problems.ShouldContain(problem => problem.Contains("language must be en", StringComparison.Ordinal));
-        problems.ShouldContain(problem => problem.Contains("AI note", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -100,17 +99,17 @@ public sealed class WeeklyIssueValidatorTests
     }
 
     [Fact]
-    public void The_ai_note_must_close_the_issue_word_for_word()
+    public void An_issue_without_an_ai_note_is_valid()
     {
-        var problems = WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), Turkish.Replace("editörü seçti ve onayladı.", "editörü düzenledi.", StringComparison.Ordinal));
-
-        problems.ShouldHaveSingleItem().ShouldContain("AI note");
+        // ADR-0006 madde 4, 2026-11-10: no AI note under the issue.
+        Turkish.ShouldNotContain(DraftLanguage.Turkish.AiNote);
+        WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), Turkish).ShouldBeEmpty();
     }
 
     [Fact]
     public void Issues_with_the_note_of_the_first_drafts_stay_valid()
     {
-        var legacy = Turkish.Replace(DraftLanguage.Turkish.AiNote, DraftLanguage.Turkish.LegacyAiNote, StringComparison.Ordinal);
+        var legacy = Turkish.TrimEnd() + $"\n\n*{DraftLanguage.Turkish.LegacyAiNote}*\n";
 
         WeeklyIssueValidator.Validate(IssueName(DraftLanguage.Turkish), legacy).ShouldBeEmpty();
     }
@@ -127,7 +126,10 @@ public sealed class WeeklyIssueValidatorTests
         (issue.Subject, issue.Preview).ShouldBe(("Two hooks · TBL Weekly", "A line."));
         WeeklyIssueValidator.Read(name, withNeither).ShouldNotBeNull().Subject.ShouldBeNull();
 
-        var tooLong = Draft(DraftLanguage.Turkish, Answer() with { Subject = new string('s', 61), Preview = new string('p', 91) }).IssueMarkdown;
+        // The writer cuts over-long values itself; an editor's hand edit can still exceed the limits.
+        var tooLong = withBoth
+            .Replace("subject: \"Two hooks · TBL Weekly\"", $"subject: \"{new string('s', 61)}\"", StringComparison.Ordinal)
+            .Replace("preview: \"A line.\"", $"preview: \"{new string('p', 91)}\"", StringComparison.Ordinal);
         WeeklyIssueValidator.Validate(name, tooLong).ShouldBe(
             ["subject must be 1-60 characters when present.", "preview must be 1-90 characters when present."]);
     }

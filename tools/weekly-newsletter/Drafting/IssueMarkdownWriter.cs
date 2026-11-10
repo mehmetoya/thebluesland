@@ -33,12 +33,12 @@ public static class IssueMarkdownWriter
         markdown.Append(CultureInfo.InvariantCulture, $"title: {Quote(Title(week, language))}\n");
         if (draft.Subject is { Length: > 0 } subject)
         {
-            markdown.Append(CultureInfo.InvariantCulture, $"subject: {Quote(subject)}\n");
+            markdown.Append(CultureInfo.InvariantCulture, $"subject: {Quote(FitSubject(subject))}\n");
         }
 
         if (draft.Preview is { Length: > 0 } preview)
         {
-            markdown.Append(CultureInfo.InvariantCulture, $"preview: {Quote(preview)}\n");
+            markdown.Append(CultureInfo.InvariantCulture, $"preview: {Quote(Fit(preview, DraftLanguage.MaxPreview))}\n");
         }
 
         markdown.Append(CultureInfo.InvariantCulture, $"sendDate: {week.SendDate:yyyy-MM-dd}\n");
@@ -59,8 +59,9 @@ public static class IssueMarkdownWriter
             markdown.Append(Section(language, draft.For(story.Key), story, heading: draft.For(story.Key).Headline));
         }
 
-        markdown.Append(draft.Outro).Append("\n\n");
-        markdown.Append(CultureInfo.InvariantCulture, $"*{language.AiNote}*\n");
+        // No AI note under the issue (Mehmet, 2026-11-10; ADR-0006 madde 4): aiAssisted stays in the
+        // front matter as the internal record, and the editor's review is the human control.
+        markdown.Append(draft.Outro).Append('\n');
         return markdown.ToString();
     }
 
@@ -114,4 +115,35 @@ public static class IssueMarkdownWriter
     /// <summary>A YAML double-quoted scalar.</summary>
     private static string Quote(string value) =>
         "\"" + value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
+
+    /// <summary>
+    /// validate-weekly rejects a subject over 60 or a preview over 90 characters, which would block
+    /// the PR's merge; the model sometimes runs over (2026-11-10: a 94-character preview). Cut at a
+    /// word boundary and add "…"; the draft report still warns, so the editor sees it.
+    /// </summary>
+    public static string Fit(string text, int max)
+    {
+        text = text.Trim();
+        if (text.Length <= max)
+        {
+            return text;
+        }
+
+        var head = text[..(max - 1)];
+        var space = head.LastIndexOf(' ');
+        return (space > max / 2 ? head[..space] : head).TrimEnd(' ', ',', ';', ':', '-', '·') + "…";
+    }
+
+    /// <summary>Like <see cref="Fit"/>, but keeps the brand tag at the end of the subject.</summary>
+    public static string FitSubject(string subject)
+    {
+        subject = subject.Trim();
+        if (subject.Length <= DraftLanguage.MaxSubject || !subject.EndsWith(DraftLanguage.SubjectTag, StringComparison.Ordinal))
+        {
+            return Fit(subject, DraftLanguage.MaxSubject);
+        }
+
+        var hooks = subject[..^DraftLanguage.SubjectTag.Length];
+        return Fit(hooks, DraftLanguage.MaxSubject - DraftLanguage.SubjectTag.Length) + DraftLanguage.SubjectTag;
+    }
 }

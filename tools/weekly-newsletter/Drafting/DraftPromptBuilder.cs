@@ -46,7 +46,7 @@ public static class DraftPromptBuilder
           phrases such as "pioneering", "reach well beyond", "proving", "coveted", "öncü bir grup",
           "geniş kitle", "doğrudan belirliyor", "kendine yer buluyor".
         - intro: 1-2 sentences referring only to the picks, ending with the sentence "{language.IntroTagline}".
-        - outro: 1-2 short sentences. Do not write the AI note or a signature; the code adds it.
+        - outro: 1-2 short sentences. Do not mention AI or write a signature.
         - subject: at most {DraftLanguage.MaxSubject} characters, two story hooks from the picks, ending with
           "{DraftLanguage.SubjectTag}". preview: at most {DraftLanguage.MaxPreview} characters, adds something and
           does not repeat the subject.

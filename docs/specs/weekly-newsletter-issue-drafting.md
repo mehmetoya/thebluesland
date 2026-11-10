@@ -115,7 +115,6 @@ Kaynaklar: [Pitchfork](…) · [Stereogum](…) · [NME](…)
 
 Haftaya pazartesi yine buradayız. İyi dinlemeler.
 
-*Bu sayı yapay zekâ yardımıyla yazıldı; TheBluesland editörü seçti ve onayladı.*
 ```
 
 - `subject` ve `preview` isteğe bağlıdır (eski dosyalar geçerli kalır); varsa `validate-weekly` 60/90
