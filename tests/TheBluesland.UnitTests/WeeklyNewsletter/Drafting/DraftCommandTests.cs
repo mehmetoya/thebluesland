@@ -119,6 +119,12 @@ public sealed partial class DraftCommandTests : IAsyncLifetime
         handler.Requests.Take(8).ShouldAllBe(request => request.Request.RequestUri!.AbsolutePath.Contains(GeminiClient.DefaultModel));
         handler.Requests[8].Request.RequestUri!.AbsolutePath.ShouldContain(GeminiClient.FallbackModel);
         handler.Requests[9].Request.RequestUri!.AbsolutePath.ShouldContain(GeminiClient.DefaultModel);
+        // The fallback writes at a lower temperature from the short checklist prompt, without the sample issue.
+        handler.Requests[8].Body.ShouldContain("\"temperature\":0.2");
+        handler.Requests[8].Body.ShouldContain("Check every item before you answer");
+        handler.Requests[8].Body.ShouldNotContain("Tessaly Brand");
+        handler.Requests[0].Body.ShouldContain("\"temperature\":0.4");
+        handler.Requests[0].Body.ShouldContain("Tessaly Brand");
         _output.ToString().ShouldContain($"Written by `{GeminiClient.FallbackModel}` because `{GeminiClient.DefaultModel}` was unavailable");
         _output.ToString().ShouldContain("**[DÜŞÜK MODEL]**");
         _error.ToString().ShouldContain($"writing the Turkish draft with {GeminiClient.FallbackModel}");

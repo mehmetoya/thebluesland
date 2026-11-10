@@ -42,7 +42,15 @@ yazmayacak. 8 hikâye girer (5 seçim + 3 yedek).
 ### 2. Model çağrısı
 
 - Dil başına bir çağrı yapılır. Prompt şunlardan oluşur: ses rehberinin tamamı (örnek sayı
-  dahil), o dilin bölümü, olgu kartı ve kurallar.
+  dahil), o dilin bölümü, olgu kartı ve kurallar. Örnek sayı **kurgusaldır** (uydurma sanatçı ve
+  yerler); prompt "örnekteki hiçbir ifade, cümle parçası ya da olgu taslağa taşınmaz" der. Zaman
+  kuralı: pencere ile gönderim tarihi arasında tarihlenen olay duyuru olarak geçmiş zamanla verilir,
+  sonucu yazılmaz; başlamamış şey gelecek zamanla kalır. Her haber kim (kimlikle) / ne / ne zaman /
+  nerede ve başlıklardaki özel adları taşır; roller kartın dediği gibi yazılır; iki makale çelişirse
+  ayrıntı yazılmaz. "Neden önemli" başlık ve gövdede olmayan yeni bir olgu ekler.
+- **Hafif model varyantı:** yedek model yazarken `Build(..., lite: true)` kullanılır: örnek sayı
+  çıkarılır (rehberin ton/TR/EN bölümleri kalır), kurallar olgu kartından **sonra** kısa numaralı
+  bir kontrol listesi olur ve sıcaklık 0.2'dir (varsayılan model 0.4).
 - Yanıt `responseSchema` ile **JSON**'dur:
   `{ intro, outro, subject, preview, stories: [{ key, headline, body, whyItMatters }] }`.
   `subject` (≤ 60 karakter, iki haber kancası, sonu " · TBL Weekly") e-posta konusu, `preview` (≤ 90
@@ -69,15 +77,24 @@ yazmayacak. 8 hikâye girer (5 seçim + 3 yedek).
 | **Rakam** | Metindeki her sayı (yıl, yaş, tarih, tutar) **o haberin** olgu kartında geçmeli (başka haberin kartı yetmez) | Uyarı, cümle işaretlenir |
 | **Özel ad** | Büyük harfle başlayan her ad o haberin kartında geçmeli. Yalnızca alanın ilk kelimesi muaftır; sonraki cümle başları yalnızca ad gibi görünüyorsa (kısaltma ya da ek almış ad) denetlenir | Uyarı |
 | **Eksik** | Haberin başlıklarının çoğunluğunda geçen rakam, kısaltma ve (özette de büyük harfle geçen) adlar metinde olmalı; "Grand Theft Auto" baş harfleriyle (GTA) karşılanır | Uyarı |
-| **TR/EN eşitliği** | Bir dilin haberinde olup diğerinde olmayan rakam ve özel ad | Uyarı (eksik olan dile) |
+| **TR/EN eşitliği** | Bir dilin haberinde olup diğerinde olmayan rakam ve özel ad. Başlıktan yalnızca aynı dildeki metinde ya da kart özetlerinde cümle ortasında büyük harfle geçen ve kartta küçük harfle yazılmamış sözcükler alınır; "The/St" gibi ekler atılır, bitişik büyük harfli sözcükler tek ad sayılır. Haber başına **tek** uyarı hepsini listeler; "eksik" diye zaten bildirilen öğe tekrarlanmaz | Uyarı (eksik olan dile) |
+| **Yedek yazılmadı** | Model yedeği atlayıp kod kart metnini koyduysa o haberde başka denetim çalışmaz | Tek uyarı |
+| **"Neden önemli" tekrarı** | "Neden önemli"deki ≥ 4 harfli içerik sözcüklerinin ≥ %70'i başlık+gövdede geçiyorsa | Uyarı |
+| **Örnek kopyası** | Ses rehberinin örnek sayısından 8+ kelimelik aynı dizi (`DraftCommand` örnek bölümünü verir) | Uyarı |
+| **Giriş** | Girişte üçten fazla haberin adı geçiyorsa | Uyarı |
 | **Zaman sözcüğü** | "bir yıl/a year", "geçen hafta/last week", "aylar önce/months ago", "on yıl/decades", haftanın günleri kartta yoksa | Uyarı |
-| **Geçmiş/gelecek** | Haber, gönderim tarihinden önceki bir tarihi (son 60 gün) anıp gelecek zaman kullanıyorsa (-acak/-ecek, will) | Uyarı (en iyi çaba) |
-| **Kalıp "Neden önemli"** | "öncü bir grup", "geniş kitle", "doğrudan belirliyor", "kendine yer buluyor", "hâlâ bu mirasla", "proving", "reach well beyond", "pioneering", "coveted" | Uyarı |
+| **Geçmiş/gelecek** | Haber, gönderim tarihinden önceki bir tarihi (son 60 gün) anıp gelecek zaman kullanıyorsa (-acak/-ecek, will). Tarih "November 14th" / "14th November" gibi sıra ekiyle de okunur. Haberin **kart** metni gönderimden önceki 14 gün içinde bir tarih söylüyor ve metin tarihsiz de olsa gelecek zaman kullanıyorsa ayrı uyarı | Uyarı (en iyi çaba) |
+| **Kalıp "Neden önemli"** | "öncü bir grup", "geniş kitle", "doğrudan belirliyor", "kendine yer buluyor", "hâlâ bu mirasla", "pek çok/birçok müzisyen", "many musicians", "a favorite of", "yeniden yer alacak", "proving", "reach well beyond", "pioneering", "coveted" | Uyarı |
 | "Bu hafta" | Sayı önceki haftayı anlatır; "bu hafta/this week" yazılmaz | Uyarı |
 | Outro | YZ ya da yapay zekâ geçen cümle silinir (kod notu kendisi ekler); outro boş kalırsa dilin standart kapanışı | Temizlenir ve uyarı verilir |
-| Konu / önizleme | konu ≤ 60, önizleme ≤ 90 karakter; konu " · TBL Weekly" ile biter; önizleme konuyu tekrarlamaz; giriş TR "Beş haber, beş dakika." / EN "Five stories, five minutes." içerir | Uyarı |
-| Kopya | Özetten 8+ kelimelik aynı dizi | Uyarı |
+| Konu / önizleme | konu ≤ 60 (aşarsa uyarı yayımlanacak biçimi gösterir: son kanca ayracında — ", " "; " " ve " " and " — kesilir, "…" yok), önizleme ≤ 90 karakter; konu " · TBL Weekly" ile biter; önizleme konuyu tekrarlamaz; giriş TR "Beş haber, beş dakika." / EN "Five stories, five minutes." içerir | Uyarı |
+| Kopya | Özetten 8+ kelimelik aynı dizi. Başlık bir kaynak başlığıyla eşleşiyorsa tek düşük öncelikli not ("headline matches X's headline"); gövde/neden önemli kopyaları uyarı kalır | Uyarı |
 | Abartı | Ses rehberinin yasakladığı sıfatlar (efsane, inanılmaz, "tarihi bir", legendary, iconic…) | Uyarı |
+
+PR açıklamasının "Neye bakmalı" bölümü ayrıca, bir haberin özetleri farklı "Ay gün" tarihleri
+söylüyorsa "dates differ across sources: Jan 27 (Stereogum) / Jan 29 (UCR, Consequence)" satırını
+taşır. Ingest, özetin başındaki başlık tekrarını ve sondaki "başlık + yazar adı" kuyruğunu
+(ör. Consequence "… Paolo Ragusa") temizler.
 
 Uyarılar dosyaya **girmez**. Job summary'de ve PR açıklamasında (üstte toplam sayı, altta tablo) hikâye hikâye
 listelenir. Mehmet'in neye bakacağını bilmesi için vardır; taslağı engellemez.

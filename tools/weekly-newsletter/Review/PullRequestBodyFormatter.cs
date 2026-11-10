@@ -43,6 +43,21 @@ public static class PullRequestBodyFormatter
             head.Append(DraftReportFormatter.WarningsTable(card, draft.Warnings));
         }
 
+        var conflicts = card.Stories
+            .Select(story => (Story: story, Dates: SourceDateConflicts.Describe(story)))
+            .Where(conflict => conflict.Dates is not null)
+            .ToList();
+        if (conflicts.Count > 0)
+        {
+            head.Append("#### Kaynaklar arası tarih farkı\n\n");
+            foreach (var (story, dates) in conflicts)
+            {
+                head.Append(CultureInfo.InvariantCulture, $"- {MarkdownText.Cell(story.Articles[0].Title)}: dates differ across sources: {MarkdownText.Cell(dates!)}\n");
+            }
+
+            head.Append('\n');
+        }
+
         head.Append("### Seçim\n\n");
         head.Append(WithoutFirstLine(rankReport).Trim()).Append("\n\n");
 
