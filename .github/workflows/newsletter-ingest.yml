@@ -1,0 +1,59 @@
+name: Newsletter ingest
+
+# docs/specs/weekly-newsletter-news-ingest.md, Design section 6: runs tools/weekly-newsletter's
+# "ingest" every two hours (feeds keep only their last 10-40 items; the narrowest, Consequence,
+# spans ~4.7 hours) and can be dispatched by hand. Writes only the newsletter schema.
+#
+# This is the ONLY workflow that may reference NEON_NEWSLETTER_CONNECTION_STRING, and it references
+# no other secret (enforced by tests/TheBluesland.UnitTests/Workflows/
+# NewsletterIngestWorkflowSecretIsolationTests.cs, which scans every workflow file). The secret must
+# be the newsletter_writer role's connection string (src/TheBluesland.Data/Scripts/
+# create-newsletter-role.sql) with sslmode=require - never an owner or Spotify/analytics role, and
+# never added to Render. Mehmet must additionally restrict the secret to this workflow in the repo
+# settings; that scoping is a one-time, code-external step the YAML cannot enforce.
+#
+# Exit code: the tool fails the run only when every feed failed or the configuration is unusable;
+# a single broken feed shows up as a red row in the job summary instead of a red run every two
+# hours. Scheduled workflows run only from the default branch, and GitHub pauses them after 60 days
+# without repository activity.
+
+on:
+  schedule:
+    # Minute 17 of every second hour (UTC), away from the top-of-hour scheduling rush.
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+
+# Later newsletter jobs (ranking, drafting) join this group so no two write the schema at once.
+concurrency:
+  group: newsletter-db
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore
+        run: dotnet restore tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj
+
+      - name: Build
+        run: dotnet build tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-restore
+
+      # The secret is scoped to this one step, not the job.
+      - name: Ingest
+        env:
+          NEON_NEWSLETTER_CONNECTION_STRING: ${{ secrets.NEON_NEWSLETTER_CONNECTION_STRING }}
+        run: |
+          set -euo pipefail
+          dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- ingest | tee -a "$GITHUB_STEP_SUMMARY"
