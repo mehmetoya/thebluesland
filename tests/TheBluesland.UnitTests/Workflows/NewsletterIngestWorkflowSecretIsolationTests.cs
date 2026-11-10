@@ -13,6 +13,7 @@ public sealed partial class NewsletterIngestWorkflowSecretIsolationTests
 {
     private const string NewsletterSecret = "NEON_NEWSLETTER_CONNECTION_STRING";
     private const string IngestWorkflow = ".github/workflows/newsletter-ingest.yml";
+    private const string PreviewWorkflow = ".github/workflows/newsletter-preview.yml";
 
     [Fact]
     public void Only_newsletter_workflows_reference_the_newsletter_connection_string()
@@ -27,10 +28,12 @@ public sealed partial class NewsletterIngestWorkflowSecretIsolationTests
         offenders.ShouldBeEmpty();
     }
 
-    [Fact]
-    public void IngestWorkflow_references_no_secret_other_than_its_own()
+    [Theory]
+    [InlineData(IngestWorkflow)]
+    [InlineData(PreviewWorkflow)]
+    public void Newsletter_workflows_reference_no_secret_other_than_their_own(string workflow)
     {
-        var yaml = File.ReadAllText(FindRepoFile(IngestWorkflow));
+        var yaml = File.ReadAllText(FindRepoFile(workflow));
 
         var secrets = SecretReference().Matches(yaml).Select(match => match.Groups[1].Value).Distinct().ToList();
 
@@ -55,6 +58,21 @@ public sealed partial class NewsletterIngestWorkflowSecretIsolationTests
         var yaml = File.ReadAllText(FindRepoFile(IngestWorkflow));
 
         yaml.ShouldContain("set -euo pipefail");
+    }
+
+    [Fact]
+    public void PreviewWorkflow_is_dispatch_only_read_only_and_never_interpolates_inputs_into_the_script()
+    {
+        var yaml = File.ReadAllText(FindRepoFile(PreviewWorkflow));
+
+        yaml.ShouldContain("workflow_dispatch:");
+        yaml.ShouldNotContain("schedule:");
+        yaml.ShouldNotContain("pull_request");
+        yaml.ShouldContain("contents: read");
+        yaml.ShouldNotContain("contents: write");
+        yaml.ShouldContain("set -euo pipefail");
+        var script = yaml[yaml.IndexOf("run: |", StringComparison.Ordinal)..];
+        script.ShouldNotContain("${{");
     }
 
     [GeneratedRegex(@"secrets\.([A-Z0-9_]+)")]

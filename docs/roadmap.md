@@ -19,14 +19,13 @@ Refactor / redesign planı (ayrı doküman): [`docs/plans/refactor-redesign.md`]
 | AI kürator notu | Elle tetiklenen Gemini taslağı; içeriğe yazmaz, Mehmet PR ile uygular | `suggest-curator-note.yml`, ADR-0005 |
 | Analytics | Kendi barındırdığımız ziyaret/tıklama kaydı (ham IP yok) + korumalı `/dashboard` | `docs/specs/visitor-and-playlist-click-analytics.md`, `analytics-dashboard.md` |
 | Weekly: news-ingest | 2026-11-10'dan beri production'da; 2 saatte bir 7 RSS kaynağı `newsletter` şemasına, 8 hafta saklama. İlk çalışma: 7/7 kaynak başarılı, 124 haber | `newsletter-ingest.yml`, `tools/weekly-newsletter/`, `docs/specs/weekly-newsletter-news-ingest.md` |
+| Weekly: story-clustering | Deterministik TF-IDF kümeleme (ağ çağrısı yok, DB'ye yazmaz); elle etiketlenmiş gerçek haftada precision 1.00, recall 0.96. Kümeler elle tetiklenen `newsletter-preview.yml` ile job summary'de görülür | `tools/weekly-newsletter/Clustering/`, `clustering.yml`, `docs/specs/weekly-newsletter-story-clustering.md` |
 
 ## Devam eden
 
-**story-clustering** — branch `feature/newsletter-story-clustering`, spec
-`docs/specs/weekly-newsletter-story-clustering.md` (onay: 2026-11-10; henüz `main`'de değil).
-
-- Bitti: deterministik TF-IDF kümeleyici; elle etiketlenmiş gold set'te precision 1.00, recall 0.96.
-- Kalan: `cluster` alt komutu, Markdown raporu, yalnız elle tetiklenen `newsletter-preview.yml`.
+- **story-clustering doğrulaması** — gold set şu an tek haftalık (2026-W46). 2026-W47 tam haftası
+  etiketlenip ikinci gold set olarak eklenecek. Skor düşerse eşik yeniden ayarlanacak veya
+  embedding görevi açılacak (spec §3 karar kuralı).
 
 ## Sıradaki (MVP, sırayla)
 

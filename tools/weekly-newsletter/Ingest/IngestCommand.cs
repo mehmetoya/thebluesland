@@ -1,6 +1,6 @@
-using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using TheBluesland.Data;
+using TheBluesland.WeeklyNewsletter.Reporting;
 
 namespace TheBluesland.WeeklyNewsletter.Ingest;
 
@@ -56,9 +56,9 @@ public static class IngestCommand
             {
                 removed = await RemoveExpiredAsync(CreateContext, clock.GetUtcNow() - NewsIngestService.Retention, cancellationToken);
             }
-            catch (DbException ex)
+            catch (Exception ex) when (DatabaseErrors.Find(ex) is { } database)
             {
-                report = report with { DatabaseError = $"Retention delete failed: {ex.GetType().Name}: {ex.Message}" };
+                report = report with { DatabaseError = $"Retention delete failed: {DatabaseErrors.Describe(database)}" };
             }
         }
 
