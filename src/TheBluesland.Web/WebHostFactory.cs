@@ -260,6 +260,23 @@ public static class WebHostFactory
         // the visitor gets the real site chrome and a way home while the status stays 404.
         app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 
+        // The re-execution above must only ever answer a GET/HEAD 404: a re-executed POST would hit
+        // antiforgery on /not-found, and a 405 for a non-GET call must stay the bare 405 it is. An
+        // explicit empty body (Content-Length: 0) makes StatusCodePages leave the response alone.
+        app.Use(async (context, next) =>
+        {
+            await next();
+
+            var response = context.Response;
+            if (!response.HasStarted && response.ContentLength is null && response.ContentType is null
+                && response.StatusCode >= StatusCodes.Status400BadRequest
+                && (response.StatusCode != StatusCodes.Status404NotFound
+                    || !(HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method))))
+            {
+                response.ContentLength = 0;
+            }
+        });
+
         app.UseOutputCache();
         app.UseAntiforgery();
 
