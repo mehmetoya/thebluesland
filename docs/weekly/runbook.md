@@ -27,6 +27,8 @@ Kaynak: Operasyon ve Yayın Odası raporu (2026-11-10). Ayrıntılı kurallar:
      `gh pr create --draft --base main --head newsletter/<hafta> --title "TheBluesland Weekly <hafta>" --body "..."`.
 3. **Düzenle.** PR açıklamasındaki "Neye bakmalı" tablosunu bitir. Haber değiştirmek için
    "Yedekler — yapıştırmaya hazır" bölümünü kullan. Front matter'daki `sendDate` değişmez.
+   İsteğe bağlı: front matter'a `playlist: <slug>` ekle (`content/playlists/<slug>.md`); sayı sayfasında
+   ve e-postada "Bu haftanın dinlemesi" bağlantısı çıkar. Taslak aracı bunu kendisi eklemez.
 4. **Onayla (hedef: Pazar 22:00'den önce).**
    1. `gh pr ready <n>` (CI başlar, ~4 dk)
    2. `gh pr checks <n> --watch`
