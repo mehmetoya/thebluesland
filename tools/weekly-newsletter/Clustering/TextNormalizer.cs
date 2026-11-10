@@ -44,6 +44,16 @@ public sealed partial class TextNormalizer(IReadOnlyList<Abbreviation> abbreviat
             .ToList();
     }
 
+    /// <summary>
+    /// Lowercase, accent-free words separated by single spaces, padded with a space on both ends, so
+    /// a phrase can be matched as whole words with <c>Contains(" phrase ")</c>. Keeps stop words
+    /// (unlike <see cref="Tokenize"/>), because phrases such as "hall of fame" need them.
+    /// </summary>
+    public static string Flatten(string? text) =>
+        string.IsNullOrWhiteSpace(text)
+            ? " "
+            : $" {string.Join(' ', NonAlphanumeric().Split(RemoveDiacritics(text.ToLower(CultureInfo.InvariantCulture))).Where(word => word.Length > 0))} ";
+
     private static string RemoveDiacritics(string text)
     {
         var decomposed = text.Normalize(NormalizationForm.FormKD);

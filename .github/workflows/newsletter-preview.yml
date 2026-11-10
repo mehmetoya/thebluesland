@@ -1,7 +1,8 @@
 name: Newsletter preview
 
-# docs/specs/weekly-newsletter-story-clustering.md, Design section 4: prints a week's story
-# clusters to the job summary so Mehmet can check them without reading code. Read-only (the
+# Prints a week's story clusters (docs/specs/weekly-newsletter-story-clustering.md, Design
+# section 4) or the week's pick of 5 + 3 backups (docs/specs/weekly-newsletter-story-ranking.md,
+# Design section 5) to the job summary, so Mehmet can check them without reading code. Read-only (the
 # "cluster" subcommand never writes) and dispatch-only; once the weekly pipeline exists its own
 # workflow prints the same report.
 #
@@ -12,6 +13,11 @@ name: Newsletter preview
 on:
   workflow_dispatch:
     inputs:
+      stage:
+        description: "What to print: the pick (rank) or every story cluster (cluster)."
+        type: choice
+        options: [rank, cluster]
+        default: rank
       from:
         description: "Window start, UTC (e.g. 2026-11-03 or 2026-11-03T10:00). Empty = 7 days before 'to'."
         required: false
@@ -47,14 +53,16 @@ jobs:
         run: dotnet build tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-restore
 
       # Inputs reach the shell only as environment variables, never interpolated into the script.
-      - name: Cluster
+      - name: Preview
         env:
+          STAGE: ${{ inputs.stage }}
           NEON_NEWSLETTER_CONNECTION_STRING: ${{ secrets.NEON_NEWSLETTER_CONNECTION_STRING }}
           WINDOW_FROM: ${{ inputs.from }}
           WINDOW_TO: ${{ inputs.to }}
         run: |
           set -euo pipefail
-          args=(cluster)
+          case "$STAGE" in rank|cluster) ;; *) echo "Unknown stage '$STAGE'" >&2; exit 1 ;; esac
+          args=("$STAGE")
           if [ -n "$WINDOW_FROM" ]; then args+=(--from "$WINDOW_FROM"); fi
           if [ -n "$WINDOW_TO" ]; then args+=(--to "$WINDOW_TO"); fi
           dotnet run --project tools/weekly-newsletter/TheBluesland.WeeklyNewsletter.csproj --configuration Release --no-build -- "${args[@]}" | tee -a "$GITHUB_STEP_SUMMARY"

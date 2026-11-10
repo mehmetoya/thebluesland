@@ -1,7 +1,7 @@
 # Spec: story-ranking
 
 Modül: `story-ranking` · Map: [weekly-newsletter.md](weekly-newsletter.md) · Önceki modül:
-[story-clustering](weekly-newsletter-story-clustering.md) · Durum: ONAYLANDI — Mehmet, 2026-11-10 (3 karar + W46 gold set)
+[story-clustering](weekly-newsletter-story-clustering.md) · Durum: UYGULANDI — 2026-11-10 (W46: 5/5 Mehmet'in seçimiyle aynı; PR bekliyor)
 
 ## Assumptions
 
@@ -57,10 +57,11 @@ Eşitlikte sırası: daha çok üye haber, sonra daha yeni `LastSeen`, sonra sto
    Williams – Olivia Rodrigo" ve "Christmas Wrapping – Olivia Rodrigo" aynı tartışmanın iki
    hikâyesidir.
 3. **Tür tercihi slotu (isteğe bağlı, kota değil).** İlk 5'te blues/rock/soul/indie eşleşmesi
-   (başlık, özet veya kategori kelimeleri; liste `ranking.yml`'de) yoksa, eşleşen en iyi aday
+   (başlık ve özet kelimeleri; liste `ranking.yml`'de. Feed kategorileri kümeleme girdisinde
+   olmadığı için kullanılmıyor) yoksa, eşleşen en iyi aday
    5. sıradakinin yerine geçer. Bunun koşulu, adayın puanının 5. sıradakinin en az %70'i olmasıdır
    (`genreSwapMinRatio`). Eşleşen aday yoksa veya puanı düşükse hiçbir şey değişmez.
-4. Yedekler aynı kurallarla 6.–8. sıradan seçilir.
+4. Yedekler 6.–8. sıradan seçilir: seçilen her şeyle ilişkili olmamalı, tür sınırı yedeklerin kendi içinde uygulanır. Tür slotuyla yerinden çıkan hikâye doğal olarak ilk yedek olur.
 
 ### 3. Gerçek haftada deneme (2026-W46, prototip)
 
@@ -155,8 +156,8 @@ tests/TheBluesland.UnitTests/Fixtures/newsletter-ranking/2026-W46.json
 
 ## Success Criteria
 
-- [ ] W46 gold set: ilk 5'in en az 4'ü Mehmet'in 5'iyle aynı; Mehmet'in 5'i ilk 8'in içinde.
-- [ ] Çeşitlilik kurallarının her biri testle kanıtlı.
+- [x] W46 gold set: ilk 5'in en az 4'ü Mehmet'in 5'iyle aynı; Mehmet'in 5'i ilk 8'in içinde. (Sonuç: 5/5; yedekler de §3 tablosuyla aynı.)
+- [x] Çeşitlilik kurallarının her biri testle kanıtlı.
 - [ ] `newsletter-preview` workflow'u `stage: rank` ile production verisinde yeşil; rapor her
       seçimin nedenini gösteriyor.
 - [ ] Tam build ve test yeşil; yeni paket ve migration yok.

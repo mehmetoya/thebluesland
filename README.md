@@ -183,7 +183,7 @@ src/TheBluesland.Web/       Blazor Web App - content reading, validation, and we
 src/TheBluesland.Data/      EF Core / PostgreSQL schema and migrations
 tools/spotify-playlist-fetcher/   Spotify sync tool, run monthly by GitHub Actions
 tools/playlist-taxonomy-report/   Local-only tool: reports mood/genre/occasion/era tag distribution
-tools/weekly-newsletter/    TheBluesland Weekly pipeline (news ingest + story clustering), run by GitHub Actions
+tools/weekly-newsletter/    TheBluesland Weekly pipeline (news ingest, story clustering and ranking), run by GitHub Actions
 content/playlists/          Version-controlled editorial playlist content
 tests/TheBluesland.UnitTests/     Unit, schema, and web integration tests (Testcontainers Postgres)
 tests/TheBluesland.E2ETests/      Playwright smoke tests against the real app, in-process
@@ -251,7 +251,7 @@ inside the web app or the PR/deploy pipelines:
 | `report-eras.yml` | Manual | Prints a per-playlist era-distribution report from the cache's stored bucket counts — a plain database read, no Spotify call, safe to re-run any time. |
 | `suggest-curator-note.yml` | Manual | Drafts a curator-note suggestion for one playlist via Gemini, from the cache's public fields only; never writes to `content/playlists/*.md` — Mehmet applies it through a normal PR if he agrees. |
 | `newsletter-ingest.yml` | Every 2 hours, or manual | TheBluesland Weekly news ingest (`docs/specs/weekly-newsletter-news-ingest.md`): pulls the music-news RSS feeds listed in `tools/weekly-newsletter/feeds.yml` into the `newsletter` schema, removes items older than 8 weeks and writes a per-source health table to the job summary. Fails only when every feed fails. No Spotify or AI access. |
-| `newsletter-preview.yml` | Manual | TheBluesland Weekly story clusters (`docs/specs/weekly-newsletter-story-clustering.md`): groups a window of stored articles (default: the last 7 days) into stories and prints them to the job summary — most-covered first, with every member headline — so wrong merges are visible at a glance. Read-only; same secret as `newsletter-ingest.yml`, no Spotify or AI access. |
+| `newsletter-preview.yml` | Manual | TheBluesland Weekly preview over a window of stored articles (default: the last 7 days). `stage: rank` (default) prints the week's pick — 5 stories + 3 backups, each with why it was chosen (`docs/specs/weekly-newsletter-story-ranking.md`); `stage: cluster` prints every story cluster with its member headlines (`docs/specs/weekly-newsletter-story-clustering.md`). Read-only; same secret as `newsletter-ingest.yml`, no Spotify or AI access. |
 
 Each of `sync-spotify.yml`, `report-eras.yml`, `suggest-curator-note.yml` and `newsletter-ingest.yml` is the *only* workflow allowed to hold its particular external credential (see
 [Spotify cache database access](#-spotify-cache-database-access-sec-001) below) — `ci.yml` and
