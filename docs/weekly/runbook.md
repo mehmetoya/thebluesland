@@ -23,6 +23,9 @@ yeşil olunca kendiliğinden merge edilir, gönderim kendiliğinden zamanlanır)
 - PR'da **`needs-human`** etiketi varsa: PR yorumu nedenini söyler (kontrolcü geçmedi, engelleyen
   doğrulama problemi, hafif modelle yazıldı ya da otomatik merge açılamadı). Metni düzeltip aşağıdaki
   elle yola (3–4. adım) dön ya da PR'ı kapat; **merge edilmezse o hafta hiçbir dil gitmez**.
+  Böyle bir haftada draft çalışması bilerek kırmızı biter ("bu hafta gitmeyecek"); GitHub başarısız
+  çalışma e-postası gönderir (GitHub → Settings → Notifications → Actions: Email, "Only notify for
+  failed workflows"). Bir şey yapmazsan o hafta atlanır, sonraki pazar normal çalışır.
 - Otomatik merge beklemede kalırsa (PR yeşil ama merge olmuyor): `main` ilerlemiş olabilir (strict
   koruma) → `gh pr update-branch <n>`; CI yeşil olunca merge kendiliğinden olur.
 - Kurulum (bir kez): repo secret'ı `WEEKLY_BOT_TOKEN` = yalnız bu repoya sınırlı fine-grained PAT,
