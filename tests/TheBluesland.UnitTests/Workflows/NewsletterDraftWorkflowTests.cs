@@ -76,6 +76,9 @@ public sealed partial class NewsletterDraftWorkflowTests
         // Without the secret the job only warns and leaves the draft for a manual merge.
         OpenPrJob.ShouldContain("::warning title=WEEKLY_BOT_TOKEN is not set::");
         OpenPrJob.IndexOf("gh pr merge", StringComparison.Ordinal).ShouldBeGreaterThan(OpenPrJob.IndexOf("url=\"$(gh pr create", StringComparison.Ordinal));
+        // A week that will not go out fails the run, so GitHub's failed-run e-mail reaches Mehmet.
+        OpenPrJob.ShouldContain("::error title=TheBluesland Weekly $WEEK bu hafta gitmeyecek::");
+        OpenPrJob.IndexOf("bu hafta gitmeyecek", StringComparison.Ordinal).ShouldBeGreaterThan(OpenPrJob.IndexOf("gh pr comment", StringComparison.Ordinal));
     }
 
     [Fact]

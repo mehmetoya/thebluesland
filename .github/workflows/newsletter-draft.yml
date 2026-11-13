@@ -263,3 +263,9 @@ jobs:
           elif [ "$publish" != "true" ]; then
             echo "Draft PR: $url" >> "$GITHUB_STEP_SUMMARY"
           fi
+          # A week that will not go out fails the run on purpose: GitHub e-mails Mehmet about failed runs
+          # (his Actions notification setting), so a skipped week never passes silently.
+          if [ "$publish" != "true" ]; then
+            echo "::error title=TheBluesland Weekly $WEEK bu hafta gitmeyecek::Otomatik yayın olmadı: $url"
+            exit 1
+          fi
